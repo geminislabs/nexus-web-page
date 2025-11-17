@@ -83,9 +83,9 @@ function createTokenStore() {
 		 */
 		setTokens: (tokens) => {
 			const { access_token, refresh_token, id_token, expires_in } = tokens;
-			
+
 			set(access_token);
-			
+
 			if (browser) {
 				localStorage.setItem('token', access_token);
 				if (refresh_token) {
@@ -137,10 +137,10 @@ function createTokenStore() {
 		 */
 		isTokenExpired: () => {
 			if (!browser) return true;
-			
+
 			const expiresAt = localStorage.getItem('token_expires_at');
 			if (!expiresAt) return true;
-			
+
 			return Date.now() >= parseInt(expiresAt);
 		},
 		/**

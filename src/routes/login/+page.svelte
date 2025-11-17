@@ -62,13 +62,15 @@
 			goto('/dashboard');
 		} catch (err) {
 			console.error('Error en login:', err);
-			
+
 			// Manejar diferentes tipos de errores según el código de estado HTTP
 			if (err.status === 401) {
 				// Usar el mensaje del API si está disponible, o uno genérico
 				error = err.detail || 'Credenciales inválidas. Por favor, verifica tu email y contraseña.';
 			} else if (err.status === 403) {
-				error = err.detail || 'Tu email no ha sido verificado. Por favor, verifica tu correo electrónico.';
+				error =
+					err.detail ||
+					'Tu email no ha sido verificado. Por favor, verifica tu correo electrónico.';
 			} else if (err.status === 400) {
 				error = err.detail || 'Formato de email o contraseña inválido.';
 			} else if (err.detail) {
@@ -90,7 +92,7 @@
 </script>
 
 <svelte:head>
-	<title>Login - Tracker Monitor</title>
+	<title>Login - Nexus</title>
 </svelte:head>
 
 <!-- Background video -->
@@ -112,13 +114,9 @@
 	<div class="max-w-md w-full space-y-8 card">
 		<!-- Logo principal -->
 		<div class="text-center mb-6">
-			<img 
-				src="/img/logo.png" 
-				alt="Tracker Monitor Logo" 
-				class="h-20 mx-auto mb-4"
-			/>
+			<img src="/img/logo.png" alt="Nexus Logo" class="h-20 mx-auto mb-4" />
 			<h2 class="section-title">Iniciar Sesión</h2>
-			<p class="mt-2 text-sm text-app">Accede a tu cuenta de Tracker Monitor</p>
+			<p class="mt-2 text-sm text-app">Accede a tu cuenta de Nexus</p>
 		</div>
 
 		<form on:submit|preventDefault={handleLogin} class="space-y-6">
@@ -127,9 +125,7 @@
 			{/if}
 
 			<div>
-				<label for="email" class="block text-sm font-medium text-app"
-					>Correo electrónico</label
-				>
+				<label for="email" class="block text-sm font-medium text-app">Correo electrónico</label>
 				<input
 					id="email"
 					type="email"
@@ -144,8 +140,8 @@
 			<div>
 				<div class="flex items-center justify-between mb-2">
 					<label for="password" class="block text-sm font-medium text-app">Contraseña</label>
-					<a 
-						href="{COMPANY_URL}/auth?mode=recover" 
+					<a
+						href="{COMPANY_URL}/auth?mode=recover"
 						class="text-xs text-accent hover:underline"
 						target="_blank"
 					>
@@ -200,8 +196,8 @@
 		<div class="mt-6 text-center">
 			<p class="text-sm text-app">
 				¿No tienes una cuenta?
-				<a 
-					href="{COMPANY_URL}/auth?mode=register" 
+				<a
+					href="{COMPANY_URL}/auth?mode=register"
 					class="font-medium text-accent hover:underline"
 					target="_blank"
 				>
@@ -213,13 +209,11 @@
 
 	<!-- Footer con logo de Geminis Labs -->
 	<div class="mt-8 text-center">
-		<div class="flex items-center justify-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+		<div
+			class="flex items-center justify-center gap-2 opacity-70 hover:opacity-100 transition-opacity"
+		>
 			<span class="text-xs text-app">Powered by</span>
-			<img 
-				src="/img/geminis-labs-logo-short.png" 
-				alt="Geminis Labs" 
-				class="h-5"
-			/>
+			<img src="/img/geminis-labs-logo-short.png" alt="Geminis Labs" class="h-5" />
 		</div>
 	</div>
 </div>

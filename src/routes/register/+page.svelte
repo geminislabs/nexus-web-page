@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>Redirigiendo... - Tracker Monitor</title>
+	<title>Redirigiendo... - Nexus</title>
 </svelte:head>
 
 <div class="min-h-screen bg-app flex items-center justify-center px-4">

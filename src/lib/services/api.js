@@ -47,7 +47,7 @@ class ApiService {
 			if (!response.ok) {
 				let errorMessage = `HTTP error! status: ${response.status}`;
 				let errorDetail = null;
-				
+
 				try {
 					const errorData = await response.json();
 					errorDetail = errorData.detail || errorData.message || null;
@@ -57,7 +57,7 @@ class ApiService {
 				} catch (e) {
 					// Si no se puede parsear el error, usar el mensaje por defecto
 				}
-				
+
 				// Crear error con información del status code
 				const error = new Error(errorMessage);
 				error.status = response.status;
@@ -301,7 +301,7 @@ class ApiService {
 		// Por ahora retorna un array vacío para evitar errores
 		console.warn('⚠️ getDevices: Endpoint no implementado aún en SISCOM-ADMIN-API');
 		return { devices: [] };
-		
+
 		// Cuando esté disponible, descomentar:
 		// return this.request('/api/v1/devices/', {
 		// 	method: 'GET'

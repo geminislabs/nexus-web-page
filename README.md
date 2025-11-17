@@ -1,4 +1,4 @@
-# Tracker Monitor App
+# Nexus App
 
 Una aplicación SvelteKit con autenticación y Google Maps que permite a los usuarios hacer login y ver un mapa que cubre toda la pantalla.
 
@@ -135,6 +135,7 @@ La aplicación está configurada para trabajar con SISCOM-ADMIN-API (FastAPI). L
 ### Arquitectura Multi-tenant
 
 La aplicación soporta múltiples clientes (organizaciones):
+
 - Cada cliente tiene sus propios usuarios y datos
 - El aislamiento de datos se maneja automáticamente por el backend
 - Los usuarios maestros pueden invitar a otros usuarios
@@ -155,6 +156,7 @@ La aplicación soporta múltiples clientes (organizaciones):
 ### Autenticación Centralizada
 
 La aplicación utiliza un sistema de autenticación centralizado:
+
 - **Registro de usuarios**: Se realiza en la página principal de Geminis Labs (`/auth?mode=register`)
 - **Recuperación de contraseña**: Se gestiona desde la página principal de Geminis Labs (`/auth?mode=recover`)
 - **Login**: Se realiza directamente en la aplicación usando SISCOM-ADMIN-API
