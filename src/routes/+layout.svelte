@@ -1,6 +1,6 @@
 <script>
 	import '../app.css';
-	import favicon from '$lib/assets/favicon.svg';
+	import favicon from '$lib/assets/favicon.png';
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { onMount } from 'svelte';
 	import { theme } from '$lib/stores/theme.js';

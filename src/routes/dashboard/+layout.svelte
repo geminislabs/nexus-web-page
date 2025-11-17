@@ -1,24 +1,24 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { user } from '$lib/stores/auth.js';
+	import { user, authToken } from '$lib/stores/auth.js';
 	import '$lib//styles/dashboard.css';
-
-	// Permitir saltar autenticación si VITE_BYPASS_AUTH=true
-	const BYPASS = typeof import.meta !== 'undefined' && import.meta.env?.VITE_BYPASS_AUTH === 'true';
 
 	let { children } = $props();
 	let isAuthenticated = $state(false);
 	let isLoading = $state(true);
 
 	onMount(() => {
+		// Inicializar stores desde localStorage
+		authToken.init();
 		user.init();
 
 		const unsubscribe = user.subscribe((userData) => {
 			isAuthenticated = !!userData;
 			isLoading = false;
 
-			if (!userData && !BYPASS) {
+			// Redirigir al login si no hay usuario autenticado
+			if (!userData) {
 				goto('/login');
 			}
 		});

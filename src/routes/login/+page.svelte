@@ -4,16 +4,17 @@
 	import { apiService } from '$lib/services/api.js';
 	import { onMount } from 'svelte';
 
-	// Bypass para demo: si VITE_BYPASS_AUTH=true permite entrar con cualquier dato
-	const BYPASS = typeof import.meta !== 'undefined' && import.meta.env?.VITE_BYPASS_AUTH === 'true';
+	// URL de la página principal de la compañía para registro y recuperación de contraseña
+	const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
 
 	let email = '';
 	let password = '';
 	let loading = false;
 	let error = '';
 
-	// Redirigir si ya está autenticado (o si BYPASS activa mock desde user.init)
+	// Redirigir si ya está autenticado
 	onMount(() => {
+		authToken.init();
 		user.init();
 		const unsubscribe = user.subscribe((userData) => {
 			if (userData) {
@@ -33,24 +34,49 @@
 		error = '';
 
 		try {
-			// Si BYPASS está activo, autenticamos mock sin llamar a la API
-			if (BYPASS) {
-				const demoUser = { id: 1, name: 'Usuario Demo', email };
-				authToken.setToken('mock-demo-token');
-				user.login(demoUser);
-				goto('/dashboard');
-				return;
-			}
+			// Llamar a la API de login (POST /api/v1/auth/login)
 			const response = await apiService.login({ email, password });
 
-			// Guardar token y datos del usuario
-			authToken.setToken(response.access_token);
-			user.login(response.user);
+			// La respuesta incluye: user (objeto completo), access_token, id_token, refresh_token, expires_in
+			// Verificar que el email esté verificado
+			if (response.user && !response.user.email_verified) {
+				error = 'Tu email no ha sido verificado. Por favor, verifica tu correo electrónico.';
+				loading = false;
+				return;
+			}
+
+			// Guardar todos los tokens
+			authToken.setTokens({
+				access_token: response.access_token,
+				refresh_token: response.refresh_token,
+				id_token: response.id_token,
+				expires_in: response.expires_in
+			});
+
+			// Guardar los datos del usuario (la API ya nos envía todo el objeto user)
+			if (response.user) {
+				user.login(response.user);
+			}
 
 			// Redirigir al dashboard
 			goto('/dashboard');
 		} catch (err) {
-			error = 'Credenciales inválidas. Por favor, intenta de nuevo.';
+			console.error('Error en login:', err);
+			
+			// Manejar diferentes tipos de errores según el código de estado HTTP
+			if (err.status === 401) {
+				// Usar el mensaje del API si está disponible, o uno genérico
+				error = err.detail || 'Credenciales inválidas. Por favor, verifica tu email y contraseña.';
+			} else if (err.status === 403) {
+				error = err.detail || 'Tu email no ha sido verificado. Por favor, verifica tu correo electrónico.';
+			} else if (err.status === 400) {
+				error = err.detail || 'Formato de email o contraseña inválido.';
+			} else if (err.detail) {
+				// Si el API nos da un mensaje específico, mostrarlo
+				error = err.detail;
+			} else {
+				error = 'Error al iniciar sesión. Por favor, intenta de nuevo más tarde.';
+			}
 		} finally {
 			loading = false;
 		}
@@ -82,9 +108,15 @@
 <div class="fixed inset-0 overlay-layer pointer-events-none"></div>
 
 <!-- Page content -->
-<div class="relative z-10 min-h-screen flex items-center justify-center px-4">
+<div class="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 py-8">
 	<div class="max-w-md w-full space-y-8 card">
-		<div class="text-center">
+		<!-- Logo principal -->
+		<div class="text-center mb-6">
+			<img 
+				src="/img/logo.png" 
+				alt="Tracker Monitor Logo" 
+				class="h-20 mx-auto mb-4"
+			/>
 			<h2 class="section-title">Iniciar Sesión</h2>
 			<p class="mt-2 text-sm text-app">Accede a tu cuenta de Tracker Monitor</p>
 		</div>
@@ -96,21 +128,30 @@
 
 			<div>
 				<label for="email" class="block text-sm font-medium text-app"
-					>Correo electrónico o usuario</label
+					>Correo electrónico</label
 				>
 				<input
 					id="email"
-					type="text"
+					type="email"
 					bind:value={email}
 					on:keypress={handleKeyPress}
 					required
 					class="input-field"
-					placeholder="test o test@tracker-monitor.com"
+					placeholder="tu@email.com"
 				/>
 			</div>
 
 			<div>
-				<label for="password" class="block text-sm font-medium text-app">Contraseña</label>
+				<div class="flex items-center justify-between mb-2">
+					<label for="password" class="block text-sm font-medium text-app">Contraseña</label>
+					<a 
+						href="{COMPANY_URL}/auth?mode=recover" 
+						class="text-xs text-accent hover:underline"
+						target="_blank"
+					>
+						¿Olvidaste tu contraseña?
+					</a>
+				</div>
 				<input
 					id="password"
 					type="password"
@@ -159,8 +200,26 @@
 		<div class="mt-6 text-center">
 			<p class="text-sm text-app">
 				¿No tienes una cuenta?
-				<a href="/register" class="font-medium text-accent">Regístrate aquí</a>
+				<a 
+					href="{COMPANY_URL}/auth?mode=register" 
+					class="font-medium text-accent hover:underline"
+					target="_blank"
+				>
+					Regístrate aquí
+				</a>
 			</p>
+		</div>
+	</div>
+
+	<!-- Footer con logo de Geminis Labs -->
+	<div class="mt-8 text-center">
+		<div class="flex items-center justify-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+			<span class="text-xs text-app">Powered by</span>
+			<img 
+				src="/img/geminis-labs-logo-short.png" 
+				alt="Geminis Labs" 
+				class="h-5"
+			/>
 		</div>
 	</div>
 </div>

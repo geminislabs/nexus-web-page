@@ -94,10 +94,10 @@
 		return !!mapService?.map;
 	}
 
-	async function loadDevicesAndCommunications(currentUser) {
+	async function loadDevicesAndCommunications() {
 		try {
-			// Obtener devices del usuario
-			const resp = await apiService.getDevices(currentUser);
+			// Obtener devices del usuario actual (usa el token automáticamente)
+			const resp = await apiService.getDevices();
 			const deviceList = resp?.devices || [];
 
 			// Mapear devices a vehículos mínimos
@@ -218,7 +218,7 @@
 				return;
 			}
 		});
-		loadDevicesAndCommunications(userData);
+		loadDevicesAndCommunications();
 
 		// Cleanup function
 		return () => {

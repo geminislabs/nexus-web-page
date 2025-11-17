@@ -1,12 +1,11 @@
 /**
- * Servicio para consultar posiciones de vehículos desde la API
+ * Servicio para consultar posiciones de vehículos desde la API de comunicaciones (SISCOM-API)
  */
 
 import { vehicleActions } from '../stores/vehicleStore.js';
 
-const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'http://34.237.30.30:8080';
-// Base para API administrativa de comunicaciones (puede ser distinta)
-const COMM_BASE_URL = import.meta.env?.VITE_COMM_BASE_URL || 'http://10.8.0.1:8000';
+// URL base de la API de comunicaciones (SISCOM-API)
+const COMM_API_URL = import.meta.env?.VITE_COMM_API_URL || 'http://34.237.30.30:8080';
 
 class PositionService {
 	constructor() {
@@ -23,7 +22,7 @@ class PositionService {
 		if (!Array.isArray(deviceIds) || deviceIds.length === 0) {
 			return { communications: [] };
 		}
-		const url = new URL('/api/v1/communications/latest', COMM_BASE_URL);
+		const url = new URL('/api/v1/communications/latest', COMM_API_URL);
 		deviceIds.forEach((id) => url.searchParams.append('device_ids', id));
 		try {
 			const res = await fetch(url.toString(), { method: 'GET' });
@@ -50,7 +49,7 @@ class PositionService {
 				return cached.data;
 			}
 
-			const response = await fetch(`${API_BASE_URL}/positions?deviceId=${deviceId}`, {
+			const response = await fetch(`${COMM_API_URL}/positions?deviceId=${deviceId}`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json'
@@ -231,7 +230,7 @@ class PositionService {
 
 		// Crear la URL para el streaming
 		const deviceIdsParam = deviceIds.join(',');
-		const streamUrl = `${COMM_BASE_URL}/api/v1/stream?device_ids=${deviceIdsParam}`;
+		const streamUrl = `${COMM_API_URL}/api/v1/stream?device_ids=${deviceIdsParam}`;
 
 		console.warn('Connecting to real-time stream:', streamUrl);
 

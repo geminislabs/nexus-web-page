@@ -1,17 +1,30 @@
 import { authToken } from '../stores/auth.js';
 import { get } from 'svelte/store';
 
-// Configuración base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// Configuración de las APIs
+const ADMIN_API_URL = import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:8000';
+const COMM_API_URL = import.meta.env.VITE_COMM_API_URL || 'http://34.237.30.30:8080';
 
+/**
+ * Servicio de API para comunicación con SISCOM-ADMIN-API y SISCOM-API
+ * - ADMIN_API_URL: API administrativa (usuarios, clientes, dispositivos)
+ * - COMM_API_URL: API de comunicaciones (rastreo GPS)
+ */
 class ApiService {
 	constructor() {
-		this.baseURL = API_BASE_URL;
+		this.adminBaseURL = ADMIN_API_URL;
+		this.commBaseURL = COMM_API_URL;
 	}
 
-	// Método para hacer peticiones HTTP
-	async request(endpoint, options = {}) {
-		const url = `${this.baseURL}${endpoint}`;
+	/**
+	 * Método genérico para hacer peticiones HTTP
+	 * @param {string} endpoint - Endpoint de la API
+	 * @param {Object} options - Opciones de fetch
+	 * @param {string} baseURL - URL base a usar (por defecto ADMIN_API)
+	 * @returns {Promise<Object>} Respuesta de la API
+	 */
+	async request(endpoint, options = {}, baseURL = this.adminBaseURL) {
+		const url = `${baseURL}${endpoint}`;
 		const token = get(authToken) || authToken.getToken();
 
 		const config = {
@@ -30,8 +43,27 @@ class ApiService {
 		try {
 			const response = await fetch(url, config);
 
+			// Si la respuesta no es OK, intentar obtener el mensaje de error
 			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
+				let errorMessage = `HTTP error! status: ${response.status}`;
+				let errorDetail = null;
+				
+				try {
+					const errorData = await response.json();
+					errorDetail = errorData.detail || errorData.message || null;
+					if (errorDetail) {
+						errorMessage = errorDetail;
+					}
+				} catch (e) {
+					// Si no se puede parsear el error, usar el mensaje por defecto
+				}
+				
+				// Crear error con información del status code
+				const error = new Error(errorMessage);
+				error.status = response.status;
+				error.statusText = response.statusText;
+				error.detail = errorDetail;
+				throw error;
 			}
 
 			return await response.json();
@@ -41,102 +73,239 @@ class ApiService {
 		}
 	}
 
-	// Métodos de autenticación
+	// ============================================
+	// MÉTODOS DE AUTENTICACIÓN (SISCOM-ADMIN-API)
+	// ============================================
+
+	/**
+	 * Iniciar sesión
+	 * POST /api/v1/auth/login
+	 * @param {Object} credentials - {email, password}
+	 * @returns {Promise<Object>} Tokens y datos del usuario
+	 */
 	async login(credentials) {
-		// Mock de login: acepta únicamente usuario "test" y contraseña "test"
-		const { email, username, password } = credentials || {};
-		const isUserTest =
-			email === 'test' || email === 'test@tracker-monitor.com' || username === 'test';
-		const isPwdTest = password === 'test';
-
-		return new Promise((resolve, reject) => {
-			// pequeña latencia para simular red
-			setTimeout(() => {
-				if (isUserTest && isPwdTest) {
-					resolve({
-						access_token: 'fake-demo-token',
-						user: {
-							id: 1,
-							name: 'Usuario Test',
-							email: email || 'test@tracker-monitor.com'
-						}
-					});
-				} else {
-					reject(new Error('Invalid credentials'));
-				}
-			}, 400);
-		});
-	}
-
-	async register(userData) {
-		return this.request('/auth/register', {
+		const { email, password } = credentials;
+		return this.request('/api/v1/auth/login', {
 			method: 'POST',
-			body: JSON.stringify(userData)
+			body: JSON.stringify({ email, password })
 		});
 	}
 
+	/**
+	 * Cerrar sesión
+	 * POST /api/v1/auth/logout
+	 * @returns {Promise<Object>} Mensaje de confirmación
+	 */
 	async logout() {
-		return this.request('/auth/logout', {
+		return this.request('/api/v1/auth/logout', {
 			method: 'POST'
 		});
 	}
 
-	// Método para verificar el token
-	async verifyToken() {
-		return this.request('/auth/verify');
+	/**
+	 * Solicitar código de recuperación de contraseña
+	 * POST /api/v1/auth/forgot-password
+	 * @param {string} email - Email del usuario
+	 * @returns {Promise<Object>} Mensaje de confirmación
+	 */
+	async forgotPassword(email) {
+		return this.request('/api/v1/auth/forgot-password', {
+			method: 'POST',
+			body: JSON.stringify({ email })
+		});
 	}
 
-	// Métodos GET
-	async get(endpoint) {
-		return this.request(endpoint, { method: 'GET' });
-	}
-
-	// Métodos POST
-	async post(endpoint, data) {
-		return this.request(endpoint, {
+	/**
+	 * Restablecer contraseña con código
+	 * POST /api/v1/auth/reset-password
+	 * @param {Object} data - {email, code, new_password}
+	 * @returns {Promise<Object>} Mensaje de confirmación
+	 */
+	async resetPassword(data) {
+		return this.request('/api/v1/auth/reset-password', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
 	}
 
-	// Métodos PUT
-	async put(endpoint, data) {
-		return this.request(endpoint, {
-			method: 'PUT',
+	/**
+	 * Cambiar contraseña (usuario autenticado)
+	 * PATCH /api/v1/auth/password
+	 * @param {Object} data - {old_password, new_password}
+	 * @returns {Promise<Object>} Mensaje de confirmación
+	 */
+	async changePassword(data) {
+		return this.request('/api/v1/auth/password', {
+			method: 'PATCH',
 			body: JSON.stringify(data)
 		});
 	}
 
-	// Métodos DELETE
-	async delete(endpoint) {
-		return this.request(endpoint, { method: 'DELETE' });
+	// ============================================
+	// MÉTODOS DE USUARIOS (SISCOM-ADMIN-API)
+	// ============================================
+
+	/**
+	 * Obtener datos del usuario actual
+	 * GET /api/v1/users/me
+	 * @returns {Promise<Object>} Datos del usuario
+	 */
+	async getCurrentUser() {
+		return this.request('/api/v1/users/me', {
+			method: 'GET'
+		});
 	}
 
-	// Métodos específicos para vehículos
-	async getVehicles() {
-		return this.request('/vehicles', { method: 'GET' });
+	/**
+	 * Listar todos los usuarios del cliente
+	 * GET /api/v1/users/
+	 * @returns {Promise<Array>} Lista de usuarios
+	 */
+	async getUsers() {
+		return this.request('/api/v1/users/', {
+			method: 'GET'
+		});
 	}
 
-	// Mock administrativo: obtener dispositivos del usuario
-	async getDevices(user) {
-		// user puede ser usado en el futuro; por ahora retornamos datos fijos
-		const payload = {
-			devices: [{ id: '0848063597' }, { id: '867564050638581' }, { id: '0848086072' }]
-		};
-
-		return new Promise((resolve) => setTimeout(() => resolve(payload), 300));
+	/**
+	 * Invitar un nuevo usuario (solo maestros)
+	 * POST /api/v1/users/invite
+	 * @param {Object} data - {email, full_name}
+	 * @returns {Promise<Object>} Confirmación de invitación
+	 */
+	async inviteUser(data) {
+		return this.request('/api/v1/users/invite', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
 	}
 
-	async getVehicle(vehicleId) {
-		return this.request(`/vehicles/${vehicleId}`, { method: 'GET' });
+	// ============================================
+	// MÉTODOS DE CLIENTES (SISCOM-ADMIN-API)
+	// ============================================
+
+	/**
+	 * Crear un nuevo cliente (registro público)
+	 * POST /api/v1/clients/
+	 * @param {Object} data - {name, email, password}
+	 * @returns {Promise<Object>} Datos del cliente creado
+	 */
+	async createClient(data) {
+		return this.request('/api/v1/clients/', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
 	}
 
-	async getVehicleLocation(vehicleId) {
-		return this.request(`/vehicles/${vehicleId}/location`, { method: 'GET' });
+	/**
+	 * Obtener datos del cliente actual
+	 * GET /api/v1/clients/
+	 * @returns {Promise<Object>} Datos del cliente
+	 */
+	async getCurrentClient() {
+		return this.request('/api/v1/clients/', {
+			method: 'GET'
+		});
 	}
 
-	async getVehicleStatus(vehicleId) {
-		return this.request(`/vehicles/${vehicleId}/status`, { method: 'GET' });
+	// ============================================
+	// MÉTODOS GENÉRICOS HTTP
+	// ============================================
+
+	/**
+	 * Petición GET genérica
+	 * @param {string} endpoint - Endpoint de la API
+	 * @param {string} baseURL - URL base (opcional)
+	 * @returns {Promise<Object>} Respuesta de la API
+	 */
+	async get(endpoint, baseURL = this.adminBaseURL) {
+		return this.request(endpoint, { method: 'GET' }, baseURL);
+	}
+
+	/**
+	 * Petición POST genérica
+	 * @param {string} endpoint - Endpoint de la API
+	 * @param {Object} data - Datos a enviar
+	 * @param {string} baseURL - URL base (opcional)
+	 * @returns {Promise<Object>} Respuesta de la API
+	 */
+	async post(endpoint, data, baseURL = this.adminBaseURL) {
+		return this.request(
+			endpoint,
+			{
+				method: 'POST',
+				body: JSON.stringify(data)
+			},
+			baseURL
+		);
+	}
+
+	/**
+	 * Petición PUT genérica
+	 * @param {string} endpoint - Endpoint de la API
+	 * @param {Object} data - Datos a enviar
+	 * @param {string} baseURL - URL base (opcional)
+	 * @returns {Promise<Object>} Respuesta de la API
+	 */
+	async put(endpoint, data, baseURL = this.adminBaseURL) {
+		return this.request(
+			endpoint,
+			{
+				method: 'PUT',
+				body: JSON.stringify(data)
+			},
+			baseURL
+		);
+	}
+
+	/**
+	 * Petición PATCH genérica
+	 * @param {string} endpoint - Endpoint de la API
+	 * @param {Object} data - Datos a enviar
+	 * @param {string} baseURL - URL base (opcional)
+	 * @returns {Promise<Object>} Respuesta de la API
+	 */
+	async patch(endpoint, data, baseURL = this.adminBaseURL) {
+		return this.request(
+			endpoint,
+			{
+				method: 'PATCH',
+				body: JSON.stringify(data)
+			},
+			baseURL
+		);
+	}
+
+	/**
+	 * Petición DELETE genérica
+	 * @param {string} endpoint - Endpoint de la API
+	 * @param {string} baseURL - URL base (opcional)
+	 * @returns {Promise<Object>} Respuesta de la API
+	 */
+	async delete(endpoint, baseURL = this.adminBaseURL) {
+		return this.request(endpoint, { method: 'DELETE' }, baseURL);
+	}
+
+	// ============================================
+	// MÉTODOS DE DISPOSITIVOS (SISCOM-ADMIN-API)
+	// ============================================
+
+	/**
+	 * Obtener dispositivos del usuario/cliente actual
+	 * GET /api/v1/devices/ (endpoint a confirmar)
+	 * TODO: Confirmar el endpoint exacto cuando esté disponible en la API
+	 * @returns {Promise<Object>} Lista de dispositivos
+	 */
+	async getDevices() {
+		// TODO: Reemplazar con el endpoint real cuando esté disponible
+		// Por ahora retorna un array vacío para evitar errores
+		console.warn('⚠️ getDevices: Endpoint no implementado aún en SISCOM-ADMIN-API');
+		return { devices: [] };
+		
+		// Cuando esté disponible, descomentar:
+		// return this.request('/api/v1/devices/', {
+		// 	method: 'GET'
+		// });
 	}
 }
 
