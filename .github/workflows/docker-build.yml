@@ -1,4 +1,4 @@
-name: Build and Deploy Tracker Monitor Web to EC2
+name: Build and Deploy Nexus Web Page to EC2
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: tracker-monitor-web:latest
+          tags: nexus-web-page:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -73,32 +73,35 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: tracker-monitor-web:latest
+          tags: nexus-web-page:latest
           load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             VITE_BYPASS_AUTH=true
+            VITE_COMPANY_URL=${{ secrets.VITE_COMPANY_URL }}
+            VITE_COMM_API_URL=${{ secrets.VITE_COMM_API_URL }}
+            VITE_ADMIN_API_URL=${{ secrets.VITE_ADMIN_API_URL }}
 
       - name: Save Docker image
-        run: docker save tracker-monitor-web:latest | gzip > tracker-monitor-web.tar.gz
+        run: docker save nexus-web-page:latest | gzip > nexus-web-page.tar.gz
 
       - name: Copy Docker image to EC2
         run: |
           echo "Copiando imagen Docker al servidor..."
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa tracker-monitor-web.tar.gz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_TEST }}:/tmp/
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa nexus-web-page.tar.gz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_TEST }}:/tmp/
           echo "Copia completada."
 
       - name: Verify file transfer
         run: |
           echo "Verificando que el archivo se copió correctamente..."
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_TEST }} << 'EOF'
-              if [ -f /tmp/tracker-monitor-web.tar.gz ]; then
-              echo "✅ Archivo encontrado: /tmp/tracker-monitor-web.tar.gz"
-              echo "Tamaño del archivo: $(du -h /tmp/tracker-monitor-web.tar.gz)"
+              if [ -f /tmp/nexus-web-page.tar.gz ]; then
+              echo "✅ Archivo encontrado: /tmp/nexus-web-page.tar.gz"
+              echo "Tamaño del archivo: $(du -h /tmp/nexus-web-page.tar.gz)"
               echo "Espacio disponible en /tmp: $(df -h /tmp | tail -1)"
               else
-              echo "❌ Error: No se encontró el archivo /tmp/tracker-monitor-web.tar.gz"
+              echo "❌ Error: No se encontró el archivo /tmp/nexus-web-page.tar.gz"
               exit 1
               fi
           EOF
@@ -110,8 +113,8 @@ jobs:
 
           echo "=== Detener contenedor anterior ==="
           # Detener y remover el contenedor anterior si existe
-          docker stop tracker-monitor-web-test || true
-          docker rm tracker-monitor-web-test || true
+          docker stop nexus-web-page-test || true
+          docker rm nexus-web-page-test || true
 
           echo "=== Limpiando espacio en disco ==="
           # Limpiar contenedores e imágenes Docker no utilizadas (pero no archivos temporales aún)
@@ -126,34 +129,34 @@ jobs:
           echo "=== Cargar nueva imagen ==="
           # Cargar la nueva imagen
           cd /tmp
-          if [ -f tracker-monitor-web.tar.gz ]; then
+          if [ -f nexus-web-page.tar.gz ]; then
               echo "Cargando imagen Docker..."
-              docker load < tracker-monitor-web.tar.gz
+              docker load < nexus-web-page.tar.gz
 
               echo "=== Verificar imagen cargada ==="
-              docker images | grep tracker-monitor-web || echo "Advertencia: No se encontró la imagen tracker-monitor-web"
+              docker images | grep nexus-web-page || echo "Advertencia: No se encontró la imagen nexus-web-page"
               
               echo "=== Ejecutar nuevo contenedor ==="
               # Ejecutar el nuevo contenedor
               docker run -d \
-                  --name tracker-monitor-web-test \
+                  --name nexus-web-page-test \
                   --restart unless-stopped \
                   -p 3340:3340 \
                   -e NODE_ENV=production \
-                  tracker-monitor-web:latest
+                  nexus-web-page:latest
               
               echo "=== Verificar contenedor ==="
-              docker ps | grep tracker-monitor-web-test
+              docker ps | grep nexus-web-page-test
               
               echo "=== Limpiar archivos temporales ==="
-              rm -f tracker-monitor-web.tar.gz
+              rm -f nexus-web-page.tar.gz
               
               # Limpiar archivos temporales antiguos de deployments anteriores
-              find /tmp -name "tracker-monitor-web*.tar.gz" -mtime +1 -delete || true
+              find /tmp -name "nexus-web-page*.tar.gz" -mtime +1 -delete || true
               
               echo "=== Deployment completado exitosamente ==="
           else
-              echo "Error: No se encontró el archivo tracker-monitor-web.tar.gz"
+              echo "Error: No se encontró el archivo nexus-web-page.tar.gz"
               exit 1
           fi
           EOF

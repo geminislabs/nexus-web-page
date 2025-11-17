@@ -13,9 +13,18 @@ RUN npm ci --ignore-scripts
 # Copiar el código fuente
 COPY . .
 
-# Permitir inyectar el flag de bypass en tiempo de build (para Vite)
+# Permitir inyectar variables de entorno en tiempo de build (para Vite)
 ARG VITE_BYPASS_AUTH=false
 ENV VITE_BYPASS_AUTH=$VITE_BYPASS_AUTH
+
+ARG VITE_COMPANY_URL
+ENV VITE_COMPANY_URL=$VITE_COMPANY_URL
+
+ARG VITE_COMM_API_URL
+ENV VITE_COMM_API_URL=$VITE_COMM_API_URL
+
+ARG VITE_ADMIN_API_URL
+ENV VITE_ADMIN_API_URL=$VITE_ADMIN_API_URL
 
 # Construir la aplicación
 RUN npm run build
@@ -53,8 +62,6 @@ EXPOSE 3340
 ENV NODE_ENV=production
 ENV PORT=3340
 ENV HOST=0.0.0.0
-ARG VITE_BYPASS_AUTH=false
-ENV VITE_BYPASS_AUTH=$VITE_BYPASS_AUTH
 
 # Comando de inicio
 ENTRYPOINT ["dumb-init", "--"]

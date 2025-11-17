@@ -209,11 +209,14 @@
 
 	<!-- Footer con logo de Geminis Labs -->
 	<div class="mt-8 text-center">
-		<div
-			class="flex items-center justify-center gap-2 opacity-70 hover:opacity-100 transition-opacity"
+		<a
+			href={COMPANY_URL}
+			target="_blank"
+			rel="noopener noreferrer"
+			class="inline-flex items-center justify-center gap-2 opacity-70 hover:opacity-100 transition-opacity"
 		>
 			<span class="text-xs text-app">Powered by</span>
 			<img src="/img/geminis-labs-logo-short.png" alt="Geminis Labs" class="h-5" />
-		</div>
+		</a>
 	</div>
 </div>
