@@ -97,7 +97,7 @@
 
 <!-- Background video -->
 <video
-	class="fixed inset-0 w-full h-full object-cover pointer-events-none"
+	class="fixed inset-0 w-full h-full object-cover pointer-events-none background-video"
 	src="/vid/map-back-1.mp4"
 	autoplay
 	muted

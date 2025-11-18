@@ -325,7 +325,7 @@ section::before {
 
 /* Clase especial para el título Nexus */
 .nexus-title {
-	font-family: "Stack Sans Headline", sans-serif;
+	font-family: 'Stack Sans Headline', sans-serif;
 	font-optical-sizing: auto;
 	font-weight: 900;
 	font-style: normal;
@@ -333,4 +333,10 @@ section::before {
 	font-size: 3rem;
 	color: #dfdfdf;
 	margin-bottom: 1rem;
+}
+
+/* Video de fondo atenuado */
+.background-video {
+	opacity: 0.4;
+	filter: blur(5px);
 }
