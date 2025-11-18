@@ -27,9 +27,11 @@
 	/* Overlay gradient (login/video) */
 	--overlay-gradient: linear-gradient(
 		to bottom right,
-		rgba(30, 58, 138, 0.7),
-		rgba(49, 46, 129, 0.7)
-	); /* blue-900 -> indigo-900 */
+		rgba(11, 18, 32, 0.9),
+		rgba(11, 18, 32, 0.7),
+		rgba(22, 33, 63, 0.6),
+		rgba(16, 20, 29, 0.9)
+	); /* #0B1220 -> blue-700 */
 	/* Inputs */
 	--input-bg: rgba(255, 255, 255, 0.05);
 	--input-text: #e5e7eb; /* text-app */
@@ -319,4 +321,16 @@ section::before {
 }
 .btn-secondary:hover {
 	background: var(--btn-secondary-hover-bg);
+}
+
+/* Clase especial para el título Nexus */
+.nexus-title {
+	font-family: "Stack Sans Headline", sans-serif;
+	font-optical-sizing: auto;
+	font-weight: 900;
+	font-style: normal;
+
+	font-size: 3rem;
+	color: #dfdfdf;
+	margin-bottom: 1rem;
 }

@@ -114,7 +114,8 @@
 	<div class="max-w-md w-full space-y-8 card">
 		<!-- Logo principal -->
 		<div class="text-center mb-6">
-			<img src="/img/logo.png" alt="Nexus Logo" class="h-20 mx-auto mb-4" />
+			<img src="/img/logo-nexus.png" alt="Nexus Logo" class="h-20 mx-auto mb-4" />
+			<h2 class="nexus-title">Nexus</h2>
 			<h2 class="section-title">Iniciar Sesión</h2>
 			<p class="mt-2 text-sm text-app">Accede a tu cuenta de Nexus</p>
 		</div>
