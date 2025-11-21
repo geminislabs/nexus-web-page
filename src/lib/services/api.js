@@ -291,21 +291,19 @@ class ApiService {
 	// ============================================
 
 	/**
-	 * Obtener dispositivos del usuario/cliente actual
-	 * GET /api/v1/devices/ (endpoint a confirmar)
-	 * TODO: Confirmar el endpoint exacto cuando esté disponible en la API
-	 * @returns {Promise<Object>} Lista de dispositivos
+	 * Obtener dispositivos del cliente actual
+	 * GET /api/v1/devices/my-devices
+	 * @param {string} status_filter - Filtro opcional por estado
+	 * @returns {Promise<Array>} Lista de dispositivos del cliente
 	 */
-	async getDevices() {
-		// TODO: Reemplazar con el endpoint real cuando esté disponible
-		// Por ahora retorna un array vacío para evitar errores
-		console.warn('⚠️ getDevices: Endpoint no implementado aún en SISCOM-ADMIN-API');
-		return { devices: [] };
-
-		// Cuando esté disponible, descomentar:
-		// return this.request('/api/v1/devices/', {
-		// 	method: 'GET'
-		// });
+	async getMyDevices(status_filter = null) {
+		let endpoint = '/api/v1/devices/my-devices';
+		if (status_filter) {
+			endpoint += `?status_filter=${encodeURIComponent(status_filter)}`;
+		}
+		return this.request(endpoint, {
+			method: 'GET'
+		});
 	}
 }
 
