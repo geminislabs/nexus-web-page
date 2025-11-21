@@ -3,6 +3,7 @@
 
 	export let showVehiclePanel = false;
 	export let toggleVehiclePanel = null;
+	export let embedded = false;
 
 	// Estados para dispositivos
 	let showDevices = false;
@@ -160,65 +161,69 @@
 </script>
 
 <!-- Botón del vehículo -->
-<button
-	on:click={toggleVehiclePanel || (() => (showVehiclePanel = !showVehiclePanel))}
-	aria-label="Abrir panel de control de vehículos"
-	class="nav-button"
->
-	<svg
-		class="menu-icon"
-		fill="currentColor"
-		viewBox="-12.29 -12.29 147.46 147.46"
-		version="1.1"
-		id="Layer_1"
-		xmlns="http://www.w3.org/2000/svg"
-		xmlns:xlink="http://www.w3.org/1999/xlink"
-		style="enable-background:new 0 0 122.88 92.02"
-		xml:space="preserve"
-		transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"
+{#if !embedded}
+	<button
+		on:click={toggleVehiclePanel || (() => (showVehiclePanel = !showVehiclePanel))}
+		aria-label="Abrir panel de control de vehículos"
+		class="nav-button"
 	>
-		<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-		<g
-			id="SVGRepo_tracerCarrier"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			stroke="#CCCCCC"
-			stroke-width="4.9152000000000005"
-		></g>
-		<g id="SVGRepo_iconCarrier">
-			<style type="text/css">
-				.st0 {
-					fill-rule: evenodd;
-					clip-rule: evenodd;
-				}
-			</style>
-			<g>
-				<path
-					class="st0"
-					d="M10.17,34.23c-10.98-5.58-9.72-11.8,1.31-11.15l2.47,4.63l5.09-15.83C21.04,5.65,24.37,0,30.9,0H96 c6.53,0,10.29,5.54,11.87,11.87l3.82,15.35l2.2-4.14c11.34-0.66,12.35,5.93,0.35,11.62l1.95,2.99c7.89,8.11,7.15,22.45,5.92,42.48 v8.14c0,2.04-1.67,3.71-3.71,3.71h-15.83c-2.04,0-3.71-1.67-3.71-3.71v-4.54H24.04v4.54c0,2.04-1.67,3.71-3.71,3.71H4.5 c-2.04,0-3.71-1.67-3.71-3.71V78.2c0-0.2,0.02-0.39,0.04-0.58C-0.37,62.25-2.06,42.15,10.17,34.23L10.17,34.23z M30.38,58.7 l-14.06-1.77c-3.32-0.37-4.21,1.03-3.08,3.89l1.52,3.69c0.49,0.95,1.14,1.64,1.9,2.12c0.89,0.55,1.96,0.82,3.15,0.87l12.54,0.1 c3.03-0.01,4.34-1.22,3.39-4C34.96,60.99,33.18,59.35,30.38,58.7L30.38,58.7z M54.38,52.79h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0 c0,0.85-0.7,1.55-1.55,1.55h-14.4c-0.85,0-1.55-0.7-1.55-1.55l0,0C52.82,53.49,53.52,52.79,54.38,52.79L54.38,52.79z M89.96,73.15 h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0c0,0.85-0.7,1.55-1.55,1.55h-14.4c-0.85,0-1.55-0.7-1.55-1.55l0,0 C88.41,73.85,89.1,73.15,89.96,73.15L89.96,73.15z M92.5,58.7l14.06-1.77c3.32-0.37,4.21,1.03,3.08,3.89l-1.52,3.69 c-0.49,0.95-1.14,1.64-1.9,2.12c-0.89,0.55-1.96,0.82-3.15,0.87l-12.54,0.1c-3.03-0.01-4.34-1.22-3.39-4 C87.92,60.99,89.7,59.35,92.5,58.7L92.5,58.7z M18.41,73.15h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0c0,0.85-0.7,1.55-1.55,1.55h-14.4 c-0.85,0-1.55-0.7-1.55-1.55l0,0C16.86,73.85,17.56,73.15,18.41,73.15L18.41,73.15z M19.23,31.2h86.82l-3.83-15.92 c-1.05-4.85-4.07-9.05-9.05-9.05H33.06c-4.97,0-7.52,4.31-9.05,9.05L19.23,31.2v0.75V31.2L19.23,31.2z"
-				></path>
+		<svg
+			class="menu-icon"
+			fill="currentColor"
+			viewBox="-12.29 -12.29 147.46 147.46"
+			version="1.1"
+			id="Layer_1"
+			xmlns="http://www.w3.org/2000/svg"
+			xmlns:xlink="http://www.w3.org/1999/xlink"
+			style="enable-background:new 0 0 122.88 92.02"
+			xml:space="preserve"
+			transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"
+		>
+			<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+			<g
+				id="SVGRepo_tracerCarrier"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				stroke="#CCCCCC"
+				stroke-width="4.9152000000000005"
+			></g>
+			<g id="SVGRepo_iconCarrier">
+				<style type="text/css">
+					.st0 {
+						fill-rule: evenodd;
+						clip-rule: evenodd;
+					}
+				</style>
+				<g>
+					<path
+						class="st0"
+						d="M10.17,34.23c-10.98-5.58-9.72-11.8,1.31-11.15l2.47,4.63l5.09-15.83C21.04,5.65,24.37,0,30.9,0H96 c6.53,0,10.29,5.54,11.87,11.87l3.82,15.35l2.2-4.14c11.34-0.66,12.35,5.93,0.35,11.62l1.95,2.99c7.89,8.11,7.15,22.45,5.92,42.48 v8.14c0,2.04-1.67,3.71-3.71,3.71h-15.83c-2.04,0-3.71-1.67-3.71-3.71v-4.54H24.04v4.54c0,2.04-1.67,3.71-3.71,3.71H4.5 c-2.04,0-3.71-1.67-3.71-3.71V78.2c0-0.2,0.02-0.39,0.04-0.58C-0.37,62.25-2.06,42.15,10.17,34.23L10.17,34.23z M30.38,58.7 l-14.06-1.77c-3.32-0.37-4.21,1.03-3.08,3.89l1.52,3.69c0.49,0.95,1.14,1.64,1.9,2.12c0.89,0.55,1.96,0.82,3.15,0.87l12.54,0.1 c3.03-0.01,4.34-1.22,3.39-4C34.96,60.99,33.18,59.35,30.38,58.7L30.38,58.7z M54.38,52.79h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0 c0,0.85-0.7,1.55-1.55,1.55h-14.4c-0.85,0-1.55-0.7-1.55-1.55l0,0C52.82,53.49,53.52,52.79,54.38,52.79L54.38,52.79z M89.96,73.15 h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0c0,0.85-0.7,1.55-1.55,1.55h-14.4c-0.85,0-1.55-0.7-1.55-1.55l0,0 C88.41,73.85,89.1,73.15,89.96,73.15L89.96,73.15z M92.5,58.7l14.06-1.77c3.32-0.37,4.21,1.03,3.08,3.89l-1.52,3.69 c-0.49,0.95-1.14,1.64-1.9,2.12c-0.89,0.55-1.96,0.82-3.15,0.87l-12.54,0.1c-3.03-0.01-4.34-1.22-3.39-4 C87.92,60.99,89.7,59.35,92.5,58.7L92.5,58.7z M18.41,73.15h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0c0,0.85-0.7,1.55-1.55,1.55h-14.4 c-0.85,0-1.55-0.7-1.55-1.55l0,0C16.86,73.85,17.56,73.15,18.41,73.15L18.41,73.15z M19.23,31.2h86.82l-3.83-15.92 c-1.05-4.85-4.07-9.05-9.05-9.05H33.06c-4.97,0-7.52,4.31-9.05,9.05L19.23,31.2v0.75V31.2L19.23,31.2z"
+					></path>
+				</g>
 			</g>
-		</g>
-	</svg>
-</button>
+		</svg>
+	</button>
+{/if}
 
 <!-- Panel de controles expandible -->
-{#if showVehiclePanel}
-	<div class="menu-card">
+{#if showVehiclePanel || embedded}
+	<div class={embedded ? '' : 'menu-card'}>
 		<div class="controls">
 			<!-- Acordeón de dispositivos -->
-			<div class="mb-2">
-				<button class="large-button" on:click={toggleDevices}>
-					<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-						<path
-							fill-rule="evenodd"
-							d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z"
-							clip-rule="evenodd"
-						/>
-					</svg>
-					Mis Dispositivos
+			<div class="mb-3">
+				<button class="large-button shadow-md justify-between" on:click={toggleDevices}>
+					<div class="flex items-center gap-2">
+						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+							<path
+								fill-rule="evenodd"
+								d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+						<span class="font-semibold tracking-wide text-white/90">Mis Dispositivos</span>
+					</div>
 					<svg
-						class="w-4 h-4 ml-auto transition-transform"
+						class="w-4 h-4 transition-transform text-white/70"
 						class:rotate-180={showDevices}
 						fill="currentColor"
 						viewBox="0 0 20 20"
@@ -232,7 +237,7 @@
 				</button>
 
 				{#if showDevices}
-					<div class="mt-2 p-3 rounded-lg panel">
+					<div class="mt-2 p-3 rounded-lg panel shadow-inner bg-black/20">
 						{#if loadingDevices}
 							<div class="flex items-center justify-center py-4">
 								<svg
@@ -258,21 +263,18 @@
 								</svg>
 							</div>
 						{:else if devicesError}
-							<p class="text-xs text-red-500 py-2">{devicesError}</p>
+							<p class="text-xs text-red-400 py-2">{devicesError}</p>
 						{:else if devices.length === 0}
-							<p class="text-xs text-app opacity-70 py-2 text-center">
-								No hay dispositivos disponibles
-							</p>
+							<p class="text-xs text-white/60 py-2 text-center">No hay dispositivos disponibles</p>
 						{:else}
-							<div class="space-y-2 max-h-60 overflow-y-auto">
+							<div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
 								{#each devices as device}
 									<div
-										class="flex items-center justify-between py-2 px-2 rounded hover:bg-opacity-50 transition-colors"
-										style="hover:background-color: var(--hover-bg)"
+										class="flex items-center justify-between py-2 px-3 rounded bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
 									>
-										<span class="text-sm text-app font-mono">{device.device_id}</span>
+										<span class="text-sm text-white/80 font-mono">{device.device_id}</span>
 										<span
-											class="px-2 py-1 text-xs font-semibold rounded-full text-white {statusConfig[
+											class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full text-white shadow-sm {statusConfig[
 												device.status
 											]?.color || 'bg-gray-500'}"
 										>
@@ -286,20 +288,24 @@
 				{/if}
 			</div>
 
+			<div class="h-px bg-white/10 my-3"></div>
+
 			<!-- Acordeón de unidades -->
 			<div class="mb-2">
-				<button class="large-button" on:click={toggleUnits}>
-					<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-						<path
-							d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
-						/>
-						<path
-							d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"
-						/>
-					</svg>
-					Mis Unidades
+				<button class="large-button shadow-md justify-between" on:click={toggleUnits}>
+					<div class="flex items-center gap-2">
+						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+							<path
+								d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
+							/>
+							<path
+								d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"
+							/>
+						</svg>
+						<span class="font-semibold tracking-wide text-white/90">Mis Unidades</span>
+					</div>
 					<svg
-						class="w-4 h-4 ml-auto transition-transform"
+						class="w-4 h-4 transition-transform text-white/70"
 						class:rotate-180={showUnits}
 						fill="currentColor"
 						viewBox="0 0 20 20"
@@ -313,7 +319,7 @@
 				</button>
 
 				{#if showUnits}
-					<div class="mt-2 p-3 rounded-lg panel">
+					<div class="mt-2 p-3 rounded-lg panel shadow-inner bg-black/20">
 						{#if loadingUnits}
 							<div class="flex items-center justify-center py-4">
 								<svg
@@ -339,32 +345,29 @@
 								</svg>
 							</div>
 						{:else if unitsError}
-							<p class="text-xs text-red-500 py-2">{unitsError}</p>
+							<p class="text-xs text-red-400 py-2">{unitsError}</p>
 						{:else if units.length === 0}
-							<p class="text-xs text-app opacity-70 py-2 text-center">
-								No hay unidades disponibles
-							</p>
+							<p class="text-xs text-white/60 py-2 text-center">No hay unidades disponibles</p>
 						{:else}
-							<div class="space-y-2 max-h-96 overflow-y-auto mb-3">
+							<div class="space-y-2 max-h-96 overflow-y-auto mb-3 custom-scrollbar">
 								{#each units as unit}
-									<div class="unit-card">
+									<div class="unit-card shadow-sm bg-white/5 border-white/10">
 										<button
-											class="w-full text-left py-2 px-2 rounded text-sm text-app hover:bg-opacity-50 transition-colors flex items-center justify-between"
-											style="hover:background-color: var(--hover-bg)"
+											class="w-full text-left py-2 px-3 rounded text-sm text-white/90 hover:bg-white/10 transition-colors flex items-center justify-between"
 											on:click={() => selectUnit(unit.id)}
 										>
 											<div class="flex-1">
-												<div class="font-medium">{unit.name}</div>
+												<div class="font-medium tracking-wide">{unit.name}</div>
 												{#if unit.device_id}
-													<div class="text-xs opacity-70 font-mono mt-1">
+													<div class="text-[11px] opacity-70 font-mono mt-0.5 text-accent-cyan">
 														📡 {unit.device_id}
 													</div>
 												{:else}
-													<div class="text-xs opacity-50 mt-1">Sin dispositivo</div>
+													<div class="text-[11px] opacity-40 mt-0.5 italic">Sin dispositivo</div>
 												{/if}
 											</div>
 											<svg
-												class="w-4 h-4 transition-transform"
+												class="w-4 h-4 transition-transform text-white/50"
 												class:rotate-180={selectedUnitId === unit.id}
 												fill="currentColor"
 												viewBox="0 0 20 20"
@@ -378,32 +381,38 @@
 										</button>
 
 										{#if selectedUnitId === unit.id}
-											<div
-												class="px-2 pb-2 mt-2 border-t pt-2"
-												style="border-color: var(--border-color)"
-											>
+											<div class="px-3 pb-3 mt-1 border-t border-white/10 pt-3 bg-black/10">
 												{#if unit.device_id}
 													<!-- Unidad con dispositivo asignado -->
-													<div class="space-y-2">
-														<div class="text-xs text-app">
-															<div class="mb-1"><strong>Dispositivo:</strong> {unit.device_id}</div>
+													<div class="space-y-3">
+														<div class="text-xs text-white/80 space-y-1">
+															<div>
+																<strong class="text-white/60">Dispositivo:</strong>
+																{unit.device_id}
+															</div>
 															{#if unit.device_brand}
-																<div class="mb-1"><strong>Marca:</strong> {unit.device_brand}</div>
+																<div>
+																	<strong class="text-white/60">Marca:</strong>
+																	{unit.device_brand}
+																</div>
 															{/if}
 															{#if unit.device_model}
-																<div class="mb-1"><strong>Modelo:</strong> {unit.device_model}</div>
+																<div>
+																	<strong class="text-white/60">Modelo:</strong>
+																	{unit.device_model}
+																</div>
 															{/if}
 														</div>
 														<button
 															on:click={() => unassignDevice(unit.assignment_id || unit.id)}
-															class="w-full px-3 py-1.5 text-xs rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
+															class="w-full px-3 py-1.5 text-xs font-medium rounded bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 transition-colors"
 														>
 															Desasignar Dispositivo
 														</button>
 													</div>
 												{:else}
 													<!-- Unidad sin dispositivo asignado -->
-													<div class="space-y-2">
+													<div class="space-y-3">
 														{#if loadingUnassignedDevices}
 															<div class="flex items-center justify-center py-2">
 																<svg
@@ -429,25 +438,28 @@
 																</svg>
 															</div>
 														{:else if unassignedDevices.length === 0}
-															<p class="text-xs text-app opacity-50 py-2 text-center">
+															<p class="text-xs text-white/50 py-2 text-center">
 																No hay dispositivos disponibles
 															</p>
 														{:else}
 															<select
 																bind:value={selectedDeviceId}
-																class="w-full px-2 py-1.5 text-xs rounded input-field"
+																class="w-full px-2 py-1.5 text-xs rounded input-field bg-white/5 border-white/10 text-white/90 focus:border-accent-cyan"
 															>
-																<option value="">Seleccionar dispositivo...</option>
+																<option value="" class="bg-gray-900"
+																	>Seleccionar dispositivo...</option
+																>
 																{#each unassignedDevices as device}
-																	<option value={device.device_id}>
-																		{device.device_id} - {device.brand} {device.model}
+																	<option value={device.device_id} class="bg-gray-900">
+																		{device.device_id} - {device.brand}
+																		{device.model}
 																	</option>
 																{/each}
 															</select>
 															<button
 																on:click={() => assignDevice(unit.id)}
 																disabled={!selectedDeviceId || assigningDevice}
-																class="w-full px-3 py-1.5 text-xs rounded transition-colors"
+																class="w-full px-3 py-1.5 text-xs font-medium rounded transition-colors shadow-sm"
 																style="background: var(--accent-cyan); color: white;"
 																style:opacity={!selectedDeviceId || assigningDevice ? '0.5' : '1'}
 															>
@@ -464,20 +476,20 @@
 						{/if}
 
 						<!-- Formulario para agregar nueva unidad -->
-						<div class="border-t pt-3 mt-3" style="border-color: var(--border-color)">
+						<div class="border-t border-white/10 pt-3 mt-1">
 							<div class="flex gap-2">
 								<input
 									type="text"
 									bind:value={newUnitName}
 									placeholder="Nombre de la unidad"
-									class="flex-1 px-2 py-1.5 text-sm rounded input-field"
+									class="flex-1 px-3 py-2 text-sm rounded-lg input-field bg-white/5 border-white/10 text-white/90 placeholder-white/40 focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-all"
 									on:keydown={(e) => e.key === 'Enter' && createUnit()}
 									disabled={creatingUnit}
 								/>
 								<button
 									on:click={createUnit}
 									disabled={creatingUnit || !newUnitName.trim()}
-									class="add-button"
+									class="add-button shadow-md"
 									aria-label="Agregar unidad"
 								>
 									{#if creatingUnit}
@@ -582,4 +594,3 @@
 		color: var(--text-primary);
 	}
 </style>
-

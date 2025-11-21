@@ -12,44 +12,13 @@
 	import { positionService } from '$lib/services/positionService.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { fade } from 'svelte/transition';
-	import UserPanel from '$lib/components/UserPanel.svelte';
-	import VehiclePanel from '$lib/components/VehiclePanel.svelte';
-	import OptionPanel from '$lib/components/OptionPanel.svelte';
+	import Sidebar from '$lib/components/Sidebar.svelte';
 	import MapContainer from '$lib/components/MapContainer.svelte';
 
 	let isLoading = true;
 	let userData = null;
-	let showVehiclePanel = false;
-	let showUserPanel = false;
-	let showVehicleList = false;
-	let showOptionPanel = false;
 	let showToast = false;
 	let toastTimeout;
-
-	// Funciones exclusivas para abrir/cerrar menús sin ciclos
-	function toggleUserPanel() {
-		showUserPanel = !showUserPanel;
-		if (showUserPanel) {
-			showVehiclePanel = false;
-			showOptionPanel = false;
-		}
-	}
-
-	function toggleVehiclePanel() {
-		showVehiclePanel = !showVehiclePanel;
-		if (showVehiclePanel) {
-			showUserPanel = false;
-			showOptionPanel = false;
-		}
-	}
-
-	function toggleOptionPanel() {
-		showOptionPanel = !showOptionPanel;
-		if (showOptionPanel) {
-			showUserPanel = false;
-			showVehiclePanel = false;
-		}
-	}
 
 	$: {
 		if ($loadingVehicles || $loadingPositions) {
@@ -232,13 +201,7 @@
 </script>
 
 <div class="h-screen w-screen relative overflow-hidden bg-app">
-	<div class="nav-bar">
-		<UserPanel bind:showUserPanel {userData} {toggleUserPanel} />
-
-		<VehiclePanel bind:showVehiclePanel bind:showVehicleList {toggleVehiclePanel} />
-
-		<OptionPanel bind:showOptionPanel {toggleOptionPanel} />
-	</div>
+	<Sidebar {userData} />
 
 	<!-- Contenedor del mapa -->
 	<MapContainer bind:isLoading />

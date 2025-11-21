@@ -6,6 +6,7 @@
 	export let showUserPanel = false;
 	export let userData = null;
 	export let toggleUserPanel = null;
+	export let embedded = false;
 
 	function handleLogout() {
 		user.logout();
@@ -14,60 +15,66 @@
 	}
 </script>
 
-<button
-	on:click={toggleUserPanel || (() => (showUserPanel = !showUserPanel))}
-	aria-label="Abrir panel de información de usuario"
-	class="nav-button"
->
-	<!-- Icono de usuario -->
-	<svg class="menu-icon" fill="currentColor" viewBox="0 0 20 20">
-		<path
-			fill-rule="evenodd"
-			d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-			clip-rule="evenodd"
-		/>
-	</svg>
-</button>
+{#if !embedded}
+	<button
+		on:click={toggleUserPanel || (() => (showUserPanel = !showUserPanel))}
+		aria-label="Abrir panel de información de usuario"
+		class="nav-button"
+	>
+		<!-- Icono de usuario -->
+		<svg class="menu-icon" fill="currentColor" viewBox="0 0 20 20">
+			<path
+				fill-rule="evenodd"
+				d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+				clip-rule="evenodd"
+			/>
+		</svg>
+	</button>
+{/if}
 
 <!-- Panel de información de usuario -->
-{#if showUserPanel}
-	<div class="menu-card">
+{#if showUserPanel || embedded}
+	<div class={embedded ? '' : 'menu-card'}>
 		<!-- Información del usuario -->
 		<div class="controls">
-			<div class="p-3 rounded-lg panel">
-				<p class="text-sm font-medium mb-2 text-app">Información del Usuario</p>
+			<div class="p-4 rounded-lg panel shadow-lg">
+				<p
+					class="text-base font-semibold tracking-wide mb-3 text-white/90 border-b border-white/10 pb-2"
+				>
+					Información del Usuario
+				</p>
 				{#if userData}
-					<div class="space-y-2">
+					<div class="space-y-3">
 						<div class="flex items-center gap-2">
-							<svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+							<svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
 								<path
 									fill-rule="evenodd"
 									d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
 									clip-rule="evenodd"
 								/>
 							</svg>
-							<span class="text-sm text-app">{userData.full_name}</span>
+							<span class="text-sm text-white/80">{userData.full_name}</span>
 						</div>
 
 						<div class="flex items-center gap-2">
-							<svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+							<svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
 								<path
 									fill-rule="evenodd"
 									d="M14.243 5.757a6 6 0 10-.986 9.284 1 1 0 111.087 1.678A8 8 0 1118 10a3 3 0 01-4.8 2.401A4 4 0 1114 10a1 1 0 102 0c0-1.537-.586-3.07-1.757-4.243zM12 10a2 2 0 10-4 0 2 2 0 004 0z"
 									clip-rule="evenodd"
 								/>
 							</svg>
-							<span class="text-sm text-app">{userData.email}</span>
+							<span class="text-sm text-white/80">{userData.email}</span>
 						</div>
 						<div class="flex items-center gap-2">
-							<svg class="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+							<svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
 								<path
 									fill-rule="evenodd"
 									d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h2zM8 5a1 1 0 011-1h2a1 1 0 011 1v1H8V5zM4 8a0 0 0 000 0v6a0 0 0 000 0h12a0 0 0 000 0V8a0 0 0 000 0H4z"
 									clip-rule="evenodd"
 								/>
 							</svg>
-							<span class="text-sm text-app">ID: {userData.id}</span>
+							<span class="text-sm text-white/80">ID: {userData.id}</span>
 						</div>
 					</div>
 				{:else}
@@ -75,7 +82,9 @@
 				{/if}
 			</div>
 
-			<button class="large-button" on:click={handleLogout}>
+			<div class="h-px bg-white/10 my-4"></div>
+
+			<button class="large-button shadow-md" on:click={handleLogout}>
 				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
 					<path
 						fill-rule="evenodd"
