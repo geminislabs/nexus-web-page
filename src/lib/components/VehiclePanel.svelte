@@ -1,57 +1,160 @@
 <script>
-	import {
-		vehicles,
-		selectedVehicles,
-		loadingVehicles,
-		loadingPositions,
-		activeVehicles,
-		selectedVehicleCount,
-		vehicleActions
-	} from '$lib/stores/vehicleStore.js';
-	import { getStatusColor, getStatusText, getStatusBadgeClass } from '$lib/utils/vehicleUtils.js';
-	import { mapService } from '$lib/services/mapService.js';
 	import { apiService } from '$lib/services/api.js';
-	import { positionService } from '$lib/services/positionService.js';
-	import { user } from '$lib/stores/auth.js';
 
 	export let showVehiclePanel = false;
-	export let showVehicleList = false;
 	export let toggleVehiclePanel = null;
 
+	// Estados para dispositivos
+	let showDevices = false;
 	let devices = [];
 	let loadingDevices = false;
-	let communications = [];
+	let devicesError = null;
 
-	function toggleVehicleSelection(vehicleId) {
-		vehicleActions.toggleVehicleSelection(vehicleId);
-	}
+	// Estados para unidades
+	let showUnits = false;
+	let units = [];
+	let loadingUnits = false;
+	let unitsError = null;
+	let newUnitName = '';
+	let creatingUnit = false;
+	let selectedUnitId = null;
+	let unassignedDevices = [];
+	let loadingUnassignedDevices = false;
+	let selectedDeviceId = '';
+	let assigningDevice = false;
 
-	function selectAllVehicles() {
-		vehicleActions.selectAllVehicles();
-	}
+	// Colores según especificación del usuario
+	const statusConfig = {
+		nuevo: { label: 'Nuevo', color: 'bg-gray-500' },
+		enviado: { label: 'Enviado', color: 'bg-gray-500' },
+		entregado: { label: 'Entregado', color: 'bg-yellow-500' },
+		asignado: { label: 'Asignado', color: 'bg-green-500' },
+		devuelto: { label: 'Devuelto', color: 'status-black' },
+		inactivo: { label: 'Inactivo', color: 'bg-red-500' }
+	};
 
-	function clearVehicleSelection() {
-		vehicleActions.clearSelection();
-	}
-
-	async function refreshPositions() {
-		await vehicleActions.loadVehiclePositions();
-	}
-
-	async function trackSelectedVehicles() {
-		const selectedVehiclesList = $vehicles.filter((v) => $selectedVehicles.includes(v.id));
-		const vehiclesWithCoords = selectedVehiclesList.filter(
-			(v) => (v.latitude || v.lat) && (v.longitude || v.lng)
-		);
-
-		if (vehiclesWithCoords.length > 0) {
-			mapService.centerOnVehicles(vehiclesWithCoords);
+	async function toggleDevices() {
+		showDevices = !showDevices;
+		if (showDevices && devices.length === 0) {
+			await loadDevices();
 		}
 	}
 
-	function centerOnVehicle(vehicle) {
-		if ((vehicle.latitude || vehicle.lat) && (vehicle.longitude || vehicle.lng)) {
-			mapService.centerOnVehicle(vehicle);
+	async function loadDevices() {
+		loadingDevices = true;
+		devicesError = null;
+		try {
+			devices = await apiService.getMyDevices();
+		} catch (err) {
+			console.error('Error al cargar dispositivos:', err);
+			devicesError = err.message || 'Error al cargar dispositivos';
+		} finally {
+			loadingDevices = false;
+		}
+	}
+
+	async function toggleUnits() {
+		showUnits = !showUnits;
+		if (showUnits && units.length === 0) {
+			await loadUnits();
+		}
+	}
+
+	async function loadUnits() {
+		loadingUnits = true;
+		unitsError = null;
+		try {
+			units = await apiService.getUnits();
+		} catch (err) {
+			console.error('Error al cargar unidades:', err);
+			unitsError = err.message || 'Error al cargar unidades';
+		} finally {
+			loadingUnits = false;
+		}
+	}
+
+	async function createUnit() {
+		if (!newUnitName.trim()) {
+			unitsError = 'El nombre de la unidad es requerido';
+			return;
+		}
+
+		creatingUnit = true;
+		unitsError = null;
+		try {
+			await apiService.createUnit({ name: newUnitName.trim() });
+			newUnitName = '';
+			await loadUnits();
+		} catch (err) {
+			console.error('Error al crear unidad:', err);
+			unitsError = err.message || 'Error al crear la unidad';
+		} finally {
+			creatingUnit = false;
+		}
+	}
+
+	async function selectUnit(unitId) {
+		if (selectedUnitId === unitId) {
+			selectedUnitId = null;
+			return;
+		}
+
+		selectedUnitId = unitId;
+		const unit = units.find((u) => u.id === unitId);
+
+		// Si no tiene dispositivo asignado, cargar dispositivos disponibles
+		if (!unit.device_id) {
+			await loadUnassignedDevices();
+		}
+	}
+
+	async function loadUnassignedDevices() {
+		loadingUnassignedDevices = true;
+		try {
+			unassignedDevices = await apiService.getUnassignedDevices();
+			selectedDeviceId = '';
+		} catch (err) {
+			console.error('Error al cargar dispositivos no asignados:', err);
+			unitsError = err.message || 'Error al cargar dispositivos';
+		} finally {
+			loadingUnassignedDevices = false;
+		}
+	}
+
+	async function assignDevice(unitId) {
+		if (!selectedDeviceId) {
+			unitsError = 'Selecciona un dispositivo';
+			return;
+		}
+
+		assigningDevice = true;
+		unitsError = null;
+		try {
+			await apiService.assignDeviceToUnit(unitId, selectedDeviceId);
+			selectedUnitId = null;
+			selectedDeviceId = '';
+			await loadUnits();
+		} catch (err) {
+			console.error('Error al asignar dispositivo:', err);
+			unitsError = err.message || 'Error al asignar el dispositivo';
+		} finally {
+			assigningDevice = false;
+		}
+	}
+
+	async function unassignDevice(assignmentId) {
+		if (!confirm('¿Estás seguro de desasignar este dispositivo?')) {
+			return;
+		}
+
+		unitsError = null;
+		try {
+			await apiService.unassignDeviceFromUnit(assignmentId);
+			selectedUnitId = null;
+			await loadUnits();
+		} catch (err) {
+			console.error('Error al desasignar dispositivo:', err);
+			unitsError = err.message || 'Error al desasignar el dispositivo';
 		}
 	}
 </script>
@@ -102,165 +205,381 @@
 <!-- Panel de controles expandible -->
 {#if showVehiclePanel}
 	<div class="menu-card">
-		<!-- Controles del panel -->
 		<div class="controls">
-			<button class="large-button" on:click={toggleVehicleList}>
-				<svg
-					class="icon"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-					<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-					<g id="SVGRepo_iconCarrier">
-						<g id="Edit / Select_Multiple">
-							<path
-								id="Vector"
-								d="M3 9V19.4C3 19.9601 3 20.2399 3.10899 20.4538C3.20487 20.642 3.35774 20.7952 3.5459 20.8911C3.7596 21 4.0395 21 4.59846 21H15.0001M17 8L13 12L11 10M7 13.8002V6.2002C7 5.08009 7 4.51962 7.21799 4.0918C7.40973 3.71547 7.71547 3.40973 8.0918 3.21799C8.51962 3 9.08009 3 10.2002 3H17.8002C18.9203 3 19.4801 3 19.9079 3.21799C20.2842 3.40973 20.5905 3.71547 20.7822 4.0918C21.0002 4.51962 21.0002 5.07969 21.0002 6.19978L21.0002 13.7998C21.0002 14.9199 21.0002 15.48 20.7822 15.9078C20.5905 16.2841 20.2842 16.5905 19.9079 16.7822C19.4805 17 18.9215 17 17.8036 17H10.1969C9.07899 17 8.5192 17 8.0918 16.7822C7.71547 16.5905 7.40973 16.2842 7.21799 15.9079C7 15.4801 7 14.9203 7 13.8002Z"
-								stroke="#000000"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							></path>
-						</g>
-					</g>
-				</svg>
-				{showVehicleList ? 'Ocultar' : 'Ver'} Lista de Vehículos
-			</button>
+			<!-- Acordeón de dispositivos -->
+			<div class="mb-2">
+				<button class="large-button" on:click={toggleDevices}>
+					<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+						<path
+							fill-rule="evenodd"
+							d="M3 5a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2h-2.22l.123.489.804.804A1 1 0 0113 18H7a1 1 0 01-.707-1.707l.804-.804L7.22 15H5a2 2 0 01-2-2V5zm5.771 7H5V5h10v7H8.771z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+					Mis Dispositivos
+					<svg
+						class="w-4 h-4 ml-auto transition-transform"
+						class:rotate-180={showDevices}
+						fill="currentColor"
+						viewBox="0 0 20 20"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
 
-			<!-- Lista de vehículos -->
-			{#if showVehicleList}
-				<div class="mt-3 p-3 rounded-lg panel max-h-64 overflow-y-auto">
-					<div class="flex justify-between items-center mb-3">
-						<p class="text-sm font-medium text-app">Seleccionar Vehículos</p>
-						<div class="flex gap-2">
-							<button class="btn-primary text-xs px-2 py-1 w-auto" on:click={selectAllVehicles}>
-								Todos
-							</button>
-							<button class="btn-secondary text-xs" on:click={clearVehicleSelection}>
-								Limpiar
-							</button>
-						</div>
-					</div>
-
-					{#if $loadingVehicles || $loadingPositions}
-						<div class="flex items-center justify-center py-4">
-							<div
-								class="animate-spin rounded-full h-6 w-6 border-b-2"
-								style="border-color: var(--accent-cyan)"
-							></div>
-							<span class="ml-2 text-sm text-app">
-								{$loadingVehicles ? 'Cargando vehículos...' : 'Actualizando posiciones...'}
-							</span>
-						</div>
-					{:else if $vehicles.length > 0}
-						<div class="space-y-2">
-							{#each $vehicles as vehicle}
-								<div class="flex items-center gap-3 p-2 rounded">
-									<input
-										type="checkbox"
-										checked={$selectedVehicles.includes(vehicle.id)}
-										on:change={() => toggleVehicleSelection(vehicle.id)}
-										class="rounded"
-										style="accent-color: var(--accent-cyan)"
-									/>
-									<div class="flex-1 min-w-0">
-										<div class="flex items-center justify-between">
-											<button
-												class="text-sm font-medium truncate text-app text-left"
-												on:click={() => centerOnVehicle(vehicle)}
-												title="Centrar en el mapa"
-											>
-												{vehicle.name}
-											</button>
-											<span class="text-xs px-2 py-1 {getStatusBadgeClass(vehicle.status)}">
-												{getStatusText(vehicle.status)}
-											</span>
-										</div>
-										<div class="text-xs text-app">
-											<p>ID: {vehicle.deviceId}</p>
-										</div>
-									</div>
-								</div>
-							{/each}
-						</div>
-
-						{#if $selectedVehicleCount > 0}
-							<div class="mt-3 pt-3 border-t" style="border-color: var(--panel-border)">
-								<p class="text-xs text-app mb-2">
-									{$selectedVehicleCount} vehículo{$selectedVehicleCount !== 1 ? 's' : ''} seleccionado{$selectedVehicleCount !==
-									1
-										? 's'
-										: ''}
-								</p>
-								<button
-									class="btn-primary w-full text-xs px-3 py-2"
-									on:click={trackSelectedVehicles}
+				{#if showDevices}
+					<div class="mt-2 p-3 rounded-lg panel">
+						{#if loadingDevices}
+							<div class="flex items-center justify-center py-4">
+								<svg
+									class="animate-spin h-5 w-5"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									style="color: var(--accent-cyan)"
 								>
-									Rastrear Seleccionados
-								</button>
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+									></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+							</div>
+						{:else if devicesError}
+							<p class="text-xs text-red-500 py-2">{devicesError}</p>
+						{:else if devices.length === 0}
+							<p class="text-xs text-app opacity-70 py-2 text-center">
+								No hay dispositivos disponibles
+							</p>
+						{:else}
+							<div class="space-y-2 max-h-60 overflow-y-auto">
+								{#each devices as device}
+									<div
+										class="flex items-center justify-between py-2 px-2 rounded hover:bg-opacity-50 transition-colors"
+										style="hover:background-color: var(--hover-bg)"
+									>
+										<span class="text-sm text-app font-mono">{device.device_id}</span>
+										<span
+											class="px-2 py-1 text-xs font-semibold rounded-full text-white {statusConfig[
+												device.status
+											]?.color || 'bg-gray-500'}"
+										>
+											{statusConfig[device.status]?.label || device.status}
+										</span>
+									</div>
+								{/each}
 							</div>
 						{/if}
-					{:else}
-						<p class="text-sm text-app text-center py-4">No hay vehículos disponibles</p>
-					{/if}
-				</div>
-			{/if}
-
-			<button class="large-button" on:click={refreshPositions}>
-				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-					<path
-						fill-rule="evenodd"
-						d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				Actualizar Posiciones
-			</button>
-
-			<button class="large-button">
-				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-					<path
-						fill-rule="evenodd"
-						d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				Filtros
-			</button>
-
-			<button class="large-button">
-				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd" />
-					<path
-						fill-rule="evenodd"
-						d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zM12 7a1 1 0 10-2 0v4a1 1 0 102 0V7z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				Limpiar Mapa
-			</button>
-		</div>
-
-		<!-- Información adicional -->
-		<div class="mt-4 p-3 rounded-lg panel">
-			<p class="text-xs text-app font-medium mb-1">Estado del Sistema</p>
-			<div class="flex items-center gap-2">
-				<div
-					class="w-2 h-2 rounded-full animate-pulse"
-					style="background: var(--accent-cyan)"
-				></div>
-				<span class="text-xs text-app">Conectado - {$activeVehicles.length} vehículos activos</span>
+					</div>
+				{/if}
 			</div>
-			{#if $selectedVehicleCount > 0}
-				<div class="flex items-center gap-2 mt-1">
-					<div class="w-2 h-2 rounded-full" style="background: var(--accent-cyan)"></div>
-					<span class="text-xs text-app"
-						>{$selectedVehicleCount} seleccionado{$selectedVehicleCount !== 1 ? 's' : ''}</span
+
+			<!-- Acordeón de unidades -->
+			<div class="mb-2">
+				<button class="large-button" on:click={toggleUnits}>
+					<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+						<path
+							d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
+						/>
+						<path
+							d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z"
+						/>
+					</svg>
+					Mis Unidades
+					<svg
+						class="w-4 h-4 ml-auto transition-transform"
+						class:rotate-180={showUnits}
+						fill="currentColor"
+						viewBox="0 0 20 20"
 					>
-				</div>
-			{/if}
+						<path
+							fill-rule="evenodd"
+							d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
+
+				{#if showUnits}
+					<div class="mt-2 p-3 rounded-lg panel">
+						{#if loadingUnits}
+							<div class="flex items-center justify-center py-4">
+								<svg
+									class="animate-spin h-5 w-5"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									style="color: var(--accent-cyan)"
+								>
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+									></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+							</div>
+						{:else if unitsError}
+							<p class="text-xs text-red-500 py-2">{unitsError}</p>
+						{:else if units.length === 0}
+							<p class="text-xs text-app opacity-70 py-2 text-center">
+								No hay unidades disponibles
+							</p>
+						{:else}
+							<div class="space-y-2 max-h-96 overflow-y-auto mb-3">
+								{#each units as unit}
+									<div class="unit-card">
+										<button
+											class="w-full text-left py-2 px-2 rounded text-sm text-app hover:bg-opacity-50 transition-colors flex items-center justify-between"
+											style="hover:background-color: var(--hover-bg)"
+											on:click={() => selectUnit(unit.id)}
+										>
+											<div class="flex-1">
+												<div class="font-medium">{unit.name}</div>
+												{#if unit.device_id}
+													<div class="text-xs opacity-70 font-mono mt-1">
+														📡 {unit.device_id}
+													</div>
+												{:else}
+													<div class="text-xs opacity-50 mt-1">Sin dispositivo</div>
+												{/if}
+											</div>
+											<svg
+												class="w-4 h-4 transition-transform"
+												class:rotate-180={selectedUnitId === unit.id}
+												fill="currentColor"
+												viewBox="0 0 20 20"
+											>
+												<path
+													fill-rule="evenodd"
+													d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+													clip-rule="evenodd"
+												/>
+											</svg>
+										</button>
+
+										{#if selectedUnitId === unit.id}
+											<div
+												class="px-2 pb-2 mt-2 border-t pt-2"
+												style="border-color: var(--border-color)"
+											>
+												{#if unit.device_id}
+													<!-- Unidad con dispositivo asignado -->
+													<div class="space-y-2">
+														<div class="text-xs text-app">
+															<div class="mb-1"><strong>Dispositivo:</strong> {unit.device_id}</div>
+															{#if unit.device_brand}
+																<div class="mb-1"><strong>Marca:</strong> {unit.device_brand}</div>
+															{/if}
+															{#if unit.device_model}
+																<div class="mb-1"><strong>Modelo:</strong> {unit.device_model}</div>
+															{/if}
+														</div>
+														<button
+															on:click={() => unassignDevice(unit.assignment_id || unit.id)}
+															class="w-full px-3 py-1.5 text-xs rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
+														>
+															Desasignar Dispositivo
+														</button>
+													</div>
+												{:else}
+													<!-- Unidad sin dispositivo asignado -->
+													<div class="space-y-2">
+														{#if loadingUnassignedDevices}
+															<div class="flex items-center justify-center py-2">
+																<svg
+																	class="animate-spin h-4 w-4"
+																	xmlns="http://www.w3.org/2000/svg"
+																	fill="none"
+																	viewBox="0 0 24 24"
+																	style="color: var(--accent-cyan)"
+																>
+																	<circle
+																		class="opacity-25"
+																		cx="12"
+																		cy="12"
+																		r="10"
+																		stroke="currentColor"
+																		stroke-width="4"
+																	></circle>
+																	<path
+																		class="opacity-75"
+																		fill="currentColor"
+																		d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+																	></path>
+																</svg>
+															</div>
+														{:else if unassignedDevices.length === 0}
+															<p class="text-xs text-app opacity-50 py-2 text-center">
+																No hay dispositivos disponibles
+															</p>
+														{:else}
+															<select
+																bind:value={selectedDeviceId}
+																class="w-full px-2 py-1.5 text-xs rounded input-field"
+															>
+																<option value="">Seleccionar dispositivo...</option>
+																{#each unassignedDevices as device}
+																	<option value={device.device_id}>
+																		{device.device_id} - {device.brand} {device.model}
+																	</option>
+																{/each}
+															</select>
+															<button
+																on:click={() => assignDevice(unit.id)}
+																disabled={!selectedDeviceId || assigningDevice}
+																class="w-full px-3 py-1.5 text-xs rounded transition-colors"
+																style="background: var(--accent-cyan); color: white;"
+																style:opacity={!selectedDeviceId || assigningDevice ? '0.5' : '1'}
+															>
+																{assigningDevice ? 'Asignando...' : 'Asignar Dispositivo'}
+															</button>
+														{/if}
+													</div>
+												{/if}
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{/if}
+
+						<!-- Formulario para agregar nueva unidad -->
+						<div class="border-t pt-3 mt-3" style="border-color: var(--border-color)">
+							<div class="flex gap-2">
+								<input
+									type="text"
+									bind:value={newUnitName}
+									placeholder="Nombre de la unidad"
+									class="flex-1 px-2 py-1.5 text-sm rounded input-field"
+									on:keydown={(e) => e.key === 'Enter' && createUnit()}
+									disabled={creatingUnit}
+								/>
+								<button
+									on:click={createUnit}
+									disabled={creatingUnit || !newUnitName.trim()}
+									class="add-button"
+									aria-label="Agregar unidad"
+								>
+									{#if creatingUnit}
+										<svg
+											class="animate-spin h-4 w-4"
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+										>
+											<circle
+												class="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												stroke-width="4"
+											></circle>
+											<path
+												class="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											></path>
+										</svg>
+									{:else}
+										<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+											<path
+												fill-rule="evenodd"
+												d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+												clip-rule="evenodd"
+											/>
+										</svg>
+									{/if}
+								</button>
+							</div>
+						</div>
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 {/if}
+
+<style>
+	.status-black {
+		background-color: #000000;
+	}
+
+	.rotate-180 {
+		transform: rotate(180deg);
+	}
+
+	.input-field {
+		background: var(--bg-primary);
+		color: var(--text-primary);
+		border: 1px solid var(--border-color);
+		outline: none;
+		transition: border-color 0.2s;
+	}
+
+	.input-field:focus {
+		border-color: var(--accent-cyan);
+	}
+
+	.input-field:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.add-button {
+		padding: 0.375rem 0.75rem;
+		border-radius: 0.375rem;
+		background: var(--accent-cyan);
+		color: white;
+		transition: opacity 0.2s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.add-button:hover:not(:disabled) {
+		opacity: 0.8;
+	}
+
+	.add-button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	.unit-card {
+		border: 1px solid var(--border-color);
+		border-radius: 0.375rem;
+		background: var(--bg-primary);
+		overflow: hidden;
+	}
+
+	select.input-field {
+		cursor: pointer;
+	}
+
+	select.input-field option {
+		background: var(--bg-primary);
+		color: var(--text-primary);
+	}
+</style>
+
