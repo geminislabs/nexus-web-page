@@ -305,6 +305,102 @@ class ApiService {
 			method: 'GET'
 		});
 	}
+
+	// ============================================
+	// MÉTODOS DE UNIDADES (SISCOM-ADMIN-API)
+	// ============================================
+
+	/**
+	 * Listar unidades del cliente
+	 * GET /api/v1/units/
+	 * @param {boolean} include_deleted - Incluir unidades eliminadas (solo maestros)
+	 * @returns {Promise<Array>} Lista de unidades
+	 */
+	async getUnits(include_deleted = false) {
+		let endpoint = '/api/v1/units/';
+		if (include_deleted) {
+			endpoint += '?include_deleted=true';
+		}
+		return this.request(endpoint, {
+			method: 'GET'
+		});
+	}
+
+	/**
+	 * Crear una nueva unidad
+	 * POST /api/v1/units/
+	 * @param {Object} data - {name, description}
+	 * @returns {Promise<Object>} Unidad creada
+	 */
+	async createUnit(data) {
+		return this.request('/api/v1/units/', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+	}
+
+	/**
+	 * Actualizar una unidad
+	 * PATCH /api/v1/units/{unit_id}
+	 * @param {string} unit_id - ID de la unidad
+	 * @param {Object} data - {name, description}
+	 * @returns {Promise<Object>} Unidad actualizada
+	 */
+	async updateUnit(unit_id, data) {
+		return this.request(`/api/v1/units/${unit_id}`, {
+			method: 'PATCH',
+			body: JSON.stringify(data)
+		});
+	}
+
+	/**
+	 * Eliminar una unidad
+	 * DELETE /api/v1/units/{unit_id}
+	 * @param {string} unit_id - ID de la unidad
+	 * @returns {Promise<Object>} Confirmación de eliminación
+	 */
+	async deleteUnit(unit_id) {
+		return this.request(`/api/v1/units/${unit_id}`, {
+			method: 'DELETE'
+		});
+	}
+
+	/**
+	 * Obtener dispositivos no asignados del cliente
+	 * GET /api/v1/devices/unassigned
+	 * @returns {Promise<Array>} Lista de dispositivos sin asignar
+	 */
+	async getUnassignedDevices() {
+		return this.request('/api/v1/devices/unassigned', {
+			method: 'GET'
+		});
+	}
+
+	/**
+	 * Asignar dispositivo a una unidad
+	 * POST /api/v1/units/{unit_id}/device
+	 * @param {string} unit_id - ID de la unidad
+	 * @param {string} device_id - ID del dispositivo
+	 * @returns {Promise<Object>} Confirmación de asignación
+	 */
+	async assignDeviceToUnit(unit_id, device_id) {
+		return this.request(`/api/v1/units/${unit_id}/device`, {
+			method: 'POST',
+			body: JSON.stringify({ device_id })
+		});
+	}
+
+	/**
+	 * Desasignar dispositivo de una unidad
+	 * DELETE /api/v1/user-units/{assignment_id}
+	 * @param {string} assignment_id - ID de la asignación
+	 * @returns {Promise<Object>} Confirmación de desasignación
+	 */
+	async unassignDeviceFromUnit(assignment_id) {
+		return this.request(`/api/v1/user-units/${assignment_id}`, {
+			method: 'DELETE'
+		});
+	}
 }
 
 export const apiService = new ApiService();
