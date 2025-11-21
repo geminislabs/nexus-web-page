@@ -33,39 +33,41 @@
 		<div class="controls">
 			<div class="p-4 rounded-lg panel shadow-lg">
 				<p
-					class="text-base font-semibold tracking-wide mb-3 text-white/90 border-b border-white/10 pb-2"
+					class="text-base font-semibold tracking-wide mb-3 text-app opacity-90 border-b border-[var(--panel-border)] pb-2"
 				>
 					Configuraciones
 				</p>
 
 				<div class="space-y-4">
 					<div>
-						<p class="text-xs font-medium text-white/60 uppercase tracking-wider mb-2">Tema</p>
+						<p class="text-xs font-medium text-app opacity-60 uppercase tracking-wider mb-2">
+							Tema
+						</p>
 						<div class="grid grid-cols-3 gap-2">
 							<button
 								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
 								'dark'
 									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-									: 'bg-white/5 text-white/70 hover:bg-white/10'}"
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
 								on:click={() => changeTheme('dark')}
 							>
 								Dark
 							</button>
 							<button
 								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
-								'light'
+								'classic'
 									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-									: 'bg-white/5 text-white/70 hover:bg-white/10'}"
-								on:click={() => changeTheme('light')}
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+								on:click={() => changeTheme('classic')}
 							>
 								Light
 							</button>
 							<button
 								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
-								'glass'
+								'modern'
 									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-									: 'bg-white/5 text-white/70 hover:bg-white/10'}"
-								on:click={() => changeTheme('glass')}
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+								on:click={() => changeTheme('modern')}
 							>
 								Glass
 							</button>

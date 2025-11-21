@@ -237,7 +237,7 @@
 				</button>
 
 				{#if showDevices}
-					<div class="mt-2 p-3 rounded-lg panel shadow-inner bg-black/20">
+					<div class="mt-2 p-3 rounded-lg panel shadow-inner bg-[var(--glass-bg)]">
 						{#if loadingDevices}
 							<div class="flex items-center justify-center py-4">
 								<svg
@@ -265,14 +265,16 @@
 						{:else if devicesError}
 							<p class="text-xs text-red-400 py-2">{devicesError}</p>
 						{:else if devices.length === 0}
-							<p class="text-xs text-white/60 py-2 text-center">No hay dispositivos disponibles</p>
+							<p class="text-xs text-app opacity-60 py-2 text-center">
+								No hay dispositivos disponibles
+							</p>
 						{:else}
 							<div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
 								{#each devices as device}
 									<div
-										class="flex items-center justify-between py-2 px-3 rounded bg-white/5 hover:bg-white/10 transition-colors border border-white/5"
+										class="flex items-center justify-between py-2 px-3 rounded bg-[var(--btn-secondary-bg)] hover:bg-[var(--btn-secondary-hover-bg)] transition-colors border border-[var(--panel-border)]"
 									>
-										<span class="text-sm text-white/80 font-mono">{device.device_id}</span>
+										<span class="text-sm text-app opacity-80 font-mono">{device.device_id}</span>
 										<span
 											class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full text-white shadow-sm {statusConfig[
 												device.status
@@ -288,7 +290,7 @@
 				{/if}
 			</div>
 
-			<div class="h-px bg-white/10 my-3"></div>
+			<div class="h-px bg-[var(--panel-border)] my-3"></div>
 
 			<!-- Acordeón de unidades -->
 			<div class="mb-2">
@@ -319,7 +321,7 @@
 				</button>
 
 				{#if showUnits}
-					<div class="mt-2 p-3 rounded-lg panel shadow-inner bg-black/20">
+					<div class="mt-2 p-3 rounded-lg panel shadow-inner bg-[var(--glass-bg)]">
 						{#if loadingUnits}
 							<div class="flex items-center justify-center py-4">
 								<svg
@@ -347,13 +349,17 @@
 						{:else if unitsError}
 							<p class="text-xs text-red-400 py-2">{unitsError}</p>
 						{:else if units.length === 0}
-							<p class="text-xs text-white/60 py-2 text-center">No hay unidades disponibles</p>
+							<p class="text-xs text-app opacity-60 py-2 text-center">
+								No hay unidades disponibles
+							</p>
 						{:else}
 							<div class="space-y-2 max-h-96 overflow-y-auto mb-3 custom-scrollbar">
 								{#each units as unit}
-									<div class="unit-card shadow-sm bg-white/5 border-white/10">
+									<div
+										class="unit-card shadow-sm bg-[var(--btn-secondary-bg)] border-[var(--panel-border)]"
+									>
 										<button
-											class="w-full text-left py-2 px-3 rounded text-sm text-white/90 hover:bg-white/10 transition-colors flex items-center justify-between"
+											class="w-full text-left py-2 px-3 rounded text-sm text-app opacity-90 hover:bg-[var(--btn-secondary-hover-bg)] transition-colors flex items-center justify-between"
 											on:click={() => selectUnit(unit.id)}
 										>
 											<div class="flex-1">
@@ -367,7 +373,7 @@
 												{/if}
 											</div>
 											<svg
-												class="w-4 h-4 transition-transform text-white/50"
+												class="w-4 h-4 transition-transform text-app opacity-50"
 												class:rotate-180={selectedUnitId === unit.id}
 												fill="currentColor"
 												viewBox="0 0 20 20"
@@ -381,24 +387,26 @@
 										</button>
 
 										{#if selectedUnitId === unit.id}
-											<div class="px-3 pb-3 mt-1 border-t border-white/10 pt-3 bg-black/10">
+											<div
+												class="px-3 pb-3 mt-1 border-t border-[var(--panel-border)] pt-3 bg-[var(--glass-bg)]"
+											>
 												{#if unit.device_id}
 													<!-- Unidad con dispositivo asignado -->
 													<div class="space-y-3">
-														<div class="text-xs text-white/80 space-y-1">
+														<div class="text-xs text-app opacity-80 space-y-1">
 															<div>
-																<strong class="text-white/60">Dispositivo:</strong>
+																<strong class="text-app opacity-60">Dispositivo:</strong>
 																{unit.device_id}
 															</div>
 															{#if unit.device_brand}
 																<div>
-																	<strong class="text-white/60">Marca:</strong>
+																	<strong class="text-app opacity-60">Marca:</strong>
 																	{unit.device_brand}
 																</div>
 															{/if}
 															{#if unit.device_model}
 																<div>
-																	<strong class="text-white/60">Modelo:</strong>
+																	<strong class="text-app opacity-60">Modelo:</strong>
 																	{unit.device_model}
 																</div>
 															{/if}
@@ -438,19 +446,19 @@
 																</svg>
 															</div>
 														{:else if unassignedDevices.length === 0}
-															<p class="text-xs text-white/50 py-2 text-center">
+															<p class="text-xs text-app opacity-50 py-2 text-center">
 																No hay dispositivos disponibles
 															</p>
 														{:else}
 															<select
 																bind:value={selectedDeviceId}
-																class="w-full px-2 py-1.5 text-xs rounded input-field bg-white/5 border-white/10 text-white/90 focus:border-accent-cyan"
+																class="w-full px-2 py-1.5 text-xs rounded input-field bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--input-text)] focus:border-accent-cyan"
 															>
-																<option value="" class="bg-gray-900"
+																<option value="" class="bg-[var(--app-bg)]"
 																	>Seleccionar dispositivo...</option
 																>
 																{#each unassignedDevices as device}
-																	<option value={device.device_id} class="bg-gray-900">
+																	<option value={device.device_id} class="bg-[var(--app-bg)]">
 																		{device.device_id} - {device.brand}
 																		{device.model}
 																	</option>
@@ -476,13 +484,13 @@
 						{/if}
 
 						<!-- Formulario para agregar nueva unidad -->
-						<div class="border-t border-white/10 pt-3 mt-1">
+						<div class="border-t border-[var(--panel-border)] pt-3 mt-1">
 							<div class="flex gap-2">
 								<input
 									type="text"
 									bind:value={newUnitName}
 									placeholder="Nombre de la unidad"
-									class="flex-1 px-3 py-2 text-sm rounded-lg input-field bg-white/5 border-white/10 text-white/90 placeholder-white/40 focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-all"
+									class="flex-1 px-3 py-2 text-sm rounded-lg input-field bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--input-text)] placeholder-[var(--input-placeholder)] focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-all"
 									on:keydown={(e) => e.key === 'Enter' && createUnit()}
 									disabled={creatingUnit}
 								/>
