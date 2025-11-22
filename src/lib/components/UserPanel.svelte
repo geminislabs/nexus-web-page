@@ -3,7 +3,7 @@
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { theme } from '$lib/stores/theme.js';
 	import { apiService } from '$lib/services/api.js';
-	import { slide } from 'svelte/transition';
+	import InviteUser from './InviteUser.svelte';
 
 	export let showUserPanel = false;
 	export let userData = null;
@@ -30,64 +30,9 @@
 
 	// Invite User State
 	let showInviteUser = false;
-	let inviteName = '';
-	let inviteEmail = '';
-	let inviteLoading = false;
-	let inviteError = '';
-	let inviteSuccess = '';
 
 	function toggleInviteUser() {
 		showInviteUser = !showInviteUser;
-		if (!showInviteUser) {
-			inviteName = '';
-			inviteEmail = '';
-			inviteError = '';
-			inviteSuccess = '';
-		}
-	}
-
-	async function handleInviteUser() {
-		inviteError = '';
-		inviteSuccess = '';
-
-		if (!inviteName.trim()) {
-			inviteError = 'El nombre es requerido.';
-			return;
-		}
-		if (!inviteEmail.trim()) {
-			inviteError = 'El correo es requerido.';
-			return;
-		}
-		if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail)) {
-			inviteError = 'El formato del correo no es válido.';
-			return;
-		}
-
-		inviteLoading = true;
-
-		try {
-			const response = await apiService.inviteUser({
-				email: inviteEmail,
-				full_name: inviteName
-			});
-			inviteSuccess = response.message || 'Invitación enviada exitosamente.';
-			inviteName = '';
-			inviteEmail = '';
-			setTimeout(() => {
-				toggleInviteUser();
-			}, 3000);
-		} catch (error) {
-			console.error('Error al invitar usuario:', error);
-			if (Array.isArray(error.detail)) {
-				inviteError = error.detail.map((e) => e.msg).join(', ');
-			} else if (error.detail) {
-				inviteError = error.detail;
-			} else {
-				inviteError = error.message || 'Error al enviar la invitación';
-			}
-		} finally {
-			inviteLoading = false;
-		}
 	}
 
 	function validatePassword(password) {
@@ -314,72 +259,18 @@
 				</button>
 
 				{#if showInviteUser}
-					<div transition:slide class="mt-4 space-y-3">
-						{#if inviteError}
-							<p class="text-xs text-red-400 bg-red-400/10 p-2 rounded">{inviteError}</p>
-						{/if}
-						{#if inviteSuccess}
-							<p class="text-xs text-green-400 bg-green-400/10 p-2 rounded">{inviteSuccess}</p>
-						{/if}
-
-						<div>
-							<label for="invite-name" class="block text-xs font-medium text-app opacity-70 mb-1"
-								>Nombre Completo</label
-							>
-							<input
-								id="invite-name"
-								type="text"
-								bind:value={inviteName}
-								class="w-full px-3 py-2 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-app text-sm focus:outline-none focus:border-accent-cyan transition-colors"
-								placeholder="Nombre del usuario"
-							/>
-						</div>
-
-						<div>
-							<label for="invite-email" class="block text-xs font-medium text-app opacity-70 mb-1"
-								>Correo Electrónico</label
-							>
-							<input
-								id="invite-email"
-								type="email"
-								bind:value={inviteEmail}
-								class="w-full px-3 py-2 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-app text-sm focus:outline-none focus:border-accent-cyan transition-colors"
-								placeholder="usuario@ejemplo.com"
-							/>
-						</div>
-
-						<button
-							class="w-full py-3 rounded-md bg-[var(--accent-cyan)] text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-[0_0_15px_var(--accent-cyan)] hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-							on:click={handleInviteUser}
-							disabled={inviteLoading}
-						>
-							{#if inviteLoading}
-								<span class="flex items-center justify-center gap-2">
-									<svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-										<circle
-											class="opacity-25"
-											cx="12"
-											cy="12"
-											r="10"
-											stroke="currentColor"
-											stroke-width="4"
-											fill="none"
-										/>
-										<path
-											class="opacity-75"
-											fill="currentColor"
-											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										/>
-									</svg>
-									Enviando...
-								</span>
-							{:else}
-								Enviar Invitación
-							{/if}
-						</button>
+					<div transition:slide class="mt-4">
+						<InviteUser />
 					</div>
 				{/if}
 			{/if}
 		</div>
 	</div>
+	{#if !embedded && showUserPanel}
+		<div
+			class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+			on:click={toggleUserPanel}
+			transition:fade
+		></div>
+	{/if}
 {/if}
