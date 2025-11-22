@@ -449,6 +449,16 @@ class ApiService {
 			method: 'DELETE'
 		});
 	}
+	/**
+	 * Obtener unidades asignadas al usuario
+	 * GET /api/v1/user-units/
+	 * @returns {Promise<Array>} Lista de unidades asignadas
+	 */
+	async getUserUnits() {
+		return this.request('/api/v1/user-units/', {
+			method: 'GET'
+		});
+	}
 }
 
 export const apiService = new ApiService();

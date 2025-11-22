@@ -142,7 +142,7 @@
 				<div class="flex items-center justify-between mb-2">
 					<label for="password" class="block text-sm font-medium text-app">Contraseña</label>
 					<a
-						href="{COMPANY_URL}/auth?mode=recover"
+						href="https://geminislabs.com/auth?mode=recover"
 						class="text-xs text-accent hover:underline"
 						target="_blank"
 					>

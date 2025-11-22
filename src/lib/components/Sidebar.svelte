@@ -1,7 +1,10 @@
 <script>
 	import { fade, fly } from 'svelte/transition';
+	import { goto } from '$app/navigation';
+	import { user, authToken } from '$lib/stores/auth.js';
 	import UserPanel from './UserPanel.svelte';
 	import VehiclePanel from './VehiclePanel.svelte';
+	import AdminPanel from './AdminPanel.svelte';
 	import OptionPanel from './OptionPanel.svelte';
 
 	export let userData = null;
@@ -18,6 +21,12 @@
 
 	function closeMenu() {
 		activeMenu = null;
+	}
+
+	function handleLogout() {
+		user.logout();
+		authToken.clearToken();
+		goto('/login');
 	}
 </script>
 
@@ -65,17 +74,46 @@
 			</svg>
 		</button>
 
+		<!-- Admin Icon (Only for masters) -->
+		{#if userData?.is_master}
+			<button
+				class="sidebar-btn"
+				class:active={activeMenu === 'admin'}
+				on:click={() => toggleMenu('admin')}
+				aria-label="Administración"
+			>
+				<svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+					<path
+						fill-rule="evenodd"
+						d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z"
+						clip-rule="evenodd"
+					/>
+				</svg>
+			</button>
+		{/if}
+
 		<!-- Options Icon -->
 		<button
 			class="sidebar-btn"
 			class:active={activeMenu === 'options'}
 			on:click={() => toggleMenu('options')}
-			aria-label="Opciones"
+			aria-label="Configuración"
 		>
 			<svg class="icon" viewBox="0 0 32 32" fill="currentColor">
 				<path
 					d="M23.265,24.381l.9-.894c4.164.136,4.228-.01,4.411-.438l1.144-2.785L29.805,20l-.093-.231c-.049-.122-.2-.486-2.8-2.965V15.5c3-2.89,2.936-3.038,2.765-3.461L28.538,9.225c-.171-.422-.236-.587-4.37-.474l-.9-.93a20.166,20.166,0,0,0-.141-4.106l-.116-.263-2.974-1.3c-.438-.2-.592-.272-3.4,2.786l-1.262-.019c-2.891-3.086-3.028-3.03-3.461-2.855L9.149,3.182c-.433.175-.586.237-.418,4.437l-.893.89c-4.162-.136-4.226.012-4.407.438L2.285,11.733,2.195,12l.094.232c.049.12.194.48,2.8,2.962l0,1.3c-3,2.89-2.935,3.038-2.763,3.462l1.138,2.817c.174.431.236.584,4.369.476l.9.935a20.243,20.243,0,0,0,.137,4.1l.116.265,2.993,1.308c.435.182.586.247,3.386-2.8l1.262.016c2.895,3.09,3.043,3.03,3.466,2.859l2.759-1.115C23.288,28.644,23.44,28.583,23.265,24.381ZM11.407,17.857a4.957,4.957,0,1,1,6.488,2.824A5.014,5.014,0,0,1,11.407,17.857Z"
 				></path>
+			</svg>
+		</button>
+
+		<!-- Logout Button -->
+		<button class="sidebar-btn logout-btn" on:click={handleLogout} aria-label="Cerrar Sesión">
+			<svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					d="M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9"
+				/>
 			</svg>
 		</button>
 	</div>
@@ -89,6 +127,10 @@
 		{:else if activeMenu === 'vehicle'}
 			<div in:fade={{ duration: 200 }}>
 				<VehiclePanel embedded={true} />
+			</div>
+		{:else if activeMenu === 'admin'}
+			<div in:fade={{ duration: 200 }}>
+				<AdminPanel embedded={true} />
 			</div>
 		{:else if activeMenu === 'options'}
 			<div in:fade={{ duration: 200 }}>
@@ -202,5 +244,20 @@
 	.sidebar.expanded .sidebar-content {
 		opacity: 1;
 		pointer-events: auto;
+	}
+	.logout-btn {
+		margin-top: auto;
+		margin-bottom: 2rem;
+		color: #ef4444; /* Red-500 */
+		opacity: 0.8;
+		border-radius: 50%;
+		width: 32px;
+		height: 32px;
+	}
+
+	.logout-btn:hover {
+		background: rgba(239, 68, 68, 0.1);
+		color: #ef4444;
+		box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
 	}
 </style>

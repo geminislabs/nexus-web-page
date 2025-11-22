@@ -2,11 +2,82 @@
 	import { goto } from '$app/navigation';
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { theme } from '$lib/stores/theme.js';
+	import { apiService } from '$lib/services/api.js';
+	import { slide } from 'svelte/transition';
 
 	export let showUserPanel = false;
 	export let userData = null;
 	export let toggleUserPanel = null;
 	export let embedded = false;
+
+	let showPasswordChange = false;
+	let oldPassword = '';
+	let newPassword = '';
+	let loading = false;
+	let errorMessage = '';
+	let successMessage = '';
+
+	function togglePasswordChange() {
+		showPasswordChange = !showPasswordChange;
+		if (!showPasswordChange) {
+			// Limpiar campos al cerrar
+			oldPassword = '';
+			newPassword = '';
+			errorMessage = '';
+			successMessage = '';
+		}
+	}
+
+	function validatePassword(password) {
+		if (password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+		if (password.length > 72) return 'La contraseña no puede exceder los 72 caracteres.';
+		if (!/[A-Z]/.test(password)) return 'La contraseña debe incluir al menos una letra mayúscula.';
+		if (!/[0-9]/.test(password)) return 'La contraseña debe incluir al menos un número.';
+		if (!/[^A-Za-z0-9]/.test(password))
+			return 'La contraseña debe incluir al menos un carácter especial.';
+		return null;
+	}
+
+	async function handleChangePassword() {
+		if (!oldPassword || !newPassword) {
+			errorMessage = 'Por favor ingresa ambas contraseñas';
+			return;
+		}
+
+		const validationError = validatePassword(newPassword);
+		if (validationError) {
+			errorMessage = validationError;
+			return;
+		}
+
+		loading = true;
+		errorMessage = '';
+		successMessage = '';
+
+		try {
+			const response = await apiService.changePassword({
+				old_password: oldPassword,
+				new_password: newPassword
+			});
+			successMessage = response.message || 'Contraseña actualizada correctamente';
+			oldPassword = '';
+			newPassword = '';
+			setTimeout(() => {
+				togglePasswordChange();
+			}, 2000);
+		} catch (error) {
+			console.error('Error al cambiar contraseña:', error);
+			if (Array.isArray(error.detail)) {
+				errorMessage = error.detail.map((e) => e.msg).join(', ');
+			} else if (error.detail) {
+				errorMessage = error.detail;
+			} else {
+				errorMessage = error.message || 'Error al cambiar la contraseña';
+			}
+		} finally {
+			loading = false;
+		}
+	}
 
 	function handleLogout() {
 		user.logout();
@@ -37,12 +108,12 @@
 	<div class={embedded ? '' : 'menu-card'}>
 		<!-- Información del usuario -->
 		<div class="controls">
+			<p
+				class="text-center text-lg font-bold uppercase tracking-widest mb-12 text-app opacity-100 border-b border-[var(--panel-border)] pb-3"
+			>
+				Información del Usuario
+			</p>
 			<div class="p-4 rounded-lg panel shadow-lg">
-				<p
-					class="text-base font-semibold tracking-wide mb-3 text-app opacity-90 border-b border-[var(--panel-border)] pb-2"
-				>
-					Información del Usuario
-				</p>
 				{#if userData}
 					<div class="space-y-3">
 						<div class="flex items-center gap-2">
@@ -66,16 +137,6 @@
 							</svg>
 							<span class="text-sm text-app opacity-80">{userData.email}</span>
 						</div>
-						<div class="flex items-center gap-2">
-							<svg class="w-4 h-4 text-app opacity-50" fill="currentColor" viewBox="0 0 20 20">
-								<path
-									fill-rule="evenodd"
-									d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h2zM8 5a1 1 0 011-1h2a1 1 0 011 1v1H8V5zM4 8a0 0 0 000 0v6a0 0 0 000 0h12a0 0 0 000 0V8a0 0 0 000 0H4z"
-									clip-rule="evenodd"
-								/>
-							</svg>
-							<span class="text-sm text-app opacity-80">ID: {userData.id}</span>
-						</div>
 					</div>
 				{:else}
 					<p class="text-sm text-app opacity-50">No hay información de usuario disponible</p>
@@ -84,16 +145,94 @@
 
 			<div class="h-px bg-[var(--panel-border)] my-4"></div>
 
-			<button class="large-button shadow-md" on:click={handleLogout}>
-				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-					<path
-						fill-rule="evenodd"
-						d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				Cerrar Sesión
-			</button>
+			<div class="mt-4 p-4 rounded-lg panel shadow-lg">
+				<button
+					class="w-full flex justify-between items-center text-base font-semibold tracking-wide text-app opacity-90"
+					on:click={togglePasswordChange}
+				>
+					<span>Cambiar Contraseña</span>
+					<svg
+						class="w-4 h-4 transition-transform duration-200 {showPasswordChange
+							? 'rotate-180'
+							: ''}"
+						fill="currentColor"
+						viewBox="0 0 20 20"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
+
+				{#if showPasswordChange}
+					<div transition:slide class="mt-4 space-y-3">
+						{#if errorMessage}
+							<p class="text-xs text-red-400 bg-red-400/10 p-2 rounded">{errorMessage}</p>
+						{/if}
+						{#if successMessage}
+							<p class="text-xs text-green-400 bg-green-400/10 p-2 rounded">{successMessage}</p>
+						{/if}
+
+						<div>
+							<label for="old-pwd" class="block text-xs font-medium text-app opacity-70 mb-1"
+								>Contraseña Actual</label
+							>
+							<input
+								id="old-pwd"
+								type="password"
+								bind:value={oldPassword}
+								class="w-full px-3 py-2 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-app text-sm focus:outline-none focus:border-accent-cyan transition-colors"
+								placeholder="********"
+							/>
+						</div>
+
+						<div>
+							<label for="new-pwd" class="block text-xs font-medium text-app opacity-70 mb-1"
+								>Nueva Contraseña</label
+							>
+							<input
+								id="new-pwd"
+								type="password"
+								bind:value={newPassword}
+								class="w-full px-3 py-2 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-app text-sm focus:outline-none focus:border-accent-cyan transition-colors"
+								placeholder="********"
+							/>
+						</div>
+
+						<button
+							class="w-full py-2 rounded-md bg-accent-cyan text-white text-sm font-medium shadow-lg shadow-accent-cyan/20 hover:bg-accent-cyan/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+							on:click={handleChangePassword}
+							disabled={loading}
+						>
+							{#if loading}
+								<span class="flex items-center justify-center gap-2">
+									<svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+										<circle
+											class="opacity-25"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											stroke-width="4"
+											fill="none"
+										/>
+										<path
+											class="opacity-75"
+											fill="currentColor"
+											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+										/>
+									</svg>
+									Procesando...
+								</span>
+							{:else}
+								Actualizar Contraseña
+							{/if}
+						</button>
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 {/if}

@@ -31,13 +31,12 @@
 {#if showOptionPanel || embedded}
 	<div class={embedded ? '' : 'menu-card'}>
 		<div class="controls">
+			<p
+				class="text-center text-lg font-bold uppercase tracking-widest mb-12 text-app opacity-100 border-b border-[var(--panel-border)] pb-3"
+			>
+				Configuraciones
+			</p>
 			<div class="p-4 rounded-lg panel shadow-lg">
-				<p
-					class="text-base font-semibold tracking-wide mb-3 text-app opacity-90 border-b border-[var(--panel-border)] pb-2"
-				>
-					Configuraciones
-				</p>
-
 				<div class="space-y-4">
 					<div>
 						<p class="text-xs font-medium text-app opacity-60 uppercase tracking-wider mb-2">
