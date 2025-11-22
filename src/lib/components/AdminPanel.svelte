@@ -24,6 +24,7 @@
 	let loadingUnassignedDevices = false;
 	let selectedDeviceId = '';
 	let assigningDevice = false;
+	let selectedListDeviceId = null; // State for selected device in the list
 
 	// Estados para asignación de unidades
 	let showAssignUnits = false;
@@ -147,6 +148,14 @@
 		}
 	}
 
+	function selectListDevice(deviceId) {
+		if (selectedListDeviceId === deviceId) {
+			selectedListDeviceId = null;
+		} else {
+			selectedListDeviceId = deviceId;
+		}
+	}
+
 	async function unassignDevice(assignmentId) {
 		if (!confirm('¿Estás seguro de desasignar este dispositivo?')) {
 			return;
@@ -253,29 +262,33 @@
 					{:else}
 						<div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
 							{#each devices as device}
-								<div
-									class="flex items-center gap-3 py-2 px-3 rounded bg-[var(--btn-secondary-bg)] hover:bg-[var(--btn-secondary-hover-bg)] transition-colors border border-[var(--panel-border)]"
+								<button
+									class="w-full flex items-center justify-between py-2 px-3 rounded hover:bg-[var(--btn-secondary-hover-bg)] transition-colors {selectedListDeviceId ===
+									device.device_id
+										? 'bg-[var(--btn-secondary-hover-bg)]'
+										: ''}"
+									on:click={() => selectListDevice(device.device_id)}
 								>
-									<!-- Status Dot with Tooltip -->
-									<div class="relative group">
+									<div class="flex items-center gap-3">
+										<!-- Status Dot -->
 										<div
 											class="w-2.5 h-2.5 rounded-full {statusConfig[device.status]?.color ||
 												'bg-gray-500'}"
 										></div>
-										<!-- Tooltip -->
-										<div
-											class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/90 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10"
-										>
-											{statusConfig[device.status]?.label || device.status}
-											<!-- Arrow -->
-											<div
-												class="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-black/90"
-											></div>
-										</div>
+										<span class="text-sm text-app opacity-80 font-mono">{device.device_id}</span>
 									</div>
 
-									<span class="text-sm text-app opacity-80 font-mono">{device.device_id}</span>
-								</div>
+									<!-- Status Badge (Only visible if selected) -->
+									{#if selectedListDeviceId === device.device_id}
+										<span
+											class="px-2 py-[2px] rounded-md text-[10px] sm:text-xs font-medium text-white whitespace-nowrap {statusConfig[
+												device.status
+											]?.color || 'bg-gray-500'}"
+										>
+											{statusConfig[device.status]?.label || device.status}
+										</span>
+									{/if}
+								</button>
 							{/each}
 						</div>
 					{/if}
