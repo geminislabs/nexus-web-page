@@ -202,7 +202,7 @@
 						</div>
 
 						<button
-							class="w-full py-2 rounded-md bg-accent-cyan text-white text-sm font-medium shadow-lg shadow-accent-cyan/20 hover:bg-accent-cyan/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+							class="w-full py-3 rounded-md bg-[var(--accent-cyan)] text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-[0_0_15px_var(--accent-cyan)] hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
 							on:click={handleChangePassword}
 							disabled={loading}
 						>
