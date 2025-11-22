@@ -7,6 +7,12 @@
 	export let toggleOptionPanel = null;
 	export let embedded = false;
 
+	let showTheme = false;
+
+	function toggleTheme() {
+		showTheme = !showTheme;
+	}
+
 	function changeTheme(newTheme) {
 		theme.set(newTheme);
 	}
@@ -36,42 +42,67 @@
 			>
 				Configuraciones
 			</p>
-			<div class="p-4 rounded-lg panel shadow-lg">
-				<div class="space-y-4">
-					<div>
-						<p class="text-xs font-medium text-app opacity-60 uppercase tracking-wider mb-2">
-							Tema
-						</p>
-						<div class="grid grid-cols-3 gap-2">
-							<button
-								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
-								'dark'
-									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
-								on:click={() => changeTheme('dark')}
-							>
-								Dark
-							</button>
-							<button
-								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
-								'classic'
-									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
-								on:click={() => changeTheme('classic')}
-							>
-								Light
-							</button>
-							<button
-								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
-								'modern'
-									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
-								on:click={() => changeTheme('modern')}
-							>
-								Glass
-							</button>
+
+			<div class="space-y-4">
+				<div>
+					<button class="large-button justify-between w-full mb-2" on:click={toggleTheme}>
+						<div class="flex items-center gap-2">
+							<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+								<path
+									fill-rule="evenodd"
+									d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+							<span class="font-semibold tracking-wide text-white/90">Tema</span>
 						</div>
-					</div>
+						<svg
+							class="w-4 h-4 transition-transform text-white/70"
+							class:rotate-180={showTheme}
+							fill="currentColor"
+							viewBox="0 0 20 20"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</button>
+
+					{#if showTheme}
+						<div class="p-3 rounded-lg panel shadow-inner bg-[var(--glass-bg)]">
+							<div class="grid grid-cols-3 gap-2">
+								<button
+									class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+									'dark'
+										? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+										: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+									on:click={() => changeTheme('dark')}
+								>
+									Dark
+								</button>
+								<button
+									class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+									'classic'
+										? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+										: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+									on:click={() => changeTheme('classic')}
+								>
+									Light
+								</button>
+								<button
+									class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+									'modern'
+										? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+										: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+									on:click={() => changeTheme('modern')}
+								>
+									Glass
+								</button>
+							</div>
+						</div>
+					{/if}
 				</div>
 			</div>
 		</div>

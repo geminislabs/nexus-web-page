@@ -1,5 +1,6 @@
 <script>
 	import { apiService } from '$lib/services/api.js';
+	import AssignUnits from './AssignUnits.svelte';
 
 	export let showAdminPanel = false;
 	export let toggleAdminPanel = null;
@@ -23,6 +24,9 @@
 	let loadingUnassignedDevices = false;
 	let selectedDeviceId = '';
 	let assigningDevice = false;
+
+	// Estados para asignación de unidades
+	let showAssignUnits = false;
 
 	// Colores según especificación del usuario
 	const statusConfig = {
@@ -190,7 +194,7 @@
 
 			<!-- Acordeón de dispositivos -->
 			<div class="mb-3">
-				<button class="large-button shadow-md justify-between" on:click={toggleDevices}>
+				<button class="large-button justify-between" on:click={toggleDevices}>
 					<div class="flex items-center gap-2">
 						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
 							<path
@@ -273,7 +277,7 @@
 
 			<!-- Acordeón de unidades -->
 			<div class="mb-2">
-				<button class="large-button shadow-md justify-between" on:click={toggleUnits}>
+				<button class="large-button justify-between" on:click={toggleUnits}>
 					<div class="flex items-center gap-2">
 						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
 							<path
@@ -512,6 +516,45 @@
 								</button>
 							</div>
 						</div>
+					</div>
+				{/if}
+			</div>
+
+			<div class="h-px bg-[var(--panel-border)] my-3"></div>
+
+			<!-- Acordeón de Asignar Unidades a Usuarios -->
+			<div class="mb-2">
+				<button
+					class="large-button justify-between"
+					on:click={() => (showAssignUnits = !showAssignUnits)}
+				>
+					<div class="flex items-center gap-2">
+						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+							<path
+								d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"
+							/>
+						</svg>
+						<span class="font-semibold tracking-wide text-white/90"
+							>Asignar Unidades a Usuarios</span
+						>
+					</div>
+					<svg
+						class="w-4 h-4 transition-transform text-white/70"
+						class:rotate-180={showAssignUnits}
+						fill="currentColor"
+						viewBox="0 0 20 20"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
+
+				{#if showAssignUnits}
+					<div class="mt-2 p-3 rounded-lg panel shadow-inner bg-[var(--glass-bg)]">
+						<AssignUnits />
 					</div>
 				{/if}
 			</div>

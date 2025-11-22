@@ -145,94 +145,90 @@
 
 			<div class="h-px bg-[var(--panel-border)] my-4"></div>
 
-			<div class="mt-4 p-4 rounded-lg panel shadow-lg">
-				<button
-					class="w-full flex justify-between items-center text-base font-semibold tracking-wide text-app opacity-90"
-					on:click={togglePasswordChange}
+			<button
+				class="w-full flex justify-between items-center text-base font-semibold tracking-wide text-app opacity-90"
+				on:click={togglePasswordChange}
+			>
+				<span>Cambiar Contraseña</span>
+				<svg
+					class="w-4 h-4 transition-transform duration-200 {showPasswordChange ? 'rotate-180' : ''}"
+					fill="currentColor"
+					viewBox="0 0 20 20"
 				>
-					<span>Cambiar Contraseña</span>
-					<svg
-						class="w-4 h-4 transition-transform duration-200 {showPasswordChange
-							? 'rotate-180'
-							: ''}"
-						fill="currentColor"
-						viewBox="0 0 20 20"
-					>
-						<path
-							fill-rule="evenodd"
-							d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-							clip-rule="evenodd"
-						/>
-					</svg>
-				</button>
+					<path
+						fill-rule="evenodd"
+						d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+						clip-rule="evenodd"
+					/>
+				</svg>
+			</button>
 
-				{#if showPasswordChange}
-					<div transition:slide class="mt-4 space-y-3">
-						{#if errorMessage}
-							<p class="text-xs text-red-400 bg-red-400/10 p-2 rounded">{errorMessage}</p>
-						{/if}
-						{#if successMessage}
-							<p class="text-xs text-green-400 bg-green-400/10 p-2 rounded">{successMessage}</p>
-						{/if}
+			{#if showPasswordChange}
+				<div transition:slide class="mt-4 space-y-3">
+					{#if errorMessage}
+						<p class="text-xs text-red-400 bg-red-400/10 p-2 rounded">{errorMessage}</p>
+					{/if}
+					{#if successMessage}
+						<p class="text-xs text-green-400 bg-green-400/10 p-2 rounded">{successMessage}</p>
+					{/if}
 
-						<div>
-							<label for="old-pwd" class="block text-xs font-medium text-app opacity-70 mb-1"
-								>Contraseña Actual</label
-							>
-							<input
-								id="old-pwd"
-								type="password"
-								bind:value={oldPassword}
-								class="w-full px-3 py-2 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-app text-sm focus:outline-none focus:border-accent-cyan transition-colors"
-								placeholder="********"
-							/>
-						</div>
-
-						<div>
-							<label for="new-pwd" class="block text-xs font-medium text-app opacity-70 mb-1"
-								>Nueva Contraseña</label
-							>
-							<input
-								id="new-pwd"
-								type="password"
-								bind:value={newPassword}
-								class="w-full px-3 py-2 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-app text-sm focus:outline-none focus:border-accent-cyan transition-colors"
-								placeholder="********"
-							/>
-						</div>
-
-						<button
-							class="w-full py-3 rounded-md bg-[var(--accent-cyan)] text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-[0_0_15px_var(--accent-cyan)] hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-							on:click={handleChangePassword}
-							disabled={loading}
+					<div>
+						<label for="old-pwd" class="block text-xs font-medium text-app opacity-70 mb-1"
+							>Contraseña Actual</label
 						>
-							{#if loading}
-								<span class="flex items-center justify-center gap-2">
-									<svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
-										<circle
-											class="opacity-25"
-											cx="12"
-											cy="12"
-											r="10"
-											stroke="currentColor"
-											stroke-width="4"
-											fill="none"
-										/>
-										<path
-											class="opacity-75"
-											fill="currentColor"
-											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										/>
-									</svg>
-									Procesando...
-								</span>
-							{:else}
-								Actualizar Contraseña
-							{/if}
-						</button>
+						<input
+							id="old-pwd"
+							type="password"
+							bind:value={oldPassword}
+							class="w-full px-3 py-2 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-app text-sm focus:outline-none focus:border-accent-cyan transition-colors"
+							placeholder="********"
+						/>
 					</div>
-				{/if}
-			</div>
+
+					<div>
+						<label for="new-pwd" class="block text-xs font-medium text-app opacity-70 mb-1"
+							>Nueva Contraseña</label
+						>
+						<input
+							id="new-pwd"
+							type="password"
+							bind:value={newPassword}
+							class="w-full px-3 py-2 rounded-md bg-[var(--input-bg)] border border-[var(--input-border)] text-app text-sm focus:outline-none focus:border-accent-cyan transition-colors"
+							placeholder="********"
+						/>
+					</div>
+
+					<button
+						class="w-full py-3 rounded-md bg-[var(--accent-cyan)] text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-[0_0_15px_var(--accent-cyan)] hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+						on:click={handleChangePassword}
+						disabled={loading}
+					>
+						{#if loading}
+							<span class="flex items-center justify-center gap-2">
+								<svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+										fill="none"
+									/>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									/>
+								</svg>
+								Procesando...
+							</span>
+						{:else}
+							Actualizar Contraseña
+						{/if}
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
