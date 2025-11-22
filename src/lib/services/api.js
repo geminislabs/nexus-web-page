@@ -214,7 +214,7 @@ class ApiService {
 	 * @returns {Promise<Array>} Lista de usuarios
 	 */
 	async getUsers() {
-		return this.request('/api/v1/users/', {
+		return this.request('/api/v1/users', {
 			method: 'GET'
 		});
 	}
@@ -256,7 +256,7 @@ class ApiService {
 	 * @returns {Promise<Object>} Datos del cliente creado
 	 */
 	async createClient(data) {
-		return this.request('/api/v1/clients/', {
+		return this.request('/api/v1/clients', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
@@ -268,7 +268,7 @@ class ApiService {
 	 * @returns {Promise<Object>} Datos del cliente
 	 */
 	async getCurrentClient() {
-		return this.request('/api/v1/clients/', {
+		return this.request('/api/v1/clients', {
 			method: 'GET'
 		});
 	}
@@ -382,7 +382,7 @@ class ApiService {
 	 * @returns {Promise<Array>} Lista de unidades
 	 */
 	async getUnits(include_deleted = false) {
-		let endpoint = '/api/v1/units/';
+		let endpoint = '/api/v1/units';
 		if (include_deleted) {
 			endpoint += '?include_deleted=true';
 		}
@@ -398,7 +398,7 @@ class ApiService {
 	 * @returns {Promise<Object>} Unidad creada
 	 */
 	async createUnit(data) {
-		return this.request('/api/v1/units/', {
+		return this.request('/api/v1/units', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
@@ -472,7 +472,7 @@ class ApiService {
 	 * @returns {Promise<Array>} Lista de unidades asignadas
 	 */
 	async getUserUnits() {
-		return this.request('/api/v1/user-units/', {
+		return this.request('/api/v1/user-units', {
 			method: 'GET'
 		});
 	}

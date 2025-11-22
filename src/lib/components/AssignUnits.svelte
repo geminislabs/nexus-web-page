@@ -50,7 +50,7 @@
 			// Fetch units and assignments in parallel
 			const [unitsData, assignmentsData] = await Promise.all([
 				apiService.getUnits(),
-				apiService.request(`/api/v1/user-units/?user_id=${selectedUserId}`, { method: 'GET' })
+				apiService.request(`/api/v1/user-units?user_id=${selectedUserId}`, { method: 'GET' })
 			]);
 
 			units = unitsData;
@@ -106,7 +106,7 @@
 		try {
 			if (newAssignedState) {
 				// Create assignment
-				const response = await apiService.request('/api/v1/user-units/', {
+				const response = await apiService.request('/api/v1/user-units', {
 					method: 'POST',
 					body: JSON.stringify({
 						user_id: selectedUserId,
