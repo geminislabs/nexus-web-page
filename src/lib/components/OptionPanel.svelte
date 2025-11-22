@@ -71,36 +71,34 @@
 					</button>
 
 					{#if showTheme}
-						<div class="p-3 rounded-lg panel shadow-inner bg-[var(--glass-bg)]">
-							<div class="grid grid-cols-3 gap-2">
-								<button
-									class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
-									'dark'
-										? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-										: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
-									on:click={() => changeTheme('dark')}
-								>
-									Dark
-								</button>
-								<button
-									class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
-									'classic'
-										? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-										: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
-									on:click={() => changeTheme('classic')}
-								>
-									Light
-								</button>
-								<button
-									class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
-									'modern'
-										? 'bg-accent-cyan text-white shadow-accent-cyan/20'
-										: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
-									on:click={() => changeTheme('modern')}
-								>
-									Glass
-								</button>
-							</div>
+						<div class="grid grid-cols-3 gap-2">
+							<button
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+								'dark'
+									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+								on:click={() => changeTheme('dark')}
+							>
+								Dark
+							</button>
+							<button
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+								'classic'
+									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+								on:click={() => changeTheme('classic')}
+							>
+								Light
+							</button>
+							<button
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+								'modern'
+									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+								on:click={() => changeTheme('modern')}
+							>
+								Glass
+							</button>
 						</div>
 					{/if}
 				</div>
