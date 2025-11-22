@@ -51,14 +51,18 @@ class ApiService {
 				}
 
 				try {
+					const refreshToken = authToken.getRefreshToken();
+					if (!refreshToken) {
+						throw new Error('No refresh token available');
+					}
+
 					// Attempt to refresh token
-					// We use credentials: 'include' to send the httpOnly cookie
 					const refreshResponse = await fetch(`${this.adminBaseURL}/api/v1/auth/refresh`, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json'
 						},
-						credentials: 'include'
+						body: JSON.stringify({ refresh_token: refreshToken })
 					});
 
 					if (refreshResponse.ok) {

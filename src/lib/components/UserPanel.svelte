@@ -4,6 +4,7 @@
 	import { theme } from '$lib/stores/theme.js';
 	import { apiService } from '$lib/services/api.js';
 	import InviteUser from './InviteUser.svelte';
+	import { slide, fade } from 'svelte/transition';
 
 	export let showUserPanel = false;
 	export let userData = null;

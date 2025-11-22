@@ -87,7 +87,10 @@ function createTokenStore() {
 
 			if (browser) {
 				localStorage.setItem('token', access_token);
-				// Refresh token is now handled via httpOnly cookie by the backend
+				localStorage.setItem('token', access_token);
+				if (tokens.refresh_token) {
+					localStorage.setItem('refresh_token', tokens.refresh_token);
+				}
 
 				if (expires_in) {
 					// Guardar timestamp de expiración
@@ -116,6 +119,16 @@ function createTokenStore() {
 			}
 			return null;
 		},
+		/**
+		 * Obtener el refresh token actual
+		 * @returns {string|null} Refresh token o null
+		 */
+		getRefreshToken: () => {
+			if (browser) {
+				return localStorage.getItem('refresh_token');
+			}
+			return null;
+		},
 
 		/**
 		 * Verificar si el token ha expirado
@@ -136,6 +149,7 @@ function createTokenStore() {
 			set(null);
 			if (browser) {
 				localStorage.removeItem('token');
+				localStorage.removeItem('refresh_token');
 				localStorage.removeItem('token_expires_at');
 			}
 		},
