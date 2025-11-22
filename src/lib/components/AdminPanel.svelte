@@ -269,19 +269,22 @@
 										: ''}"
 									on:click={() => selectListDevice(device.device_id)}
 								>
-									<div class="flex items-center gap-3">
+									<div class="flex items-center gap-3 min-w-0 flex-1 mr-2">
 										<!-- Status Dot -->
 										<div
-											class="w-2.5 h-2.5 rounded-full {statusConfig[device.status]?.color ||
-												'bg-gray-500'}"
+											class="w-2.5 h-2.5 rounded-full shrink-0 {statusConfig[device.status]
+												?.color || 'bg-gray-500'}"
 										></div>
-										<span class="text-sm text-app opacity-80 font-mono">{device.device_id}</span>
+										<span
+											class="text-sm text-app opacity-80 font-mono truncate"
+											title={device.device_id}>{device.device_id}</span
+										>
 									</div>
 
 									<!-- Status Badge (Only visible if selected) -->
 									{#if selectedListDeviceId === device.device_id}
 										<span
-											class="px-2 py-[2px] rounded-md text-[10px] sm:text-xs font-medium text-white whitespace-nowrap {statusConfig[
+											class="px-2 py-[2px] rounded-md text-[10px] sm:text-xs font-medium text-white whitespace-nowrap shrink-0 {statusConfig[
 												device.status
 											]?.color || 'bg-gray-500'}"
 										>
