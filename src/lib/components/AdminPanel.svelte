@@ -255,16 +255,27 @@
 							<div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
 								{#each devices as device}
 									<div
-										class="flex items-center justify-between py-2 px-3 rounded bg-[var(--btn-secondary-bg)] hover:bg-[var(--btn-secondary-hover-bg)] transition-colors border border-[var(--panel-border)]"
+										class="flex items-center gap-3 py-2 px-3 rounded bg-[var(--btn-secondary-bg)] hover:bg-[var(--btn-secondary-hover-bg)] transition-colors border border-[var(--panel-border)]"
 									>
+										<!-- Status Dot with Tooltip -->
+										<div class="relative group">
+											<div
+												class="w-2.5 h-2.5 rounded-full {statusConfig[device.status]?.color ||
+													'bg-gray-500'}"
+											></div>
+											<!-- Tooltip -->
+											<div
+												class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/90 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10"
+											>
+												{statusConfig[device.status]?.label || device.status}
+												<!-- Arrow -->
+												<div
+													class="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-black/90"
+												></div>
+											</div>
+										</div>
+
 										<span class="text-sm text-app opacity-80 font-mono">{device.device_id}</span>
-										<span
-											class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full text-white shadow-sm {statusConfig[
-												device.status
-											]?.color || 'bg-gray-500'}"
-										>
-											{statusConfig[device.status]?.label || device.status}
-										</span>
 									</div>
 								{/each}
 							</div>
