@@ -143,6 +143,24 @@ function createTokenStore() {
 			return Date.now() >= parseInt(expiresAt);
 		},
 		/**
+		 * Verificar si el token está próximo a expirar
+		 * @param {number} thresholdSeconds - Segundos antes de expirar para considerar "próximo"
+		 * @returns {boolean} true si está próximo a expirar o ya expiró
+		 */
+		isTokenExpiringSoon: (thresholdSeconds = 300) => {
+			if (!browser) return false;
+
+			const expiresAt = localStorage.getItem('token_expires_at');
+			if (!expiresAt) return true; // Si no hay expiración, asumir que necesitamos refresh
+
+			// Calcular tiempo restante
+			const timeLeft = parseInt(expiresAt) - Date.now();
+			// Convertir a segundos
+			const secondsLeft = timeLeft / 1000;
+
+			return secondsLeft < thresholdSeconds;
+		},
+		/**
 		 * Limpiar todos los tokens
 		 */
 		clearToken: () => {

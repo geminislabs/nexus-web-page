@@ -44,6 +44,7 @@ class ApiService {
 			let response = await fetch(url, config);
 
 			// Intercept 401 errors for token refresh
+			// Intercept 401 errors for token refresh
 			if (response.status === 401) {
 				// Avoid infinite loops if the refresh endpoint itself returns 401
 				if (endpoint.includes('/auth/refresh')) {
@@ -51,39 +52,15 @@ class ApiService {
 				}
 
 				try {
-					const refreshToken = authToken.getRefreshToken();
-					if (!refreshToken) {
-						throw new Error('No refresh token available');
-					}
+					const refreshResponse = await this.refreshSession();
 
-					// Attempt to refresh token
-					const refreshResponse = await fetch(`${this.adminBaseURL}/api/v1/auth/refresh`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({ refresh_token: refreshToken })
-					});
-
-					if (refreshResponse.ok) {
-						const data = await refreshResponse.json();
-						// Update store with new access token
-						// Note: The backend might return refresh_token in body too, but we only store access_token
-						authToken.setTokens(data);
-
+					if (refreshResponse) {
 						// Update token for the retry
-						token = data.access_token;
+						token = refreshResponse.access_token;
 						config.headers.Authorization = `Bearer ${token}`;
 
 						// Retry original request
 						response = await fetch(url, config);
-					} else {
-						// Refresh failed (token expired or invalid)
-						user.logout();
-						if (typeof window !== 'undefined') {
-							window.location.href = '/login';
-						}
-						throw new Error('Session expired');
 					}
 				} catch (refreshError) {
 					// If refresh fails completely
@@ -128,6 +105,47 @@ class ApiService {
 	// ============================================
 	// MÉTODOS DE AUTENTICACIÓN (SISCOM-ADMIN-API)
 	// ============================================
+
+	/**
+	 * Refrescar la sesión actual
+	 * POST /api/v1/auth/refresh
+	 * @returns {Promise<Object>} Nuevos tokens
+	 */
+	async refreshSession() {
+		const refreshToken = authToken.getRefreshToken();
+		const currentUser = get(user);
+		const email = currentUser?.email;
+
+		if (!refreshToken || !email) {
+			throw new Error('No refresh token or email available');
+		}
+
+		try {
+			const response = await fetch(`${this.adminBaseURL}/api/v1/auth/refresh`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					email: email,
+					refresh_token: refreshToken
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to refresh token');
+			}
+
+			const data = await response.json();
+			authToken.setTokens(data);
+			return data;
+		} catch (error) {
+			console.error('Session refresh failed:', error);
+			authToken.clearToken();
+			user.logout();
+			throw error;
+		}
+	}
 
 	/**
 	 * Iniciar sesión
