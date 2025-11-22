@@ -1,6 +1,7 @@
 <script>
 	import { apiService } from '$lib/services/api.js';
 	import AssignUnits from './AssignUnits.svelte';
+	import InviteUser from './InviteUser.svelte';
 
 	export let showAdminPanel = false;
 	export let toggleAdminPanel = null;
@@ -27,6 +28,9 @@
 
 	// Estados para asignación de unidades
 	let showAssignUnits = false;
+
+	// Estados para invitar usuarios
+	let showInviteUser = false;
 
 	// Colores según especificación del usuario
 	const statusConfig = {
@@ -516,6 +520,43 @@
 								</button>
 							</div>
 						</div>
+					</div>
+				{/if}
+			</div>
+
+			<div class="h-px bg-[var(--panel-border)] my-3"></div>
+
+			<!-- Acordeón de Invitar Usuario -->
+			<div class="mb-2">
+				<button
+					class="large-button justify-between"
+					on:click={() => (showInviteUser = !showInviteUser)}
+				>
+					<div class="flex items-center gap-2">
+						<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+							<path
+								d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0 1 1 0 002 0zM16 9a3 3 0 11-6 0 3 3 0 016 0z"
+							/>
+						</svg>
+						<span class="font-semibold tracking-wide text-white/90">Invitar Usuario</span>
+					</div>
+					<svg
+						class="w-4 h-4 transition-transform text-white/70"
+						class:rotate-180={showInviteUser}
+						fill="currentColor"
+						viewBox="0 0 20 20"
+					>
+						<path
+							fill-rule="evenodd"
+							d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+							clip-rule="evenodd"
+						/>
+					</svg>
+				</button>
+
+				{#if showInviteUser}
+					<div class="mt-2 p-3 rounded-lg panel shadow-inner bg-[var(--glass-bg)]">
+						<InviteUser />
 					</div>
 				{/if}
 			</div>

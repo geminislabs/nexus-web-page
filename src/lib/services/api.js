@@ -228,6 +228,19 @@ class ApiService {
 		});
 	}
 
+	/**
+	 * Reenviar invitación a un usuario
+	 * POST /api/v1/users/resend-invitation
+	 * @param {Object} data - {email}
+	 * @returns {Promise<Object>} Confirmación de reenvío
+	 */
+	async resendInvitation(data) {
+		return this.request('/api/v1/users/resend-invitation', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+	}
+
 	// ============================================
 	// MÉTODOS DE CLIENTES (SISCOM-ADMIN-API)
 	// ============================================
