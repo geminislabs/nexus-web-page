@@ -65,9 +65,12 @@
 
 	async function loadDevicesAndCommunications() {
 		try {
-			// Obtener devices del usuario actual (usa el token automáticamente)
-			const resp = await apiService.getDevices();
-			const deviceList = resp?.devices || [];
+			// Cargar dispositivos y unidades en paralelo
+			const [devicesData, unitsData] = await Promise.all([
+				apiService.getMyDevices(),
+				apiService.getUnits()
+			]);
+			const deviceList = devicesData?.devices || [];
 
 			// Mapear devices a vehículos mínimos
 			const mapped = deviceList.map((d) => ({

@@ -1,4 +1,4 @@
-import { authToken } from '../stores/auth.js';
+import { authToken, user } from '../stores/auth.js';
 import { get } from 'svelte/store';
 
 // Configuración de las APIs
@@ -25,7 +25,7 @@ class ApiService {
 	 */
 	async request(endpoint, options = {}, baseURL = this.adminBaseURL) {
 		const url = `${baseURL}${endpoint}`;
-		const token = get(authToken) || authToken.getToken();
+		let token = get(authToken) || authToken.getToken();
 
 		const config = {
 			headers: {
@@ -41,9 +41,57 @@ class ApiService {
 		}
 
 		try {
-			const response = await fetch(url, config);
+			let response = await fetch(url, config);
 
-			// Si la respuesta no es OK, intentar obtener el mensaje de error
+			// Intercept 401 errors for token refresh
+			if (response.status === 401) {
+				// Avoid infinite loops if the refresh endpoint itself returns 401
+				if (endpoint.includes('/auth/refresh')) {
+					throw new Error('Refresh token expired');
+				}
+
+				try {
+					// Attempt to refresh token
+					// We use credentials: 'include' to send the httpOnly cookie
+					const refreshResponse = await fetch(`${this.adminBaseURL}/api/v1/auth/refresh`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						credentials: 'include'
+					});
+
+					if (refreshResponse.ok) {
+						const data = await refreshResponse.json();
+						// Update store with new access token
+						// Note: The backend might return refresh_token in body too, but we only store access_token
+						authToken.setTokens(data);
+
+						// Update token for the retry
+						token = data.access_token;
+						config.headers.Authorization = `Bearer ${token}`;
+
+						// Retry original request
+						response = await fetch(url, config);
+					} else {
+						// Refresh failed (token expired or invalid)
+						user.logout();
+						if (typeof window !== 'undefined') {
+							window.location.href = '/login';
+						}
+						throw new Error('Session expired');
+					}
+				} catch (refreshError) {
+					// If refresh fails completely
+					user.logout();
+					if (typeof window !== 'undefined') {
+						window.location.href = '/login';
+					}
+					throw refreshError;
+				}
+			}
+
+			// Si la respuesta no es OK (y no fue 401 o falló el refresh), lanzar error
 			if (!response.ok) {
 				let errorMessage = `HTTP error! status: ${response.status}`;
 				let errorDetail = null;

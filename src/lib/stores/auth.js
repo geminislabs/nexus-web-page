@@ -28,8 +28,7 @@ function createAuthStore() {
 			if (browser) {
 				localStorage.removeItem('user');
 				localStorage.removeItem('token');
-				localStorage.removeItem('refresh_token');
-				localStorage.removeItem('id_token');
+				localStorage.removeItem('token_expires_at');
 			}
 		},
 		/**
@@ -82,18 +81,14 @@ function createTokenStore() {
 		 * @param {Object} tokens - {access_token, refresh_token, id_token, expires_in}
 		 */
 		setTokens: (tokens) => {
-			const { access_token, refresh_token, id_token, expires_in } = tokens;
+			const { access_token, expires_in } = tokens;
 
 			set(access_token);
 
 			if (browser) {
 				localStorage.setItem('token', access_token);
-				if (refresh_token) {
-					localStorage.setItem('refresh_token', refresh_token);
-				}
-				if (id_token) {
-					localStorage.setItem('id_token', id_token);
-				}
+				// Refresh token is now handled via httpOnly cookie by the backend
+
 				if (expires_in) {
 					// Guardar timestamp de expiración
 					const expiresAt = Date.now() + expires_in * 1000;
@@ -121,16 +116,7 @@ function createTokenStore() {
 			}
 			return null;
 		},
-		/**
-		 * Obtener el refresh token
-		 * @returns {string|null} Refresh token o null
-		 */
-		getRefreshToken: () => {
-			if (browser) {
-				return localStorage.getItem('refresh_token');
-			}
-			return null;
-		},
+
 		/**
 		 * Verificar si el token ha expirado
 		 * @returns {boolean} true si expiró o no existe
@@ -150,8 +136,6 @@ function createTokenStore() {
 			set(null);
 			if (browser) {
 				localStorage.removeItem('token');
-				localStorage.removeItem('refresh_token');
-				localStorage.removeItem('id_token');
 				localStorage.removeItem('token_expires_at');
 			}
 		},
