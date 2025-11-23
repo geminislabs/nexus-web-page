@@ -1,6 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
 	import { apiService } from '$lib/services/api.js';
+	import { positionService } from '$lib/services/positionService.js';
+	import { vehicleActions } from '$lib/stores/vehicleStore.js';
 
 	export let showVehiclePanel = false;
 	export let toggleVehiclePanel = null;
@@ -20,6 +22,26 @@
 			error = err.message || 'Error al cargar unidades';
 		} finally {
 			loading = false;
+		}
+	}
+
+	async function handleVehicleSelect(unit) {
+		const deviceId = unit.device_id || unit.deviceId;
+		if (!deviceId) {
+			console.warn('No device ID found for unit:', unit);
+			return;
+		}
+
+		try {
+			// Consultar getLastPosition
+			const positionData = await positionService.getLastPosition(deviceId);
+
+			// Actualizar las coordenadas del mapa para ese vehiculo
+			if (positionData) {
+				vehicleActions.updateVehiclePosition(deviceId, positionData);
+			}
+		} catch (err) {
+			console.error('Error al obtener la posición del vehículo:', err);
 		}
 	}
 
@@ -97,7 +119,11 @@
 				<div class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
 					{#each units as unit}
 						<div
-							class="unit-card p-3 rounded-lg bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] hover:bg-[var(--btn-secondary-hover-bg)] transition-colors"
+							class="unit-card p-3 rounded-lg bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] hover:bg-[var(--btn-secondary-hover-bg)] transition-colors cursor-pointer"
+							on:click={() => handleVehicleSelect(unit)}
+							on:keydown={(e) => e.key === 'Enter' && handleVehicleSelect(unit)}
+							role="button"
+							tabindex="0"
 						>
 							<div class="flex justify-between items-start mb-2">
 								<h3 class="font-bold text-app text-lg tracking-wide">{unit.name}</h3>
