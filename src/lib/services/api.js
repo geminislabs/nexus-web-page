@@ -490,7 +490,7 @@ class ApiService {
 	 * @returns {Promise<Array>} Lista de unidades asignadas
 	 */
 	async getUserUnits() {
-		return this.request('/api/v1/user-units', {
+		return this.request('/api/v1/units?include_deleted=false', {
 			method: 'GET'
 		});
 	}

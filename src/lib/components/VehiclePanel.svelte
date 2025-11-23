@@ -63,7 +63,7 @@
 			<p
 				class="text-center text-lg font-bold uppercase tracking-widest mb-12 text-app opacity-100 border-b border-[var(--panel-border)] pb-3"
 			>
-				Mis Vehículos
+				Mis Veh&iacute;culos
 			</p>
 
 			{#if loading}
@@ -100,42 +100,7 @@
 							class="unit-card p-3 rounded-lg bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] hover:bg-[var(--btn-secondary-hover-bg)] transition-colors"
 						>
 							<div class="flex justify-between items-start mb-2">
-								<h3 class="font-bold text-app text-lg tracking-wide">{unit.unit_name}</h3>
-								<span
-									class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
-								>
-									{unit.role}
-								</span>
-							</div>
-
-							<div class="space-y-1.5 text-xs text-app opacity-80">
-								<div class="flex items-center gap-2">
-									<svg class="w-3.5 h-3.5 opacity-60" fill="currentColor" viewBox="0 0 20 20">
-										<path
-											fill-rule="evenodd"
-											d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-											clip-rule="evenodd"
-										/>
-									</svg>
-									<span>{unit.user_full_name}</span>
-								</div>
-								<div class="flex items-center gap-2">
-									<svg class="w-3.5 h-3.5 opacity-60" fill="currentColor" viewBox="0 0 20 20">
-										<path
-											d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"
-										/>
-										<path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-									</svg>
-									<span class="opacity-70">{unit.user_email}</span>
-								</div>
-								{#if unit.granted_by_email}
-									<div
-										class="mt-2 pt-2 border-t border-white/10 flex items-center gap-1.5 text-[10px] opacity-60"
-									>
-										<span>Otorgado por:</span>
-										<span class="font-medium">{unit.granted_by_email}</span>
-									</div>
-								{/if}
+								<h3 class="font-bold text-app text-lg tracking-wide">{unit.name}</h3>
 							</div>
 						</div>
 					{/each}
