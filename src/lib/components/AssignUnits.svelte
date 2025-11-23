@@ -343,4 +343,10 @@
 	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
 		background: rgba(255, 255, 255, 0.3);
 	}
+
+	/* Fix for dropdown options background */
+	select option {
+		background-color: var(--glass-bg) !important;
+		color: var(--app-text) !important;
+	}
 </style>

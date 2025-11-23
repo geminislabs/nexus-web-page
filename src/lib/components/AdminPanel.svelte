@@ -457,13 +457,12 @@
 													{:else}
 														<select
 															bind:value={selectedDeviceId}
-															class="w-full px-2 py-1.5 text-xs rounded input-field bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--input-text)] focus:border-accent-cyan"
+															class="w-full px-2 py-1.5 text-xs rounded input-field border-[var(--input-border)] text-[var(--input-text)] focus:border-accent-cyan"
+															style="color-scheme: dark;"
 														>
-															<option value="" class="bg-[var(--app-bg)]"
-																>Seleccionar dispositivo...</option
-															>
+															<option value="" class="">Seleccionar dispositivo...</option>
 															{#each unassignedDevices as device}
-																<option value={device.device_id} class="bg-[var(--app-bg)]">
+																<option value={device.device_id} class="">
 																	{device.device_id} - {device.brand}
 																	{device.model}
 																</option>
@@ -591,7 +590,6 @@
 	}
 
 	.input-field {
-		background: var(--bg-primary);
 		color: var(--text-primary);
 		border: 1px solid var(--border-color);
 		outline: none;
@@ -630,7 +628,7 @@
 	.unit-card {
 		border: 1px solid var(--border-color);
 		border-radius: 0.375rem;
-		background: var(--bg-primary);
+		background: transparent;
 		overflow: hidden;
 	}
 
@@ -639,7 +637,7 @@
 	}
 
 	select.input-field option {
-		background: var(--bg-primary);
+		background-color: var(--field-bg) !important;
 		color: var(--text-primary);
 	}
 </style>
