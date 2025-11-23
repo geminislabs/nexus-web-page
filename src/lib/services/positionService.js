@@ -49,7 +49,7 @@ class PositionService {
 				return cached.data;
 			}
 
-			const response = await fetch(`${COMM_API_URL}/positions?deviceId=${deviceId}`, {
+			const response = await fetch(`${COMM_API_URL}/api/v1/positions?deviceId=${deviceId}`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json'
