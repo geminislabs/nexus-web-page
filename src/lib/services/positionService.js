@@ -49,12 +49,15 @@ class PositionService {
 				return cached.data;
 			}
 
-			const response = await fetch(`${COMM_API_URL}/api/v1/positions?deviceId=${deviceId}`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json'
+			const response = await fetch(
+				`${COMM_API_URL}/api/v1/devices/${deviceId}/communications/latest`,
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
 				}
-			});
+			);
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
