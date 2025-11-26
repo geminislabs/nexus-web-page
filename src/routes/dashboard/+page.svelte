@@ -41,16 +41,30 @@
 		const deviceId = c?.device_id || c?.deviceId || c?.device?.id || c?.id || 'unknown';
 		const lat = c?.latitude ?? c?.lat ?? c?.coordinates?.lat ?? c?.position?.lat;
 		const lng = c?.longitude ?? c?.lng ?? c?.coordinates?.lng ?? c?.position?.lng;
-		const ts = c?.timestamp || c?.time || c?.created_at || c?.lastUpdate;
 
 		return {
 			id: deviceId,
-			name: deviceId,
 			deviceId,
 			latitude: lat,
 			longitude: lng,
 			status: 'active',
-			lastUpdateFormatted: ts || 'No disponible'
+			// Todos los campos de communications
+			backup_battery_voltage: c.backup_battery_voltage,
+			course: c.course,
+			delivery_type: c.delivery_type,
+			engine_status: c.engine_status,
+			fix_status: c.fix_status,
+			gps_datetime: c.gps_datetime,
+			gps_epoch: c.gps_epoch,
+			main_battery_voltage: c.main_battery_voltage,
+			msg_class: c.msg_class,
+			network_status: c.network_status,
+			odometer: c.odometer,
+			received_at: c.received_at,
+			received_epoch: c.received_epoch,
+			rx_lvl: c.rx_lvl,
+			satellites: c.satellites,
+			speed: c.speed
 		};
 	}
 
@@ -65,48 +79,108 @@
 
 	async function loadDevicesAndCommunications() {
 		try {
-			// Cargar dispositivos y unidades en paralelo
+			// Load devices and units in parallel
 			const [devicesData, unitsData] = await Promise.all([
 				apiService.getMyDevices(),
 				apiService.getUnits()
 			]);
-			const deviceList = devicesData?.devices || [];
 
-			// Mapear devices a vehículos mínimos
-			const mapped = deviceList.map((d) => ({
-				id: d.id,
-				name: d.id,
-				deviceId: d.id,
-				status: 'active'
-			}));
-			vehicles.set(mapped);
+			// Determine device list; API may return an array or an object with a .devices property
+			let deviceList;
+			if (Array.isArray(devicesData)) {
+				deviceList = devicesData;
+			} else {
+				deviceList = devicesData?.devices || [];
+			}
 
-			// Consultar últimas comunicaciones para estos device_ids
-			const ids = deviceList.map((d) => d.id);
-			console.warn('IDs de dispositivos:', ids);
+			console.log('devicesData', devicesData);
+			console.log('deviceList', deviceList);
+			console.log('unitsData', unitsData);
+
+			// Create a map of units by device_id for quick lookup
+			const unitsByDeviceId = {};
+			const unitsList = Array.isArray(unitsData) ? unitsData : unitsData?.units || [];
+			unitsList.forEach((unit) => {
+				if (unit.device_id) {
+					unitsByDeviceId[unit.device_id] = unit;
+				}
+			});
+
+			// Get device ids for fetching communications
+			const ids = deviceList.map((d) => d.device_id);
+			console.log('ids', ids);
+
+			// Get latest communications
+			let communicationsByDeviceId = {};
 			if (ids.length > 0) {
 				try {
 					const comm = await positionService.getLatestCommunications(ids);
-					console.warn('Comunicaciones (page load):', comm);
-					// Asegurar que el mapa esté listo antes de pintar
-					await waitForMapReady();
+					console.log('Communications (page load):', comm);
+
 					const items = Array.isArray(comm) ? comm : comm?.communications || [];
 					items.forEach((c) => {
-						//const v = normalizeCommToVehicle(c);
-						const v = c;
-						if (v.latitude != null && v.longitude != null) {
-							mapService.updateVehicleMarker(v);
+						const deviceId = c?.device_id || c?.deviceId || c?.device?.id;
+						if (deviceId) {
+							communicationsByDeviceId[deviceId] = c;
 						}
 					});
-
-					// Iniciar conexión de tiempo real después de cargar posiciones iniciales
-					startRealtimeConnection(ids);
 				} catch (e2) {
-					console.warn('No se pudieron obtener las comunicaciones en page load:', e2);
+					console.warn('Failed to get communications on page load:', e2);
 				}
 			}
+
+			// Combine all data: devices + units + communications
+			const mapped = deviceList.map((d) => {
+				const deviceId = d.device_id;
+				const unit = unitsByDeviceId[deviceId] || {};
+				const comm = communicationsByDeviceId[deviceId] || {};
+
+				return {
+					id: deviceId,
+					name: unit.name || deviceId,
+					deviceId: deviceId,
+					status: 'active',
+					// Datos de communications
+					backup_battery_voltage: comm.backup_battery_voltage,
+					course: comm.course,
+					delivery_type: comm.delivery_type,
+					engine_status: comm.engine_status,
+					fix_status: comm.fix_status,
+					gps_datetime: comm.gps_datetime,
+					gps_epoch: comm.gps_epoch,
+					latitude: comm.latitude,
+					longitude: comm.longitude,
+					main_battery_voltage: comm.main_battery_voltage,
+					msg_class: comm.msg_class,
+					network_status: comm.network_status,
+					odometer: comm.odometer,
+					received_at: comm.received_at,
+					received_epoch: comm.received_epoch,
+					rx_lvl: comm.rx_lvl,
+					satellites: comm.satellites,
+					speed: comm.speed
+				};
+			});
+
+			vehicles.set(mapped);
+
+			// Update map markers after setting vehicles
+			if (ids.length > 0) {
+				await waitForMapReady();
+				// Clear existing markers before adding new ones
+				mapService.clearAllMarkers();
+
+				mapped.forEach((vehicle) => {
+					if (vehicle.latitude != null && vehicle.longitude != null) {
+						mapService.updateVehicleMarker(vehicle);
+					}
+				});
+
+				// Start realtime connection after initial positions loaded
+				startRealtimeConnection(ids);
+			}
 		} catch (e) {
-			console.error('Error cargando devices en page load:', e);
+			console.error('Error loading devices on page load:', e);
 		}
 	}
 
@@ -141,6 +215,9 @@
 					if (vehicleData.latitude != null && vehicleData.longitude != null) {
 						// Actualizar el marcador en el mapa
 						mapService.updateVehicleMarker(vehicleData);
+
+						// Actualizar el vehículo en el store con todos los campos
+						vehicleActions.updateVehicle(vehicleData.deviceId, vehicleData);
 
 						// Actualizar el indicador de carga
 						loadingPositions.set(false);

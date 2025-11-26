@@ -68,6 +68,8 @@ class PositionService {
 			// Normalizar los datos
 			const normalizedData = this.normalizePositionData(data);
 
+			console.log('Normalized data:', normalizedData);
+
 			// Guardar en cache
 			this.cache.set(cacheKey, {
 				data: normalizedData,

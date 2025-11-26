@@ -242,8 +242,16 @@ class MapService {
 	}
 
 	clearAllMarkers() {
+		// Safely remove all markers, handling different stored shapes
 		this.markers.forEach((markerData) => {
-			markerData.marker.setMap(null);
+			if (!markerData) return;
+			// Vehicle markers stored as { marker, infoWindow }
+			if (markerData.marker) {
+				markerData.marker.setMap(null);
+			} else if (typeof markerData.setMap === 'function') {
+				// Direct marker instance (e.g., user-location)
+				markerData.setMap(null);
+			}
 		});
 		this.markers.clear();
 	}
