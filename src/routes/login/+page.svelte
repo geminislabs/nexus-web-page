@@ -145,6 +145,7 @@
 						href="https://geminislabs.com/auth?mode=recover"
 						class="text-xs text-accent hover:underline"
 						target="_blank"
+						tabindex="-1"
 					>
 						¿Olvidaste tu contraseña?
 					</a>

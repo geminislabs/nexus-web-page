@@ -449,6 +449,32 @@ class ApiService {
 	}
 
 	/**
+	 * Obtener el perfil completo de una unidad
+	 * GET /api/v1/units/{unit_id}/profile
+	 * @param {string} unit_id - ID de la unidad
+	 * @returns {Promise<Object>} Perfil de la unidad
+	 */
+	async getUnitProfile(unit_id) {
+		return this.request(`/api/v1/units/${unit_id}/profile`, {
+			method: 'GET'
+		});
+	}
+
+	/**
+	 * Actualizar el perfil de una unidad
+	 * PATCH /api/v1/units/{unit_id}/profile
+	 * @param {string} unit_id - ID de la unidad
+	 * @param {Object} data - Datos a actualizar
+	 * @returns {Promise<Object>} Perfil actualizado
+	 */
+	async updateUnitProfile(unit_id, data) {
+		return this.request(`/api/v1/units/${unit_id}/profile`, {
+			method: 'PATCH',
+			body: JSON.stringify(data)
+		});
+	}
+
+	/**
 	 * Obtener dispositivos no asignados del cliente
 	 * GET /api/v1/devices/unassigned
 	 * @returns {Promise<Array>} Lista de dispositivos sin asignar
