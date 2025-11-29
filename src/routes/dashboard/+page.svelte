@@ -140,6 +140,7 @@
 					name: unit.name || deviceId,
 					deviceId: deviceId,
 					status: 'active',
+					icon_type: d.icon_type, // Map icon_type from device data
 					// Datos de communications
 					backup_battery_voltage: comm.backup_battery_voltage,
 					course: comm.course,

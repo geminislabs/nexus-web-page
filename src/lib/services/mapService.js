@@ -1,7 +1,9 @@
 import * as GoogleMapsLoader from '@googlemaps/js-api-loader';
 import { darkBlueCarStyle, DBLUE, darkGrayMapStyle, DGREY } from '$lib/mapStyles';
+
 import { getStatusBadgeClass } from '$lib/utils/vehicleUtils.js';
 import { theme } from '$lib/stores/theme.js';
+import { unitIcons } from '$lib/data/unitIcons.js';
 
 class MapService {
 	constructor() {
@@ -132,21 +134,20 @@ class MapService {
 
 		const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
 
+		// Determine icon URL
+		const iconUrl =
+			vehicle.icon_type && unitIcons[vehicle.icon_type]
+				? unitIcons[vehicle.icon_type]
+				: unitIcons['vehicle-car-sedan'];
+
 		const marker = new this.google.maps.Marker({
 			position: position,
 			map: this.map,
 			title: vehicle.device_id,
 			icon: {
-				url:
-					'data:image/svg+xml;charset=UTF-8,' +
-					encodeURIComponent(`
-					<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<circle cx="16" cy="16" r="14" fill="${this.getVehicleColor(vehicle.status)}" stroke="white" stroke-width="2"/>
-						<path d="M8 16h16M12 12h8M12 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
-					</svg>
-				`),
-				scaledSize: new this.google.maps.Size(32, 32),
-				anchor: new this.google.maps.Point(16, 16)
+				url: iconUrl,
+				scaledSize: new this.google.maps.Size(40, 40),
+				anchor: new this.google.maps.Point(20, 20)
 			}
 		});
 
@@ -159,7 +160,8 @@ class MapService {
 			infoWindow.open(this.map, marker);
 		});
 
-		this.markers.set(vehicle.id, { marker, infoWindow });
+		const id = vehicle.id || vehicle.deviceId || vehicle.device_id;
+		this.markers.set(id, { marker, infoWindow });
 		return marker;
 	}
 
@@ -267,7 +269,8 @@ class MapService {
 
 	// Actualizar marcador de vehículo existente
 	updateVehicleMarker(vehicle) {
-		const existingMarkerData = this.markers.get(vehicle.device_id);
+		const id = vehicle.id || vehicle.deviceId || vehicle.device_id;
+		const existingMarkerData = this.markers.get(id);
 
 		if (existingMarkerData) {
 			// Actualizar posición
@@ -281,18 +284,17 @@ class MapService {
 				// Actualizar contenido del info window
 				existingMarkerData.infoWindow.setContent(this.createVehicleInfoContent(vehicle));
 
-				// Actualizar color del marcador según el estado
+				// Determine icon URL
+				const iconUrl =
+					vehicle.icon_type && unitIcons[vehicle.icon_type]
+						? unitIcons[vehicle.icon_type]
+						: unitIcons['vehicle-car-sedan'];
+
+				// Actualizar icono del marcador
 				existingMarkerData.marker.setIcon({
-					url:
-						'data:image/svg+xml;charset=UTF-8,' +
-						encodeURIComponent(`
-						<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<circle cx="16" cy="16" r="14" fill="${this.getVehicleColor(vehicle.status)}" stroke="white" stroke-width="2"/>
-							<path d="M8 16h16M12 12h8M12 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>
-						</svg>
-					`),
-					scaledSize: new this.google.maps.Size(32, 32),
-					anchor: new this.google.maps.Point(16, 16)
+					url: iconUrl,
+					scaledSize: new this.google.maps.Size(40, 40),
+					anchor: new this.google.maps.Point(20, 20)
 				});
 			}
 		} else {
