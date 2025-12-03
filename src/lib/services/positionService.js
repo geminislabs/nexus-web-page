@@ -388,8 +388,56 @@ class PositionService {
 		const streamUrl = `${COMM_API_URL}/api/v1/public/share-location/stream?token=${encodeURIComponent(token)}`;
 		console.log('Connecting to share stream:', streamUrl);
 
+		// Pre-check with fetch to catch HTTP errors (HEAD not allowed, using GET with abort)
+		const controller = new AbortController();
+		fetch(streamUrl, {
+			method: 'GET',
+			signal: controller.signal
+		})
+			.then((response) => {
+				// We just want to check status, then abort the stream consumption
+				controller.abort();
+
+				if (!response.ok) {
+					throw new Error(`Stream connection failed: ${response.status} ${response.statusText}`);
+				}
+				// If OK, proceed with EventSource
+				this._initEventSource(streamUrl, onUpdate, onError);
+			})
+			.catch((err) => {
+				// Ignore abort errors as they are expected when we cancel the success case
+				if (err.name === 'AbortError') return;
+
+				console.error('Stream pre-check failed:', err);
+				if (onError) onError(err);
+			});
+
+		// Return a placeholder close function that will be overwritten or handled
+		// This is a bit tricky because _initEventSource is async-ish.
+		// Better to return an object that we can update.
+		const streamController = {
+			close: () => {
+				console.log('Stream closed (pre-check)');
+				controller.abort(); // Ensure fetch is aborted if closed early
+			}
+		};
+
+		// Store controller reference to update it later
+		this._currentStreamController = streamController;
+		return streamController;
+	}
+
+	_initEventSource(url, onUpdate, onError) {
 		try {
-			const eventSource = new EventSource(streamUrl);
+			const eventSource = new EventSource(url);
+
+			// Update the controller's close method
+			if (this._currentStreamController) {
+				this._currentStreamController.close = () => {
+					eventSource.close();
+					console.log('Share stream closed');
+				};
+			}
 
 			eventSource.onmessage = (event) => {
 				try {
@@ -412,19 +460,17 @@ class PositionService {
 
 			eventSource.onerror = (err) => {
 				console.error('Share stream error:', err);
-				if (onError) onError(err);
-			};
-
-			return {
-				close: () => {
-					eventSource.close();
-					console.log('Share stream closed');
+				// EventSource error doesn't give much info, but if we passed pre-check, it might be network drop
+				if (eventSource.readyState === EventSource.CLOSED) {
+					if (onError) onError(new Error('Conexión del stream cerrada'));
+				} else {
+					// It might be trying to reconnect
+					console.warn('Stream trying to reconnect...');
 				}
 			};
 		} catch (err) {
 			console.error('Error creating share stream:', err);
 			if (onError) onError(err);
-			return null;
 		}
 	}
 }

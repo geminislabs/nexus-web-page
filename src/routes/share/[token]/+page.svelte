@@ -96,11 +96,19 @@
 					handleStreamUpdate,
 					(err) => {
 						console.error('Stream error:', err);
-						// Si es error de expiración, podríamos mostrar un mensaje
-						if (err.message === 'El enlace ha expirado') {
-							error = err;
-							success = false;
-							if (streamConnection) streamConnection.close();
+						// Mostrar error si es crítico
+						if (err) {
+							// Si ya tenemos éxito (mapa cargado), tal vez solo mostrar un toast o alerta no intrusiva?
+							// Por ahora, si el error es de conexión inicial o expiración, mostramos la pantalla de error.
+							if (
+								!success ||
+								(err.message &&
+									(err.message.includes('failed') || err.message.includes('expirado')))
+							) {
+								error = err;
+								success = false;
+								if (streamConnection) streamConnection.close();
+							}
 						}
 					}
 				);
