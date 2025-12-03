@@ -520,6 +520,18 @@ class ApiService {
 			method: 'GET'
 		});
 	}
+
+	/**
+	 * Compartir ubicación de la unidad (Solo Master)
+	 * POST /api/v1/units/{unit_id}/share-location
+	 * @param {string} unit_id - ID de la unidad
+	 * @returns {Promise<Object>} Datos del token de compartición
+	 */
+	async shareLocation(unit_id) {
+		return this.request(`/api/v1/units/${unit_id}/share-location`, {
+			method: 'POST'
+		});
+	}
 }
 
 export const apiService = new ApiService();

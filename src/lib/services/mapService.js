@@ -124,8 +124,8 @@ class MapService {
 
 	addVehicleMarker(vehicle) {
 		// Verificar que tenemos coordenadas válidas
-		const lat = vehicle.latitude || vehicle.latitude;
-		const lng = vehicle.longitude || vehicle.longitude;
+		const lat = vehicle.latitude || vehicle.lat;
+		const lng = vehicle.longitude || vehicle.lng;
 
 		if (!this.google || !this.map || !lat || !lng) {
 			console.warn('No se pueden agregar marcadores sin coordenadas válidas:', vehicle);

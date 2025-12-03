@@ -3,6 +3,7 @@
 	import { apiService } from '$lib/services/api.js';
 	import { positionService } from '$lib/services/positionService.js';
 	import { vehicleActions } from '$lib/stores/vehicleStore.js';
+	import { user } from '$lib/stores/auth.js';
 
 	export let showVehiclePanel = false;
 	export let toggleVehiclePanel = null;
@@ -11,6 +12,15 @@
 	let units = [];
 	let loading = false;
 	let error = null;
+	let selectedUnitId = null;
+	let shareUrls = {}; // { [unitId]: { url: string, expires_at: string } }
+	let sharingLoading = false;
+	let shareError = {}; // { [unitId]: boolean }
+	let copySuccess = {}; // { [unitId]: boolean }
+	let copyError = {}; // { [unitId]: boolean }
+
+	$: currentUser = $user;
+	$: isMaster = currentUser?.is_master === true;
 
 	async function loadUserUnits() {
 		loading = true;
@@ -26,6 +36,7 @@
 	}
 
 	async function handleVehicleSelect(unit) {
+		selectedUnitId = unit.id;
 		const deviceId = unit.device_id || unit.deviceId;
 		if (!deviceId) {
 			console.warn('No device ID found for unit:', unit);
@@ -43,6 +54,69 @@
 		} catch (err) {
 			console.error('Error al obtener la posición del vehículo:', err);
 		}
+	}
+
+	// URL de la compañía para enlaces compartidos
+	const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
+
+	async function handleShareClick(unit) {
+		if (sharingLoading) return;
+
+		sharingLoading = true;
+		shareError = { ...shareError, [unit.id]: false };
+
+		try {
+			const response = await apiService.shareLocation(unit.id);
+			if (response.token) {
+				const url = `http://nexus.geminislabs.com/share/${response.token}`;
+				shareUrls = {
+					...shareUrls,
+					[unit.id]: {
+						url,
+						expires_at: response.expires_at
+					}
+				};
+			} else {
+				throw new Error('No token received');
+			}
+		} catch (err) {
+			console.error('Error sharing location:', err);
+			shareError = { ...shareError, [unit.id]: true };
+			setTimeout(() => {
+				shareError = { ...shareError, [unit.id]: false };
+			}, 1500);
+		} finally {
+			sharingLoading = false;
+		}
+	}
+
+	function copyToClipboard(text, unitId) {
+		if (navigator.clipboard) {
+			navigator.clipboard
+				.writeText(text)
+				.then(() => {
+					copySuccess = { ...copySuccess, [unitId]: true };
+					setTimeout(() => {
+						copySuccess = { ...copySuccess, [unitId]: false };
+					}, 1500);
+				})
+				.catch(() => {
+					copyError = { ...copyError, [unitId]: true };
+					setTimeout(() => {
+						copyError = { ...copyError, [unitId]: false };
+					}, 1500);
+				});
+		} else {
+			copyError = { ...copyError, [unitId]: true };
+			setTimeout(() => {
+				copyError = { ...copyError, [unitId]: false };
+			}, 1500);
+		}
+	}
+
+	function formatDate(dateString) {
+		if (!dateString) return '';
+		return new Date(dateString).toLocaleString();
 	}
 
 	// Cargar unidades cuando se muestra el panel
@@ -126,8 +200,83 @@
 							tabindex="0"
 						>
 							<div class="flex justify-between items-start mb-2">
-								<h3 class="font-bold text-app text-lg tracking-wide">{unit.name}</h3>
+								<h3 class="font-bold text-app text-lg tracking-wide">
+									{unit.name}
+								</h3>
+								{#if isMaster && selectedUnitId === unit.id}
+									<button
+										class="p-2 rounded-full transition-all duration-300 text-accent-cyan {shareError[
+											unit.id
+										]
+											? 'glow-red'
+											: 'hover:bg-white/10'}"
+										on:click|stopPropagation={() => handleShareClick(unit)}
+										title="Compartir ubicación"
+										aria-label="Compartir ubicación"
+										disabled={sharingLoading}
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="20"
+											height="20"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+										>
+											<circle cx="18" cy="5" r="3"></circle>
+											<circle cx="6" cy="12" r="3"></circle>
+											<circle cx="18" cy="19" r="3"></circle>
+											<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+											<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+										</svg>
+									</button>
+								{/if}
 							</div>
+
+							{#if shareUrls[unit.id]}
+								<div
+									class="mt-2 p-2 text-xs break-all"
+									on:click|stopPropagation
+									on:keydown|stopPropagation
+									role="button"
+									tabindex="0"
+								>
+									<div class="flex items-center gap-2 justify-between">
+										<span class="text-app/80 font-mono"
+											>Expira: {formatDate(shareUrls[unit.id].expires_at)}</span
+										>
+										<button
+											class="text-accent-cyan p-1 rounded transition-all duration-300 {copySuccess[
+												unit.id
+											]
+												? 'glow-green'
+												: ''} {copyError[unit.id] ? 'glow-red' : 'hover:text-white'}"
+											on:click|stopPropagation={() =>
+												copyToClipboard(shareUrls[unit.id].url, unit.id)}
+											title="Copiar enlace"
+											aria-label="Copiar enlace"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="16"
+												height="16"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+											>
+												<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+												<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+											</svg>
+										</button>
+									</div>
+								</div>
+							{/if}
 						</div>
 					{/each}
 				</div>
@@ -139,5 +288,13 @@
 <style>
 	.unit-card {
 		box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	}
+	.glow-red {
+		box-shadow: 0 0 10px red;
+		color: red;
+	}
+	.glow-green {
+		box-shadow: 0 0 10px var(--accent-cyan);
+		color: var(--accent-cyan);
 	}
 </style>

@@ -336,5 +336,96 @@ class PositionService {
 			return null;
 		}
 	}
+	/**
+	 * Inicializar vista de ubicación compartida (Público)
+	 * GET /public/share-location/init
+	 * @param {string} token - Token de compartición
+	 * @returns {Promise<Object>} Datos de la unidad y configuración
+	 */
+	async initShareLocation(token) {
+		try {
+			const response = await fetch(
+				`${COMM_API_URL}/api/v1/public/share-location/init?token=${encodeURIComponent(token)}`,
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+			);
+
+			if (!response.ok) {
+				let errorDetail = null;
+				try {
+					const errorData = await response.json();
+					errorDetail = errorData.detail;
+				} catch (e) {
+					// Ignore json parse error
+				}
+
+				console.error('Error initializing share location:', response.status, errorDetail);
+
+				if (!errorDetail) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				throw new Error(errorDetail);
+			}
+
+			return await response.json();
+		} catch (error) {
+			console.error('Error initializing share location:', error);
+			throw error;
+		}
+	}
+	/**
+	 * Conectar al stream de ubicación compartida (SSE)
+	 * @param {string} token - Token de compartición
+	 * @param {Function} onUpdate - Callback para actualizaciones de ubicación
+	 * @param {Function} onError - Callback para errores
+	 * @returns {Object} Controlador del stream { close: Function }
+	 */
+	connectToShareStream(token, onUpdate, onError) {
+		const streamUrl = `${COMM_API_URL}/api/v1/public/share-location/stream?token=${encodeURIComponent(token)}`;
+		console.log('Connecting to share stream:', streamUrl);
+
+		try {
+			const eventSource = new EventSource(streamUrl);
+
+			eventSource.onmessage = (event) => {
+				try {
+					const data = JSON.parse(event.data);
+					if (onUpdate) onUpdate(data);
+				} catch (e) {
+					console.error('Error parsing share stream data:', e);
+				}
+			};
+
+			eventSource.addEventListener('expired', () => {
+				console.warn('Share token expired');
+				eventSource.close();
+				if (onError) onError(new Error('El enlace ha expirado'));
+			});
+
+			eventSource.addEventListener('no_data', () => {
+				console.log('No data available for shared device');
+			});
+
+			eventSource.onerror = (err) => {
+				console.error('Share stream error:', err);
+				if (onError) onError(err);
+			};
+
+			return {
+				close: () => {
+					eventSource.close();
+					console.log('Share stream closed');
+				}
+			};
+		} catch (err) {
+			console.error('Error creating share stream:', err);
+			if (onError) onError(err);
+			return null;
+		}
+	}
 }
 export const positionService = new PositionService();

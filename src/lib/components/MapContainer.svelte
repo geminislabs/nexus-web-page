@@ -65,3 +65,44 @@
 	<div bind:this={mapElement} class="map-canvas"></div>
 	<div class="vignette pointer-events-none"></div>
 </div>
+
+<style>
+	.map-wrap {
+		position: relative;
+		width: 100%;
+		height: 100vh; /* ajusta según tu layout */
+		background: #0b1524; /* fondo fuera del mapa */
+		border-radius: 16px;
+		overflow: hidden; /* recorta el canvas + overlay */
+	}
+
+	.map-canvas {
+		position: absolute;
+		inset: 0;
+	}
+
+	.vignette {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+
+	@supports (mask-image: radial-gradient(circle, #000, transparent)) {
+		.vignette {
+			background-color: rgba(11, 21, 36, 0.65);
+			mask-image: radial-gradient(circle at 50% 50%, transparent 60%, black 85%);
+			-webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 60%, black 85%);
+		}
+	}
+
+	@supports not (mask-image: radial-gradient(circle, #000, transparent)) {
+		.vignette {
+			background: radial-gradient(
+				circle at 50% 50%,
+				rgba(11, 21, 36, 0) 58%,
+				rgba(11, 21, 36, 0.5) 80%,
+				rgba(11, 21, 36, 0.7) 100%
+			);
+		}
+	}
+</style>
