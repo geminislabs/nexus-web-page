@@ -19,6 +19,11 @@
 	let copySuccess = {}; // { [unitId]: boolean }
 	let copyError = {}; // { [unitId]: boolean }
 
+	// Trayectos
+	let trips = [];
+	let tripsLoading = false;
+	let tripsError = null;
+
 	$: currentUser = $user;
 	$: isMaster = currentUser?.is_master === true;
 
@@ -38,6 +43,10 @@
 	async function handleVehicleSelect(unit) {
 		selectedUnitId = unit.id;
 		const deviceId = unit.device_id || unit.deviceId;
+
+		// Cargar trayectos
+		loadTrips(unit.id);
+
 		if (!deviceId) {
 			console.warn('No device ID found for unit:', unit);
 			return;
@@ -53,6 +62,32 @@
 			}
 		} catch (err) {
 			console.error('Error al obtener la posición del vehículo:', err);
+		}
+	}
+
+	async function loadTrips(unitId) {
+		tripsLoading = true;
+		tripsError = null;
+		trips = [];
+
+		try {
+			// Obtener fecha actual en formato YYYY-MM-DD
+			const now = new Date();
+			const day = now.toISOString().split('T')[0];
+
+			const response = await apiService.getTrips({
+				unit_id: unitId,
+				day: day
+			});
+
+			if (response && response.trips) {
+				trips = response.trips;
+			}
+		} catch (err) {
+			console.error('Error al cargar trayectos:', err);
+			tripsError = 'Error al cargar trayectos';
+		} finally {
+			tripsLoading = false;
 		}
 	}
 
@@ -279,6 +314,58 @@
 							{/if}
 						</div>
 					{/each}
+				</div>
+			{/if}
+
+			<!-- Sección de Trayectos -->
+			{#if selectedUnitId}
+				<div class="mt-6 border-t border-[var(--panel-border)] pt-4">
+					<h3 class="text-app font-bold mb-3 uppercase tracking-wider text-sm">
+						Trayectos del día
+					</h3>
+
+					{#if tripsLoading}
+						<div class="flex justify-center py-4">
+							<svg
+								class="animate-spin h-5 w-5 text-accent-cyan"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"
+								></circle>
+								<path
+									class="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								></path>
+							</svg>
+						</div>
+					{:else if tripsError}
+						<p class="text-xs text-red-400 text-center">{tripsError}</p>
+					{:else if trips.length === 0}
+						<p class="text-xs text-app opacity-60 text-center italic">Sin trayectos</p>
+					{:else}
+						<div class="space-y-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-1">
+							{#each trips as trip}
+								<div
+									class="p-2 rounded bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] text-xs"
+								>
+									<div class="flex justify-between items-center">
+										<span class="font-mono text-accent-cyan"
+											>{formatDate(trip.start_timestamp)}</span
+										>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>

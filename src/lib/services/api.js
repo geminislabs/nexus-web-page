@@ -532,6 +532,28 @@ class ApiService {
 			method: 'POST'
 		});
 	}
+
+	/**
+	 * Obtener lista de trayectos (trips)
+	 * GET /api/v1/trips
+	 * @param {Object} params - Parámetros de filtro (unit_id, day, etc.)
+	 * @returns {Promise<Object>} Lista de trips
+	 */
+	async getTrips(params = {}) {
+		const queryParams = new URLSearchParams();
+		Object.keys(params).forEach((key) => {
+			if (params[key] !== undefined && params[key] !== null) {
+				queryParams.append(key, params[key]);
+			}
+		});
+
+		const queryString = queryParams.toString();
+		const endpoint = `/api/v1/trips${queryString ? `?${queryString}` : ''}`;
+
+		return this.request(endpoint, {
+			method: 'GET'
+		});
+	}
 }
 
 export const apiService = new ApiService();
