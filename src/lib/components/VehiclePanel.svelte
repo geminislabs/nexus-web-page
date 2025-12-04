@@ -24,6 +24,7 @@
 	let trips = [];
 	let tripsLoading = false;
 	let tripsError = null;
+	let currentDate = '';
 
 	$: currentUser = $user;
 	$: isMaster = currentUser?.is_master === true;
@@ -78,6 +79,7 @@
 			const month = String(now.getMonth() + 1).padStart(2, '0');
 			const dayOfMonth = String(now.getDate()).padStart(2, '0');
 			const day = `${year}-${month}-${dayOfMonth}`;
+			currentDate = day;
 
 			const response = await apiService.getTrips({
 				unit_id: unitId,
@@ -183,6 +185,11 @@
 	function formatDate(dateString) {
 		if (!dateString) return '';
 		return new Date(dateString).toLocaleString();
+	}
+
+	function formatTime(dateString) {
+		if (!dateString) return '';
+		return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 	}
 
 	// Cargar unidades cuando se muestra el panel
@@ -351,9 +358,12 @@
 			<!-- Sección de Trayectos -->
 			{#if selectedUnitId}
 				<div class="mt-6 border-t border-[var(--panel-border)] pt-4">
-					<h3 class="text-app font-bold mb-3 uppercase tracking-wider text-sm">
-						Trayectos del día
-					</h3>
+					<div class="flex justify-between items-center mb-3">
+						<h3 class="text-app font-bold uppercase tracking-wider text-sm">Trayectos del día</h3>
+						{#if currentDate}
+							<span class="text-xs text-accent-cyan font-mono">{currentDate}</span>
+						{/if}
+					</div>
 
 					{#if tripsLoading}
 						<div class="flex justify-center py-4">
@@ -393,9 +403,18 @@
 									tabindex="0"
 								>
 									<div class="flex justify-between items-center">
-										<span class="font-mono text-accent-cyan"
-											>{formatDate(trip.start_timestamp)}</span
-										>
+										<div class="flex gap-2">
+											<span class="text-app opacity-70">Inicio:</span>
+											<span class="font-mono text-accent-cyan"
+												>{formatTime(trip.start_timestamp)}</span
+											>
+										</div>
+										<div class="flex gap-2">
+											<span class="text-app opacity-70">Fin:</span>
+											<span class="font-mono text-accent-cyan"
+												>{formatTime(trip.end_timestamp)}</span
+											>
+										</div>
 									</div>
 								</div>
 							{/each}
