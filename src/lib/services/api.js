@@ -554,6 +554,29 @@ class ApiService {
 			method: 'GET'
 		});
 	}
+
+	/**
+	 * Obtener detalles de un trip
+	 * GET /api/v1/trips/{trip_id}
+	 * @param {string} trip_id - ID del trip
+	 * @param {Object} params - Parámetros opcionales (include_points, include_alerts, etc.)
+	 * @returns {Promise<Object>} Detalles del trip
+	 */
+	async getTripDetails(trip_id, params = { include_points: true, include_alerts: true }) {
+		const queryParams = new URLSearchParams();
+		Object.keys(params).forEach((key) => {
+			if (params[key] !== undefined && params[key] !== null) {
+				queryParams.append(key, params[key]);
+			}
+		});
+
+		const queryString = queryParams.toString();
+		const endpoint = `/api/v1/trips/${trip_id}${queryString ? `?${queryString}` : ''}`;
+
+		return this.request(endpoint, {
+			method: 'GET'
+		});
+	}
 }
 
 export const apiService = new ApiService();

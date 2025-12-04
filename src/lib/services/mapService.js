@@ -14,6 +14,8 @@ class MapService {
 		this.currentTheme = undefined;
 		this.apiKey =
 			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
+		this.currentPolyline = null;
+		this.tripMarkers = [];
 	}
 
 	async initialize(mapElement) {
@@ -344,6 +346,77 @@ class MapService {
 	setZoom(zoom) {
 		if (this.map) {
 			this.map.setZoom(zoom);
+		}
+	}
+
+	drawTripPolyline(coordinates) {
+		if (!this.map || !this.google) return;
+
+		// Limpiar polilínea y marcadores existentes
+		this.clearTripPolyline();
+
+		if (!coordinates || coordinates.length === 0) return;
+
+		const path = [];
+		const bounds = new this.google.maps.LatLngBounds();
+
+		coordinates.forEach((coord) => {
+			const lat = parseFloat(coord.lat);
+			const lng = parseFloat(coord.lng || coord.lon);
+			const position = { lat, lng };
+
+			path.push(position);
+			bounds.extend(position);
+
+			// Agregar marcadores para eventos de ignición
+			if (coord.itemType === 'alert') {
+				let iconUrl = null;
+
+				if (coord.type === 'ignition_on') {
+					iconUrl = '/marker/marker-power-on.png';
+				} else if (coord.type === 'ignition_off') {
+					iconUrl = '/marker/marker-power-off.png';
+				}
+
+				if (iconUrl) {
+					const marker = new this.google.maps.Marker({
+						position: position,
+						map: this.map,
+						icon: {
+							url: iconUrl,
+							scaledSize: new this.google.maps.Size(32, 32),
+							anchor: new this.google.maps.Point(16, 16)
+						},
+						title: coord.type
+					});
+					this.tripMarkers.push(marker);
+				}
+			}
+		});
+
+		// Crear nueva polilínea
+		this.currentPolyline = new this.google.maps.Polyline({
+			path: path,
+			geodesic: true,
+			strokeColor: '#00FFFF', // Cyan neon
+			strokeOpacity: 1.0,
+			strokeWeight: 4,
+			map: this.map
+		});
+
+		this.map.fitBounds(bounds);
+	}
+
+	clearTripPolyline() {
+		if (this.currentPolyline) {
+			this.currentPolyline.setMap(null);
+			this.currentPolyline = null;
+		}
+
+		// Limpiar marcadores de viaje
+		if (this.tripMarkers && this.tripMarkers.length > 0) {
+			this.tripMarkers.forEach((marker) => marker.setMap(null));
+			this.tripMarkers = [];
 		}
 	}
 }

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { apiService } from '$lib/services/api.js';
 	import { positionService } from '$lib/services/positionService.js';
+	import { mapService } from '$lib/services/mapService.js';
 	import { vehicleActions } from '$lib/stores/vehicleStore.js';
 	import { user } from '$lib/stores/auth.js';
 
@@ -71,13 +72,17 @@
 		trips = [];
 
 		try {
-			// Obtener fecha actual en formato YYYY-MM-DD
+			// Obtener fecha actual en formato YYYY-MM-DD usando la zona horaria local
 			const now = new Date();
-			const day = now.toISOString().split('T')[0];
+			const year = now.getFullYear();
+			const month = String(now.getMonth() + 1).padStart(2, '0');
+			const dayOfMonth = String(now.getDate()).padStart(2, '0');
+			const day = `${year}-${month}-${dayOfMonth}`;
 
 			const response = await apiService.getTrips({
 				unit_id: unitId,
-				day: day
+				day: day,
+				tz: 'America/Mexico_City'
 			});
 
 			if (response && response.trips) {
@@ -88,6 +93,32 @@
 			tripsError = 'Error al cargar trayectos';
 		} finally {
 			tripsLoading = false;
+		}
+	}
+
+	async function handleTripClick(trip) {
+		if (!trip || !trip.trip_id) return;
+
+		try {
+			// Obtener detalles del trip (puntos y alertas)
+			const details = await apiService.getTripDetails(trip.trip_id);
+
+			if (details) {
+				// Combinar puntos y alertas
+				const points = details.points || [];
+				const alerts = details.alerts || [];
+
+				// Unificar formato y ordenar por timestamp
+				const allPoints = [
+					...points.map((p) => ({ ...p, itemType: 'point' })),
+					...alerts.map((a) => ({ ...a, itemType: 'alert' }))
+				].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+				// Dibujar en el mapa
+				mapService.drawTripPolyline(allPoints);
+			}
+		} catch (err) {
+			console.error('Error al cargar detalles del trayecto:', err);
 		}
 	}
 
@@ -355,7 +386,11 @@
 						<div class="space-y-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-1">
 							{#each trips as trip}
 								<div
-									class="p-2 rounded bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] text-xs"
+									class="p-2 rounded bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] text-xs cursor-pointer hover:bg-[var(--btn-secondary-hover-bg)] transition-colors"
+									on:click={() => handleTripClick(trip)}
+									on:keydown={(e) => e.key === 'Enter' && handleTripClick(trip)}
+									role="button"
+									tabindex="0"
 								>
 									<div class="flex justify-between items-center">
 										<span class="font-mono text-accent-cyan"
