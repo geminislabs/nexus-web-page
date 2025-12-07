@@ -210,10 +210,11 @@ class MapService {
 					<p><span class="font-medium ">Bater&iacute;a dispositivo:</span> ${batteryDevice || 0} V</p>
 					${vehicle.device_id ? `<p><span class=\"font-medium \">Device ID:</span> ${vehicle.device_id}</p>` : ''}
 					<p><span class="font-medium ">Última actualización:</span> ${lastUpdate}</p>
-					${vehicle.latitude && vehicle.longitude
-				? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
-				: ''
-			}
+					${
+						vehicle.latitude && vehicle.longitude
+							? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
+							: ''
+					}
 				</div>
 			</div>
 		`;
@@ -430,36 +431,133 @@ class MapService {
 		this.stopAnimation();
 	}
 
-	animateTrip(coordinates, duration = 10000) {
+	animateTrip(coordinates, totalDuration = 10000, onFinish = null) {
 		if (!this.map || !this.google || !coordinates || coordinates.length < 2) return;
 
 		this.stopAnimation();
 
-		this.animationPath = coordinates.map((coord) => ({
+		this.onFinish = onFinish;
+
+		// Preparar path con lógica de clustering y tiempos
+		const rawPath = coordinates.map((coord) => ({
 			lat: parseFloat(coord.lat),
 			lng: parseFloat(coord.lng || coord.lon)
 		}));
-		this.animationDuration = duration;
+
+		this.animationPath = this.prepareAnimationPath(rawPath, totalDuration);
 		this.animationStartTime = performance.now();
 		this.pausedTime = 0;
 		this.isPaused = false;
+		this.currentSegmentIndex = 0;
 
 		// Crear marcador del vehículo si no existe
 		if (!this.vehicleMarker) {
 			this.vehicleMarker = new this.google.maps.Marker({
 				map: this.map,
 				icon: {
-					url: unitIcons['vehicle-car-sedan'], // Usar icono por defecto o pasar tipo
+					url: unitIcons['vehicle-car-sedan'],
 					scaledSize: new this.google.maps.Size(40, 40),
 					anchor: new this.google.maps.Point(20, 20)
 				},
-				zIndex: 1000 // Asegurar que esté encima
+				zIndex: 1000
 			});
 		} else {
 			this.vehicleMarker.setMap(this.map);
 		}
 
+		// Posicionar al inicio
+		if (this.animationPath.length > 0) {
+			const startPos =
+				this.animationPath[0].type === 'move'
+					? this.animationPath[0].start
+					: this.animationPath[0].position;
+			this.vehicleMarker.setPosition(startPos);
+		}
+
 		this.animate(performance.now());
+	}
+
+	// Helper para calcular distancia Haversine entre dos puntos (en metros)
+	haversineDistance(coords1, coords2) {
+		const R = 6371e3; // metres
+		const φ1 = (coords1.lat * Math.PI) / 180; // φ, λ in radians
+		const φ2 = (coords2.lat * Math.PI) / 180;
+		const Δφ = ((coords2.lat - coords1.lat) * Math.PI) / 180;
+		const Δλ = ((coords2.lng - coords1.lng) * Math.PI) / 180;
+
+		const a =
+			Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+			Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+		const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+		return R * c; // in metres
+	}
+
+	prepareAnimationPath(rawPath, totalDuration) {
+		const segments = [];
+		const STOP_THRESHOLD = 5; // metros
+		const STOP_PAUSE_DURATION = 400; // ms
+
+		let currentStop = null;
+
+		// 1. Identificar segmentos (move vs stop)
+		for (let i = 0; i < rawPath.length - 1; i++) {
+			const p1 = rawPath[i];
+			const p2 = rawPath[i + 1];
+			const dist = this.haversineDistance(p1, p2);
+
+			if (dist < STOP_THRESHOLD) {
+				// Es un stop
+				if (!currentStop) {
+					currentStop = {
+						type: 'stop',
+						position: p1,
+						duration: STOP_PAUSE_DURATION
+					};
+					segments.push(currentStop);
+				}
+				// Si ya estamos en un stop, simplemente lo extendemos (no hacemos nada visualmente extra)
+			} else {
+				// Es movimiento
+				currentStop = null;
+				segments.push({
+					type: 'move',
+					start: p1,
+					end: p2,
+					distance: dist,
+					duration: 0 // Se calculará después
+				});
+			}
+		}
+
+		// 2. Calcular duración de segmentos de movimiento
+		const totalMoveDistance = segments
+			.filter((s) => s.type === 'move')
+			.reduce((acc, s) => acc + s.distance, 0);
+
+		const totalStopDuration = segments
+			.filter((s) => s.type === 'stop')
+			.reduce((acc, s) => acc + s.duration, 0);
+
+		const availableMoveTime = Math.max(1000, totalDuration - totalStopDuration);
+
+		segments.forEach((segment) => {
+			if (segment.type === 'move') {
+				// Asignar tiempo proporcional a la distancia
+				segment.duration = (segment.distance / totalMoveDistance) * availableMoveTime;
+			}
+		});
+
+		// 3. Calcular tiempos de inicio para cada segmento para facilitar la animación
+		let accumulatedTime = 0;
+		segments.forEach((segment) => {
+			segment.startTime = accumulatedTime;
+			accumulatedTime += segment.duration;
+			segment.endTime = accumulatedTime;
+		});
+
+		this.totalAnimationTime = accumulatedTime;
+		return segments;
 	}
 
 	animate(currentTime) {
@@ -469,40 +567,45 @@ class MapService {
 		}
 
 		const elapsed = currentTime - this.animationStartTime - this.pausedTime;
-		const progress = Math.min(elapsed / this.animationDuration, 1);
 
-		if (progress < 1) {
-			const position = this.getInterpolatedPosition(progress);
-			if (position) {
-				this.vehicleMarker.setPosition(position);
-			}
-			this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
-		} else {
-			// Animación terminada
-			const endPos = this.animationPath[this.animationPath.length - 1];
+		if (elapsed >= this.totalAnimationTime) {
+			// Fin de la animación
+			const lastSegment = this.animationPath[this.animationPath.length - 1];
+			const endPos = lastSegment.type === 'move' ? lastSegment.end : lastSegment.position;
 			this.vehicleMarker.setPosition(endPos);
-			this.isPaused = true; // Pausar al final para permitir reinicio
-			// Disparar evento de fin si fuera necesario
+			this.isPaused = true;
+
+			if (this.onFinish) {
+				this.onFinish();
+			}
+			return;
 		}
+
+		// Encontrar segmento actual
+		const segment = this.animationPath.find((s) => elapsed >= s.startTime && elapsed < s.endTime);
+
+		if (segment) {
+			if (segment.type === 'stop') {
+				this.vehicleMarker.setPosition(segment.position);
+			} else if (segment.type === 'move') {
+				const segmentElapsed = elapsed - segment.startTime;
+				const progress = segmentElapsed / segment.duration;
+
+				// Interpolación simple (linear)
+				// Podríamos agregar ease-in/out aquí si se desea
+				const lat = segment.start.lat + (segment.end.lat - segment.start.lat) * progress;
+				const lng = segment.start.lng + (segment.end.lng - segment.start.lng) * progress;
+
+				this.vehicleMarker.setPosition({ lat, lng });
+			}
+		}
+
+		this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
 	}
 
 	getInterpolatedPosition(progress) {
-		const path = this.animationPath;
-		const totalPoints = path.length - 1;
-		const virtualIndex = progress * totalPoints;
-		const index = Math.floor(virtualIndex);
-		const nextIndex = Math.min(index + 1, totalPoints);
-		const segmentProgress = virtualIndex - index;
-
-		const p1 = path[index];
-		const p2 = path[nextIndex];
-
-		if (!p1 || !p2) return null;
-
-		return {
-			lat: p1.lat + (p2.lat - p1.lat) * segmentProgress,
-			lng: p1.lng + (p2.lng - p1.lng) * segmentProgress
-		};
+		// Deprecated by new animate logic
+		return null;
 	}
 
 	pauseAnimation() {
@@ -519,7 +622,7 @@ class MapService {
 
 			// Si ya había terminado, reiniciar
 			const elapsed = performance.now() - this.animationStartTime - this.pausedTime;
-			if (elapsed >= this.animationDuration) {
+			if (elapsed >= this.totalAnimationTime) {
 				this.animationStartTime = performance.now();
 				this.pausedTime = 0;
 			}
@@ -535,6 +638,7 @@ class MapService {
 			this.vehicleMarker.setMap(null);
 		}
 		this.isPaused = false;
+		this.onFinish = null;
 	}
 }
 

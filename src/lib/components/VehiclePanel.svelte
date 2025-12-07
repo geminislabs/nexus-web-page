@@ -25,6 +25,7 @@
 	let tripsLoading = false;
 	let tripsError = null;
 	let currentDate = '';
+	let selectedTripId = null;
 
 	// Animación
 	let isPlaying = false;
@@ -105,6 +106,8 @@
 	async function handleTripClick(trip) {
 		if (!trip || !trip.trip_id) return;
 
+		selectedTripId = trip.trip_id;
+
 		// Detener animación anterior si existe
 		stopAnimation();
 
@@ -145,7 +148,9 @@
 		} else {
 			if (currentTripPoints.length > 0) {
 				const duration = currentTripPoints.length < 20 ? 10000 : 20000;
-				mapService.animateTrip(currentTripPoints, duration);
+				mapService.animateTrip(currentTripPoints, duration, () => {
+					stopAnimation();
+				});
 				isPlaying = true;
 				isPaused = false;
 			}
@@ -501,7 +506,10 @@
 						<div class="space-y-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-1">
 							{#each trips as trip}
 								<div
-									class="p-2 rounded bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] text-xs cursor-pointer hover:bg-[var(--btn-secondary-hover-bg)] transition-colors"
+									class="p-2 rounded bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] text-xs cursor-pointer hover:bg-[var(--btn-secondary-hover-bg)] transition-colors {selectedTripId ===
+									trip.trip_id
+										? 'bg-[var(--btn-secondary-hover-bg)] border-accent-cyan'
+										: ''}"
 									on:click={() => handleTripClick(trip)}
 									on:keydown={(e) => e.key === 'Enter' && handleTripClick(trip)}
 									role="button"
