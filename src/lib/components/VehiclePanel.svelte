@@ -26,6 +26,11 @@
 	let tripsError = null;
 	let currentDate = '';
 
+	// Animación
+	let isPlaying = false;
+	let isPaused = false;
+	let currentTripPoints = [];
+
 	$: currentUser = $user;
 	$: isMaster = currentUser?.is_master === true;
 
@@ -100,6 +105,9 @@
 	async function handleTripClick(trip) {
 		if (!trip || !trip.trip_id) return;
 
+		// Detener animación anterior si existe
+		stopAnimation();
+
 		try {
 			// Obtener detalles del trip (puntos y alertas)
 			const details = await apiService.getTripDetails(trip.trip_id);
@@ -115,12 +123,39 @@
 					...alerts.map((a) => ({ ...a, itemType: 'alert' }))
 				].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
+				currentTripPoints = allPoints;
+
 				// Dibujar en el mapa
 				mapService.drawTripPolyline(allPoints);
 			}
 		} catch (err) {
 			console.error('Error al cargar detalles del trayecto:', err);
 		}
+	}
+
+	function togglePlay() {
+		if (isPlaying) {
+			if (isPaused) {
+				mapService.resumeAnimation();
+				isPaused = false;
+			} else {
+				mapService.pauseAnimation();
+				isPaused = true;
+			}
+		} else {
+			if (currentTripPoints.length > 0) {
+				const duration = currentTripPoints.length < 20 ? 10000 : 20000;
+				mapService.animateTrip(currentTripPoints, duration);
+				isPlaying = true;
+				isPaused = false;
+			}
+		}
+	}
+
+	function stopAnimation() {
+		mapService.stopAnimation();
+		isPlaying = false;
+		isPaused = false;
 	}
 
 	// URL de la compañía para enlaces compartidos
@@ -357,8 +392,73 @@
 			<!-- Sección de Trayectos -->
 			{#if selectedUnitId}
 				<div class="mt-6 border-t border-[var(--panel-border)] pt-4">
+					<h3 class="text-app font-bold uppercase tracking-wider text-sm mb-3 block w-full">
+						Trayectos del día
+					</h3>
 					<div class="flex justify-between items-center mb-3">
-						<h3 class="text-app font-bold uppercase tracking-wider text-sm">Trayectos del día</h3>
+						<div class="flex items-center gap-2">
+							{#if currentTripPoints.length > 0}
+								<div class="flex gap-1">
+									<button
+										class="p-1 rounded hover:bg-white/10 text-accent-cyan transition-colors"
+										on:click={togglePlay}
+										title={isPlaying && !isPaused ? 'Pausar' : 'Reproducir'}
+										aria-label={isPlaying && !isPaused ? 'Pausar' : 'Reproducir'}
+									>
+										{#if isPlaying && !isPaused}
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="16"
+												height="16"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												><rect x="6" y="4" width="4" height="16"></rect><rect
+													x="14"
+													y="4"
+													width="4"
+													height="16"
+												></rect></svg
+											>
+										{:else}
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="16"
+												height="16"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg
+											>
+										{/if}
+									</button>
+									<button
+										class="p-1 rounded hover:bg-white/10 text-red-400 transition-colors"
+										on:click={stopAnimation}
+										title="Detener"
+										aria-label="Detener"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="16"
+											height="16"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg
+										>
+									</button>
+								</div>
+							{/if}
+						</div>
 						{#if currentDate}
 							<input
 								type="date"

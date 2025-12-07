@@ -16,6 +16,15 @@ class MapService {
 			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
 		this.currentPolyline = null;
 		this.tripMarkers = [];
+
+		// Animación
+		this.vehicleMarker = null;
+		this.animationFrameId = null;
+		this.isPaused = false;
+		this.animationStartTime = null;
+		this.pausedTime = 0;
+		this.animationDuration = 0;
+		this.animationPath = [];
 	}
 
 	async initialize(mapElement) {
@@ -201,11 +210,10 @@ class MapService {
 					<p><span class="font-medium ">Bater&iacute;a dispositivo:</span> ${batteryDevice || 0} V</p>
 					${vehicle.device_id ? `<p><span class=\"font-medium \">Device ID:</span> ${vehicle.device_id}</p>` : ''}
 					<p><span class="font-medium ">Última actualización:</span> ${lastUpdate}</p>
-					${
-						vehicle.latitude && vehicle.longitude
-							? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
-							: ''
-					}
+					${vehicle.latitude && vehicle.longitude
+				? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
+				: ''
+			}
 				</div>
 			</div>
 		`;
@@ -418,6 +426,115 @@ class MapService {
 			this.tripMarkers.forEach((marker) => marker.setMap(null));
 			this.tripMarkers = [];
 		}
+
+		this.stopAnimation();
+	}
+
+	animateTrip(coordinates, duration = 10000) {
+		if (!this.map || !this.google || !coordinates || coordinates.length < 2) return;
+
+		this.stopAnimation();
+
+		this.animationPath = coordinates.map((coord) => ({
+			lat: parseFloat(coord.lat),
+			lng: parseFloat(coord.lng || coord.lon)
+		}));
+		this.animationDuration = duration;
+		this.animationStartTime = performance.now();
+		this.pausedTime = 0;
+		this.isPaused = false;
+
+		// Crear marcador del vehículo si no existe
+		if (!this.vehicleMarker) {
+			this.vehicleMarker = new this.google.maps.Marker({
+				map: this.map,
+				icon: {
+					url: unitIcons['vehicle-car-sedan'], // Usar icono por defecto o pasar tipo
+					scaledSize: new this.google.maps.Size(40, 40),
+					anchor: new this.google.maps.Point(20, 20)
+				},
+				zIndex: 1000 // Asegurar que esté encima
+			});
+		} else {
+			this.vehicleMarker.setMap(this.map);
+		}
+
+		this.animate(performance.now());
+	}
+
+	animate(currentTime) {
+		if (this.isPaused) {
+			this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
+			return;
+		}
+
+		const elapsed = currentTime - this.animationStartTime - this.pausedTime;
+		const progress = Math.min(elapsed / this.animationDuration, 1);
+
+		if (progress < 1) {
+			const position = this.getInterpolatedPosition(progress);
+			if (position) {
+				this.vehicleMarker.setPosition(position);
+			}
+			this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
+		} else {
+			// Animación terminada
+			const endPos = this.animationPath[this.animationPath.length - 1];
+			this.vehicleMarker.setPosition(endPos);
+			this.isPaused = true; // Pausar al final para permitir reinicio
+			// Disparar evento de fin si fuera necesario
+		}
+	}
+
+	getInterpolatedPosition(progress) {
+		const path = this.animationPath;
+		const totalPoints = path.length - 1;
+		const virtualIndex = progress * totalPoints;
+		const index = Math.floor(virtualIndex);
+		const nextIndex = Math.min(index + 1, totalPoints);
+		const segmentProgress = virtualIndex - index;
+
+		const p1 = path[index];
+		const p2 = path[nextIndex];
+
+		if (!p1 || !p2) return null;
+
+		return {
+			lat: p1.lat + (p2.lat - p1.lat) * segmentProgress,
+			lng: p1.lng + (p2.lng - p1.lng) * segmentProgress
+		};
+	}
+
+	pauseAnimation() {
+		if (!this.isPaused && this.animationFrameId) {
+			this.isPaused = true;
+			this.lastPauseStart = performance.now();
+		}
+	}
+
+	resumeAnimation() {
+		if (this.isPaused) {
+			this.isPaused = false;
+			this.pausedTime += performance.now() - this.lastPauseStart;
+
+			// Si ya había terminado, reiniciar
+			const elapsed = performance.now() - this.animationStartTime - this.pausedTime;
+			if (elapsed >= this.animationDuration) {
+				this.animationStartTime = performance.now();
+				this.pausedTime = 0;
+			}
+		}
+	}
+
+	stopAnimation() {
+		if (this.animationFrameId) {
+			cancelAnimationFrame(this.animationFrameId);
+			this.animationFrameId = null;
+		}
+		if (this.vehicleMarker) {
+			this.vehicleMarker.setMap(null);
+		}
+		this.isPaused = false;
 	}
 }
 
