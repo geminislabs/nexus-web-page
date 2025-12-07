@@ -46,6 +46,13 @@
 		selectedUnitId = unit.id;
 		const deviceId = unit.device_id || unit.deviceId;
 
+		// Inicializar fecha actual
+		const now = new Date();
+		const year = now.getFullYear();
+		const month = String(now.getMonth() + 1).padStart(2, '0');
+		const dayOfMonth = String(now.getDate()).padStart(2, '0');
+		currentDate = `${year}-${month}-${dayOfMonth}`;
+
 		// Cargar trayectos
 		loadTrips(unit.id);
 
@@ -73,17 +80,9 @@
 		trips = [];
 
 		try {
-			// Obtener fecha actual en formato YYYY-MM-DD usando la zona horaria local
-			const now = new Date();
-			const year = now.getFullYear();
-			const month = String(now.getMonth() + 1).padStart(2, '0');
-			const dayOfMonth = String(now.getDate()).padStart(2, '0');
-			const day = `${year}-${month}-${dayOfMonth}`;
-			currentDate = day;
-
 			const response = await apiService.getTrips({
 				unit_id: unitId,
-				day: day,
+				day: currentDate,
 				tz: 'America/Mexico_City'
 			});
 
@@ -361,7 +360,13 @@
 					<div class="flex justify-between items-center mb-3">
 						<h3 class="text-app font-bold uppercase tracking-wider text-sm">Trayectos del día</h3>
 						{#if currentDate}
-							<span class="text-xs text-accent-cyan font-mono">{currentDate}</span>
+							<input
+								type="date"
+								bind:value={currentDate}
+								on:change={() => loadTrips(selectedUnitId)}
+								class="bg-transparent text-xs text-accent-cyan font-mono border-none focus:ring-0 cursor-pointer p-0 text-right w-24"
+								style="color-scheme: dark;"
+							/>
 						{/if}
 					</div>
 
