@@ -265,6 +265,30 @@
 					</div>
 				{/if}
 			{/if}
+
+			<!-- Mobile Logout Button -->
+			<div class="mobile-logout-section">
+				<div class="h-px bg-[var(--panel-border)] my-4"></div>
+				<button
+					class="w-full flex justify-between items-center text-base font-semibold tracking-wide text-red-500 opacity-90 hover:opacity-100 transition-opacity"
+					on:click={handleLogout}
+				>
+					<span>Cerrar Sesión</span>
+					<svg
+						class="w-4 h-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+						/>
+					</svg>
+				</button>
+			</div>
 		</div>
 	</div>
 	{#if !embedded && showUserPanel}
@@ -275,3 +299,15 @@
 		></div>
 	{/if}
 {/if}
+
+<style>
+	.mobile-logout-section {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		.mobile-logout-section {
+			display: block;
+		}
+	}
+</style>
