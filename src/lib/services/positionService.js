@@ -227,6 +227,38 @@ class PositionService {
 	 * @param {Function} onError - Callback para manejar errores
 	 * @returns {Object} Controlador para manejar la conexión
 	 */
+	/**
+	 * Convierte una URL HTTP (http/https) a WebSocket (ws/wss)
+	 * @param {string} urlStr - URL base
+	 * @returns {string} URL de WebSocket
+	 */
+	_getWebSocketUrl(urlStr) {
+		try {
+			// Si ya empieza con ws, devolver tal cual
+			if (urlStr.startsWith('ws://') || urlStr.startsWith('wss://')) {
+				return urlStr;
+			}
+
+			const url = new URL(urlStr);
+			if (url.protocol === 'https:') {
+				url.protocol = 'wss:';
+			} else {
+				url.protocol = 'ws:';
+			}
+			return url.toString();
+		} catch (e) {
+			// Fallback simple string replacement si URL falla
+			return urlStr.replace(/^http/, 'ws');
+		}
+	}
+
+	/**
+	 * Obtiene posiciones en tiempo real usando WebSocket
+	 * @param {string[]} deviceIds - IDs de dispositivos a monitorear
+	 * @param {Function} onUpdate - Callback para manejar actualizaciones de posición
+	 * @param {Function} onError - Callback para manejar errores
+	 * @returns {Object} Controlador para manejar la conexión
+	 */
 	connectToRealtimeStream(deviceIds = [], onUpdate = null, onError = null) {
 		if (!Array.isArray(deviceIds) || deviceIds.length === 0) {
 			console.warn('No device IDs provided for real-time streaming');
@@ -235,106 +267,144 @@ class PositionService {
 
 		// Crear la URL para el streaming
 		const deviceIdsParam = deviceIds.join(',');
-		const streamUrl = `${COMM_API_URL}/api/v1/stream?device_ids=${deviceIdsParam}`;
+
+		// Obtener base URL correcta para WebSocket
+		const baseUrl = this._getWebSocketUrl(COMM_API_URL);
+		// Eliminar trailing slash si existe para evitar doble slash
+		const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+		const streamUrl = `${sanitizedBaseUrl}/api/v1/stream?device_ids=${deviceIdsParam}`;
 
 		console.warn('Connecting to real-time stream:', streamUrl);
 
-		try {
-			const eventSource = new EventSource(streamUrl, {
-				withCredentials: false
-			});
+		let websocket = null;
+		let reconnectTimer = null;
+		let isClosed = false;
 
-			// Manejar mensajes de actualización
-			eventSource.onmessage = (event) => {
-				try {
-					const rawData = JSON.parse(event.data);
-					console.warn('Real-time position update:', rawData);
+		const connect = () => {
+			if (isClosed) return;
 
-					// Extraer datos del stream - la información está en la propiedad "data"
-					const streamData = rawData?.data;
-					if (!streamData) {
-						console.warn('No data property found in stream message');
-						return;
+			try {
+				websocket = new WebSocket(streamUrl);
+
+				websocket.onopen = () => {
+					console.warn('Real-time stream connected successfully');
+				};
+
+				websocket.onmessage = (event) => {
+					try {
+						// El formato del mensaje puede variar, intentamos parsear
+						const rawData = JSON.parse(event.data);
+						console.warn('Real-time position update:', rawData);
+
+						// Verificar si es un keep-alive o mensaje de control
+						if (rawData.event === 'ping' || !rawData) {
+							return;
+						}
+
+						// Extraer datos del stream
+						// Según documentación, puede venir directo o envuelto
+						// Intentamos detectar el formato
+						let streamData = rawData;
+
+						// Si tiene propiedad data y no es la data directa de rastreo (ej. { event: 'message', data: {...} })
+						if (rawData.data && rawData.event === 'message') {
+							streamData = rawData.data;
+						} else if (rawData.data && !rawData.LAT && !rawData.LATITUD) {
+							// Caso genérico wrapper { data: ... }
+							streamData = rawData.data;
+						}
+
+						// Normalizar los datos para el formato esperado por el sistema
+						const normalizedData = this.normalizeStreamData(streamData);
+
+						// Actualizar posición en el store de vehículos
+						if (
+							normalizedData.deviceId &&
+							normalizedData.latitude != null &&
+							normalizedData.longitude != null
+						) {
+							vehicleActions.updateVehiclePosition(normalizedData.deviceId, {
+								latitude: normalizedData.latitude,
+								longitude: normalizedData.longitude,
+								speed: normalizedData.speed || 0,
+								altitude: normalizedData.altitude || 0,
+								odometer: normalizedData.odometer || 0,
+								lastUpdate: new Date().toISOString(),
+								status: normalizedData.status || 'active',
+								// Datos adicionales del stream
+								cellId: streamData.CELL_ID,
+								lac: streamData.LAC,
+								mcc: streamData.MCC,
+								mnc: streamData.MNC,
+								fix: streamData.FIX_,
+								course: streamData.COURSE,
+								msgCounter: streamData.MSG_COUNTER,
+								rawData: streamData
+							});
+						}
+
+						// Llamar al callback del dashboard si existe (para compatibilidad)
+						if (onUpdate && typeof onUpdate === 'function') {
+							// Crear objeto en formato esperado por el dashboard
+							const dashboardData = {
+								device_id: normalizedData.deviceId,
+								latitude: normalizedData.latitude,
+								longitude: normalizedData.longitude,
+								speed: normalizedData.speed || 0,
+								altitude: normalizedData.altitude || 0,
+								gps_datetime: new Date().toISOString(),
+								main_battery_voltage: 0, // No disponible en stream
+								backup_battery_voltage: 0, // No disponible en stream
+								status: normalizedData.status || 'active'
+							};
+							onUpdate(dashboardData);
+						}
+					} catch (parseError) {
+						console.error('Error parsing real-time data:', parseError);
 					}
+				};
 
-					// Normalizar los datos para el formato esperado por el sistema
-					const normalizedData = this.normalizeStreamData(streamData);
-
-					// Actualizar posición en el store de vehículos
-					if (
-						normalizedData.deviceId &&
-						normalizedData.latitude != null &&
-						normalizedData.longitude != null
-					) {
-						vehicleActions.updateVehiclePosition(normalizedData.deviceId, {
-							latitude: normalizedData.latitude,
-							longitude: normalizedData.longitude,
-							speed: normalizedData.speed || 0,
-							altitude: normalizedData.altitude || 0,
-							odometer: normalizedData.odometer || 0,
-							lastUpdate: new Date().toISOString(),
-							status: normalizedData.status || 'active',
-							// Datos adicionales del stream
-							cellId: streamData.CELL_ID,
-							lac: streamData.LAC,
-							mcc: streamData.MCC,
-							mnc: streamData.MNC,
-							fix: streamData.FIX_,
-							course: streamData.COURSE,
-							msgCounter: streamData.MSG_COUNTER,
-							rawData: streamData
-						});
+				websocket.onerror = (error) => {
+					console.error('Real-time stream error:', error);
+					if (onError && typeof onError === 'function') {
+						onError(error);
 					}
+				};
 
-					// Llamar al callback del dashboard si existe (para compatibilidad)
-					if (onUpdate && typeof onUpdate === 'function') {
-						// Crear objeto en formato esperado por el dashboard
-						const dashboardData = {
-							device_id: normalizedData.deviceId,
-							latitude: normalizedData.latitude,
-							longitude: normalizedData.longitude,
-							speed: normalizedData.speed || 0,
-							altitude: normalizedData.altitude || 0,
-							gps_datetime: new Date().toISOString(),
-							main_battery_voltage: 0, // No disponible en stream
-							backup_battery_voltage: 0, // No disponible en stream
-							status: normalizedData.status || 'active'
-						};
-						onUpdate(dashboardData);
-					}
-				} catch (parseError) {
-					console.error('Error parsing real-time data:', parseError);
-				}
-			};
+				websocket.onclose = (event) => {
+					if (isClosed) return;
 
-			// Manejar errores de conexión
-			eventSource.onerror = (error) => {
-				console.error('Real-time stream error:', error);
+					console.warn(
+						`Real-time stream disconnected (code: ${event.code}), reconnecting in 3s...`
+					);
 
+					// Intentar reconexión básica
+					clearTimeout(reconnectTimer);
+					reconnectTimer = setTimeout(() => {
+						connect();
+					}, 3000);
+				};
+			} catch (error) {
+				console.error('Error creating WebSocket connection:', error);
 				if (onError && typeof onError === 'function') {
 					onError(error);
 				}
-			};
-
-			// Manejar conexión abierta
-			eventSource.onopen = () => {
-				console.warn('Real-time stream connected successfully');
-			};
-
-			return {
-				eventSource,
-				close: () => {
-					eventSource.close();
-					console.warn('Real-time stream disconnected');
-				}
-			};
-		} catch (error) {
-			console.error('Error creating EventSource connection:', error);
-			if (onError && typeof onError === 'function') {
-				onError(error);
 			}
-			return null;
-		}
+		};
+
+		// Iniciar conexión
+		connect();
+
+		return {
+			close: () => {
+				isClosed = true;
+				clearTimeout(reconnectTimer);
+				if (websocket) {
+					websocket.close();
+				}
+				console.warn('Real-time stream manually closed');
+			}
+		};
 	}
 	/**
 	 * Inicializar vista de ubicación compartida (Público)
@@ -378,100 +448,82 @@ class PositionService {
 		}
 	}
 	/**
-	 * Conectar al stream de ubicación compartida (SSE)
+	 * Conectar al stream de ubicación compartida (WebSocket)
 	 * @param {string} token - Token de compartición
 	 * @param {Function} onUpdate - Callback para actualizaciones de ubicación
 	 * @param {Function} onError - Callback para errores
 	 * @returns {Object} Controlador del stream { close: Function }
 	 */
 	connectToShareStream(token, onUpdate, onError) {
-		const streamUrl = `${COMM_API_URL}/api/v1/public/share-location/stream?token=${encodeURIComponent(token)}`;
+		// Obtener base URL correcta para WebSocket
+		const baseUrl = this._getWebSocketUrl(COMM_API_URL);
+		// Eliminar trailing slash si existe
+		const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+		const streamUrl = `${sanitizedBaseUrl}/api/v1/public/share-location/stream?token=${encodeURIComponent(token)}`;
 		console.log('Connecting to share stream:', streamUrl);
 
-		// Pre-check with fetch to catch HTTP errors (HEAD not allowed, using GET with abort)
-		const controller = new AbortController();
-		fetch(streamUrl, {
-			method: 'GET',
-			signal: controller.signal
-		})
-			.then((response) => {
-				// We just want to check status, then abort the stream consumption
-				controller.abort();
+		let websocket = null;
 
-				if (!response.ok) {
-					throw new Error(`Stream connection failed: ${response.status} ${response.statusText}`);
-				}
-				// If OK, proceed with EventSource
-				this._initEventSource(streamUrl, onUpdate, onError);
-			})
-			.catch((err) => {
-				// Ignore abort errors as they are expected when we cancel the success case
-				if (err.name === 'AbortError') return;
-
-				console.error('Stream pre-check failed:', err);
-				if (onError) onError(err);
-			});
-
-		// Return a placeholder close function that will be overwritten or handled
-		// This is a bit tricky because _initEventSource is async-ish.
-		// Better to return an object that we can update.
-		const streamController = {
-			close: () => {
-				console.log('Stream closed (pre-check)');
-				controller.abort(); // Ensure fetch is aborted if closed early
-			}
-		};
-
-		// Store controller reference to update it later
-		this._currentStreamController = streamController;
-		return streamController;
-	}
-
-	_initEventSource(url, onUpdate, onError) {
 		try {
-			const eventSource = new EventSource(url);
+			websocket = new WebSocket(streamUrl);
 
-			// Update the controller's close method
-			if (this._currentStreamController) {
-				this._currentStreamController.close = () => {
-					eventSource.close();
-					console.log('Share stream closed');
-				};
-			}
+			websocket.onopen = () => {
+				console.log('Share stream connected');
+			};
 
-			eventSource.onmessage = (event) => {
+			websocket.onmessage = (event) => {
 				try {
 					const data = JSON.parse(event.data);
-					if (onUpdate) onUpdate(data);
+
+					if (data.event === 'message') {
+						if (onUpdate) onUpdate(data.data);
+					} else if (data.event === 'expired') {
+						console.warn('Share token expired');
+						websocket.close();
+						if (onError) onError(new Error('El enlace ha expirado'));
+					} else if (data.event === 'ping') {
+						// Keep-alive, ignorar
+						console.debug('Ping received');
+					}
 				} catch (e) {
 					console.error('Error parsing share stream data:', e);
 				}
 			};
 
-			eventSource.addEventListener('expired', () => {
-				console.warn('Share token expired');
-				eventSource.close();
-				if (onError) onError(new Error('El enlace ha expirado'));
-			});
-
-			eventSource.addEventListener('no_data', () => {
-				console.log('No data available for shared device');
-			});
-
-			eventSource.onerror = (err) => {
-				console.error('Share stream error:', err);
-				// EventSource error doesn't give much info, but if we passed pre-check, it might be network drop
-				if (eventSource.readyState === EventSource.CLOSED) {
-					if (onError) onError(new Error('Conexión del stream cerrada'));
+			websocket.onclose = (event) => {
+				if (event.code === 1008) {
+					console.log('🚫 Token inválido o expirado');
+					if (onError) onError(new Error('Token inválido o expirado'));
 				} else {
-					// It might be trying to reconnect
-					console.warn('Stream trying to reconnect...');
+					console.log('Share stream closed');
 				}
+			};
+
+			websocket.onerror = (err) => {
+				console.error('Share stream error:', err);
+				if (onError) onError(err);
 			};
 		} catch (err) {
 			console.error('Error creating share stream:', err);
 			if (onError) onError(err);
 		}
+
+		return {
+			close: () => {
+				if (websocket) {
+					websocket.close();
+				}
+			}
+		};
+	}
+
+	_initEventSource(url, onUpdate, onError) {
+		// Deprecated method, kept for reference or removal?
+		// Removing content to avoid confusion as we fully switched to WebSocket
+		console.warn(
+			'_initEventSource is deprecated. Use connectToShareStream/connectToRealtimeStream with WebSocket.'
+		);
 	}
 }
 export const positionService = new PositionService();
