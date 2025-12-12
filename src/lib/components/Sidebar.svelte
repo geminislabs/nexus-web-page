@@ -124,7 +124,11 @@
 		</button>
 
 		<!-- Logout Button -->
-		<button class="sidebar-btn logout-btn" on:click={handleLogout} aria-label="Cerrar Sesión">
+		<button
+			class="sidebar-btn logout-btn logout-container"
+			on:click={handleLogout}
+			aria-label="Cerrar Sesión"
+		>
 			<svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 				<path
 					stroke-linecap="round"
@@ -137,6 +141,11 @@
 
 	<!-- Expanded Content -->
 	<div class="sidebar-content">
+		<!-- Mobile Minimize Button -->
+		<button class="mobile-minimize-btn" on:click={closeMenu} aria-label="Minimizar menú">
+			<div class="minimize-bar"></div>
+		</button>
+
 		{#if activeMenu === 'user'}
 			<div in:fade={{ duration: 200 }}>
 				<UserPanel {userData} embedded={true} />
@@ -262,6 +271,7 @@
 		opacity: 1;
 		pointer-events: auto;
 	}
+
 	.logout-btn {
 		margin-top: auto;
 		margin-bottom: 2rem;
@@ -276,5 +286,86 @@
 		background: rgba(239, 68, 68, 0.1);
 		color: #ef4444;
 		box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+	}
+
+	/* Mobile Styles */
+	@media (max-width: 768px) {
+		.sidebar {
+			top: auto;
+			bottom: 0;
+			width: 100%;
+			height: 70px; /* Collapsed height */
+			border-right: none;
+			border-top: 1px solid var(--glass-border);
+			transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+			z-index: 100;
+		}
+
+		.sidebar.expanded {
+			width: 100%;
+			height: 80vh; /* Expanded height */
+		}
+
+		.logo-area {
+			display: none; /* Hide logo on mobile to save space or move it */
+		}
+
+		.menu-icons {
+			flex-direction: row;
+			width: 100%;
+			height: 70px;
+			top: auto;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			padding-top: 0;
+			justify-content: space-evenly; /* Distribute icons evenly */
+			gap: 0;
+			background: transparent;
+			padding-bottom: env(safe-area-inset-bottom);
+		}
+
+		.sidebar-content {
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 70px; /* Leave space for the menu bar */
+			padding: 1rem;
+		}
+
+		.logout-container {
+			display: none; /* Hide standard logout button on mobile if needed, or reposition */
+		}
+
+		/* Adjust button hover effects for touch */
+		.sidebar-btn:hover {
+			transform: none;
+		}
+	}
+
+	/* Mobile Minimize Button Styles */
+	.mobile-minimize-btn {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		.mobile-minimize-btn {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			width: 100%;
+			padding: 10px 0 20px 0;
+			background: transparent;
+			border: none;
+			cursor: pointer;
+		}
+
+		.minimize-bar {
+			width: 40px;
+			height: 5px;
+			background-color: var(--glass-border);
+			border-radius: 10px;
+			opacity: 0.6;
+		}
 	}
 </style>
