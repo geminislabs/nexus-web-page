@@ -17,7 +17,12 @@ class MapService {
 		this.currentPolyline = null;
 		this.tripMarkers = [];
 
-		// Animación
+		// Animación en vivo (Dead Reckoning)
+		this.liveVehicles = new Map(); // Map<deviceId, LiveUnitState>
+		this.liveAnimationFrameId = null;
+		this.lastLiveFrameTime = 0;
+
+		// Propiedades trip animation (legacy/playback)
 		this.vehicleMarker = null;
 		this.animationFrameId = null;
 		this.isPaused = false;
@@ -25,6 +30,9 @@ class MapService {
 		this.pausedTime = 0;
 		this.animationDuration = 0;
 		this.animationPath = [];
+
+		// Iniciar loop de animación global para vehículos en vivo
+		this.startLiveAnimationLoop();
 	}
 
 	async initialize(mapElement) {
@@ -173,6 +181,10 @@ class MapService {
 
 		const id = vehicle.id || vehicle.deviceId || vehicle.device_id;
 		this.markers.set(id, { marker, infoWindow });
+
+		// Inicializar estado para animación en vivo
+		this.initLiveState(id, vehicle);
+
 		return marker;
 	}
 
@@ -252,6 +264,7 @@ class MapService {
 			markerData.marker.setMap(null);
 			this.markers.delete(id);
 		}
+		this.liveVehicles.delete(id);
 	}
 
 	clearAllMarkers() {
@@ -267,6 +280,7 @@ class MapService {
 			}
 		});
 		this.markers.clear();
+		this.liveVehicles.clear();
 	}
 
 	// Agregar múltiples marcadores de vehículos
@@ -289,29 +303,201 @@ class MapService {
 			const lng = vehicle.longitude || vehicle.lng;
 
 			if (lat && lng) {
-				const newPosition = { lat: parseFloat(lat), lng: parseFloat(lng) };
-				existingMarkerData.marker.setPosition(newPosition);
-
-				// Actualizar contenido del info window
+				// Update info window content always
 				existingMarkerData.infoWindow.setContent(this.createVehicleInfoContent(vehicle));
 
-				// Determine icon URL
+				// Update icon if needed
 				const iconUrl =
 					vehicle.icon_type && unitIcons[vehicle.icon_type]
 						? unitIcons[vehicle.icon_type]
 						: unitIcons['vehicle-car-sedan'];
 
-				// Actualizar icono del marcador
 				existingMarkerData.marker.setIcon({
 					url: iconUrl,
 					scaledSize: new this.google.maps.Size(40, 40),
 					anchor: new this.google.maps.Point(20, 20)
 				});
+
+				// UPDATE LIVE STATE INSTEAD OF DIRECT SET POSITION
+				this.updateLiveState(id, vehicle, parseFloat(lat), parseFloat(lng));
 			}
 		} else {
 			// Si no existe, crear nuevo marcador
 			this.addVehicleMarker(vehicle);
 		}
+	}
+
+	// ==========================================
+	// LIVE ANIMATION / DEAD RECKONING LOGIC
+	// ==========================================
+
+	initLiveState(id, vehicle) {
+		const lat = parseFloat(vehicle.latitude || vehicle.lat);
+		const lng = parseFloat(vehicle.longitude || vehicle.lng);
+		const speedKmh = parseFloat(vehicle.speed || 0);
+		const ts = Date.now();
+
+		this.liveVehicles.set(id, {
+			lastFix: { lat, lon: lng, ts },
+			prevFix: null,
+			speed: (speedKmh * 1000) / 3600, // m/s
+			bearing: parseFloat(vehicle.course || 0),
+			virtualPosition: { lat, lon: lng },
+			lastUpdateTs: performance.now(),
+			isStopped: this.isVehicleStopped(vehicle)
+		});
+	}
+
+	updateLiveState(id, vehicle, newLat, newLon) {
+		const state = this.liveVehicles.get(id);
+		if (!state) {
+			this.initLiveState(id, vehicle);
+			return;
+		}
+
+		const now = performance.now();
+		const speedKmh = parseFloat(vehicle.speed || 0);
+
+		// Copiar el fix anterior
+		state.prevFix = { ...state.lastFix };
+
+		// Actualizar nuevo fix
+		state.lastFix = {
+			lat: newLat,
+			lon: newLon,
+			ts: now
+		};
+
+		// Calcular bearing si nos movemos significativamente
+		if (state.prevFix) {
+			const dist = this.haversineDistance(
+				{ lat: state.prevFix.lat, lng: state.prevFix.lon },
+				{ lat: newLat, lng: newLon }
+			);
+
+			if (dist > 2) {
+				state.bearing = this.computeBearing(state.prevFix.lat, state.prevFix.lon, newLat, newLon);
+			} else if (vehicle.course) {
+				state.bearing = parseFloat(vehicle.course);
+			}
+		}
+
+		state.speed = (speedKmh * 1000) / 3600; // m/s
+		state.isStopped = this.isVehicleStopped(vehicle);
+
+		// Si error muy grande, snap inmediato
+		const distVirtual = this.haversineDistance(
+			{ lat: state.virtualPosition.lat, lng: state.virtualPosition.lon },
+			{ lat: newLat, lng: newLon }
+		);
+
+		if (distVirtual > 500) {
+			state.virtualPosition = { lat: newLat, lon: newLon };
+		}
+	}
+
+	isVehicleStopped(vehicle) {
+		const speed = parseFloat(vehicle.speed || 0);
+		// Ajustar lógica de ignición según tus datos (bool, string, int)
+		// Asumimos que engine_status false/0/'off' es apagado
+		const ignition = vehicle.engine_status;
+		const isIgnitionOff = ignition === false || ignition === 'off' || ignition === 0;
+		return speed < 1 || isIgnitionOff;
+	}
+
+	startLiveAnimationLoop() {
+		if (typeof window === 'undefined') return;
+
+		const animate = (time) => {
+			const delta = time - this.lastLiveFrameTime;
+			this.lastLiveFrameTime = time;
+
+			// Evitar saltos grandes si la tab estaba inactiva
+			const dt = Math.min(delta, 100) / 1000; // segundos, cap a 100ms
+
+			this.liveVehicles.forEach((state, id) => {
+				const markerData = this.markers.get(id);
+				if (!markerData || !markerData.marker) return;
+
+				if (state.isStopped) {
+					// Stop suave
+					state.virtualPosition = this.lerpPosition(
+						state.virtualPosition,
+						{ lat: state.lastFix.lat, lon: state.lastFix.lon },
+						0.1
+					);
+				} else {
+					// 1. Extrapolar (Dead Reckoning)
+					const projectedParams = this.extrapolatePosition(
+						state.virtualPosition.lat,
+						state.virtualPosition.lon,
+						state.speed,
+						state.bearing,
+						dt
+					);
+
+					// 2. Corregir (Interpolación suave hacia lastFix)
+					const correctionFactor = 0.05; // Ajustar experimentalmente
+					state.virtualPosition = this.lerpPosition(
+						projectedParams,
+						{ lat: state.lastFix.lat, lon: state.lastFix.lon },
+						correctionFactor
+					);
+				}
+
+				const newPos = new this.google.maps.LatLng(
+					state.virtualPosition.lat,
+					state.virtualPosition.lon
+				);
+				markerData.marker.setPosition(newPos);
+			});
+
+			this.liveAnimationFrameId = requestAnimationFrame(animate);
+		};
+
+		this.liveAnimationFrameId = requestAnimationFrame(animate);
+	}
+
+	computeBearing(lat1, lon1, lat2, lon2) {
+		const φ1 = (lat1 * Math.PI) / 180;
+		const φ2 = (lat2 * Math.PI) / 180;
+		const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+		const y = Math.sin(Δλ) * Math.cos(φ2);
+		const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+
+		return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+	}
+
+	extrapolatePosition(lat, lon, speedMps, bearingDeg, deltaSeconds) {
+		const R = 6378137;
+		const dist = speedMps * deltaSeconds;
+		const δ = dist / R;
+		const θ = (bearingDeg * Math.PI) / 180;
+
+		const φ1 = (lat * Math.PI) / 180;
+		const λ1 = (lon * Math.PI) / 180;
+
+		const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ));
+
+		const λ2 =
+			λ1 +
+			Math.atan2(
+				Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
+				Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2)
+			);
+
+		return {
+			lat: (φ2 * 180) / Math.PI,
+			lon: (λ2 * 180) / Math.PI
+		};
+	}
+
+	lerpPosition(pos1, pos2, t) {
+		return {
+			lat: pos1.lat + (pos2.lat - pos1.lat) * t,
+			lon: pos1.lon + (pos2.lon - pos1.lon) * t
+		};
 	}
 
 	centerOnVehicles(vehicles) {
