@@ -31,6 +31,6 @@
 	},
 	"dependencies": {
 		"@googlemaps/js-api-loader": "^1.16.10",
-		"@jesusCabrera84/map-engine": "npm:@JesusCabrera84/map-engine@^0.0.1"
+		"@jesusCabrera84/map-engine": "npm:@JesusCabrera84/map-engine@^0.0.2"
 	}
 }
