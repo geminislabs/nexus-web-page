@@ -64,7 +64,9 @@
 			received_epoch: c.received_epoch,
 			rx_lvl: c.rx_lvl,
 			satellites: c.satellites,
-			speed: c.speed
+			satellites: c.satellites,
+			speed: c.speed,
+			alert: c.alert
 		};
 	}
 

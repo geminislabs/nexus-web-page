@@ -209,7 +209,11 @@ class PositionService {
 			rawLatitude: streamData.LATITUD || streamData.decoded?.QueclinkRaw?.LAT,
 			rawLongitude: streamData.LONGITUD || streamData.decoded?.QueclinkRaw?.LON,
 			fix: streamData.FIX_ || streamData.decoded?.QueclinkRaw?.FIX,
-			course: streamData.COURSE || streamData.decoded?.QueclinkRaw?.CRS
+			course: streamData.COURSE || streamData.decoded?.QueclinkRaw?.CRS,
+			// Campos críticos para lógica de animación/stop
+			msg_class: streamData.MSG_CLASS || streamData.decoded?.QueclinkRaw?.MSG_CLASS,
+			alert: streamData.ALERT || streamData.decoded?.QueclinkRaw?.ALERT,
+			engine_status: streamData.ENGINE_STATUS || streamData.decoded?.QueclinkRaw?.ENGINE_STATUS
 		};
 	}
 
@@ -339,7 +343,11 @@ class PositionService {
 								fix: streamData.FIX_,
 								course: streamData.COURSE,
 								msgCounter: streamData.MSG_COUNTER,
-								rawData: streamData
+								rawData: streamData,
+								// Datos críticos para animación
+								msg_class: normalizedData.msg_class,
+								alert: normalizedData.alert,
+								engine_status: normalizedData.engine_status
 							});
 						}
 
@@ -355,7 +363,10 @@ class PositionService {
 								gps_datetime: new Date().toISOString(),
 								main_battery_voltage: 0, // No disponible en stream
 								backup_battery_voltage: 0, // No disponible en stream
-								status: normalizedData.status || 'active'
+								status: normalizedData.status || 'active',
+								msg_class: normalizedData.msg_class,
+								alert: normalizedData.alert,
+								engine_status: normalizedData.engine_status
 							};
 							onUpdate(dashboardData);
 						}

@@ -398,11 +398,24 @@ class MapService {
 
 	isVehicleStopped(vehicle) {
 		const speed = parseFloat(vehicle.speed || 0);
-		// Ajustar lógica de ignición según tus datos (bool, string, int)
-		// Asumimos que engine_status false/0/'off' es apagado
-		const ignition = vehicle.engine_status;
-		const isIgnitionOff = ignition === false || ignition === 'off' || ignition === 0;
-		return speed < 1 || isIgnitionOff;
+
+		// 1. Prioridad: Alertas explícitas de encendido/apagado
+		if (vehicle.msg_class === 'Alert') {
+			if (vehicle.alert === 'Turn Off') return true;
+			if (vehicle.alert === 'Turn On') return false;
+		}
+
+		// 2. Estado de motor si es un mensaje de estado
+		if (vehicle.msg_class === 'status' || vehicle.msg_class === 'STATUS') {
+			const status = vehicle.engine_status;
+			// Normalizar valores posibles de engine_status
+			if (status === 'OFF' || status === 'off' || status === false || status === 0) return true;
+			if (status === 'ON' || status === 'on' || status === true || status === 1) return false;
+		}
+
+		// 3. Fallback: Velocidad muy baja (por seguridad)
+		// Si speed < 1 km/h, asumimos detenido.
+		return speed < 1;
 	}
 
 	startLiveAnimationLoop() {
