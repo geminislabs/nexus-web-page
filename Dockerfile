@@ -8,7 +8,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instalar todas las dependencias (incluyendo devDependencies para el build)
-RUN npm ci --ignore-scripts
+ARG NODE_AUTH_TOKEN
+RUN echo "@JesusCabrera84:registry=https://npm.pkg.github.com/" > .npmrc && \
+    echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc && \
+    npm ci --ignore-scripts
 
 # Copiar el código fuente
 COPY . .
