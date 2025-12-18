@@ -364,6 +364,7 @@ class PositionService {
 								main_battery_voltage: 0, // No disponible en stream
 								backup_battery_voltage: 0, // No disponible en stream
 								status: normalizedData.status || 'active',
+								heading: normalizedData.course,
 								msg_class: normalizedData.msg_class,
 								alert: normalizedData.alert,
 								engine_status: normalizedData.engine_status

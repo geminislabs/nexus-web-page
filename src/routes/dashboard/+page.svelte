@@ -52,6 +52,7 @@
 			backup_battery_voltage: c.backup_battery_voltage,
 			course: c.course,
 			delivery_type: c.delivery_type,
+			heading: c.heading ?? c.course,
 			engine_status: c.engine_status,
 			fix_status: c.fix_status,
 			gps_datetime: c.gps_datetime,

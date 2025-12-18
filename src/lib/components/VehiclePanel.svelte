@@ -127,6 +127,7 @@
 				].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
 				currentTripPoints = allPoints;
+				console.log('currentTripPoints', currentTripPoints);
 
 				// Dibujar en el mapa
 				mapService.drawTripPolyline(allPoints);

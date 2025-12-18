@@ -17,7 +17,8 @@ class MapService {
 	}
 
 	initEngine() {
-		const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
+		const apiKey =
+			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
 
 		this.engine = new GoogleMapEngine({
 			apiKey,
@@ -63,10 +64,11 @@ class MapService {
 							<p><span class="font-medium">Bater&iacute;a dispositivo:</span> ${batteryDevice || 0} V</p>
 							${vehicle.device_id ? `<p><span class=\"font-medium\">Device ID:</span> ${vehicle.device_id}</p>` : ''}
 							<p><span class="font-medium">Última actualización:</span> ${lastUpdate}</p>
-							${vehicle.latitude && vehicle.longitude
-						? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
-						: ''
-					}
+							${
+								vehicle.latitude && vehicle.longitude
+									? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
+									: ''
+							}
 						</div>
 					</div>
 				`;
@@ -100,7 +102,10 @@ class MapService {
 			// For now, retaining the pattern if possible, but map-engine might not have built-in user location.
 			// Implementing user location manually on top of the map map instance if needed.
 			// But since we want to rely on the engine, we will skip manual user location for now unless requested.
-			// The previous service did: await this.setUserLocation(); 
+			// The previous service did: await this.setUserLocation();
+
+			// Start the live animation loop once the map is ready
+			this.startLive();
 
 			return this.mapInstance;
 		} catch (error) {
@@ -140,49 +145,75 @@ class MapService {
 
 	getBackgroundColorForTheme(theme) {
 		switch (theme) {
-			case 'modern': return '#0b1524';
-			case 'dark': return '#0f1115';
+			case 'modern':
+				return '#0b1524';
+			case 'dark':
+				return '#0f1115';
 			case 'classic':
 			case 'light':
-			default: return '#ffffff';
+			default:
+				return '#ffffff';
 		}
 	}
 
 	// Methods delegating to the engine
 
+	// Live Motion
+	startLive() {
+		if (this.engine && this.engine.startLive) {
+			this.engine.startLive();
+		}
+	}
+
+	stopLive() {
+		if (this.engine && this.engine.stopLive) {
+			this.engine.stopLive();
+		}
+	}
+
 	addVehicleMarker(vehicle) {
-		return this.engine.updateVehicleMarker(vehicle);
+		// Map backend data to LiveMotionInput expected by the engine
+		const input = {
+			id: vehicle.device_id || vehicle.id, // Ensure ID is present
+			lat: vehicle.latitude,
+			lng: vehicle.longitude,
+			speedKmh: vehicle.speed || 0,
+			bearing: vehicle.heading || vehicle.bearing || 0,
+			timestamp: vehicle.timestamp ? new Date(vehicle.timestamp).getTime() : Date.now(),
+			motion: {
+				moving: vehicle.is_moving, // Assuming backend provides this
+				ignition: vehicle.ignition_status ? 'on' : 'off' // Assuming this logic
+			},
+			// Pass through other properties if needed by the renderer
+			...vehicle
+		};
+		return this.engine.updateVehicleMarker(input);
 	}
 
 	updateVehicleMarker(vehicle) {
-		return this.engine.updateVehicleMarker(vehicle);
+		// Reuse mapping logic from addVehicleMarker
+		return this.addVehicleMarker(vehicle);
 	}
 
 	addVehicleMarkers(vehicles) {
 		if (!Array.isArray(vehicles)) return;
-		vehicles.forEach(v => this.updateVehicleMarker(v));
+		vehicles.forEach((v) => this.updateVehicleMarker(v));
 	}
 
 	removeMarker(id) {
-		// MapEngine should have a method to remove a vehicle.
-		// If not explicitly documented in the snippet, we might assume updateVehicleMarker with null?
-		// Or we might need to check if mapEngine exposes 'removeVehicle'.
-		// Assuming for now we just don't update it, or we rely on re-syncing.
-		// Detailed docs were: "StartLiveAnimationLoop... idles if no vehicles exist".
-		// I will check if I can access the internal state or if there's a remove method.
-		// If not, I'll search the codebase next.
-		// For now, I'll log a warning.
-		console.warn('removeMarker not explicitly exposed by MapEngine adapter yet');
+		if (this.engine && this.engine.removeMarker) {
+			this.engine.removeMarker(id);
+		} else {
+			console.warn(
+				'removeMarker not explicit on engine, trying update with null/removal logic if supported'
+			);
+		}
 	}
 
 	clearAllMarkers() {
-		// If the engine allows clearing
-		// this.engine.clearAll(); 
-		// Or we might need to recreate the engine? No, that's heavy.
-		// I will assume there is a way or I just don't call it if not critical.
-		// The legacy code called clearAllMarkers().
-		// If MapEngine is managing state, maybe passing empty list to something?
-		// For now, I'll skip it or try to find a method on the engine instance dynamically.
+		if (this.engine && this.engine.clear) {
+			this.engine.clear();
+		}
 	}
 
 	centerOnVehicles(vehicles) {
@@ -193,6 +224,7 @@ class MapService {
 		this.engine.centerOnVehicles([vehicle]);
 	}
 
+	// Trip Replay
 	drawTripPolyline(coordinates) {
 		this.engine.drawTripPolyline(coordinates);
 	}
@@ -202,27 +234,26 @@ class MapService {
 	}
 
 	stopAnimation() {
-		if (this.engine && this.engine.stopAnimation) {
-			this.engine.stopAnimation();
+		if (this.engine && this.engine.stopTripAnimation) {
+			this.engine.stopTripAnimation();
 		}
 	}
 
 	pauseAnimation() {
-		if (this.engine && this.engine.pauseAnimation) {
-			this.engine.pauseAnimation();
+		if (this.engine && this.engine.pauseTripAnimation) {
+			this.engine.pauseTripAnimation();
 		}
 	}
 
 	resumeAnimation() {
-		if (this.engine && this.engine.resumeAnimation) {
-			this.engine.resumeAnimation();
+		if (this.engine && this.engine.resumeTripAnimation) {
+			this.engine.resumeTripAnimation();
 		}
 	}
 
-
 	// Getters for compatibility
 	get isReady() {
-		return !!this.engine; // Simplified check, usually if instantiated it's "ready" to receive calls, 
+		return !!this.engine; // Simplified check, usually if instantiated it's "ready" to receive calls,
 		// but "mount" is async.
 	}
 }
