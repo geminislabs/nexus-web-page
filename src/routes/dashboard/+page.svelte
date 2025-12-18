@@ -72,11 +72,11 @@
 
 	async function waitForMapReady(maxAttempts = 20, delayMs = 150) {
 		let attempts = 0;
-		while (!mapService?.map && attempts < maxAttempts) {
+		while (!mapService?.isReady && attempts < maxAttempts) {
 			await new Promise((r) => setTimeout(r, delayMs));
 			attempts++;
 		}
-		return !!mapService?.map;
+		return !!mapService?.isReady;
 	}
 
 	async function loadDevicesAndCommunications() {

@@ -13,16 +13,15 @@
 			map = await mapService.initialize(mapElement);
 			isLoading = false;
 
+			google.maps.event.addListenerOnce(map, 'idle', () => {
+				map.setZoom(map.getZoom());
+			});
+
 			// Suscribirse a cambios en vehículos para actualizar marcadores
 			const unsubscribe = vehicles.subscribe((vehicleList) => {
 				if (vehicleList.length > 0) {
-					// Limpiar marcadores existentes (excepto ubicación del usuario)
-					mapService.markers.forEach((markerData, key) => {
-						if (key !== 'user-location') {
-							markerData.marker.setMap(null);
-							mapService.markers.delete(key);
-						}
-					});
+					// Actualizar marcadores
+					// mapService.markers usage removed as it is now managed by the engine internally
 
 					// Agregar nuevos marcadores
 					mapService.addVehicleMarkers(vehicleList);
@@ -71,7 +70,7 @@
 		position: relative;
 		width: 100%;
 		height: 100vh; /* ajusta según tu layout */
-		background: #0b1524; /* fondo fuera del mapa */
+		background: var(--app-bg); /* fondo fuera del mapa */
 		border-radius: 16px;
 		overflow: hidden; /* recorta el canvas + overlay */
 	}
@@ -89,9 +88,9 @@
 
 	@supports (mask-image: radial-gradient(circle, #000, transparent)) {
 		.vignette {
-			background-color: rgba(11, 21, 36, 0.65);
-			mask-image: radial-gradient(circle at 50% 50%, transparent 60%, black 85%);
-			-webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 60%, black 85%);
+			background-color: var(--vignette-color);
+			mask-image: radial-gradient(circle at 50% 50%, var(--vignette-stops));
+			-webkit-mask-image: radial-gradient(circle at 50% 50%, var(--vignette-stops));
 		}
 	}
 
@@ -100,8 +99,7 @@
 			background: radial-gradient(
 				circle at 50% 50%,
 				rgba(11, 21, 36, 0) 58%,
-				rgba(11, 21, 36, 0.5) 80%,
-				rgba(11, 21, 36, 0.7) 100%
+				var(--vignette-color) 100%
 			);
 		}
 	}
