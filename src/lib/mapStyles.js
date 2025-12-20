@@ -140,7 +140,11 @@ export const matrixMapStyle = [
 
 	{ featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: MATRIX.arterial }] },
 	{ featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: MATRIX.highway }] },
-	{ featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: MATRIX.road }] },
+	{
+		featureType: 'road.highway',
+		elementType: 'geometry.stroke',
+		stylers: [{ color: MATRIX.road }]
+	},
 
 	{ featureType: 'administrative', elementType: 'geometry', stylers: [{ color: MATRIX.admin }] },
 	{
@@ -175,7 +179,11 @@ export const dGrayMapStyle = [
 	{ elementType: 'labels.text.stroke', stylers: [{ color: DGRAY_ACCENT.textStroke }] },
 
 	{ featureType: 'water', elementType: 'geometry', stylers: [{ color: DGRAY_ACCENT.water }] },
-	{ featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: DGRAY_ACCENT.text }] },
+	{
+		featureType: 'water',
+		elementType: 'labels.text.fill',
+		stylers: [{ color: DGRAY_ACCENT.text }]
+	},
 
 	{ featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: DGRAY_ACCENT.park }] },
 	{ featureType: 'poi', elementType: 'geometry', stylers: [{ color: DGRAY_ACCENT.poi }] },
@@ -183,14 +191,34 @@ export const dGrayMapStyle = [
 	{ featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: DGRAY_ACCENT.text }] },
 
 	{ featureType: 'road', elementType: 'geometry', stylers: [{ color: DGRAY_ACCENT.road }] },
-	{ featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: DGRAY_ACCENT.roadStroke }] },
+	{
+		featureType: 'road',
+		elementType: 'geometry.stroke',
+		stylers: [{ color: DGRAY_ACCENT.roadStroke }]
+	},
 	{ featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: DGRAY_ACCENT.text }] },
 
-	{ featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: DGRAY_ACCENT.arterial }] },
-	{ featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: DGRAY_ACCENT.highway }] },
-	{ featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: DGRAY_ACCENT.road }] },
+	{
+		featureType: 'road.arterial',
+		elementType: 'geometry',
+		stylers: [{ color: DGRAY_ACCENT.arterial }]
+	},
+	{
+		featureType: 'road.highway',
+		elementType: 'geometry',
+		stylers: [{ color: DGRAY_ACCENT.highway }]
+	},
+	{
+		featureType: 'road.highway',
+		elementType: 'geometry.stroke',
+		stylers: [{ color: DGRAY_ACCENT.road }]
+	},
 
-	{ featureType: 'administrative', elementType: 'geometry', stylers: [{ color: DGRAY_ACCENT.admin }] },
+	{
+		featureType: 'administrative',
+		elementType: 'geometry',
+		stylers: [{ color: DGRAY_ACCENT.admin }]
+	},
 	{
 		featureType: 'administrative.locality',
 		elementType: 'labels.text.fill',
@@ -198,7 +226,11 @@ export const dGrayMapStyle = [
 	},
 
 	{ featureType: 'transit', stylers: [{ visibility: 'off' }] },
-	{ featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: DGRAY_ACCENT.land }] }
+	{
+		featureType: 'landscape.natural',
+		elementType: 'geometry',
+		stylers: [{ color: DGRAY_ACCENT.land }]
+	}
 ];
 
 // Estilo tipo “car UI” (oscuro, azules, labels discretos)

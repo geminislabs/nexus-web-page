@@ -1,9 +1,17 @@
 import { GoogleMapEngine } from '@jesusCabrera84/map-engine';
-import { dGrayMapStyle, matrixMapStyle, darkBlueCarStyle, DBLUE, darkGrayMapStyle, DGREY } from '$lib/mapStyles';
+import {
+	dGrayMapStyle,
+	matrixMapStyle,
+	darkBlueCarStyle,
+	DBLUE,
+	darkGrayMapStyle,
+	DGREY
+} from '$lib/mapStyles';
 import { getStatusBadgeClass, getStatusText } from '$lib/utils/vehicleUtils.js';
 import { theme } from '$lib/stores/theme.js';
 import { unitIcons } from '$lib/data/unitIcons.js';
 import { ICON_REGISTRY } from '../../icons/index.js';
+import { deriveStrokeColor } from '../../icons/iconStyles.ts';
 import { vehicleColors } from '$lib/data/vehicleColors.js';
 
 class MapService {
@@ -68,10 +76,11 @@ class MapService {
 							<p><span class="font-medium">Bater&iacute;a dispositivo:</span> ${batteryDevice || 0} V</p>
 							${vehicle.device_id ? `<p><span class=\"font-medium\">Device ID:</span> ${vehicle.device_id}</p>` : ''}
 							<p><span class="font-medium">Última actualización:</span> ${lastUpdate}</p>
-							${vehicle.latitude && vehicle.longitude
-						? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
-						: ''
-					}
+							${
+								vehicle.latitude && vehicle.longitude
+									? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
+									: ''
+							}
 						</div>
 					</div>
 				`;
@@ -121,18 +130,15 @@ class MapService {
 		if (this.unsubscribeTheme) return;
 
 		this.unsubscribeTheme = theme.subscribe((t) => {
-			console.log('[MapService] Theme changed:', t);
 			this.currentTheme = t;
 			if (this.engine) {
 				// Map "classic" to "light" for the engine to recognize the default nature
 				const engineTheme = t === 'classic' ? 'light' : t;
-				console.log('[MapService] Setting engine theme:', engineTheme);
 				this.engine.setTheme(engineTheme);
 
 				// Apply background color fix
 				const backgroundColor = this.getBackgroundColorForTheme(t);
 				if (this.mapInstance) {
-					console.log('[MapService] Setting map background color:', backgroundColor);
 					this.mapInstance.setOptions({ backgroundColor });
 				}
 
@@ -198,25 +204,20 @@ class MapService {
 		// Determine the effective icon type (default to sedan)
 		const iconType = vehicle.icon_type || 'vehicle-car-sedan';
 
-		console.log('Icon type:', iconType);
-		console.log('Vehicle:', vehicle);
-		console.log('Vehicle icon type:', vehicle.icon_type);
-		console.log('Vehicle color:', vehicle.color);
-
 		// CHECK FOR SVG ICON OVERRIDE
 		// If vehicle type matches our SVG car (explicitly or by default), inject the SvgIconConfig
 		if (iconType === 'vehicle-car-sedan') {
 			const colorEntry = vehicleColors.find((c) => c.slug === vehicle.color);
-			const fill = colorEntry ? colorEntry.hex : '#3B82F6';
+			const fill = colorEntry ? colorEntry.hex : 'transparent';
 
 			input.icon = {
 				path: ICON_REGISTRY.car,
 				fillColor: fill, // Use vehicle color or default Blue neon
 				fillOpacity: 1,
-				strokeColor: '#ffffff',
-				strokeWeight: 1,
-				scale: 0.5, // Adjusted scale as discussed
-				anchor: { x: 0, y: 0 }
+				strokeColor: deriveStrokeColor(fill),
+				strokeWeight: 1.2,
+				scale: 0.7, // Adjusted scale as discussed
+				anchor: { x: 27.5, y: 52.5 }
 			};
 		}
 

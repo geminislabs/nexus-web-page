@@ -68,8 +68,6 @@ class PositionService {
 			// Normalizar los datos
 			const normalizedData = this.normalizePositionData(data);
 
-			console.log('Normalized data:', normalizedData);
-
 			// Guardar en cache
 			this.cache.set(cacheKey, {
 				data: normalizedData,
@@ -473,16 +471,13 @@ class PositionService {
 		const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
 		const streamUrl = `${sanitizedBaseUrl}/api/v1/public/share-location/stream?token=${encodeURIComponent(token)}`;
-		console.log('Connecting to share stream:', streamUrl);
 
 		let websocket = null;
 
 		try {
 			websocket = new WebSocket(streamUrl);
 
-			websocket.onopen = () => {
-				console.log('Share stream connected');
-			};
+			websocket.onopen = () => {};
 
 			websocket.onmessage = (event) => {
 				try {

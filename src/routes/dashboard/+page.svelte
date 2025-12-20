@@ -96,10 +96,6 @@
 				deviceList = devicesData?.devices || [];
 			}
 
-			console.log('devicesData', devicesData);
-			console.log('deviceList', deviceList);
-			console.log('unitsData', unitsData);
-
 			// Create a map of units by device_id for quick lookup
 			const unitsByDeviceId = {};
 			const unitsList = Array.isArray(unitsData) ? unitsData : unitsData?.units || [];
@@ -111,14 +107,12 @@
 
 			// Get device ids for fetching communications
 			const ids = deviceList.map((d) => d.device_id);
-			console.log('ids', ids);
 
 			// Get latest communications
 			let communicationsByDeviceId = {};
 			if (ids.length > 0) {
 				try {
 					const comm = await positionService.getLatestCommunications(ids);
-					console.log('Communications (page load):', comm);
 
 					const items = Array.isArray(comm) ? comm : comm?.communications || [];
 					items.forEach((c) => {
