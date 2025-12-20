@@ -3,6 +3,7 @@ import { darkBlueCarStyle, DBLUE, darkGrayMapStyle, DGREY } from '$lib/mapStyles
 import { getStatusBadgeClass, getStatusText } from '$lib/utils/vehicleUtils.js';
 import { theme } from '$lib/stores/theme.js';
 import { unitIcons } from '$lib/data/unitIcons.js';
+import { ICON_REGISTRY } from '../../icons/index.js';
 
 class MapService {
 	constructor() {
@@ -64,11 +65,10 @@ class MapService {
 							<p><span class="font-medium">Bater&iacute;a dispositivo:</span> ${batteryDevice || 0} V</p>
 							${vehicle.device_id ? `<p><span class=\"font-medium\">Device ID:</span> ${vehicle.device_id}</p>` : ''}
 							<p><span class="font-medium">Última actualización:</span> ${lastUpdate}</p>
-							${
-								vehicle.latitude && vehicle.longitude
-									? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
-									: ''
-							}
+							${vehicle.latitude && vehicle.longitude
+						? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
+						: ''
+					}
 						</div>
 					</div>
 				`;
@@ -187,6 +187,24 @@ class MapService {
 			// Pass through other properties if needed by the renderer
 			...vehicle
 		};
+
+		// Determine the effective icon type (default to sedan)
+		const iconType = vehicle.icon_type || 'vehicle-car-sedan';
+
+		// CHECK FOR SVG ICON OVERRIDE
+		// If vehicle type matches our SVG car (explicitly or by default), inject the SvgIconConfig
+		if (iconType === 'vehicle-car-sedan') {
+			input.icon = {
+				path: ICON_REGISTRY.car,
+				fillColor: '#3B82F6', // Blue neon
+				fillOpacity: 1,
+				strokeColor: '#ffffff',
+				strokeWeight: 1,
+				scale: 0.7, // Adjusted scale as discussed
+				anchor: { x: 32, y: 32 }
+			};
+		}
+
 		return this.engine.updateVehicleMarker(input);
 	}
 
