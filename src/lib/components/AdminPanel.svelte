@@ -2,6 +2,8 @@
 	import { apiService } from '$lib/services/api';
 	import { vehicleColors } from '$lib/data/vehicleColors';
 	import { user } from '$lib/stores/auth';
+	import { vehicleActions } from '$lib/stores/vehicleStore';
+	import { mapService } from '$lib/services/mapService';
 	import IconPicker from '$lib/components/Unit/IconPicker.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import AssignUnits from './AssignUnits.svelte';
@@ -173,6 +175,35 @@
 
 			if (field === 'color') {
 				showColorPicker = false;
+			}
+
+			// Update vehicle store immediately to reflect changes on map
+			// We need the device_id which is in the unit object, not necessarily in the profile response directly in the same way
+			const unit = units.find((u) => u.id === selectedUnitId);
+			if (unit && unit.device_id) {
+				// We map the profile fields to the vehicle store structure
+				const updates = {};
+				if (field === 'color') updates.color = value;
+				if (field === 'icon_type') updates.icon_type = value;
+				// Add more fields if they are visualized on the map/list
+
+				if (Object.keys(updates).length > 0) {
+					vehicleActions.updateVehicle(unit.device_id, updates);
+					// Also force update map marker directly
+					try {
+						// We need full vehicle object for mapService, but updateVehicleMarker likely merges or handles partials?
+						// checking mapService: it uses "input" object.
+						// We should construct a minimal update object or pass the merged one.
+						// vehicleActions.updateVehicle updates the store. Let's get the updated vehicle from store or construct it.
+						// Ideally we pass what changed.
+						// Re-reading mapService logic: it takes a "vehicle" object and reads properties.
+						// We'll pass the unit plus updates.
+						const updatedVehicle = { ...unit, ...updates };
+						mapService.updateVehicleMarker(updatedVehicle);
+					} catch (e) {
+						console.error('Error updating map marker from admin panel:', e);
+					}
+				}
 			}
 
 			// Remove focus to indicate completion or just keep it?

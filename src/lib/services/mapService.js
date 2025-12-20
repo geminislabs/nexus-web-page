@@ -66,10 +66,11 @@ class MapService {
 							<p><span class="font-medium">Bater&iacute;a dispositivo:</span> ${batteryDevice || 0} V</p>
 							${vehicle.device_id ? `<p><span class=\"font-medium\">Device ID:</span> ${vehicle.device_id}</p>` : ''}
 							<p><span class="font-medium">Última actualización:</span> ${lastUpdate}</p>
-							${vehicle.latitude && vehicle.longitude
-						? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
-						: ''
-					}
+							${
+								vehicle.latitude && vehicle.longitude
+									? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
+									: ''
+							}
 						</div>
 					</div>
 				`;
@@ -209,8 +210,8 @@ class MapService {
 				fillOpacity: 1,
 				strokeColor: '#ffffff',
 				strokeWeight: 1,
-				scale: 0.7, // Adjusted scale as discussed
-				anchor: { x: 32, y: 32 }
+				scale: 0.5, // Adjusted scale as discussed
+				anchor: { x: 0, y: 0 }
 			};
 		}
 
