@@ -141,6 +141,7 @@
 				return {
 					id: deviceId,
 					name: unit.name || deviceId,
+					unit_id: unit.id, // Ensure unit.id is mapped for profile fetching
 					deviceId: deviceId,
 					status: 'active',
 					icon_type: d.icon_type, // Map icon_type from device data
@@ -167,6 +168,9 @@
 			});
 
 			vehicles.set(mapped);
+
+			// Load profiles (color, icon_type) in background
+			vehicleActions.loadVehicleProfiles();
 
 			// Update map markers after setting vehicles
 			if (ids.length > 0) {

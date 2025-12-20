@@ -4,6 +4,7 @@ import { getStatusBadgeClass, getStatusText } from '$lib/utils/vehicleUtils.js';
 import { theme } from '$lib/stores/theme.js';
 import { unitIcons } from '$lib/data/unitIcons.js';
 import { ICON_REGISTRY } from '../../icons/index.js';
+import { vehicleColors } from '$lib/data/vehicleColors.js';
 
 class MapService {
 	constructor() {
@@ -191,12 +192,20 @@ class MapService {
 		// Determine the effective icon type (default to sedan)
 		const iconType = vehicle.icon_type || 'vehicle-car-sedan';
 
+		console.log('Icon type:', iconType);
+		console.log('Vehicle:', vehicle);
+		console.log('Vehicle icon type:', vehicle.icon_type);
+		console.log('Vehicle color:', vehicle.color);
+
 		// CHECK FOR SVG ICON OVERRIDE
 		// If vehicle type matches our SVG car (explicitly or by default), inject the SvgIconConfig
 		if (iconType === 'vehicle-car-sedan') {
+			const colorEntry = vehicleColors.find((c) => c.slug === vehicle.color);
+			const fill = colorEntry ? colorEntry.hex : '#3B82F6';
+
 			input.icon = {
 				path: ICON_REGISTRY.car,
-				fillColor: '#3B82F6', // Blue neon
+				fillColor: fill, // Use vehicle color or default Blue neon
 				fillOpacity: 1,
 				strokeColor: '#ffffff',
 				strokeWeight: 1,

@@ -1,4 +1,5 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
+import { apiService } from '$lib/services/api.js';
 
 export const vehicles = writable([]);
 export const selectedVehicles = writable([]);
@@ -102,5 +103,47 @@ export const vehicleActions = {
 				return vehicle;
 			});
 		});
+	},
+
+	async loadVehicleProfiles() {
+		const currentVehicles = get(vehicles);
+		if (!currentVehicles.length) return;
+
+		// Filter vehicles that have a unit_id to fetch profile
+		const vehiclesToFetch = currentVehicles.filter((v) => v.unit_id);
+
+		if (vehiclesToFetch.length === 0) return;
+
+		try {
+			// Fetch all profiles in parallel
+			const profiles = await Promise.all(
+				vehiclesToFetch.map(async (v) => {
+					try {
+						const profile = await apiService.getUnitProfile(v.unit_id);
+						return { deviceId: v.deviceId, profile };
+					} catch (err) {
+						console.warn(`Failed to load profile for unit ${v.unit_id}`, err);
+						return null;
+					}
+				})
+			);
+
+			// Update store with new info
+			vehicles.update((list) => {
+				return list.map((vehicle) => {
+					const result = profiles.find((p) => p && p.deviceId === vehicle.deviceId);
+					if (result && result.profile) {
+						return {
+							...vehicle,
+							icon_type: result.profile.icon_type || vehicle.icon_type,
+							color: result.profile.color || vehicle.color
+						};
+					}
+					return vehicle;
+				});
+			});
+		} catch (error) {
+			console.error('Error batch loading vehicle profiles:', error);
+		}
 	}
 };
