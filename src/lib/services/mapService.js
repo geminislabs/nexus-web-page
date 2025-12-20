@@ -1,5 +1,5 @@
 import { GoogleMapEngine } from '@jesusCabrera84/map-engine';
-import { darkBlueCarStyle, DBLUE, darkGrayMapStyle, DGREY } from '$lib/mapStyles';
+import { dGrayMapStyle, matrixMapStyle, darkBlueCarStyle, DBLUE, darkGrayMapStyle, DGREY } from '$lib/mapStyles';
 import { getStatusBadgeClass, getStatusText } from '$lib/utils/vehicleUtils.js';
 import { theme } from '$lib/stores/theme.js';
 import { unitIcons } from '$lib/data/unitIcons.js';
@@ -29,6 +29,8 @@ class MapService {
 			styles: {
 				modern: darkBlueCarStyle,
 				dark: darkGrayMapStyle,
+				matrix: matrixMapStyle,
+				dgray: dGrayMapStyle,
 				light: null, // Default google maps style
 				classic: null // Explicitly classic as default
 			},
@@ -66,11 +68,10 @@ class MapService {
 							<p><span class="font-medium">Bater&iacute;a dispositivo:</span> ${batteryDevice || 0} V</p>
 							${vehicle.device_id ? `<p><span class=\"font-medium\">Device ID:</span> ${vehicle.device_id}</p>` : ''}
 							<p><span class="font-medium">Última actualización:</span> ${lastUpdate}</p>
-							${
-								vehicle.latitude && vehicle.longitude
-									? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
-									: ''
-							}
+							${vehicle.latitude && vehicle.longitude
+						? `<p><span class=\"font-medium\">Coordenadas:</span> ${vehicle.latitude}, ${vehicle.longitude}</p>`
+						: ''
+					}
 						</div>
 					</div>
 				`;
@@ -149,6 +150,10 @@ class MapService {
 		switch (theme) {
 			case 'modern':
 				return '#0b1524';
+			case 'matrix':
+				return '#0a0f0d';
+			case 'dgray':
+				return '#18181b';
 			case 'dark':
 				return '#0f1115';
 			case 'classic':

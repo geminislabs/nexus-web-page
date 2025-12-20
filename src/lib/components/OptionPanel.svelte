@@ -71,9 +71,9 @@
 					</button>
 
 					{#if showTheme}
-						<div class="grid grid-cols-3 gap-2">
+						<div class="grid grid-cols-2 gap-2">
 							<button
-								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {$theme ===
 								'dark'
 									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
 									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
@@ -82,7 +82,7 @@
 								Dark
 							</button>
 							<button
-								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {$theme ===
 								'classic'
 									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
 									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
@@ -91,13 +91,31 @@
 								Light
 							</button>
 							<button
-								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {theme ===
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {$theme ===
 								'modern'
 									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
 									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
 								on:click={() => changeTheme('modern')}
 							>
 								Glass
+							</button>
+							<button
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {$theme ===
+								'matrix'
+									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+								on:click={() => changeTheme('matrix')}
+							>
+								Matrix
+							</button>
+							<button
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {$theme ===
+								'dgray'
+									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+								on:click={() => changeTheme('dgray')}
+							>
+								DGray
 							</button>
 						</div>
 					{/if}
