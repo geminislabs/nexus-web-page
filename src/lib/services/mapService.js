@@ -62,9 +62,11 @@ class MapService {
 				const statusClass = getStatusBadgeClass(vehicle.status);
 				const statusText = getStatusText(vehicle.status);
 
+				console.log(vehicle);
+
 				return `
 					<div class="info-window-text">
-						<h3 class="font-semibold mb-2">${vehicle.device_id}</h3>
+						<h3 class="font-semibold mb-2">${vehicle.name || vehicle.id || 'Sin ID'}</h3>
 						<div class="space-y-1 text-sm">
 							<p><span class="font-medium">Estado:</span> 
 								<span class="px-2 py-1 text-xs ${statusClass}">
@@ -74,7 +76,6 @@ class MapService {
 							<p><span class="font-medium">Velocidad:</span> ${speed} km/h</p>
 							<p><span class="font-medium">Batería:</span> ${battery} V</p>
 							<p><span class="font-medium">Bater&iacute;a dispositivo:</span> ${batteryDevice || 0} V</p>
-							${vehicle.device_id ? `<p><span class=\"font-medium\">Device ID:</span> ${vehicle.device_id}</p>` : ''}
 							<p><span class="font-medium">Última actualización:</span> ${lastUpdate}</p>
 							${
 								vehicle.latitude && vehicle.longitude

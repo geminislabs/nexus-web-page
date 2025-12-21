@@ -1,6 +1,16 @@
 function hexToRgb(hex: string) {
+	if (!hex || hex === 'transparent') {
+		return { r: 0, g: 0, b: 0 }; // Treat as black for stroke calculation purposes, or could default to white?
+		// If transparent, maybe we want a white stroke?
+		// Actually if fill is transparent, we probably want a visible stroke.
+		// If we return 0,0,0 (black), luminance is 0.
+		// logic: lum < 85 -> adjustColor(rgb, 70) -> adds 70 to 0 -> dark gray (70,70,70).
+		// That seems acceptable for a default placeholder.
+	}
 	const clean = hex.replace('#', '');
 	const num = parseInt(clean, 16);
+
+	if (isNaN(num)) return { r: 0, g: 0, b: 0 }; // Fallback
 
 	return {
 		r: (num >> 16) & 255,

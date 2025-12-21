@@ -46,6 +46,7 @@
 	--input-border: var(--glass-border);
 	/* Google Maps */
 	--info-window-text: #272727;
+	--info-window-bg: #ffffff;
 	--field-bg: rgba(77, 77, 77, 1);
 	--vignette-color: rgba(11, 21, 36, 0.65);
 	--vignette-stops: transparent 60%, black 85%;
@@ -94,6 +95,7 @@
 	--input-placeholder: rgba(229, 231, 235, 0.6);
 	--input-border: var(--glass-border);
 	--info-window-text: #00327c;
+	--info-window-bg: #ffffff;
 	--vignette-color: rgba(15, 17, 21, 0.65);
 	--vignette-stops: transparent 60%, black 85%;
 	color-scheme: dark;
@@ -145,6 +147,7 @@
 	--input-border: var(--glass-border);
 
 	--info-window-text: #00ff9d;
+	--info-window-bg: #0a100d;
 	--vignette-color: rgba(5, 10, 8, 0.75);
 	--vignette-stops: transparent 60%, black 90%;
 
@@ -203,6 +206,7 @@
 	--input-border: var(--glass-border);
 
 	--info-window-text: #22c55e;
+	--info-window-bg: #18181b;
 	--vignette-color: rgba(24, 24, 27, 0.75);
 	--vignette-stops: transparent 60%, black 90%;
 
@@ -257,6 +261,7 @@
 	/* gray-500 */
 	--input-border: rgba(0, 0, 0, 0.12);
 	--info-window-text: #0b1524;
+	--info-window-bg: #ffffff;
 	--vignette-color: transparent;
 	--vignette-stops: transparent 60%, transparent 100%;
 }
@@ -500,4 +505,51 @@ section::before {
 .background-video {
 	opacity: 0.4;
 	filter: blur(5px);
+}
+
+/* Fix para el botón cerrar de Google Maps con Tailwind */
+.gm-ui-hover-effect {
+	opacity: 0.8 !important;
+}
+
+.gm-ui-hover-effect > span {
+	background-color: #bd1f1f !important;
+	/* O el color que quieras para la X */
+	display: block !important;
+	/* Tailwind a veces lo oculta */
+	width: 20px !important;
+	height: 20px !important;
+}
+
+/* Opcional: Asegurar que la X (que es una imagen/svg) tenga dimensiones */
+.gm-ui-hover-effect img {
+	width: 100% !important;
+	height: 100% !important;
+	display: block !important;
+}
+
+/* 1. Fondo del contenedor principal */
+.gm-style-iw-c {
+	background-color: var(--info-window-bg) !important;
+	/* Opcional: Quitar padding nativo si quieres control total en tu HTML */
+	padding: 0 !important;
+}
+
+/* 2. Fondo del contenedor interno (por seguridad) */
+.gm-style-iw-d {
+	background-color: var(--info-window-bg) !important;
+	overflow: hidden !important;
+	padding: 15px !important;
+	/* Ayuda a evitar scrollbars no deseados */
+}
+
+/* 3. CORRECCIÓN DE LA FLECHA (El hueco blanco principal) */
+/* En versiones recientes, la flecha suele ser un pseudo-elemento del contenedor tc */
+.gm-style-iw-tc::after {
+	background-color: var(--info-window-bg) !important;
+}
+
+/* Si en tu versión la flecha usa un div normal, intenta esto también: */
+.gm-style-iw-t::after {
+	background-color: var(--info-window-bg) !important;
 }
