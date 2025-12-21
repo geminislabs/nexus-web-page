@@ -33,6 +33,7 @@ class MapService {
 
 		this.engine = new GoogleMapEngine({
 			apiKey,
+			streetViewControl: true,
 			// Define default theme and styles
 			theme: this.currentTheme,
 			styles: {
