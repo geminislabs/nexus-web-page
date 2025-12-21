@@ -271,3 +271,72 @@ export const darkBlueCarStyle = [
 	{ featureType: 'transit', stylers: [{ visibility: 'off' }] },
 	{ featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: DBLUE.land }] }
 ];
+
+// === TEMA ANCESTRAL (Pirate Map) ===
+export const ANCESTRAL = {
+	bg: '#2b1d0e', // Wood/Dark texture base
+	land: '#dcc7a0', // Parchment
+	water: '#a89f91', // Muddy/Ink water
+	road: '#c5b38e', // Slightly darker parchment
+	roadStroke: '#8b4513', // SaddleBrown ink
+	arterial: '#cdb890',
+	highway: '#d2b48c', // Tan
+	park: '#d4c5a5', // Desaturated parchment
+	poi: '#dcc7a0',
+	text: '#5c4033', // Dark brown ink
+	textStroke: '#f5e6c4', // Halo parchment
+	admin: '#8b4513', // Brown lines
+	accent: '#d2691e' // Burnt Orange
+};
+
+export const ancestralMapStyle = [
+	{ elementType: 'geometry', stylers: [{ color: ANCESTRAL.land }] },
+	{ elementType: 'labels.text.fill', stylers: [{ color: ANCESTRAL.text }] },
+	{ elementType: 'labels.text.stroke', stylers: [{ color: ANCESTRAL.textStroke }] },
+
+	{ featureType: 'water', elementType: 'geometry', stylers: [{ color: ANCESTRAL.water }] },
+	{ featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: ANCESTRAL.text }] },
+
+	{ featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: ANCESTRAL.park }] },
+	{ featureType: 'poi', elementType: 'geometry', stylers: [{ color: ANCESTRAL.poi }] },
+	{ featureType: 'poi', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+	{ featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: ANCESTRAL.text }] },
+
+	{ featureType: 'road', elementType: 'geometry', stylers: [{ color: ANCESTRAL.road }] },
+	{
+		featureType: 'road',
+		elementType: 'geometry.stroke',
+		stylers: [{ color: ANCESTRAL.roadStroke }]
+	},
+	{ featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: ANCESTRAL.text }] },
+
+	{
+		featureType: 'road.arterial',
+		elementType: 'geometry',
+		stylers: [{ color: ANCESTRAL.arterial }]
+	},
+	{ featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: ANCESTRAL.highway }] },
+	{
+		featureType: 'road.highway',
+		elementType: 'geometry.stroke',
+		stylers: [{ color: ANCESTRAL.roadStroke }]
+	},
+
+	{
+		featureType: 'administrative',
+		elementType: 'geometry.stroke',
+		stylers: [{ color: ANCESTRAL.admin }]
+	},
+	{
+		featureType: 'administrative.locality',
+		elementType: 'labels.text.fill',
+		stylers: [{ color: ANCESTRAL.text }]
+	},
+
+	{ featureType: 'transit', stylers: [{ visibility: 'off' }] },
+	{
+		featureType: 'landscape.natural',
+		elementType: 'geometry',
+		stylers: [{ color: ANCESTRAL.land }]
+	}
+];

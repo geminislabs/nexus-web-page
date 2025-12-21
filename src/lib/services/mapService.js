@@ -5,7 +5,8 @@ import {
 	darkBlueCarStyle,
 	DBLUE,
 	darkGrayMapStyle,
-	DGREY
+	DGREY,
+	ancestralMapStyle
 } from '$lib/mapStyles';
 import { getStatusBadgeClass, getStatusText } from '$lib/utils/vehicleUtils.js';
 import { theme } from '$lib/stores/theme.js';
@@ -39,6 +40,8 @@ class MapService {
 				dark: darkGrayMapStyle,
 				matrix: matrixMapStyle,
 				dgray: dGrayMapStyle,
+				dgray: dGrayMapStyle,
+				ancestral: ancestralMapStyle,
 				light: null, // Default google maps style
 				classic: null // Explicitly classic as default
 			},
@@ -163,6 +166,10 @@ class MapService {
 				return '#18181b';
 			case 'dark':
 				return '#0f1115';
+			case 'dark':
+				return '#0f1115';
+			case 'ancestral':
+				return '#2b1d0e';
 			case 'classic':
 			case 'light':
 			default:

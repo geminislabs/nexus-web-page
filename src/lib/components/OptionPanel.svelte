@@ -117,6 +117,15 @@
 							>
 								DGray
 							</button>
+							<button
+								class="px-3 py-2 rounded-md text-xs font-medium transition-all shadow-sm {$theme ===
+								'ancestral'
+									? 'bg-accent-cyan text-white shadow-accent-cyan/20'
+									: 'bg-[var(--btn-secondary-bg)] text-app opacity-70 hover:bg-[var(--btn-secondary-hover-bg)]'}"
+								on:click={() => changeTheme('ancestral')}
+							>
+								Ancestral
+							</button>
 						</div>
 					{/if}
 				</div>
