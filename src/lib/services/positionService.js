@@ -13,6 +13,29 @@ class PositionService {
 		this.cacheTimeout = 30000; // 30 segundos
 	}
 
+	/** Posición estable en dev sin llamar al backend */
+	_mockPosition(deviceId) {
+		const id = String(deviceId ?? '0');
+		let h = 0;
+		for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+		const now = new Date().toISOString();
+		const lat = 20.5888 + (Math.abs(h) % 200) / 10000;
+		const lng = -100.3899 + (Math.abs(h >> 8) % 200) / 10000;
+		return {
+			deviceId: id,
+			latitude: lat,
+			longitude: lng,
+			lastUpdate: now,
+			altitude: 0,
+			speed: 25 + (Math.abs(h) % 40),
+			battery: 60 + (Math.abs(h >> 4) % 35),
+			status: 'En ruta',
+			isOnline: true,
+			lastUpdateFormatted: this.formatLastUpdate(now),
+			coordinates: { lat, lng }
+		};
+	}
+
 	/**
 	 * Obtiene las últimas comunicaciones por lista de device_ids
 	 * @param {string[]} deviceIds - IDs de dispositivos
@@ -40,6 +63,9 @@ class PositionService {
 	 * @returns {Promise<Object>} Datos de posición
 	 */
 	async getLastPosition(deviceId) {
+		if (import.meta.env.DEV) {
+			return this._mockPosition(deviceId);
+		}
 		try {
 			const cacheKey = `position_${deviceId}`;
 			const cached = this.cache.get(cacheKey);
@@ -76,7 +102,9 @@ class PositionService {
 
 			return normalizedData;
 		} catch (error) {
-			console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
+			if (!import.meta.env.DEV) {
+				console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
+			}
 			throw error;
 		}
 	}

@@ -2,6 +2,7 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.png';
 	import { user, authToken } from '$lib/stores/auth.js';
+	import { themeActions } from '$lib/stores/themeStore.js';
 	import { onMount } from 'svelte';
 	import { theme } from '$lib/stores/theme.js';
 
@@ -10,6 +11,7 @@
 	let { children } = $props();
 
 	onMount(() => {
+		themeActions.init();
 		// Inicializar stores de autenticación
 		user.init();
 		authToken.init();
