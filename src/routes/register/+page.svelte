@@ -1,7 +1,7 @@
 <script>
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { user } from '$lib/stores/auth.js';
+	import { user, authToken } from '$lib/stores/auth.js';
 	import { apiService } from '$lib/services/api.js';
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
@@ -76,6 +76,19 @@
 </script>
 
 <svelte:head>
+	<title>NEXUS — Crear cuenta</title>
+	<meta
+		name="description"
+		content="Crea tu cuenta en NEXUS, plataforma de GeminisLabs para monitorización y gestión de flotas."
+	/>
+	<link rel="canonical" href={`${$page.url.origin}/register`} />
+	<meta property="og:title" content="NEXUS — Crear cuenta" />
+	<meta
+		property="og:description"
+		content="Crea tu cuenta en NEXUS, plataforma de GeminisLabs para monitorización y gestión de flotas."
+	/>
+	<meta property="og:type" content="website" />
+	<meta name="twitter:card" content="summary" />
 	<title>NEXUS — Crear cuenta</title>
 	<meta
 		name="description"
