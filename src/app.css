@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* === Variables globales === */
 :root {
 	--accent-cyan: #00a6c0;
@@ -9,7 +11,7 @@
 }
 
 /* === Secciones genéricas === */
-section {
+section.page-section {
 	min-height: 100vh;
 	display: flex;
 	align-items: center;
@@ -19,7 +21,7 @@ section {
 	box-sizing: border-box;
 }
 
-section::before {
+section.page-section::before {
 	content: '';
 	position: absolute;
 	top: 0;
@@ -108,11 +110,11 @@ section::before {
 }
 
 .nav-bar {
-	@apply fixed left-4 top-1/5 -translate-y-1/2 z-40 pt-5 pb-5 backdrop-blur-3xl border-2 border-white/20 rounded-full shadow-lg shadow-sky-500/80 hover:shadow-xl;
+	@apply fixed z-40 flex flex-row items-center gap-1 px-2 py-2 bottom-4 left-1/2 -translate-x-1/2 backdrop-blur-3xl border-2 border-white/20 rounded-full shadow-lg shadow-sky-500/80 hover:shadow-xl sm:left-4 sm:top-1/5 sm:bottom-auto sm:-translate-y-1/2 sm:translate-x-0 sm:flex-col sm:gap-0 sm:px-5 sm:py-5;
 }
 
 .nav-bar .menu-separator {
-	@apply h-px text-amber-50 mt-2 mb-2 mx-2;
+	@apply w-px h-8 bg-white/25 sm:w-auto sm:h-px sm:min-w-full sm:bg-transparent border-0 text-amber-50 mx-1 sm:mt-2 sm:mb-2 sm:mx-2;
 }
 .nav-button {
 	@apply w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 hover:scale-110;
@@ -123,7 +125,11 @@ section::before {
 }
 
 .nav-bar .menu-card {
-	@apply absolute left-16 top-0 w-80 max-w-[25vw] backdrop-blur-3xl backdrop-blur-lg rounded-xl shadow-xl border border-white/20 p-4 transition-all duration-8000 ease-out;
+	@apply fixed left-3 right-3 bottom-[5.25rem] w-auto max-h-[min(70vh,32rem)] overflow-y-auto sm:absolute sm:left-16 sm:right-auto sm:bottom-auto sm:top-0 sm:max-h-none sm:w-80 sm:max-w-[min(92vw,20rem)] backdrop-blur-3xl rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 transition-all duration-300 ease-out;
+}
+
+.nav-bar .menu-card--wide {
+	@apply sm:max-w-[min(96vw,24rem)];
 }
 
 .nav-bar .menu-card .controls {
@@ -131,9 +137,74 @@ section::before {
 }
 
 .nav-bar .menu-card .controls .large-button {
-	@apply w-full px-4 py-2 text-white rounded-lg shadow-sm transition-colors flex items-center gap-2;
+	@apply w-full min-h-[2.75rem] px-3 sm:px-4 py-2 text-white rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 text-sm;
+}
+
+.nav-bar .menu-card .controls .large-button .btn-label {
+	@apply hidden min-[380px]:inline sm:inline;
 }
 
 .nav-bar .menu-card .controls .large-button .icon {
 	@apply w-6 h-6 text-white;
+}
+
+html[data-theme='light'] .nav-bar {
+	background: rgba(255, 255, 255, 0.94);
+	border-color: rgb(148 163 184 / 0.55);
+	box-shadow:
+		0 10px 40px rgb(15 23 42 / 0.12),
+		0 0 0 1px rgb(15 23 42 / 0.06);
+}
+
+html[data-theme='light'] .nav-bar .menu-separator {
+	background: rgb(148 163 184 / 0.45);
+}
+
+html[data-theme='light'] .nav-button {
+	@apply text-white;
+	background: linear-gradient(165deg, #334155 0%, #1e293b 100%);
+	border: 1px solid rgb(71 85 105 / 0.45);
+	box-shadow:
+		0 2px 6px rgb(15 23 42 / 0.2),
+		inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+html[data-theme='light'] .nav-button:hover {
+	filter: brightness(1.07);
+}
+
+/* Panel central (hojas): borde más visible en claro */
+html[data-theme='light'] .center-sheet-panel {
+	border-color: rgb(148 163 184 / 0.85);
+	box-shadow:
+		0 25px 50px -12px rgb(15 23 42 / 0.18),
+		0 0 0 1px rgb(15 23 42 / 0.05);
+}
+
+.dashboard-fullscreen-btn {
+	@apply fixed z-[50] flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium shadow-lg transition-colors;
+	top: max(0.75rem, env(safe-area-inset-top));
+	right: max(0.75rem, env(safe-area-inset-right));
+	background: rgba(15, 23, 42, 0.92);
+	border-color: rgba(148, 163, 184, 0.35);
+	color: #f8fafc;
+}
+
+.dashboard-fullscreen-btn:hover {
+	background: rgba(30, 41, 59, 0.96);
+}
+
+html[data-theme='light'] .dashboard-fullscreen-btn {
+	background: rgba(255, 255, 255, 0.95);
+	border-color: rgb(148 163 184 / 0.55);
+	color: #0f172a;
+	box-shadow: 0 4px 20px rgb(15 23 42 / 0.12);
+}
+
+html[data-theme='light'] .dashboard-fullscreen-btn:hover {
+	background: #ffffff;
+}
+
+.dashboard-fullscreen-btn .btn-text {
+	@apply hidden sm:inline;
 }

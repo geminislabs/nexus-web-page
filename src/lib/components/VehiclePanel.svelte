@@ -1,4 +1,7 @@
 <script>
+	import Icon from '@iconify/svelte';
+	import CenterSheet from '$lib/components/CenterSheet.svelte';
+	import { theme } from '$lib/stores/themeStore.js';
 	import {
 		vehicles,
 		selectedVehicles,
@@ -8,11 +11,17 @@
 		selectedVehicleCount,
 		vehicleActions
 	} from '$lib/stores/vehicleStore.js';
-	import { getStatusColor, getStatusText } from '$lib/utils/vehicleUtils.js';
+	import { getStatusText, getStatusPillClass } from '$lib/utils/vehicleUtils.js';
 	import { mapService } from '$lib/services/mapService.js';
 
 	export let showVehiclePanel = false;
 	export let showVehicleList = false;
+	export let onTogglePanel = () => {};
+	export let onClose = () => {};
+
+	const listRegionId = 'vehicle-panel-list-region';
+
+	$: isLightTheme = $theme === 'light';
 
 	async function toggleVehicleList() {
 		showVehicleList = !showVehicleList;
@@ -55,233 +64,259 @@
 			mapService.centerOnVehicle(vehicle);
 		}
 	}
+
+	function vehicleCoords(vehicle) {
+		const lat = vehicle.latitude ?? vehicle.lat;
+		const lng = vehicle.longitude ?? vehicle.lng;
+		if (lat == null || lng == null) return null;
+		return { lat, lng };
+	}
 </script>
 
-<!-- Botón del vehículo -->
 <button
-	on:click={() => (showVehiclePanel = !showVehiclePanel)}
+	type="button"
+	on:click={onTogglePanel}
 	aria-label="Abrir panel de control de vehículos"
-	class="nav-button"
+	aria-haspopup="dialog"
+	aria-expanded={showVehiclePanel}
+	class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition-all duration-200 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 focus-visible:ring-offset-transparent {isLightTheme
+		? 'border border-slate-600/45 bg-gradient-to-br from-slate-700 to-slate-900 shadow-[0_2px_6px_rgb(15_23_42_/_0.2)] [box-shadow:inset_0_1px_0_rgb(255_255_255_/_0.08)] hover:brightness-[1.07]'
+		: 'border border-white/10 bg-white/10 hover:bg-white/[0.16]'}"
+	class:ring-2={showVehiclePanel}
+	class:ring-emerald-400={showVehiclePanel}
+	class:ring-offset-2={showVehiclePanel}
+	class:ring-offset-slate-900={showVehiclePanel && isLightTheme}
+	class:ring-offset-slate-950={showVehiclePanel && !isLightTheme}
 >
-	<svg
-		class="menu-icon"
-		fill="currentColor"
-		viewBox="-12.29 -12.29 147.46 147.46"
-		version="1.1"
-		id="Layer_1"
-		xmlns="http://www.w3.org/2000/svg"
-		xmlns:xlink="http://www.w3.org/1999/xlink"
-		style="enable-background:new 0 0 122.88 92.02"
-		xml:space="preserve"
-		transform="matrix(1, 0, 0, 1, 0, 0)rotate(0)"
-	>
-		<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-		<g
-			id="SVGRepo_tracerCarrier"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			stroke="#CCCCCC"
-			stroke-width="4.9152000000000005"
-		></g>
-		<g id="SVGRepo_iconCarrier">
-			<style type="text/css">
-				.st0 {
-					fill-rule: evenodd;
-					clip-rule: evenodd;
-				}
-			</style>
-			<g>
-				<path
-					class="st0"
-					d="M10.17,34.23c-10.98-5.58-9.72-11.8,1.31-11.15l2.47,4.63l5.09-15.83C21.04,5.65,24.37,0,30.9,0H96 c6.53,0,10.29,5.54,11.87,11.87l3.82,15.35l2.2-4.14c11.34-0.66,12.35,5.93,0.35,11.62l1.95,2.99c7.89,8.11,7.15,22.45,5.92,42.48 v8.14c0,2.04-1.67,3.71-3.71,3.71h-15.83c-2.04,0-3.71-1.67-3.71-3.71v-4.54H24.04v4.54c0,2.04-1.67,3.71-3.71,3.71H4.5 c-2.04,0-3.71-1.67-3.71-3.71V78.2c0-0.2,0.02-0.39,0.04-0.58C-0.37,62.25-2.06,42.15,10.17,34.23L10.17,34.23z M30.38,58.7 l-14.06-1.77c-3.32-0.37-4.21,1.03-3.08,3.89l1.52,3.69c0.49,0.95,1.14,1.64,1.9,2.12c0.89,0.55,1.96,0.82,3.15,0.87l12.54,0.1 c3.03-0.01,4.34-1.22,3.39-4C34.96,60.99,33.18,59.35,30.38,58.7L30.38,58.7z M54.38,52.79h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0 c0,0.85-0.7,1.55-1.55,1.55h-14.4c-0.85,0-1.55-0.7-1.55-1.55l0,0C52.82,53.49,53.52,52.79,54.38,52.79L54.38,52.79z M89.96,73.15 h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0c0,0.85-0.7,1.55-1.55,1.55h-14.4c-0.85,0-1.55-0.7-1.55-1.55l0,0 C88.41,73.85,89.1,73.15,89.96,73.15L89.96,73.15z M92.5,58.7l14.06-1.77c3.32-0.37,4.21,1.03,3.08,3.89l-1.52,3.69 c-0.49,0.95-1.14,1.64-1.9,2.12c-0.89,0.55-1.96,0.82-3.15,0.87l-12.54,0.1c-3.03-0.01-4.34-1.22-3.39-4 C87.92,60.99,89.7,59.35,92.5,58.7L92.5,58.7z M18.41,73.15h14.4c0.85,0,1.55,0.7,1.55,1.55l0,0c0,0.85-0.7,1.55-1.55,1.55h-14.4 c-0.85,0-1.55-0.7-1.55-1.55l0,0C16.86,73.85,17.56,73.15,18.41,73.15L18.41,73.15z M19.23,31.2h86.82l-3.83-15.92 c-1.05-4.85-4.07-9.05-9.05-9.05H33.06c-4.97,0-7.52,4.31-9.05,9.05L19.23,31.2v0.75V31.2L19.23,31.2z"
-				></path>
-			</g>
-		</g>
-	</svg>
+	<Icon icon="mdi:car-side" class="h-8 w-8 shrink-0" aria-hidden="true" />
 </button>
 
-<!-- Panel de controles expandible -->
-{#if showVehiclePanel}
-	<div class="menu-card">
-		<!-- Controles del panel -->
-		<div class="controls">
-			<button class="large-button bg-green-600 hover:bg-green-700" on:click={toggleVehicleList}>
-				<svg
-					class="icon"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-					<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-					<g id="SVGRepo_iconCarrier">
-						<g id="Edit / Select_Multiple">
-							<path
-								id="Vector"
-								d="M3 9V19.4C3 19.9601 3 20.2399 3.10899 20.4538C3.20487 20.642 3.35774 20.7952 3.5459 20.8911C3.7596 21 4.0395 21 4.59846 21H15.0001M17 8L13 12L11 10M7 13.8002V6.2002C7 5.08009 7 4.51962 7.21799 4.0918C7.40973 3.71547 7.71547 3.40973 8.0918 3.21799C8.51962 3 9.08009 3 10.2002 3H17.8002C18.9203 3 19.4801 3 19.9079 3.21799C20.2842 3.40973 20.5905 3.71547 20.7822 4.0918C21.0002 4.51962 21.0002 5.07969 21.0002 6.19978L21.0002 13.7998C21.0002 14.9199 21.0002 15.48 20.7822 15.9078C20.5905 16.2841 20.2842 16.5905 19.9079 16.7822C19.4805 17 18.9215 17 17.8036 17H10.1969C9.07899 17 8.5192 17 8.0918 16.7822C7.71547 16.5905 7.40973 16.2842 7.21799 15.9079C7 15.4801 7 14.9203 7 13.8002Z"
-								stroke="#000000"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							></path>
-						</g>
-					</g>
-				</svg>
-				{showVehicleList ? 'Ocultar' : 'Ver'} Lista de Vehículos
+<CenterSheet open={showVehiclePanel} title="Vehículos" onClose={() => onClose()}>
+	<div class="space-y-5">
+		<section class="space-y-3" aria-labelledby="vehicle-panel-actions-heading">
+			<h3 id="vehicle-panel-actions-heading" class="sr-only">Acciones del panel de vehículos</h3>
+			<button
+				type="button"
+				class="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-600/20 bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-900/20 transition-colors hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 dark:border-emerald-500/30 dark:shadow-emerald-950/40"
+				on:click={toggleVehicleList}
+				aria-expanded={showVehicleList}
+				aria-controls={listRegionId}
+			>
+				<Icon icon="mdi:view-list-outline" class="h-5 w-5 shrink-0" aria-hidden="true" />
+				{showVehicleList ? 'Ocultar lista de vehículos' : 'Ver lista de vehículos'}
 			</button>
 
-			<!-- Lista de vehículos -->
 			{#if showVehicleList}
-				<div class="mt-3 p-3 bg-gray-50/80 rounded-lg max-h-64 overflow-y-auto">
-					<div class="flex justify-between items-center mb-3">
-						<p class="text-sm font-medium text-gray-800">Seleccionar Vehículos</p>
-						<div class="flex gap-2">
+				<div
+					id={listRegionId}
+					role="region"
+					aria-label="Lista y selección de vehículos"
+					class="max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-600 dark:bg-slate-800/80"
+				>
+					<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+						<h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Selección</h4>
+						<div
+							class="flex flex-wrap gap-2"
+							role="group"
+							aria-label="Acciones de selección masiva"
+						>
 							<button
-								class="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+								type="button"
+								class="rounded-lg border border-blue-600/30 bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
 								on:click={selectAllVehicles}
 							>
-								Todos
+								Seleccionar todos
 							</button>
 							<button
-								class="text-xs px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+								type="button"
+								class="rounded-lg border border-slate-400/40 bg-slate-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 dark:border-slate-500 dark:bg-slate-700 dark:hover:bg-slate-600"
 								on:click={clearVehicleSelection}
 							>
-								Limpiar
+								Limpiar selección
 							</button>
 						</div>
 					</div>
 
 					{#if $loadingVehicles || $loadingPositions}
-						<div class="flex items-center justify-center py-4">
-							<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-							<span class="ml-2 text-sm text-gray-600">
-								{$loadingVehicles ? 'Cargando vehículos...' : 'Actualizando posiciones...'}
+						<div
+							class="flex items-center justify-center gap-2 py-6"
+							role="status"
+							aria-live="polite"
+							aria-busy="true"
+						>
+							<div
+								class="h-6 w-6 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-b-blue-600 dark:border-slate-600 dark:border-b-blue-400"
+								aria-hidden="true"
+							></div>
+							<span class="text-sm text-slate-600 dark:text-slate-300">
+								{$loadingVehicles ? 'Cargando vehículos…' : 'Actualizando posiciones…'}
 							</span>
 						</div>
 					{:else if $vehicles.length > 0}
-						<div class="space-y-2">
-							{#each $vehicles as vehicle}
-								<div class="flex items-center gap-3 p-2 rounded hover:bg-gray-100/50">
-									<input
-										type="checkbox"
-										checked={$selectedVehicles.includes(vehicle.id)}
-										on:change={() => toggleVehicleSelection(vehicle.id)}
-										class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-									/>
-									<div class="flex-1 min-w-0">
-										<div class="flex items-center justify-between">
-											<button
-												class="text-sm font-medium text-gray-900 truncate hover:text-blue-600 text-left"
-												on:click={() => centerOnVehicle(vehicle)}
-												title="Centrar en el mapa"
-											>
-												{vehicle.name}
-											</button>
-											<span
-												class="text-xs px-2 py-1 rounded-full {getStatusColor(
-													vehicle.status
-												)} bg-opacity-20"
-											>
-												{getStatusText(vehicle.status)}
-											</span>
-										</div>
-										<div class="text-xs text-gray-500">
-											<p>
-												{vehicle.driver || 'Sin conductor'} • {vehicle.location ||
-													'Ubicación desconocida'}
-											</p>
-											{#if vehicle.deviceId}
-												<p>Device: {vehicle.deviceId}</p>
-											{/if}
-											{#if vehicle.latitude && vehicle.longitude}
-												<p>Coords: {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}</p>
-											{/if}
-											{#if vehicle.speed !== undefined}
-												<p>Velocidad: {vehicle.speed} km/h • Batería: {vehicle.battery || 0}%</p>
-											{/if}
-											{#if vehicle.lastUpdateFormatted}
-												<p>Actualizado: {vehicle.lastUpdateFormatted}</p>
-											{/if}
+						<ul class="list-none space-y-1 p-0">
+							{#each $vehicles as vehicle (vehicle.id)}
+								{@const coords = vehicleCoords(vehicle)}
+								<li
+									class="rounded-lg border border-transparent p-2 transition-colors hover:border-slate-200/80 hover:bg-white/90 dark:hover:border-slate-600/60 dark:hover:bg-slate-700/50"
+								>
+									<div class="flex items-start gap-3">
+										<input
+											id="vehicle-select-{vehicle.id}"
+											type="checkbox"
+											checked={$selectedVehicles.includes(vehicle.id)}
+											class="mt-1 size-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 dark:border-slate-500 dark:bg-slate-900 dark:text-blue-500"
+											aria-label="Incluir {vehicle.name} en la selección del mapa"
+											aria-describedby="vehicle-meta-{vehicle.id}"
+											on:change={() => toggleVehicleSelection(vehicle.id)}
+										/>
+										<div class="min-w-0 flex-1" id="vehicle-meta-{vehicle.id}">
+											<div class="flex items-start justify-between gap-2">
+												<button
+													type="button"
+													class="truncate text-left text-sm font-semibold text-slate-900 underline-offset-2 hover:text-blue-600 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline dark:text-slate-100 dark:hover:text-blue-400"
+													on:click={() => centerOnVehicle(vehicle)}
+													disabled={!coords}
+													aria-label="Centrar el mapa en {vehicle.name}"
+												>
+													{vehicle.name}
+												</button>
+												<span
+													class="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold {getStatusPillClass(
+														vehicle.status
+													)}"
+												>
+													{getStatusText(vehicle.status)}
+												</span>
+											</div>
+											<dl class="mt-1 space-y-0.5 text-xs text-slate-600 dark:text-slate-400">
+												<div class="flex flex-wrap gap-x-1">
+													<dt class="font-medium text-slate-500 dark:text-slate-500">Conductor</dt>
+													<dd>{vehicle.driver || 'Sin conductor'}</dd>
+												</div>
+												<div class="flex flex-wrap gap-x-1">
+													<dt class="font-medium text-slate-500 dark:text-slate-500">Ubicación</dt>
+													<dd>{vehicle.location || 'Desconocida'}</dd>
+												</div>
+												{#if vehicle.deviceId}
+													<div class="flex flex-wrap gap-x-1">
+														<dt class="font-medium text-slate-500 dark:text-slate-500">
+															Dispositivo
+														</dt>
+														<dd class="font-mono text-[0.6875rem]">{vehicle.deviceId}</dd>
+													</div>
+												{/if}
+												{#if coords}
+													<div class="flex flex-wrap gap-x-1">
+														<dt class="font-medium text-slate-500 dark:text-slate-500">
+															Coordenadas
+														</dt>
+														<dd class="font-mono text-[0.6875rem]">
+															{coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
+														</dd>
+													</div>
+												{/if}
+												{#if vehicle.speed !== undefined}
+													<div class="flex flex-wrap gap-x-1">
+														<dt class="font-medium text-slate-500 dark:text-slate-500">
+															Movimiento
+														</dt>
+														<dd>
+															{vehicle.speed} km/h · Batería {vehicle.battery ?? 0}%
+														</dd>
+													</div>
+												{/if}
+												{#if vehicle.lastUpdateFormatted}
+													<div class="flex flex-wrap gap-x-1">
+														<dt class="font-medium text-slate-500 dark:text-slate-500">
+															Última actualización
+														</dt>
+														<dd>{vehicle.lastUpdateFormatted}</dd>
+													</div>
+												{/if}
+											</dl>
 										</div>
 									</div>
-								</div>
+								</li>
 							{/each}
-						</div>
+						</ul>
 
 						{#if $selectedVehicleCount > 0}
-							<div class="mt-3 pt-3 border-t border-gray-200">
-								<p class="text-xs text-gray-600 mb-2">
-									{$selectedVehicleCount} vehículo{$selectedVehicleCount !== 1 ? 's' : ''} seleccionado{$selectedVehicleCount !==
+							<div
+								class="mt-3 border-t border-slate-200 pt-3 dark:border-slate-600"
+								role="status"
+								aria-live="polite"
+							>
+								<p class="mb-2 text-xs font-medium text-slate-600 dark:text-slate-300">
+									{$selectedVehicleCount} unidad{$selectedVehicleCount !== 1 ? 'es' : ''} seleccionada{$selectedVehicleCount !==
 									1
 										? 's'
 										: ''}
 								</p>
 								<button
-									class="w-full text-xs px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+									type="button"
+									class="w-full rounded-lg border border-emerald-600/25 bg-emerald-600 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
 									on:click={trackSelectedVehicles}
 								>
-									Rastrear Seleccionados
+									Rastrear seleccionados en el mapa
 								</button>
 							</div>
 						{/if}
 					{:else}
-						<p class="text-sm text-gray-500 text-center py-4">No hay vehículos disponibles</p>
+						<p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400" role="status">
+							No hay vehículos disponibles
+						</p>
 					{/if}
 				</div>
 			{/if}
 
-			<button class="large-button bg-blue-600 hover:bg-blue-700" on:click={refreshPositions}>
-				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-					<path
-						fill-rule="evenodd"
-						d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				Actualizar Posiciones
+			<button
+				type="button"
+				class="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-600/25 bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-blue-900/25 transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:pointer-events-none disabled:opacity-60 dark:border-blue-500/30 dark:shadow-blue-950/40"
+				on:click={refreshPositions}
+				disabled={$loadingPositions}
+				aria-busy={$loadingPositions}
+			>
+				<Icon
+					icon="mdi:refresh"
+					class="h-5 w-5 shrink-0 {$loadingPositions ? 'animate-spin' : ''}"
+					aria-hidden="true"
+				/>
+				Actualizar posiciones
 			</button>
+		</section>
 
-			<button class="large-button bg-yellow-500 hover:bg-yellow-600">
-				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-					<path
-						fill-rule="evenodd"
-						d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				Filtros
-			</button>
-
-			<button class="large-button bg-red-600 hover:bg-red-700">
-				<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clip-rule="evenodd" />
-					<path
-						fill-rule="evenodd"
-						d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 012 0v4a1 1 0 11-2 0V7zM12 7a1 1 0 10-2 0v4a1 1 0 102 0V7z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-				Limpiar Mapa
-			</button>
-		</div>
-
-		<!-- Información adicional -->
-		<div class="mt-4 p-3 bg-gray-50/80 rounded-lg">
-			<p class="text-xs text-gray-600 font-medium mb-1">Estado del Sistema</p>
-			<div class="flex items-center gap-2">
-				<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-				<span class="text-xs text-gray-700"
-					>Conectado - {$activeVehicles.length} vehículos activos</span
-				>
-			</div>
-			{#if $selectedVehicleCount > 0}
-				<div class="flex items-center gap-2 mt-1">
-					<div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-					<span class="text-xs text-gray-700"
-						>{$selectedVehicleCount} seleccionado{$selectedVehicleCount !== 1 ? 's' : ''}</span
+		<section
+			class="rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-600 dark:bg-slate-800/50"
+			aria-labelledby="vehicle-panel-status-heading"
+		>
+			<h3
+				id="vehicle-panel-status-heading"
+				class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+			>
+				Estado del sistema
+			</h3>
+			<ul class="list-none space-y-2 p-0 text-xs text-slate-700 dark:text-slate-200">
+				<li class="flex items-center gap-2">
+					<span
+						class="h-2 w-2 shrink-0 animate-pulse rounded-full bg-emerald-500"
+						aria-hidden="true"
+					></span>
+					<span
+						>Conectado · {$activeVehicles.length} unidad{$activeVehicles.length !== 1 ? 'es' : ''} activa{$activeVehicles.length !==
+						1
+							? 's'
+							: ''}</span
 					>
-				</div>
-			{/if}
-		</div>
+				</li>
+				{#if $selectedVehicleCount > 0}
+					<li class="flex items-center gap-2">
+						<span class="h-2 w-2 shrink-0 rounded-full bg-blue-500" aria-hidden="true"></span>
+						<span>
+							{$selectedVehicleCount} en selección para seguimiento
+						</span>
+					</li>
+				{/if}
+			</ul>
+		</section>
 	</div>
-{/if}
+</CenterSheet>
