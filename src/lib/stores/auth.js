@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import { dev } from '$app/environment';
+import { bypassAuthInDev } from '$lib/config/env.js';
 
 // Mock user para desarrollo
 const mockUser = {
@@ -33,7 +33,7 @@ function createAuthStore() {
 			if (browser) {
 				localStorage.removeItem('user');
 				localStorage.removeItem('token');
-				if (dev) sessionStorage.setItem(DEV_LOGOUT_KEY, '1');
+				if (bypassAuthInDev) sessionStorage.setItem(DEV_LOGOUT_KEY, '1');
 			}
 		},
 
@@ -41,7 +41,7 @@ function createAuthStore() {
 			if (!browser) return;
 
 			// En modo desarrollo, usar mock user automáticamente
-			if (dev) {
+			if (bypassAuthInDev) {
 				const wasLoggedOut = sessionStorage.getItem(DEV_LOGOUT_KEY);
 				if (!wasLoggedOut) {
 					set(mockUser);
@@ -113,7 +113,7 @@ function createTokenStore() {
 		getToken: () => {
 			if (!browser) return null;
 			// En modo desarrollo, devolver token mock
-			if (dev) return 'mock-dev-token';
+			if (bypassAuthInDev) return 'mock-dev-token';
 			return localStorage.getItem('token');
 		},
 		/**
@@ -169,7 +169,7 @@ function createTokenStore() {
 		 */
 		init: () => {
 			if (!browser) return;
-			if (dev) {
+			if (bypassAuthInDev) {
 				const wasLoggedOut = sessionStorage.getItem(DEV_LOGOUT_KEY);
 				if (!wasLoggedOut) set('mock-dev-token');
 				return;

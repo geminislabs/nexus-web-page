@@ -1,6 +1,7 @@
 /**
  * Servicio para consultar posiciones de vehículos desde la API de comunicaciones (SISCOM-API)
  */
+import { bypassAuthInDev } from '$lib/config/env.js';
 
 import { vehicleActions } from '../stores/vehicleStore.js';
 
@@ -63,7 +64,7 @@ class PositionService {
 	 * @returns {Promise<Object>} Datos de posición
 	 */
 	async getLastPosition(deviceId) {
-		if (import.meta.env.DEV) {
+		if (bypassAuthInDev) {
 			return this._mockPosition(deviceId);
 		}
 		try {
@@ -102,9 +103,7 @@ class PositionService {
 
 			return normalizedData;
 		} catch (error) {
-			if (!import.meta.env.DEV) {
-				console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
-			}
+			console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
 			throw error;
 		}
 	}
