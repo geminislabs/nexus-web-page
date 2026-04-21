@@ -1,7 +1,7 @@
 <script>
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
-	import { user, authToken } from '$lib/stores/auth.js';
+	import { user } from '$lib/stores/auth.js';
 	import { apiService } from '$lib/services/api.js';
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
@@ -89,19 +89,6 @@
 	/>
 	<meta property="og:type" content="website" />
 	<meta name="twitter:card" content="summary" />
-	<title>NEXUS — Crear cuenta</title>
-	<meta
-		name="description"
-		content="Crea tu cuenta en NEXUS, plataforma de GeminisLabs para monitorización y gestión de flotas."
-	/>
-	<link rel="canonical" href={`${$page.url.origin}/register`} />
-	<meta property="og:title" content="NEXUS — Crear cuenta" />
-	<meta
-		property="og:description"
-		content="Crea tu cuenta en NEXUS, plataforma de GeminisLabs para monitorización y gestión de flotas."
-	/>
-	<meta property="og:type" content="website" />
-	<meta name="twitter:card" content="summary" />
 </svelte:head>
 
 <div
@@ -136,9 +123,7 @@
 		>
 			NEXUS
 		</h1>
-		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
-			Crear cuenta
-		</p>
+		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">Crear cuenta</p>
 
 		<form
 			class="flex w-full flex-col gap-4"
@@ -306,9 +291,7 @@
 
 		<p class="mt-5 text-center text-[0.8125rem] text-slate-600 dark:text-white/[0.38]">
 			¿Ya tienes cuenta?
-			<a
-				href="/login"
-				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+			<a href="/login" class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
 				>Inicia sesión</a
 			>
 		</p>

@@ -39,9 +39,9 @@
 </script>
 
 <section
-	class="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[#080d1a] text-white"
+	class="relative w-full min-w-0 bg-slate-50 text-slate-900 dark:bg-[#080d1a] dark:text-white"
 	aria-labelledby="tab-informes-heading"
-	style="font-family:'DM Sans',system-ui,sans-serif;min-height:0;align-items:stretch;justify-content:flex-start;padding:0"
+	style="font-family:'DM Sans',system-ui,sans-serif;padding:0"
 >
 	<div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
 		<div
@@ -56,7 +56,7 @@
 		></div>
 	</div>
 
-	<div class="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6">
+	<div class="relative w-full min-w-0 px-3 py-6 sm:px-4">
 		<div class="mb-6">
 			<div class="mb-3 flex items-center gap-2.5">
 				<div
@@ -65,10 +65,13 @@
 					<Icon icon="mdi:chart-bar" width={20} aria-hidden="true" />
 				</div>
 				<div>
-					<h3 id="tab-informes-heading" class="m-0 text-[16px] font-bold tracking-tight text-white">
+					<h3
+						id="tab-informes-heading"
+						class="m-0 text-[16px] font-bold tracking-tight text-slate-900 dark:text-white"
+					>
 						Informes
 					</h3>
-					<p class="m-0 text-[10px] font-semibold uppercase tracking-widest text-white/30">
+					<p class="m-0 text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/30">
 						En desarrollo
 					</p>
 				</div>
@@ -84,11 +87,11 @@
 		<div class="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
 			{#each [{ label: 'Km recorridos', value: '12,847', unit: 'km', icon: 'mdi:map-marker-distance', color: 'blue' }, { label: 'Tiempo activo', value: '487', unit: 'hrs', icon: 'mdi:clock-outline', color: 'emerald' }, { label: 'Alertas totales', value: '34', unit: 'este mes', icon: 'mdi:bell-outline', color: 'amber' }, { label: 'Eficiencia flota', value: '94', unit: '%', icon: 'mdi:gauge', color: 'violet' }] as kpi, i}
 				<div
-					class="relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] p-3.5"
+					class="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-white/[0.07] dark:bg-white/[0.04]"
 					style="animation: fadeInUp 0.4s ease both; animation-delay: {i * 80}ms"
 				>
 					<div
-						class="absolute inset-0 -translate-x-full animate-[shimmer_2.5s_ease_infinite_{i *
+						class="pointer-events-none absolute inset-0 -translate-x-full animate-[shimmer_2.5s_ease_infinite_{i *
 							400}ms] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent"
 						aria-hidden="true"
 					></div>
@@ -106,32 +109,32 @@
 							<Icon icon={kpi.icon} width={15} aria-hidden="true" />
 						</span>
 						<span
-							class="select-none rounded-md blur-[5px] text-[18px] font-bold text-white/60"
+							class="select-none rounded-md blur-[5px] text-[18px] font-bold text-slate-600 dark:text-white/60"
 							aria-hidden="true">{kpi.value}</span
 						>
 					</div>
-					<p class="m-0 text-[11px] font-medium text-white/50">{kpi.label}</p>
-					<p class="m-0 text-[10px] text-white/25">{kpi.unit}</p>
+					<p class="m-0 text-[11px] font-medium text-slate-600 dark:text-white/50">{kpi.label}</p>
+					<p class="m-0 text-[10px] text-slate-500 dark:text-white/25">{kpi.unit}</p>
 				</div>
 			{/each}
 		</div>
 
 		<div
-			class="mb-5 overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.04] p-4"
+			class="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[0.07] dark:bg-white/[0.04]"
 			style="animation: fadeInUp 0.4s ease 320ms both"
 		>
 			<div class="mb-3 flex items-center justify-between">
 				<div>
-					<p class="m-0 text-[12px] font-semibold text-white/60">Actividad semanal</p>
-					<p class="m-0 text-[10px] text-white/28">Km recorridos por día</p>
+					<p class="m-0 text-[12px] font-semibold text-slate-600 dark:text-white/60">Actividad semanal</p>
+					<p class="m-0 text-[10px] text-slate-500 dark:text-white/28">Km recorridos por día</p>
 				</div>
 				<div class="flex items-center gap-1 blur-sm" aria-hidden="true">
 					<span class="h-2 w-2 rounded-full bg-blue-500"></span>
-					<span class="text-[10px] text-white/35">Esta semana</span>
+					<span class="text-[10px] text-slate-500 dark:text-white/35">Esta semana</span>
 				</div>
 			</div>
 
-			<div class="relative h-24 overflow-hidden" aria-hidden="true">
+			<div class="relative h-24 overflow-hidden pointer-events-none" aria-hidden="true">
 				<div class="absolute inset-x-0 bottom-0 flex items-end gap-[5px] px-1 blur-[1.5px]">
 					{#each bars as h, i}
 						<div
@@ -155,24 +158,26 @@
 						</linearGradient>
 					</defs>
 				</svg>
-				<div class="absolute inset-0 bg-gradient-to-t from-[#080d1a]/60 to-transparent"></div>
+				<div
+					class="absolute inset-0 bg-gradient-to-t from-slate-100/90 to-transparent dark:from-[#080d1a]/60"
+				></div>
 			</div>
 
 			<div class="mt-2 flex justify-between px-1 blur-sm" aria-hidden="true">
 				{#each ['L', 'M', 'X', 'J', 'V', 'S', 'D', 'L', 'M', 'X', 'J', 'D'] as d}
-					<span class="text-[9px] text-white/25">{d}</span>
+					<span class="text-[9px] text-slate-500 dark:text-white/25">{d}</span>
 				{/each}
 			</div>
 		</div>
 
 		<div style="animation: fadeInUp 0.4s ease 480ms both">
-			<p class="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-white/28">
+			<p class="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/28">
 				Funciones incluidas
 			</p>
 			<div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
 				{#each features as f, i}
 					<div
-						class="flex items-start gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-2.5 transition-colors hover:bg-white/[0.05]"
+						class="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 transition-colors hover:bg-slate-100 dark:border-white/[0.05] dark:bg-white/[0.02] dark:hover:bg-white/[0.05]"
 						style="animation: fadeInUp 0.35s ease {540 + i * 60}ms both"
 					>
 						<span
@@ -181,15 +186,15 @@
 							<Icon icon={f.icon} width={13} aria-hidden="true" />
 						</span>
 						<div class="min-w-0">
-							<p class="m-0 text-[12px] font-semibold text-white/65">{f.label}</p>
-							<p class="m-0 mt-0.5 text-[10px] leading-snug text-white/30">{f.desc}</p>
+							<p class="m-0 text-[12px] font-semibold text-slate-700 dark:text-white/65">{f.label}</p>
+							<p class="m-0 mt-0.5 text-[10px] leading-snug text-slate-500 dark:text-white/30">{f.desc}</p>
 						</div>
 					</div>
 				{/each}
 			</div>
 		</div>
 
-		<p class="mt-5 text-center text-[10px] leading-relaxed text-white/22">
+		<p class="mt-5 text-center text-[10px] leading-relaxed text-slate-500 dark:text-white/22">
 			¿Necesitas datos históricos con urgencia?<br />
 			Contacta al administrador de tu organización.
 		</p>

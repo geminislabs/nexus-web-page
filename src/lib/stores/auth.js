@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import { dev } from '$app/environment';
+import { bypassAuthInDev } from '$lib/config/env.js';
 
 // Mock user para desarrollo
 const mockUser = {
@@ -33,21 +33,31 @@ function createAuthStore() {
 			if (browser) {
 				localStorage.removeItem('user');
 				localStorage.removeItem('token');
-				localStorage.removeItem('token_expires_at');
+				if (bypassAuthInDev) sessionStorage.setItem(DEV_LOGOUT_KEY, '1');
 			}
 		},
 
 		init: () => {
-			if (browser) {
-				const userData = localStorage.getItem('user');
-				if (userData) {
-					try {
-						set(JSON.parse(userData));
-					} catch (error) {
-						console.error('Error parsing user data from localStorage:', error);
-						// Limpiar datos corruptos
-						localStorage.removeItem('user');
-					}
+			if (!browser) return;
+
+			// En modo desarrollo, usar mock user automáticamente
+			if (bypassAuthInDev) {
+				const wasLoggedOut = sessionStorage.getItem(DEV_LOGOUT_KEY);
+				if (!wasLoggedOut) {
+					set(mockUser);
+					localStorage.setItem('user', JSON.stringify(mockUser));
+					return;
+				}
+				set(null);
+				return;
+			}
+			// En producción, verificar localStorage
+			const userData = localStorage.getItem('user');
+			if (userData) {
+				try {
+					set(JSON.parse(userData));
+				} catch {
+					set(null);
 				}
 			}
 		}
@@ -101,10 +111,10 @@ function createTokenStore() {
 		 * @returns {string|null} Access token o null
 		 */
 		getToken: () => {
-			if (browser) {
-				return localStorage.getItem('token');
-			}
-			return null;
+			if (!browser) return null;
+			// En modo desarrollo, devolver token mock
+			if (bypassAuthInDev) return 'mock-dev-token';
+			return localStorage.getItem('token');
 		},
 		/**
 		 * Obtener el refresh token actual
@@ -158,12 +168,14 @@ function createTokenStore() {
 		 * Inicializar el store desde localStorage si existe
 		 */
 		init: () => {
-			if (browser) {
-				const token = localStorage.getItem('token');
-				if (token) {
-					set(token);
-				}
+			if (!browser) return;
+			if (bypassAuthInDev) {
+				const wasLoggedOut = sessionStorage.getItem(DEV_LOGOUT_KEY);
+				if (!wasLoggedOut) set('mock-dev-token');
+				return;
 			}
+			const token = localStorage.getItem('token');
+			if (token) set(token);
 		}
 	};
 }

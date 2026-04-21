@@ -20,6 +20,8 @@ class H3GridOverlayService {
 		this.onCellsRendered = () => {};
 		/** @type {'light' | 'dark'} */
 		this.mapTheme = 'dark';
+		/** @type {'default' | 'zoneCreate'} */
+		this.selectionStyle = 'default';
 		this.redrawDebounced = this.createDebounced(() => this.redraw(), DEFAULT_DEBOUNCE_MS);
 	}
 
@@ -48,7 +50,24 @@ class H3GridOverlayService {
 		}
 	}
 
+	/** @param {'default' | 'zoneCreate'} style */
+	setSelectionStyle(style) {
+		this.selectionStyle = style === 'zoneCreate' ? 'zoneCreate' : 'default';
+		this.updateSelectionStyles();
+	}
+
 	getPalette() {
+		if (this.selectionStyle === 'zoneCreate') {
+			return {
+				stroke: '#7dd3fc',
+				fill: '#bae6fd',
+				fillOpacity: 0.18,
+				strokeOpacity: 0.75,
+				selectedStroke: '#007AFF',
+				selectedFill: '#007AFF',
+				selectedFillOpacity: 0.32
+			};
+		}
 		if (this.mapTheme === 'light') {
 			return {
 				stroke: '#0e7490',
@@ -113,7 +132,7 @@ class H3GridOverlayService {
 	}
 
 	/**
-	 * Controla si la malla H3 intercepta clics. Durante el dibujo de geocercas debe ser false.
+	 * Controla si la malla H3 intercepta clicks.
 	 * @param {boolean} clickable
 	 */
 	setCellPolygonsClickable(clickable) {

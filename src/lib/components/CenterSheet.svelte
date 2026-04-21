@@ -76,7 +76,7 @@
 				<p id="center-sheet-chrome-hint" class="sr-only">
 					Ventana modal centrada. Este contenedor no ejecuta consultas ni escrituras a base de
 					datos; la persistencia corresponde a las acciones del contenido incrustado (por ejemplo
-					unidades, geocercas o cuenta según la pantalla).
+					unidades, zonas o cuenta según la pantalla).
 				</p>
 
 				<header
