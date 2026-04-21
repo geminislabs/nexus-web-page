@@ -12,8 +12,34 @@ class MapService {
 		this.markers = new Map();
 		this.vehicleClusterer = null;
 		this._mapClickCloseListener = null;
+		/** Zoom fijo al crear zona en móvil */
+		this._mobileZoneEditorZoom = 12;
+		/** @type {boolean} */
+		this._mobileZoneZoomLocked = false;
+		/** @type {string | null} */
+		this._openVehiclePopupId = null;
 		this.apiKey =
 			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
+	}
+
+	/** Alineado con themeStore (`html.dark` en tema oscuro). */
+	_isDarkVehiclePopupTheme() {
+		if (typeof document === 'undefined') return true;
+		return document.documentElement.classList.contains('dark');
+	}
+
+	/**
+	 * Si hay un popup de unidad abierto, vuelve a renderizarlo con el tema indicado.
+	 * @param {'light' | 'dark'} mode
+	 */
+	refreshOpenVehicleInfoWindowTheme(mode) {
+		const id = this._openVehiclePopupId;
+		if (!id || !this.google) return;
+		const entry = this.markers.get(id);
+		if (!entry?.infoWindow || !entry.popupVehicle) return;
+		entry.infoWindow.setContent(
+			this.createVehicleInfoContent(entry.popupVehicle, entry.infoWindow, mode)
+		);
 	}
 
 	/** @param {google.maps.Marker | null} m */
@@ -37,12 +63,15 @@ class MapService {
 
 			this.google = await loader.load();
 
+			const isMobileLayout =
+				typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+
 			const mapOptions = {
 				center: { lat: 19.4326, lng: -99.1332 },
 				zoom: 13,
 				mapTypeId: this.google.maps.MapTypeId.ROADMAP,
 				disableDefaultUI: false,
-				zoomControl: true,
+				zoomControl: !isMobileLayout,
 				fullscreenControl: false,
 				mapTypeControl: false,
 				streetViewControl: false,
@@ -141,15 +170,18 @@ class MapService {
 			zIndex: 1
 		});
 
-		const infoWindow = new this.google.maps.InfoWindow();
+		const infoWindow = new this.google.maps.InfoWindow({
+			maxWidth: 340,
+			pixelOffset: new this.google.maps.Size(0, 4),
+			disableAutoPan: false
+		});
 		infoWindow.setContent(this.createVehicleInfoContent(vehicle, infoWindow));
 
 		marker.addListener('click', () => {
-			this.closeAllVehicleInfoWindows();
-			infoWindow.open(this.map, marker);
+			this.openVehicleInfoWindow(vehicle, { refreshContent: false });
 		});
 
-		this.markers.set(vehicle.id, { marker, infoWindow });
+		this.markers.set(vehicle.id, { marker, infoWindow, popupVehicle: vehicle });
 		return marker;
 	}
 
@@ -166,59 +198,211 @@ class MapService {
 		}
 	}
 
-	createVehicleInfoContent(vehicle, infoWindow) {
-		const speed = vehicle.speed || 0;
-		const battery = vehicle.battery || vehicle.fuel || 0;
-		const lastUpdate = vehicle.lastUpdateFormatted || 'No disponible';
-		const statusStyle = this.getStatusStyle(vehicle.status);
+	/** @param {unknown} s */
+	_escapeHtml(s) {
+		if (s == null) return '';
+		return String(s)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
+	_getStatusGradient(status) {
+		switch (status) {
+			case 'active':
+				return 'linear-gradient(90deg,#34d399 0%,#22d3ee 55%,#38bdf8 100%)';
+			case 'inactive':
+				return 'linear-gradient(90deg,#fb7185 0%,#f43f5e 100%)';
+			case 'maintenance':
+				return 'linear-gradient(90deg,#fbbf24 0%,#f59e0b 100%)';
+			default:
+				return 'linear-gradient(90deg,#94a3b8 0%,#64748b 100%)';
+		}
+	}
+
+	/**
+	 * @param {unknown} vehicle
+	 * @param {object | undefined} infoWindow
+	 * @param {'light' | 'dark' | undefined} [forcedTheme] Si viene del store al cambiar tema; si no, se usa el DOM.
+	 */
+	createVehicleInfoContent(vehicle, infoWindow, forcedTheme) {
+		const isDark = forcedTheme != null ? forcedTheme === 'dark' : this._isDarkVehiclePopupTheme();
+		const speed = Number(vehicle.speed) || 0;
+		const battery = Number(vehicle.battery ?? vehicle.fuel) || 0;
+		const lastUpdate = this._escapeHtml(vehicle.lastUpdateFormatted || 'No disponible');
+		const name = this._escapeHtml(vehicle.name || 'Unidad');
+		const driver = this._escapeHtml(vehicle.driver || 'No asignado');
+		const location = this._escapeHtml(vehicle.location || 'Desconocida');
+		const deviceId = vehicle.deviceId ? this._escapeHtml(String(vehicle.deviceId)) : '';
+		const statusLabel = this._escapeHtml(this.getStatusText(vehicle.status));
+		const statusBadge = isDark
+			? this.getStatusBadgeStyleDark(vehicle.status)
+			: this.getStatusBadgeStyleLight(vehicle.status);
+		const barGradient = this._getStatusGradient(vehicle.status);
+
+		const latRaw = vehicle.latitude ?? vehicle.lat;
+		const lngRaw = vehicle.longitude ?? vehicle.lng;
+		let coordsBlock = '';
+		if (
+			latRaw != null &&
+			lngRaw != null &&
+			!Number.isNaN(Number(latRaw)) &&
+			!Number.isNaN(Number(lngRaw))
+		) {
+			const la = Number(latRaw).toFixed(6);
+			const lo = Number(lngRaw).toFixed(6);
+			const coordColor = isDark ? '#94a3b8' : '#64748b';
+			coordsBlock = `<p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:10px;color:${coordColor};letter-spacing:0.02em;">${la}, ${lo}</p>`;
+		}
+
+		const divTop = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.22)';
+		const deviceBlock = deviceId
+			? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid ${divTop};">
+					<span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;">Dispositivo</span>
+					<span style="font-size:11px;color:${isDark ? '#cbd5e1' : '#334155'};font-weight:500;">${deviceId}</span>
+				</div>`
+			: '';
+
+		const cardBg = isDark
+			? 'linear-gradient(165deg,rgba(15,23,42,0.99) 0%,rgba(17,24,39,0.98) 42%,rgba(15,23,42,0.99) 100%)'
+			: 'linear-gradient(165deg,#ffffff 0%,#f8fafc 50%,#f1f5f9 100%)';
+		const cardShadow = isDark
+			? 'inset 0 1px 0 rgba(255,255,255,0.07),0 18px 40px rgba(0,0,0,0.45)'
+			: 'inset 0 1px 0 rgba(255,255,255,0.9),0 18px 40px rgba(15,23,42,0.1)';
+		const cardBorder = isDark
+			? '1px solid rgba(148,163,184,0.14)'
+			: '1px solid rgba(148,163,184,0.35)';
+		const cardColor = isDark ? '#e2e8f0' : '#0f172a';
+
+		const titleColor = isDark ? '#f8fafc' : '#0f172a';
+		const mutedColor = isDark ? '#94a3b8' : '#64748b';
+		const metricBg = isDark
+			? 'background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.06);'
+			: 'background:rgba(241,245,249,0.95);border:1px solid rgba(148,163,184,0.22);';
+		const metricValue = isDark ? '#f1f5f9' : '#0f172a';
+		const locBox = isDark
+			? 'background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.1);'
+			: 'background:#ffffff;border:1px solid rgba(148,163,184,0.22);';
+		const locText = isDark ? '#e2e8f0' : '#0f172a';
+		const footerBorder = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(148,163,184,0.2)';
+		const signalMuted = isDark ? '#94a3b8' : '#64748b';
+		const coordsHeading = isDark ? '#475569' : '#94a3b8';
+		const coordsDash = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.25)';
+
+		const closeBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
+		const closeColor = isDark ? '#cbd5e1' : '#64748b';
+		const closeInset = isDark
+			? 'inset 0 1px 0 rgba(255,255,255,0.06)'
+			: 'inset 0 1px 0 rgba(255,255,255,0.7)';
+		const closeHoverBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.1)';
+		const closeHoverColor = isDark ? '#f8fafc' : '#0f172a';
+
 		const wrapper = document.createElement('div');
-		wrapper.style.minWidth = '220px';
-		wrapper.style.maxWidth = '280px';
-		wrapper.style.padding = '12px';
-		wrapper.style.fontFamily = 'Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
-		wrapper.style.color = '#0f172a';
-		wrapper.style.lineHeight = '1.35';
-		wrapper.style.position = 'relative';
+		wrapper.className = 'nexus-viw-card';
+		wrapper.setAttribute('data-nexus-vehicle-popup', '');
+		wrapper.setAttribute('data-popup-theme', isDark ? 'dark' : 'light');
+		wrapper.style.cssText = [
+			'position:relative',
+			'min-width:268px',
+			'max-width:304px',
+			'border-radius:16px',
+			'overflow:hidden',
+			`background:${cardBg}`,
+			`box-shadow:${cardShadow}`,
+			`border:${cardBorder}`,
+			'font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif',
+			`color:${cardColor}`,
+			'line-height:1.4'
+		].join(';');
+
 		wrapper.innerHTML = `
-			<button type="button" data-action="close-popup" aria-label="Cerrar popup"
-				style="position:absolute; right:0; top:0; width:22px; height:22px; border:none; border-radius:9999px; background:#e2e8f0; color:#0f172a; font-size:14px; font-weight:700; cursor:pointer; line-height:1;">
+			<div style="height:3px;width:100%;background:${barGradient};opacity:0.95;"></div>
+			<button type="button" data-action="close-popup" aria-label="Cerrar"
+				style="position:absolute;right:10px;top:14px;z-index:2;width:30px;height:30px;border:none;border-radius:9999px;cursor:pointer;
+				background:${closeBg};color:${closeColor};font-size:18px;font-weight:400;line-height:1;display:flex;align-items:center;justify-content:center;
+				box-shadow:${closeInset};transition:background 0.15s ease,color 0.15s ease;">
 				×
 			</button>
-			<h3 style="margin:0 24px 10px 0; font-size:15px; font-weight:700; color:#0f172a;">${vehicle.name}</h3>
-			<div style="font-size:13px; color:#1e293b;">
-				<p style="margin:0 0 6px 0;"><span style="font-weight:600;">Conductor:</span> ${vehicle.driver || 'No asignado'}</p>
-				<p style="margin:0 0 6px 0;"><span style="font-weight:600;">Estado:</span> 
-					<span style="display:inline-block; margin-left:4px; padding:2px 8px; border-radius:9999px; font-size:11px; font-weight:700; ${statusStyle}">
-						${this.getStatusText(vehicle.status)}
-					</span>
-				</p>
-				<p style="margin:0 0 6px 0;"><span style="font-weight:600;">Ubicación:</span> ${vehicle.location || 'Desconocida'}</p>
-				<p style="margin:0 0 6px 0;"><span style="font-weight:600;">Velocidad:</span> ${speed} km/h</p>
-				<p style="margin:0 0 6px 0;"><span style="font-weight:600;">Batería:</span> ${battery}%</p>
-				${vehicle.deviceId ? `<p style="margin:0 0 6px 0;"><span style="font-weight:600;">Device ID:</span> ${vehicle.deviceId}</p>` : ''}
-				<p style="margin:0 0 6px 0;"><span style="font-weight:600;">Última actualización:</span> ${lastUpdate}</p>
-				${
-					vehicle.latitude && vehicle.longitude
-						? `<p style="margin:0;"><span style="font-weight:600;">Coordenadas:</span> ${Number(vehicle.latitude).toFixed(6)}, ${Number(vehicle.longitude).toFixed(6)}</p>`
-						: ''
-				}
+			<div style="padding:16px 16px 14px 16px;">
+				<div style="display:flex;align-items:flex-start;gap:10px;padding-right:28px;margin-bottom:12px;">
+					<div style="flex:1;min-width:0;">
+						<h3 style="margin:0 0 6px 0;font-size:17px;font-weight:800;letter-spacing:-0.03em;color:${titleColor};line-height:1.2;">${name}</h3>
+						<p style="margin:0;font-size:12px;color:${mutedColor};font-weight:500;">${driver}</p>
+					</div>
+					<span style="flex-shrink:0;display:inline-flex;align-items:center;padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;${statusBadge}">${statusLabel}</span>
+				</div>
+				<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+					<div style="border-radius:12px;padding:10px 10px 8px;${metricBg}">
+						<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Velocidad</div>
+						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${speed}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:2px;">km/h</span></div>
+					</div>
+					<div style="border-radius:12px;padding:10px 10px 8px;${metricBg}">
+						<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Batería</div>
+						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${battery}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:1px;">%</span></div>
+					</div>
+				</div>
+				<div style="border-radius:12px;padding:10px 12px;${locBox}margin-bottom:10px;">
+					<div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Ubicación</div>
+					<p style="margin:0;font-size:12px;font-weight:600;color:${locText};line-height:1.35;">${location}</p>
+				</div>
+				${deviceBlock}
+				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;margin-top:4px;border-top:1px solid ${footerBorder};">
+					<span style="font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">Última señal</span>
+					<span style="font-size:11px;color:${signalMuted};font-weight:500;">${lastUpdate}</span>
+				</div>
+				${coordsBlock ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed ${coordsDash};"><div style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${coordsHeading};margin-bottom:4px;">Coordenadas</div>${coordsBlock}</div>` : ''}
 			</div>
 		`;
 		const closeBtn = wrapper.querySelector('[data-action="close-popup"]');
-		closeBtn?.addEventListener('click', () => infoWindow?.close());
+		closeBtn?.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this._openVehiclePopupId = null;
+			infoWindow?.close();
+		});
+		closeBtn?.addEventListener(
+			'mouseenter',
+			() => {
+				closeBtn.style.background = closeHoverBg;
+				closeBtn.style.color = closeHoverColor;
+			},
+			{ passive: true }
+		);
+		closeBtn?.addEventListener(
+			'mouseleave',
+			() => {
+				closeBtn.style.background = closeBg;
+				closeBtn.style.color = closeColor;
+			},
+			{ passive: true }
+		);
 		return wrapper;
 	}
 
-	getStatusStyle(status) {
+	getStatusBadgeStyleDark(status) {
 		switch (status) {
 			case 'active':
-				return 'background:#dcfce7; color:#166534;';
+				return 'background:rgba(16,185,129,0.14);color:#6ee7b7;border:1px solid rgba(45,212,191,0.35);';
 			case 'inactive':
-				return 'background:#fee2e2; color:#991b1b;';
+				return 'background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(248,113,113,0.35);';
 			case 'maintenance':
-				return 'background:#fef3c7; color:#92400e;';
+				return 'background:rgba(245,158,11,0.12);color:#fcd34d;border:1px solid rgba(251,191,36,0.35);';
 			default:
-				return 'background:#e5e7eb; color:#374151;';
+				return 'background:rgba(148,163,184,0.1);color:#cbd5e1;border:1px solid rgba(148,163,184,0.28);';
+		}
+	}
+
+	getStatusBadgeStyleLight(status) {
+		switch (status) {
+			case 'active':
+				return 'background:#d1fae5;color:#047857;border:1px solid #6ee7b7;';
+			case 'inactive':
+				return 'background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;';
+			case 'maintenance':
+				return 'background:#fef3c7;color:#b45309;border:1px solid #fcd34d;';
+			default:
+				return 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;';
 		}
 	}
 
@@ -309,6 +493,7 @@ class MapService {
 				existingMarkerData.infoWindow.setContent(
 					this.createVehicleInfoContent(vehicle, existingMarkerData.infoWindow)
 				);
+				existingMarkerData.popupVehicle = vehicle;
 
 				existingMarkerData.marker.setIcon({
 					url: this._vehicleIconDataUrl(this.getVehicleColor(vehicle.status)),
@@ -331,9 +516,42 @@ class MapService {
 	}
 
 	closeAllVehicleInfoWindows() {
+		this._openVehiclePopupId = null;
 		for (const data of this.markers.values()) {
 			if (data?.infoWindow) data.infoWindow.close();
 		}
+	}
+
+	/**
+	 * Abre el InfoWindow de la unidad (mismo contenido que al pulsar el marcador).
+	 * Si el marcador está en un cluster, se ancla por la posición del `Marker`.
+	 * @param {{ id: string }} vehicle
+	 * @param {{ refreshContent?: boolean }} [opts]
+	 */
+	openVehicleInfoWindow(vehicle, opts = {}) {
+		const refreshContent = opts.refreshContent !== false;
+		if (!this.map || !this.google || !vehicle?.id) return;
+
+		const entry = this.markers.get(vehicle.id);
+		if (!entry?.infoWindow || !entry.marker) return;
+
+		this.closeAllVehicleInfoWindows();
+
+		if (refreshContent) {
+			entry.infoWindow.setContent(this.createVehicleInfoContent(vehicle, entry.infoWindow));
+		}
+		entry.popupVehicle = vehicle;
+
+		const marker = entry.marker;
+		if (marker.getMap?.()) {
+			entry.infoWindow.open(this.map, marker);
+		} else {
+			const pos = marker.getPosition?.();
+			if (!pos) return;
+			entry.infoWindow.setPosition({ lat: pos.lat(), lng: pos.lng() });
+			entry.infoWindow.open(this.map);
+		}
+		this._openVehiclePopupId = vehicle.id;
 	}
 
 	centerOnVehicles(vehicles) {
@@ -357,14 +575,21 @@ class MapService {
 		}
 	}
 
-	centerOnVehicle(vehicle) {
+	centerOnVehicle(vehicle, opts = {}) {
+		const showPopup = opts.showPopup !== false;
 		const lat = vehicle.latitude || vehicle.lat;
 		const lng = vehicle.longitude || vehicle.lng;
 
-		if (lat != null && lng != null && this.map) {
-			this.map.setCenter({ lat: parseFloat(lat), lng: parseFloat(lng) });
-			this.map.setZoom(15);
-		}
+		if (lat == null || lng == null || !this.map || !this.google) return;
+
+		this.map.setCenter({ lat: parseFloat(lat), lng: parseFloat(lng) });
+		this.map.setZoom(15);
+
+		if (!showPopup) return;
+
+		this.google.maps.event.addListenerOnce(this.map, 'idle', () => {
+			this.openVehicleInfoWindow(vehicle);
+		});
 	}
 
 	setCenter(lat, lng) {
@@ -402,44 +627,40 @@ class MapService {
 		this.google.maps.event.trigger(this.map, 'resize');
 	}
 
-	getViewSnapshot() {
-		if (!this.map) return null;
-		const c = this.map.getCenter();
-		const b = this.map.getBounds();
-		const ne = b?.getNorthEast();
-		const sw = b?.getSouthWest();
-		return {
-			center: { lat: c.lat(), lng: c.lng() },
-			zoom: this.map.getZoom(),
-			bounds:
-				ne && sw
-					? {
-							northEast: { lat: ne.lat(), lng: ne.lng() },
-							southWest: { lat: sw.lat(), lng: sw.lng() }
-						}
-					: null
-		};
+	/**
+	 * En móvil (≤639px) oculta el control de zoom de Google; en escritorio lo muestra.
+	 * @param {boolean} compact true = layout móvil
+	 */
+	setNavigationControlsCompact(compact) {
+		if (!this.map) return;
+		this.map.setOptions({
+			zoomControl: !compact
+		});
 	}
 
-	applyViewSnapshot(view) {
-		if (!this.map || !this.google || !view) return;
-		const b = view.bounds?.northEast && view.bounds?.southWest;
-		if (b) {
-			const ne = view.bounds.northEast;
-			const sw = view.bounds.southWest;
-			const bounds = new this.google.maps.LatLngBounds(
-				{ lat: sw.lat, lng: sw.lng },
-				{ lat: ne.lat, lng: ne.lng }
-			);
-			this.map.fitBounds(bounds);
-			return;
-		}
-		if (view.center && typeof view.center.lat === 'number' && typeof view.center.lng === 'number') {
-			this.map.setCenter(view.center);
-		}
-		if (typeof view.zoom === 'number' && Number.isFinite(view.zoom)) {
-			this.map.setZoom(view.zoom);
-		}
+	/**
+	 * Fija zoom y límites min/max para el editor de zona (móvil).
+	 * Mantiene el centro actual; solo ajusta el nivel de zoom al de referencia.
+	 */
+	enableMobileZoneEditorZoomLock() {
+		if (!this.map || this._mobileZoneZoomLocked) return;
+		const z = this._mobileZoneEditorZoom;
+		this._mobileZoneZoomLocked = true;
+		this.map.setOptions({
+			zoom: z,
+			minZoom: z,
+			maxZoom: z
+		});
+	}
+
+	/** Restaura zoom libre tras salir del editor de zona. */
+	disableMobileZoneEditorZoomLock() {
+		if (!this.map || !this._mobileZoneZoomLocked) return;
+		this._mobileZoneZoomLocked = false;
+		this.map.setOptions({
+			minZoom: 0,
+			maxZoom: 22
+		});
 	}
 }
 

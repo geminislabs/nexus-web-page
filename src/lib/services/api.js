@@ -2,7 +2,7 @@ import { authToken } from '../stores/auth.js';
 import { get } from 'svelte/store';
 
 // Configuración base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100/api/v1';
 
 class ApiService {
 	constructor() {
@@ -95,11 +95,31 @@ class ApiService {
 
 	// Métodos específicos para vehículos
 	async getVehicles() {
-		return this.request('/vehicles', { method: 'GET' });
+		return this.request('/units', { method: 'GET' });
 	}
 
 	async getVehicle(vehicleId) {
-		return this.request(`/vehicles/${vehicleId}`, { method: 'GET' });
+		return this.request(`/units/${vehicleId}`, { method: 'GET' });
+	}
+
+	async createVehicle(data) {
+		return this.request('/units', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async updateVehicle(vehicleId, data) {
+		return this.request(`/units/${vehicleId}`, {
+			method: 'PATCH',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async deleteVehicle(vehicleId) {
+		return this.request(`/units/${vehicleId}`, {
+			method: 'DELETE'
+		});
 	}
 
 	async getVehicleLocation(vehicleId) {
@@ -108,6 +128,75 @@ class ApiService {
 
 	async getVehicleStatus(vehicleId) {
 		return this.request(`/vehicles/${vehicleId}/status`, { method: 'GET' });
+	}
+
+	// Métodos específicos para geocercas
+	async getGeofences() {
+		return this.request('/geofences', { method: 'GET' });
+	}
+
+	async getGeofence(geofenceId) {
+		return this.request(`/geofences/${geofenceId}`, { method: 'GET' });
+	}
+
+	async createGeofence(data) {
+		return this.request('/geofences', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async updateGeofence(geofenceId, data) {
+		return this.request(`/geofences/${geofenceId}`, {
+			method: 'PATCH',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async deleteGeofence(geofenceId) {
+		return this.request(`/geofences/${geofenceId}`, {
+			method: 'DELETE'
+		});
+	}
+
+	// Métodos específicos para reglas de alerta
+	async getAlertRules() {
+		return this.request('/alert_rules', { method: 'GET' });
+	}
+
+	async getAlertRule(ruleId) {
+		return this.request(`/alert_rules/${ruleId}`, { method: 'GET' });
+	}
+
+	async createAlertRule(data) {
+		return this.request('/alert_rules', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async updateAlertRule(ruleId, data) {
+		return this.request(`/alert_rules/${ruleId}`, {
+			method: 'PATCH',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async deleteAlertRule(ruleId) {
+		return this.request(`/alert_rules/${ruleId}`, {
+			method: 'DELETE'
+		});
+	}
+
+	// Historial de alertas generadas
+	async getAlerts(params = {}) {
+		const qs = new URLSearchParams();
+		Object.entries(params).forEach(([key, value]) => {
+			if (value === undefined || value === null || value === '') return;
+			qs.set(key, String(value));
+		});
+		const query = qs.toString();
+		return this.request(`/alerts${query ? `?${query}` : ''}`, { method: 'GET' });
 	}
 }
 

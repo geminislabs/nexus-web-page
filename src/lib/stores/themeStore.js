@@ -33,5 +33,9 @@ export const themeActions = {
 		if (!browser) return;
 		document.documentElement.dataset.theme = t;
 		document.documentElement.classList.toggle('dark', t === 'dark');
+		const meta = document.querySelector('meta[name="theme-color"][data-nexus-dynamic]');
+		if (meta) {
+			meta.setAttribute('content', t === 'dark' ? '#020617' : '#f8fafc');
+		}
 	}
 };

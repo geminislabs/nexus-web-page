@@ -1,6 +1,7 @@
 /**
  * Servicio para consultar posiciones de vehículos desde la API
  */
+import { bypassAuthInDev } from '$lib/config/env.js';
 
 const API_BASE_URL = 'http://34.237.30.30:8080';
 
@@ -39,7 +40,7 @@ class PositionService {
 	 * @returns {Promise<Object>} Datos de posición
 	 */
 	async getLastPosition(deviceId) {
-		if (import.meta.env.DEV) {
+		if (bypassAuthInDev) {
 			return this._mockPosition(deviceId);
 		}
 		try {
@@ -75,9 +76,7 @@ class PositionService {
 
 			return normalizedData;
 		} catch (error) {
-			if (!import.meta.env.DEV) {
-				console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
-			}
+			console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
 			throw error;
 		}
 	}

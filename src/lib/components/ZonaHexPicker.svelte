@@ -3,6 +3,7 @@
 	import { onMount, createEventDispatcher, tick } from 'svelte';
 	import { browser } from '$app/environment';
 	import { mapService } from '$lib/services/mapService.js';
+	import { theme } from '$lib/stores/themeStore.js';
 	import { cellToBoundary, polygonToCells } from 'h3-js';
 
 	const dispatch = createEventDispatcher();
@@ -299,17 +300,27 @@
 	{#if showNameModal}
 		<dialog
 			bind:this={nameDialog}
-			class="m-0 h-full max-h-full w-full max-w-full border-0 bg-transparent p-0 [&::backdrop]:bg-black/50"
+			class="m-0 h-full max-h-full w-full max-w-full border-0 bg-transparent p-0 [&::backdrop]:bg-slate-900/25 [&::backdrop]:backdrop-blur-[1px] dark:[&::backdrop]:bg-black/40"
 			aria-labelledby="zhp-dialog-title"
 			on:close={handleNameDialogClose}
 		>
 			<form
 				method="dialog"
-				class="absolute bottom-0 left-0 right-0 mx-auto box-border flex w-full max-w-lg flex-col gap-2.5 rounded-t-[1.125rem] border border-white/10 bg-[#1c1c1e] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgb(0_0_0_/.35)]"
+				class="absolute bottom-0 left-0 right-0 mx-auto box-border flex w-full max-w-lg flex-col gap-2.5 rounded-t-[1.125rem] border p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgb(0_0_0_/.2)] {$theme === 'light'
+					? 'border-slate-200 bg-white'
+					: 'border-white/10 bg-[#1c1c1e] shadow-[0_-8px_32px_rgb(0_0_0_/.35)]'}"
 				on:submit|preventDefault={handleSave}
 			>
-				<h3 id="zhp-dialog-title" class="m-0 text-[1.0625rem] font-bold text-white">Nombre de la zona</h3>
-				<label class="text-[0.8125rem] font-semibold text-white/65" for="zhp-zone-name">Nombre visible</label>
+				<h3
+					id="zhp-dialog-title"
+					class="m-0 text-[1.0625rem] font-bold {$theme === 'light' ? 'text-slate-900' : 'text-white'}"
+				>
+					Nombre de la zona
+				</h3>
+				<label
+					class="text-[0.8125rem] font-semibold {$theme === 'light' ? 'text-slate-600' : 'text-white/65'}"
+					for="zhp-zone-name">Nombre visible</label
+				>
 				<input
 					id="zhp-zone-name"
 					bind:this={nameInput}
@@ -318,13 +329,17 @@
 					name="zoneName"
 					autocomplete="off"
 					placeholder="Ej: Centro histórico"
-					class="box-border w-full rounded-xl border border-white/15 bg-white/[0.07] px-4 py-3 text-base text-white outline-none placeholder:text-white/30 focus:border-blue-600/85 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.25)]"
+					class="box-border w-full rounded-xl border px-4 py-3 text-base outline-none {$theme === 'light'
+						? 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.2)]'
+						: 'border-white/15 bg-white/[0.07] text-white placeholder:text-white/30 focus:border-blue-600/85 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.25)]'}"
 					on:keydown={handleNameKeydown}
 				/>
 				<div class="mt-1 flex gap-2.5">
 					<button
 						type="button"
-						class="flex-1 cursor-pointer rounded-xl border border-white/15 bg-transparent px-3 py-3 text-[0.9375rem] text-white/85 transition-colors hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+						class="flex-1 cursor-pointer rounded-xl border px-3 py-3 text-[0.9375rem] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 {$theme === 'light'
+							? 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100'
+							: 'border-white/15 bg-transparent text-white/85 hover:bg-white/10'}"
 						on:click={dismissNameDialog}>Cancelar</button>
 					<button
 						type="submit"
