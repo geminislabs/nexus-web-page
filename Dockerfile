@@ -29,6 +29,9 @@ ENV VITE_COMM_API_URL=$VITE_COMM_API_URL
 ARG VITE_ADMIN_API_URL
 ENV VITE_ADMIN_API_URL=$VITE_ADMIN_API_URL
 
+# Sincronizar SvelteKit (genera .svelte-kit/tsconfig.json y tipos)
+RUN npx svelte-kit sync
+
 # Construir la aplicación
 RUN npm run build
 

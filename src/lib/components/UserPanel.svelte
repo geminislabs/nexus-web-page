@@ -49,7 +49,10 @@
 			>
 				Apariencia
 			</h3>
-			<p id="user-panel-theme-hint" class="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+			<p
+				id="user-panel-theme-hint"
+				class="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400"
+			>
 				Tema activo: <strong class="font-semibold text-slate-800 dark:text-slate-200"
 					>{$theme === 'dark' ? 'Oscuro' : 'Claro'}</strong
 				>. Puede cambiar el contraste de la aplicación.
@@ -119,7 +122,9 @@
 						/>
 						<div class="min-w-0 flex-1">
 							<dt class="sr-only">Identificador de cuenta</dt>
-							<dd class="font-mono text-[0.8125rem] font-medium leading-snug text-slate-800 dark:text-slate-200">
+							<dd
+								class="font-mono text-[0.8125rem] font-medium leading-snug text-slate-800 dark:text-slate-200"
+							>
 								{userData.id}
 							</dd>
 						</div>

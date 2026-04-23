@@ -324,10 +324,16 @@
 											title="Configuración"
 											on:click|stopPropagation={() => openConfigDrawer('apariencia')}
 										>
-											<Icon icon="mdi:cog-outline" class="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+											<Icon
+												icon="mdi:cog-outline"
+												class="h-[18px] w-[18px] shrink-0"
+												aria-hidden="true"
+											/>
 										</button>
 									</div>
-									<p class="mt-0.5 truncate text-xs text-slate-500 dark:text-white/45">{userData.email}</p>
+									<p class="mt-0.5 truncate text-xs text-slate-500 dark:text-white/45">
+										{userData.email}
+									</p>
 								</div>
 							</div>
 							<div class="my-3 h-px bg-slate-200 dark:bg-white/[0.08]" role="presentation"></div>
@@ -472,7 +478,10 @@
 							on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
 							aria-label="Mostrar panel de unidades"
 						>
-							<div class="h-1 w-10 rounded-full bg-cyan-500/70 dark:bg-cyan-200/80" aria-hidden="true"></div>
+							<div
+								class="h-1 w-10 rounded-full bg-cyan-500/70 dark:bg-cyan-200/80"
+								aria-hidden="true"
+							></div>
 						</button>
 						<button
 							type="button"
@@ -497,14 +506,20 @@
 								? 'Ocultar panel de unidades'
 								: 'Mostrar panel de unidades'}
 						>
-							<p class="m-0 text-center text-[12px] font-semibold text-slate-700 dark:text-white/78">
+							<p
+								class="m-0 text-center text-[12px] font-semibold text-slate-700 dark:text-white/78"
+							>
 								Selecciona una unidad para ver más posiciones
 							</p>
 						</button>
 						<div class="flex items-center justify-between px-4 pt-2">
 							<div>
-								<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">Seguimiento de unidades</p>
-								<p class="m-0 text-[11px] text-slate-500 dark:text-white/40">{$vehicles.length} registradas</p>
+								<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
+									Seguimiento de unidades
+								</p>
+								<p class="m-0 text-[11px] text-slate-500 dark:text-white/40">
+									{$vehicles.length} registradas
+								</p>
 							</div>
 							<button
 								type="button"
@@ -523,7 +538,9 @@
 									></div>
 								</div>
 							{:else if $vehicles.length === 0}
-								<div class="flex h-40 flex-col items-center justify-center gap-2 text-slate-500 dark:text-white/35">
+								<div
+									class="flex h-40 flex-col items-center justify-center gap-2 text-slate-500 dark:text-white/35"
+								>
 									<Icon icon="mdi:car-off" width={28} aria-hidden="true" />
 									<p class="m-0 text-xs">No hay unidades disponibles</p>
 								</div>
@@ -547,8 +564,14 @@
 													aria-hidden="true"
 												></div>
 												<div class="min-w-0 flex-1">
-													<p class="m-0 truncate text-[13px] font-semibold text-slate-900 dark:text-white">{v.name}</p>
-													<p class="m-0 mt-0.5 truncate text-[11px] text-slate-600 dark:text-white/45">
+													<p
+														class="m-0 truncate text-[13px] font-semibold text-slate-900 dark:text-white"
+													>
+														{v.name}
+													</p>
+													<p
+														class="m-0 mt-0.5 truncate text-[11px] text-slate-600 dark:text-white/45"
+													>
 														{v.driver || 'Sin conductor'}
 														{#if v.speed !== undefined}
 															· {v.speed} km/h
@@ -614,7 +637,6 @@
 				<TabAjustes />
 			</div>
 		{/if}
-
 	</main>
 
 	<div class="sm:hidden" aria-hidden="true">

@@ -123,7 +123,9 @@
 		>
 			NEXUS
 		</h1>
-		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">Crear cuenta</p>
+		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
+			Crear cuenta
+		</p>
 
 		<form
 			class="flex w-full flex-col gap-4"
@@ -291,7 +293,9 @@
 
 		<p class="mt-5 text-center text-[0.8125rem] text-slate-600 dark:text-white/[0.38]">
 			¿Ya tienes cuenta?
-			<a href="/login" class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+			<a
+				href="/login"
+				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
 				>Inicia sesión</a
 			>
 		</p>

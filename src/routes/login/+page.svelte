@@ -115,7 +115,9 @@
 		>
 			NEXUS
 		</h1>
-		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">by GeminisLabs</p>
+		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
+			by GeminisLabs
+		</p>
 
 		<form
 			class="flex w-full flex-col gap-4"
@@ -205,7 +207,9 @@
 			</button>
 
 			{#if bypassAuthInDev}
-				<div class="-mt-1 flex items-center justify-center gap-2 text-center text-xs text-slate-500 dark:text-white/35">
+				<div
+					class="-mt-1 flex items-center justify-center gap-2 text-center text-xs text-slate-500 dark:text-white/35"
+				>
 					<span
 						class="shrink-0 rounded border border-amber-500/30 bg-amber-500/20 px-1.5 py-0.5 text-[0.625rem] font-bold tracking-wider text-amber-400"
 						>DEV</span
@@ -217,7 +221,9 @@
 
 		<p class="mt-5 text-center text-[0.8125rem] text-slate-600 dark:text-white/[0.38]">
 			¿No tienes cuenta?
-			<a href="/register" class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+			<a
+				href="/register"
+				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
 				>Regístrate</a
 			>
 		</p>

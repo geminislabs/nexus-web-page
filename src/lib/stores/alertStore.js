@@ -93,8 +93,7 @@ function normalizeImportedZone(raw) {
 	const name = typeof raw.name === 'string' ? raw.name : 'Zona';
 	const cells = Array.isArray(raw.cells) ? raw.cells.filter((c) => typeof c === 'string') : [];
 	const color = typeof raw.color === 'string' && raw.color ? raw.color : '#3B82F6';
-	const createdAt =
-		typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
+	const createdAt = typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
 	const metadata =
 		raw.metadata && typeof raw.metadata === 'object'
 			? {
@@ -147,7 +146,9 @@ function h3DecimalToHexString(value) {
 
 function mapGeofenceToZone(geofence) {
 	const rawIndexes = Array.isArray(geofence?.h3_indexes) ? geofence.h3_indexes : [];
-	const cells = rawIndexes.map(h3DecimalToHexString).filter((x) => typeof x === 'string' && x.length > 0);
+	const cells = rawIndexes
+		.map(h3DecimalToHexString)
+		.filter((x) => typeof x === 'string' && x.length > 0);
 	return withZoneDbRow({
 		id: String(geofence?.id || createId('zone')),
 		name: geofence?.name || 'Zona',
@@ -187,21 +188,27 @@ function mapRuleToAlert(rule) {
 		zone: config?.zone_id ? String(config.zone_id) : null,
 		name: rule?.name || defaultAlertName({ type, condition: inferConditionFromRule(type, config) }),
 		notificationMethod: config?.notification_method || config?.notificationMethod || 'push',
-		notificationEvent: config?.notification_event || notificationEventFromWizard({ type, condition: inferConditionFromRule(type, config) }),
+		notificationEvent:
+			config?.notification_event ||
+			notificationEventFromWizard({ type, condition: inferConditionFromRule(type, config) }),
 		enabled: rule?.is_active !== false,
 		createdAt: rule?.created_at || new Date().toISOString()
 	};
 }
 
 function mapAlarmEvent(alertEvent) {
-	const payload = alertEvent?.payload && typeof alertEvent.payload === 'object' ? alertEvent.payload : {};
+	const payload =
+		alertEvent?.payload && typeof alertEvent.payload === 'object' ? alertEvent.payload : {};
 	const type = String(alertEvent?.type || payload?.type || 'alert').toLowerCase();
 	const normalizedType = type.includes('ignition') ? 'ignition' : 'zone';
 	return {
 		id: String(alertEvent?.id || createId('ev')),
 		name: payload?.message || payload?.name || alertEvent?.type || 'Alerta',
 		type: normalizedType,
-		vehicle: payload?.unit_name || payload?.vehicle_name || (alertEvent?.unit_id ? `Unidad ${String(alertEvent.unit_id).slice(0, 8)}` : 'Unidad'),
+		vehicle:
+			payload?.unit_name ||
+			payload?.vehicle_name ||
+			(alertEvent?.unit_id ? `Unidad ${String(alertEvent.unit_id).slice(0, 8)}` : 'Unidad'),
 		read: false,
 		at: alertEvent?.occurred_at || alertEvent?.created_at || new Date().toISOString()
 	};
@@ -407,7 +414,9 @@ export const alertActions = {
 		if (!currentZone) return;
 
 		const meta = {
-			...(currentZone.metadata && typeof currentZone.metadata === 'object' ? currentZone.metadata : {}),
+			...(currentZone.metadata && typeof currentZone.metadata === 'object'
+				? currentZone.metadata
+				: {}),
 			...(patch.metadata && typeof patch.metadata === 'object' ? patch.metadata : {})
 		};
 		const nextLocal = withZoneDbRow({

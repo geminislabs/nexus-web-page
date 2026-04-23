@@ -402,7 +402,10 @@ export const vehicleActions = {
 			);
 			return updated;
 		}
-		const updatedUnit = await apiService.updateVehicle(vehicleId, sanitizeVehicleUpdatePayload(payload));
+		const updatedUnit = await apiService.updateVehicle(
+			vehicleId,
+			sanitizeVehicleUpdatePayload(payload)
+		);
 		const mapped = mapUnitToVehicle(updatedUnit);
 		vehicles.update((list) => list.map((v) => (v.id === vehicleId ? mapped : v)));
 		return mapped;

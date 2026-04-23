@@ -1,12 +1,14 @@
 # Módulo: Share Location
 
 ## 📌 Descripción
+
 Vista pública para compartir ubicación de una unidad.
 Permite a usuarios externos (sin autenticación) ver la ubicación en tiempo real de una unidad mediante un token temporal.
 
 ---
 
 ## 👤 Actor
+
 - Usuario externo (no autenticado)
 - Cualquier persona con un enlace de compartición válido
 
@@ -16,17 +18,19 @@ Permite a usuarios externos (sin autenticación) ver la ubicación en tiempo rea
 
 ### 🔹 siscom-api (Público - Sin autenticación)
 
-| Endpoint | Método | Uso |
-|--------|--------|-----|
-| `/api/v1/public/share-location/init` | GET | Inicializar vista compartida con token |
-| `/api/v1/public/share-location/stream` | WebSocket | Stream de ubicación en tiempo real |
+| Endpoint                               | Método    | Uso                                    |
+| -------------------------------------- | --------- | -------------------------------------- |
+| `/api/v1/public/share-location/init`   | GET       | Inicializar vista compartida con token |
+| `/api/v1/public/share-location/stream` | WebSocket | Stream de ubicación en tiempo real     |
 
 **Init Request:**
+
 ```
 GET /api/v1/public/share-location/init?token={share_token}
 ```
 
 **Init Response:**
+
 ```json
 {
   "device_id": "string",
@@ -48,6 +52,7 @@ GET /api/v1/public/share-location/init?token={share_token}
 ```
 
 **WebSocket Events:**
+
 - `message`: Nueva posición
 - `expired`: Token expirado
 - `ping`: Keep-alive
@@ -56,11 +61,11 @@ GET /api/v1/public/share-location/init?token={share_token}
 
 ### 🔹 Google Maps API (Visualización)
 
-| Recurso | Uso |
-|---------|-----|
-| Google Maps JavaScript API | Renderizado del mapa base |
-| Markers API | Marcador de la unidad compartida |
-| InfoWindow API | Información de la unidad |
+| Recurso                    | Uso                              |
+| -------------------------- | -------------------------------- |
+| Google Maps JavaScript API | Renderizado del mapa base        |
+| Markers API                | Marcador de la unidad compartida |
+| InfoWindow API             | Información de la unidad         |
 
 ---
 
@@ -81,6 +86,7 @@ GET /api/v1/public/share-location/init?token={share_token}
 ---
 
 ## ⚠️ Consideraciones
+
 - **No requiere autenticación** (endpoints públicos)
 - Token tiene fecha de expiración configurable
 - WebSocket se cierra automáticamente si el token expira
@@ -94,7 +100,7 @@ GET /api/v1/public/share-location/init?token={share_token}
 
 - **Container:** Web App (SvelteKit)
 - **Component:** Share Location Module (Public)
-- **Consumes:** 
+- **Consumes:**
   - siscom-api (REST + WebSocket - Endpoints públicos)
   - Google Maps API (JavaScript SDK)
 - **Dependencies:**
