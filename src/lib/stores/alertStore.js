@@ -1,65 +1,10 @@
 import { writable, derived, get } from 'svelte/store';
 import { withZoneDbRow } from '$lib/utils/zoneDbMapper.js';
-import { bypassAuthInDev } from '$lib/config/env.js';
 import { apiService } from '$lib/services/api.js';
 
 function cloneDeep(value) {
 	return JSON.parse(JSON.stringify(value));
 }
-
-const INITIAL_MOCK_ALERTS = [
-	{
-		id: 'alert_mock_ign_on',
-		type: 'ignition',
-		condition: 'on',
-		units: ['unit_001', 'unit_004'],
-		zone: null,
-		name: 'Ignición encendida - Operación',
-		notificationMethod: 'push',
-		notificationEvent: 'ignition_on',
-		enabled: true,
-		createdAt: '2026-04-10T08:12:00.000Z'
-	},
-	{
-		id: 'alert_mock_zone_enter',
-		type: 'zone',
-		condition: 'enter',
-		units: ['unit_002'],
-		zone: 'zone_mock_deposito',
-		name: 'Entrada a depósito central',
-		notificationMethod: 'push',
-		notificationEvent: 'geofence_entered',
-		enabled: true,
-		createdAt: '2026-04-10T08:18:00.000Z'
-	}
-];
-
-const INITIAL_MOCK_ALARM_EVENTS = [
-	{
-		id: 'ev_mock_01',
-		name: 'Ignición encendida',
-		type: 'ignition',
-		vehicle: 'Unidad 04',
-		read: false,
-		at: '2026-04-16T13:05:00.000Z'
-	},
-	{
-		id: 'ev_mock_02',
-		name: 'Entrada a depósito central',
-		type: 'zone',
-		vehicle: 'Unidad 02',
-		read: false,
-		at: '2026-04-16T12:47:00.000Z'
-	},
-	{
-		id: 'ev_mock_03',
-		name: 'Ignición apagada',
-		type: 'ignition',
-		vehicle: 'Unidad 01',
-		read: true,
-		at: '2026-04-16T11:54:00.000Z'
-	}
-];
 
 export const alerts = writable([]);
 export const alertWizard = writable(null);
@@ -93,8 +38,7 @@ function normalizeImportedZone(raw) {
 	const name = typeof raw.name === 'string' ? raw.name : 'Zona';
 	const cells = Array.isArray(raw.cells) ? raw.cells.filter((c) => typeof c === 'string') : [];
 	const color = typeof raw.color === 'string' && raw.color ? raw.color : '#3B82F6';
-	const createdAt =
-		typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
+	const createdAt = typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
 	const metadata =
 		raw.metadata && typeof raw.metadata === 'object'
 			? {
@@ -147,7 +91,9 @@ function h3DecimalToHexString(value) {
 
 function mapGeofenceToZone(geofence) {
 	const rawIndexes = Array.isArray(geofence?.h3_indexes) ? geofence.h3_indexes : [];
-	const cells = rawIndexes.map(h3DecimalToHexString).filter((x) => typeof x === 'string' && x.length > 0);
+	const cells = rawIndexes
+		.map(h3DecimalToHexString)
+		.filter((x) => typeof x === 'string' && x.length > 0);
 	return withZoneDbRow({
 		id: String(geofence?.id || createId('zone')),
 		name: geofence?.name || 'Zona',
@@ -187,21 +133,27 @@ function mapRuleToAlert(rule) {
 		zone: config?.zone_id ? String(config.zone_id) : null,
 		name: rule?.name || defaultAlertName({ type, condition: inferConditionFromRule(type, config) }),
 		notificationMethod: config?.notification_method || config?.notificationMethod || 'push',
-		notificationEvent: config?.notification_event || notificationEventFromWizard({ type, condition: inferConditionFromRule(type, config) }),
+		notificationEvent:
+			config?.notification_event ||
+			notificationEventFromWizard({ type, condition: inferConditionFromRule(type, config) }),
 		enabled: rule?.is_active !== false,
 		createdAt: rule?.created_at || new Date().toISOString()
 	};
 }
 
 function mapAlarmEvent(alertEvent) {
-	const payload = alertEvent?.payload && typeof alertEvent.payload === 'object' ? alertEvent.payload : {};
+	const payload =
+		alertEvent?.payload && typeof alertEvent.payload === 'object' ? alertEvent.payload : {};
 	const type = String(alertEvent?.type || payload?.type || 'alert').toLowerCase();
 	const normalizedType = type.includes('ignition') ? 'ignition' : 'zone';
 	return {
 		id: String(alertEvent?.id || createId('ev')),
 		name: payload?.message || payload?.name || alertEvent?.type || 'Alerta',
 		type: normalizedType,
-		vehicle: payload?.unit_name || payload?.vehicle_name || (alertEvent?.unit_id ? `Unidad ${String(alertEvent.unit_id).slice(0, 8)}` : 'Unidad'),
+		vehicle:
+			payload?.unit_name ||
+			payload?.vehicle_name ||
+			(alertEvent?.unit_id ? `Unidad ${String(alertEvent.unit_id).slice(0, 8)}` : 'Unidad'),
 		read: false,
 		at: alertEvent?.occurred_at || alertEvent?.created_at || new Date().toISOString()
 	};
@@ -299,12 +251,6 @@ export const alertActions = {
 			createdAt: new Date().toISOString()
 		};
 
-		if (bypassAuthInDev) {
-			alerts.update((list) => [...list, newAlert]);
-			alertWizard.set(null);
-			return;
-		}
-
 		const createdRule = await apiService.createAlertRule({
 			name: newAlert.name,
 			type: newAlert.type,
@@ -322,17 +268,10 @@ export const alertActions = {
 	},
 
 	async deleteAlert(id) {
-		if (!bypassAuthInDev) {
-			await apiService.deleteAlertRule(id);
-		}
+		await apiService.deleteAlertRule(id);
 		alerts.update((list) => list.filter((a) => a.id !== id));
 	},
 	async toggleAlert(id) {
-		if (bypassAuthInDev) {
-			alerts.update((list) => list.map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a)));
-			return;
-		}
-
 		const current = get(alerts).find((a) => a.id === id);
 		if (!current) return;
 
@@ -381,12 +320,6 @@ export const alertActions = {
 		});
 		logGeofenceGenerationPreview(localZone);
 
-		const shouldUseApi = !bypassAuthInDev;
-		if (!shouldUseApi) {
-			zones.update((list) => [...list, localZone]);
-			return localZone.id;
-		}
-
 		const h3Indexes = (Array.isArray(cells) ? cells : [])
 			.map(h3HexToDecimalString)
 			.filter((v) => typeof v === 'string');
@@ -407,7 +340,9 @@ export const alertActions = {
 		if (!currentZone) return;
 
 		const meta = {
-			...(currentZone.metadata && typeof currentZone.metadata === 'object' ? currentZone.metadata : {}),
+			...(currentZone.metadata && typeof currentZone.metadata === 'object'
+				? currentZone.metadata
+				: {}),
 			...(patch.metadata && typeof patch.metadata === 'object' ? patch.metadata : {})
 		};
 		const nextLocal = withZoneDbRow({
@@ -415,12 +350,6 @@ export const alertActions = {
 			...patch,
 			metadata: meta
 		});
-
-		const shouldUseApi = !bypassAuthInDev;
-		if (!shouldUseApi) {
-			zones.update((list) => list.map((z) => (z.id === id ? nextLocal : z)));
-			return;
-		}
 
 		const updatedGeofence = await apiService.updateGeofence(id, {
 			name: nextLocal.name,
@@ -440,36 +369,25 @@ export const alertActions = {
 		zones.set(/** @type {any[]} */ (out));
 	},
 	async deleteZone(id) {
-		if (!bypassAuthInDev) {
-			await apiService.deleteGeofence(id);
-		}
+		await apiService.deleteGeofence(id);
 		zones.update((list) => list.filter((z) => z.id !== id));
 		// Remove from any alerts using this zone
 		alerts.update((list) => list.map((a) => (a.zone === id ? { ...a, zone: null } : a)));
 	},
 
 	async syncZonesFromApi() {
-		if (bypassAuthInDev) return;
 		const geofences = await apiService.getGeofences();
 		const mapped = Array.isArray(geofences) ? geofences.map(mapGeofenceToZone) : [];
 		zones.set(mapped);
 	},
 
 	async syncAlertRulesFromApi() {
-		if (bypassAuthInDev) {
-			alerts.set(cloneDeep(INITIAL_MOCK_ALERTS));
-			return;
-		}
 		const rules = await apiService.getAlertRules();
 		const mapped = Array.isArray(rules) ? rules.map(mapRuleToAlert) : [];
 		alerts.set(mapped);
 	},
 
 	async syncAlarmEventsFromApi() {
-		if (bypassAuthInDev) {
-			alarmEvents.set(cloneDeep(INITIAL_MOCK_ALARM_EVENTS));
-			return;
-		}
 		const events = await apiService.getAlerts();
 		const mapped = Array.isArray(events) ? events.map(mapAlarmEvent) : [];
 		alarmEvents.set(mapped);
