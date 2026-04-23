@@ -1,12 +1,14 @@
 # Módulo: Register
 
 ## 📌 Descripción
+
 Página de registro de nuevos clientes.
 Redirige automáticamente al sistema centralizado de registro de Geminis Labs.
 
 ---
 
 ## 👤 Actor
+
 - Usuario no autenticado
 - Persona interesada en crear una cuenta nueva
 
@@ -14,8 +16,8 @@ Redirige automáticamente al sistema centralizado de registro de Geminis Labs.
 
 ## 🌐 Recursos Externos
 
-| Recurso | Uso |
-|---------|-----|
+| Recurso                               | Uso                                              |
+| ------------------------------------- | ------------------------------------------------ |
 | `VITE_COMPANY_URL/auth?mode=register` | Sistema centralizado de registro de Geminis Labs |
 
 ---
@@ -31,6 +33,7 @@ Redirige automáticamente al sistema centralizado de registro de Geminis Labs.
 ---
 
 ## ⚠️ Consideraciones
+
 - No consume APIs directamente
 - Actúa como proxy de redirección
 - El registro real se maneja en el sistema centralizado de Geminis Labs
@@ -43,7 +46,7 @@ Redirige automáticamente al sistema centralizado de registro de Geminis Labs.
 
 - **Container:** Web App (SvelteKit)
 - **Component:** Register Module (Redirect)
-- **Consumes:** 
+- **Consumes:**
   - Sistema externo de Geminis Labs (redirección)
 - **Dependencies:**
   - Ninguna (módulo de redirección simple)

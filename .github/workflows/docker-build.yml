@@ -2,7 +2,8 @@ name: Build and Deploy Nexus Web Page to EC2
 
 on:
   push:
-    branches: [master, develop]
+    tags:
+      - 'v*'
   pull_request:
     branches: [master, develop]
 
@@ -51,10 +52,28 @@ jobs:
             VITE_BYPASS_AUTH=true
             NODE_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
-  deploy-to-ec2-test:
-    needs: build-and-test
+  validate-release-tag:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    outputs:
+      is_valid: ${{ steps.validate_tag.outputs.is_valid }}
+    steps:
+      - name: Validate tag format (vX.Y.Z)
+        id: validate_tag
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_valid=true" >> "$GITHUB_OUTPUT"
+            echo "Tag valido para deploy: $TAG"
+          else
+            echo "is_valid=false" >> "$GITHUB_OUTPUT"
+            echo "Tag invalido para deploy: $TAG"
+          fi
+
+  deploy-to-ec2-test:
+    needs: [build-and-test, validate-release-tag]
+    runs-on: ubuntu-latest
+    if: needs.validate-release-tag.outputs.is_valid == 'true'
     environment: test
 
     steps:

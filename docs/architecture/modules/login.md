@@ -1,12 +1,14 @@
 # Módulo: Login
 
 ## 📌 Descripción
+
 Página de autenticación de usuarios.
 Permite a usuarios existentes iniciar sesión con email y contraseña.
 
 ---
 
 ## 👤 Actor
+
 - Usuario no autenticado
 - Cualquier persona con cuenta en el sistema
 
@@ -16,19 +18,21 @@ Permite a usuarios existentes iniciar sesión con email y contraseña.
 
 ### 🔹 siscom-admin-api (Autenticación)
 
-| Endpoint | Método | Uso |
-|--------|--------|-----|
-| `/api/v1/auth/login` | POST | Autenticar usuario con email/password |
+| Endpoint             | Método | Uso                                   |
+| -------------------- | ------ | ------------------------------------- |
+| `/api/v1/auth/login` | POST   | Autenticar usuario con email/password |
 
 **Request Body:**
+
 ```json
 {
-  "email": "string",
-  "password": "string"
+	"email": "string",
+	"password": "string"
 }
 ```
 
 **Response:**
+
 ```json
 {
   "user": {
@@ -49,12 +53,12 @@ Permite a usuarios existentes iniciar sesión con email y contraseña.
 
 ## 🌐 Recursos Externos
 
-| Recurso | Uso |
-|---------|-----|
-| `VITE_COMPANY_URL` | URL de la página principal para registro y recuperación de contraseña |
-| `/vid/map-back-1.mp4` | Video de fondo animado |
-| `/img/logo-nexus.png` | Logo de Nexus |
-| `/img/geminis-labs-logo-short.png` | Logo de Geminis Labs (footer) |
+| Recurso                            | Uso                                                                   |
+| ---------------------------------- | --------------------------------------------------------------------- |
+| `VITE_COMPANY_URL`                 | URL de la página principal para registro y recuperación de contraseña |
+| `/vid/map-back-1.mp4`              | Video de fondo animado                                                |
+| `/img/logo-nexus.png`              | Logo de Nexus                                                         |
+| `/img/geminis-labs-logo-short.png` | Logo de Geminis Labs (footer)                                         |
 
 ---
 
@@ -78,6 +82,7 @@ Permite a usuarios existentes iniciar sesión con email y contraseña.
 ---
 
 ## ⚠️ Consideraciones
+
 - No requiere autenticación previa
 - Valida formato de email en el frontend
 - Almacena tokens en `localStorage` para persistencia
@@ -90,7 +95,7 @@ Permite a usuarios existentes iniciar sesión con email y contraseña.
 
 - **Container:** Web App (SvelteKit)
 - **Component:** Login Module
-- **Consumes:** 
+- **Consumes:**
   - siscom-admin-api (REST)
 - **Dependencies:**
   - `apiService.js` → SISCOM-ADMIN-API client
