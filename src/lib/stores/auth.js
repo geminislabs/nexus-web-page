@@ -1,186 +1,97 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
+import { bypassAuthInDev } from '$lib/config/env.js';
 
-/**
- * Store para el usuario autenticado
- * Almacena los datos del usuario en memoria y localStorage
- */
+// Mock user para desarrollo
+const mockUser = {
+	id: 1,
+	name: 'Usuario Dev',
+	email: 'dev@tracker-monitor.com'
+};
+
+// Crear el store para el usuario autenticado
+const DEV_LOGOUT_KEY = 'nexus-dev-logged-out';
+
 function createAuthStore() {
 	const { subscribe, set, update } = writable(null);
 
 	return {
 		subscribe,
-		/**
-		 * Iniciar sesión y guardar datos del usuario
-		 * @param {Object} userData - Datos del usuario
-		 */
+
 		login: (userData) => {
 			set(userData);
 			if (browser) {
+				sessionStorage.removeItem(DEV_LOGOUT_KEY);
 				localStorage.setItem('user', JSON.stringify(userData));
 			}
 		},
-		/**
-		 * Cerrar sesión y limpiar datos
-		 */
 		logout: () => {
 			set(null);
 			if (browser) {
 				localStorage.removeItem('user');
 				localStorage.removeItem('token');
-				localStorage.removeItem('token_expires_at');
+				if (bypassAuthInDev) sessionStorage.setItem(DEV_LOGOUT_KEY, '1');
 			}
 		},
-		/**
-		 * Inicializar el store desde localStorage si existe
-		 */
+
 		init: () => {
-			if (browser) {
-				const userData = localStorage.getItem('user');
-				if (userData) {
-					try {
-						set(JSON.parse(userData));
-					} catch (error) {
-						console.error('Error parsing user data from localStorage:', error);
-						// Limpiar datos corruptos
-						localStorage.removeItem('user');
-					}
+			if (!browser) return;
+
+			// En modo desarrollo, usar mock user automáticamente
+			if (bypassAuthInDev) {
+				const wasLoggedOut = sessionStorage.getItem(DEV_LOGOUT_KEY);
+				if (!wasLoggedOut) {
+					set(mockUser);
+					localStorage.setItem('user', JSON.stringify(mockUser));
+					return;
+				}
+				set(null);
+				return;
+			}
+			// En producción, verificar localStorage
+			const userData = localStorage.getItem('user');
+			if (userData) {
+				try {
+					set(JSON.parse(userData));
+				} catch {
+					set(null);
 				}
 			}
-		},
-		/**
-		 * Actualizar datos del usuario
-		 * @param {Object} updates - Actualizaciones parciales
-		 */
-		update: (updates) => {
-			update((currentUser) => {
-				if (!currentUser) return null;
-				const updatedUser = { ...currentUser, ...updates };
-				if (browser) {
-					localStorage.setItem('user', JSON.stringify(updatedUser));
-				}
-				return updatedUser;
-			});
 		}
 	};
 }
 
 export const user = createAuthStore();
 
-/**
- * Store para los tokens de autenticación
- * Maneja access_token, refresh_token e id_token
- */
+// Store para el token de autenticación
 function createTokenStore() {
 	const { subscribe, set } = writable(null);
 
 	return {
 		subscribe,
-		/**
-		 * Guardar todos los tokens de autenticación
-		 * @param {Object} tokens - {access_token, refresh_token, id_token, expires_in}
-		 */
-		setTokens: (tokens) => {
-			const { access_token, expires_in } = tokens;
-
-			set(access_token);
-
-			if (browser) {
-				localStorage.setItem('token', access_token);
-				localStorage.setItem('token', access_token);
-				if (tokens.refresh_token) {
-					localStorage.setItem('refresh_token', tokens.refresh_token);
-				}
-
-				if (expires_in) {
-					// Guardar timestamp de expiración
-					const expiresAt = Date.now() + expires_in * 1000;
-					localStorage.setItem('token_expires_at', expiresAt.toString());
-				}
-			}
-		},
-		/**
-		 * Guardar solo el access token (para compatibilidad)
-		 * @param {string} token - Access token
-		 */
 		setToken: (token) => {
 			set(token);
-			if (browser) {
-				localStorage.setItem('token', token);
-			}
+			if (browser) localStorage.setItem('token', token);
 		},
-		/**
-		 * Obtener el access token actual
-		 * @returns {string|null} Access token o null
-		 */
 		getToken: () => {
-			if (browser) {
-				return localStorage.getItem('token');
-			}
-			return null;
+			if (!browser) return null;
+			// En modo desarrollo, devolver token mock
+			if (bypassAuthInDev) return 'mock-dev-token';
+			return localStorage.getItem('token');
 		},
-		/**
-		 * Obtener el refresh token actual
-		 * @returns {string|null} Refresh token o null
-		 */
-		getRefreshToken: () => {
-			if (browser) {
-				return localStorage.getItem('refresh_token');
-			}
-			return null;
-		},
-
-		/**
-		 * Verificar si el token ha expirado
-		 * @returns {boolean} true si expiró o no existe
-		 */
-		isTokenExpired: () => {
-			if (!browser) return true;
-
-			const expiresAt = localStorage.getItem('token_expires_at');
-			if (!expiresAt) return true;
-
-			return Date.now() >= parseInt(expiresAt);
-		},
-		/**
-		 * Verificar si el token está próximo a expirar
-		 * @param {number} thresholdSeconds - Segundos antes de expirar para considerar "próximo"
-		 * @returns {boolean} true si está próximo a expirar o ya expiró
-		 */
-		isTokenExpiringSoon: (thresholdSeconds = 300) => {
-			if (!browser) return false;
-
-			const expiresAt = localStorage.getItem('token_expires_at');
-			if (!expiresAt) return true; // Si no hay expiración, asumir que necesitamos refresh
-
-			// Calcular tiempo restante
-			const timeLeft = parseInt(expiresAt) - Date.now();
-			// Convertir a segundos
-			const secondsLeft = timeLeft / 1000;
-
-			return secondsLeft < thresholdSeconds;
-		},
-		/**
-		 * Limpiar todos los tokens
-		 */
 		clearToken: () => {
 			set(null);
-			if (browser) {
-				localStorage.removeItem('token');
-				localStorage.removeItem('refresh_token');
-				localStorage.removeItem('token_expires_at');
-			}
+			if (browser) localStorage.removeItem('token');
 		},
-		/**
-		 * Inicializar el store desde localStorage si existe
-		 */
 		init: () => {
-			if (browser) {
-				const token = localStorage.getItem('token');
-				if (token) {
-					set(token);
-				}
+			if (!browser) return;
+			if (bypassAuthInDev) {
+				const wasLoggedOut = sessionStorage.getItem(DEV_LOGOUT_KEY);
+				if (!wasLoggedOut) set('mock-dev-token');
+				return;
 			}
+			const token = localStorage.getItem('token');
+			if (token) set(token);
 		}
 	};
 }

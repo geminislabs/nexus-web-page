@@ -1,36 +1,299 @@
 <script>
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { user } from '$lib/stores/auth.js';
+	import { apiService } from '$lib/services/api.js';
 	import { onMount } from 'svelte';
+	import Icon from '@iconify/svelte';
+	import logoUrl from '$lib/assets/logo.png';
 
-	// URL de la página principal de la compañía para registro centralizado
-	const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
+	const inputClass =
+		'w-full appearance-none rounded-[14px] border border-slate-200 bg-white py-3.5 pl-[2.875rem] text-[0.9375rem] text-slate-900 outline-none transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/15 dark:bg-white/[0.08] dark:text-white dark:placeholder:text-white/30 dark:focus:border-blue-500/70 dark:focus:bg-white/11';
 
-	// Redirigir automáticamente a la página de registro centralizada de Geminis Labs
+	let companyName = '';
+	let name = '';
+	let email = '';
+	let password = '';
+	let confirmPassword = '';
+	let loading = false;
+	let error = '';
+	let showPassword = false;
+	let showConfirm = false;
+
+	// Redirigir si ya está autenticado
 	onMount(() => {
-		window.location.href = `${COMPANY_URL}/auth?mode=register`;
+		user.init();
+		const unsubscribe = user.subscribe((userData) => {
+			if (userData) {
+				goto('/dashboard');
+			}
+		});
+		return unsubscribe;
 	});
+
+	async function handleRegister() {
+		if (loading) return;
+
+		if (!companyName || !name || !email || !password || !confirmPassword) {
+			error = 'Por favor, completa todos los campos';
+			return;
+		}
+
+		if (password !== confirmPassword) {
+			error = 'Las contraseñas no coinciden';
+			return;
+		}
+
+		if (password.length < 6) {
+			error = 'La contraseña debe tener al menos 6 caracteres';
+			return;
+		}
+
+		loading = true;
+		error = '';
+
+		try {
+			await apiService.register({
+				account_name: companyName,
+				organization_name: companyName,
+				name,
+				email,
+				password
+			});
+			goto('/login?registered=1');
+		} catch (err) {
+			error = 'Error al crear la cuenta. Por favor, intenta de nuevo.';
+		} finally {
+			loading = false;
+		}
+	}
+
+	function handleKeyPress(event) {
+		if (event.key === 'Enter') {
+			handleRegister();
+		}
+	}
 </script>
 
 <svelte:head>
-	<title>Redirigiendo... - Nexus</title>
+	<title>NEXUS — Crear cuenta</title>
+	<meta
+		name="description"
+		content="Crea tu cuenta en NEXUS, plataforma de GeminisLabs para monitorización y gestión de flotas."
+	/>
+	<link rel="canonical" href={`${$page.url.origin}/register`} />
+	<meta property="og:title" content="NEXUS — Crear cuenta" />
+	<meta
+		property="og:description"
+		content="Crea tu cuenta en NEXUS, plataforma de GeminisLabs para monitorización y gestión de flotas."
+	/>
+	<meta property="og:type" content="website" />
+	<meta name="twitter:card" content="summary" />
 </svelte:head>
 
-<div class="min-h-screen bg-app flex items-center justify-center px-4">
-	<div class="text-center card max-w-md w-full p-8">
-		<div class="mb-6">
-			<div
-				class="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-				style="border-color: var(--accent-cyan)"
-			></div>
+<div
+	class="fixed inset-0 flex items-center justify-center overflow-hidden bg-slate-100 font-sans [-webkit-font-smoothing:antialiased] dark:bg-[#0a0f0a]"
+>
+	<div
+		class="pointer-events-none absolute -left-20 -top-[100px] h-[420px] w-[420px] animate-pulse rounded-full bg-[radial-gradient(circle,#bbf7d0_0%,transparent_70%)] opacity-25 blur-[80px] duration-[14s] dark:bg-[radial-gradient(circle,#1a4d2a_0%,transparent_70%)] dark:opacity-[0.45]"
+		aria-hidden="true"
+	></div>
+	<div
+		class="pointer-events-none absolute bottom-[-80px] right-[60px] h-80 w-80 animate-pulse rounded-full bg-[radial-gradient(circle,#a7f3d0_0%,transparent_70%)] opacity-25 blur-[80px] duration-[18s] dark:bg-[radial-gradient(circle,#0d3322_0%,transparent_70%)] dark:opacity-[0.45]"
+		aria-hidden="true"
+	></div>
+	<div
+		class="pointer-events-none absolute left-[60%] top-[40%] h-[200px] w-[200px] animate-pulse rounded-full bg-[radial-gradient(circle,#86efac_0%,transparent_70%)] opacity-20 blur-[80px] duration-[22s] dark:bg-[radial-gradient(circle,#163d1e_0%,transparent_70%)] dark:opacity-[0.45]"
+		aria-hidden="true"
+	></div>
+
+	<main
+		class="relative z-10 flex w-[min(420px,92vw)] flex-col items-center rounded-[20px] border border-slate-200 bg-white px-8 pb-6 pt-8 shadow-xl backdrop-blur-xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-sky-500/50 hover:shadow-2xl dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] dark:hover:border-[#00a6c0] dark:hover:shadow-[0_15px_30px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
+		aria-labelledby="register-heading"
+	>
+		<div
+			class="mb-5 flex h-[88px] w-[88px] items-center justify-center drop-shadow-[0_0_24px_rgba(74,222,128,0.35)]"
+		>
+			<img src={logoUrl} alt="" class="h-full w-full object-contain" decoding="async" />
 		</div>
-		<h2 class="text-2xl font-bold text-app mb-4">Redirigiendo al registro...</h2>
-		<p class="text-sm text-app mb-6">
-			Serás redirigido a la página de registro centralizada de Geminis Labs.
+
+		<h1
+			id="register-heading"
+			class="mb-1 mt-0 text-center text-4xl font-extrabold tracking-[0.15em] text-slate-900 dark:text-white dark:[text-shadow:0_2px_20px_rgba(255,255,255,0.15)]"
+		>
+			NEXUS
+		</h1>
+		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">Crear cuenta</p>
+
+		<form
+			class="flex w-full flex-col gap-4"
+			on:submit|preventDefault={handleRegister}
+			noValidate
+			aria-describedby={error ? 'register-error' : undefined}
+		>
+			{#if error}
+				<div
+					id="register-error"
+					class="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-center text-[0.8125rem] text-red-800 dark:border-red-500/35 dark:bg-red-500/15 dark:text-red-300"
+					role="alert"
+					aria-live="assertive"
+				>
+					{error}
+				</div>
+			{/if}
+
+			<div>
+				<label for="register-company" class="sr-only">Nombre de la empresa</label>
+				<div class="relative flex items-center">
+					<Icon
+						icon="mdi:office-building-outline"
+						class="pointer-events-none absolute left-4 h-[18px] w-[18px] shrink-0 text-slate-400 dark:text-white/35"
+						aria-hidden="true"
+					/>
+					<input
+						id="register-company"
+						type="text"
+						name="companyName"
+						bind:value={companyName}
+						placeholder="Nombre de la empresa"
+						class="{inputClass} pr-4"
+						autocomplete="organization"
+						aria-required="true"
+					/>
+				</div>
+			</div>
+
+			<div>
+				<label for="register-name" class="sr-only">Nombre completo</label>
+				<div class="relative flex items-center">
+					<Icon
+						icon="mdi:account-circle-outline"
+						class="pointer-events-none absolute left-4 h-[18px] w-[18px] shrink-0 text-slate-400 dark:text-white/35"
+						aria-hidden="true"
+					/>
+					<input
+						id="register-name"
+						type="text"
+						name="name"
+						bind:value={name}
+						placeholder="Nombre completo"
+						class="{inputClass} pr-4"
+						autocomplete="name"
+						aria-required="true"
+					/>
+				</div>
+			</div>
+
+			<div>
+				<label for="register-email" class="sr-only">Correo electrónico</label>
+				<div class="relative flex items-center">
+					<Icon
+						icon="mdi:email-outline"
+						class="pointer-events-none absolute left-4 h-[18px] w-[18px] shrink-0 text-slate-400 dark:text-white/35"
+						aria-hidden="true"
+					/>
+					<input
+						id="register-email"
+						type="email"
+						name="email"
+						bind:value={email}
+						placeholder="Correo electrónico"
+						class="{inputClass} pr-4"
+						autocomplete="email"
+						inputmode="email"
+						aria-required="true"
+					/>
+				</div>
+			</div>
+
+			<div>
+				<label for="register-password" class="sr-only">Contraseña</label>
+				<div class="relative flex items-center">
+					<Icon
+						icon="mdi:lock-outline"
+						class="pointer-events-none absolute left-4 h-[18px] w-[18px] shrink-0 text-slate-400 dark:text-white/35"
+						aria-hidden="true"
+					/>
+					<input
+						id="register-password"
+						type={showPassword ? 'text' : 'password'}
+						name="password"
+						bind:value={password}
+						placeholder="Contraseña"
+						class="{inputClass} pr-12"
+						autocomplete="new-password"
+						aria-required="true"
+					/>
+					<button
+						type="button"
+						class="absolute right-3.5 flex items-center border-0 bg-transparent p-1 text-slate-500 transition-colors hover:text-slate-800 dark:text-white/35 dark:hover:text-white/65"
+						on:click={() => (showPassword = !showPassword)}
+						aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+						aria-pressed={showPassword}
+					>
+						{#if showPassword}
+							<Icon icon="mdi:eye" class="h-[18px] w-[18px]" aria-hidden="true" />
+						{:else}
+							<Icon icon="mdi:eye-off" class="h-[18px] w-[18px]" aria-hidden="true" />
+						{/if}
+					</button>
+				</div>
+			</div>
+
+			<div>
+				<label for="register-confirm" class="sr-only">Confirmar contraseña</label>
+				<div class="relative flex items-center">
+					<Icon
+						icon="mdi:lock-outline"
+						class="pointer-events-none absolute left-4 h-[18px] w-[18px] shrink-0 text-slate-400 dark:text-white/35"
+						aria-hidden="true"
+					/>
+					<input
+						id="register-confirm"
+						type={showConfirm ? 'text' : 'password'}
+						name="confirmPassword"
+						bind:value={confirmPassword}
+						placeholder="Confirmar contraseña"
+						class="{inputClass} pr-12"
+						autocomplete="new-password"
+						aria-required="true"
+					/>
+					<button
+						type="button"
+						class="absolute right-3.5 flex items-center border-0 bg-transparent p-1 text-slate-500 transition-colors hover:text-slate-800 dark:text-white/35 dark:hover:text-white/65"
+						on:click={() => (showConfirm = !showConfirm)}
+						aria-label={showConfirm ? 'Ocultar confirmación' : 'Mostrar confirmación'}
+						aria-pressed={showConfirm}
+					>
+						{#if showConfirm}
+							<Icon icon="mdi:eye" class="h-[18px] w-[18px]" aria-hidden="true" />
+						{:else}
+							<Icon icon="mdi:eye-off" class="h-[18px] w-[18px]" aria-hidden="true" />
+						{/if}
+					</button>
+				</div>
+			</div>
+
+			<button
+				type="submit"
+				class="mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb_0%,#1d9cc4_100%)] py-[0.9375rem] text-base font-semibold tracking-wide text-white shadow-[0_4px_24px_rgba(37,99,235,0.45)] transition-all duration-200 enabled:hover:-translate-y-px enabled:hover:opacity-90 enabled:active:translate-y-0 enabled:active:opacity-85 disabled:cursor-not-allowed disabled:opacity-50"
+				disabled={loading}
+				aria-busy={loading}
+			>
+				{#if loading}
+					<Icon icon="mdi:loading" class="h-[18px] w-[18px] animate-spin" aria-hidden="true" />
+					Creando cuenta...
+				{:else}
+					Crear cuenta
+				{/if}
+			</button>
+		</form>
+
+		<p class="mt-5 text-center text-[0.8125rem] text-slate-600 dark:text-white/[0.38]">
+			¿Ya tienes cuenta?
+			<a href="/login" class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+				>Inicia sesión</a
+			>
 		</p>
-		<p class="text-xs text-app opacity-70">
-			Si no eres redirigido automáticamente,
-			<a href="{COMPANY_URL}/auth?mode=register" class="text-accent hover:underline">
-				haz clic aquí
-			</a>
-		</p>
-	</div>
+	</main>
 </div>

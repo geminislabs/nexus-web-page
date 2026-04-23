@@ -55,6 +55,19 @@ export function getStatusBgColor(status) {
 	}
 }
 
+export function getStatusPillClass(status) {
+	switch (status) {
+		case 'active':
+			return 'border border-emerald-500/25 bg-emerald-500/10 text-emerald-800 dark:border-emerald-400/35 dark:bg-emerald-400/15 dark:text-emerald-200';
+		case 'inactive':
+			return 'border border-red-500/25 bg-red-500/10 text-red-800 dark:border-red-400/35 dark:bg-red-400/15 dark:text-red-200';
+		case 'maintenance':
+			return 'border border-amber-500/30 bg-amber-500/10 text-amber-900 dark:border-amber-400/35 dark:bg-amber-400/15 dark:text-amber-100';
+		default:
+			return 'border border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200';
+	}
+}
+
 export function formatLastUpdate(dateString) {
 	try {
 		const date = new Date(dateString);

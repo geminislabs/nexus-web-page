@@ -1,411 +1,39 @@
 @import 'tailwindcss';
 
-/* === Variables por tema === */
-/* Tema moderno (actual) */
-[data-theme='modern'] {
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* === Variables globales === */
+:root {
 	--accent-cyan: #00a6c0;
 	--light-cream: #fdfdf9;
-	--glass-bg: rgba(255, 255, 255, 0.12);
-	--glass-border: rgba(255, 255, 255, 0.25);
-	--acent: #1290cb;
-	/* Nuevas variables */
-	--app-bg: #0b1524;
-	/* fondo oscuro acorde al mapa */
-	--app-text: #e5e7eb;
-	/* gris claro */
-	--panel-bg: rgba(255, 255, 255, 0.06);
-	--panel-border: rgba(255, 255, 255, 0.18);
-	--btn-primary-bg: linear-gradient(135deg, #567ccf, #435ca0);
-	--btn-primary-hover-bg: linear-gradient(135deg, #3c65eb, #2955cf);
-	--btn-secondary-bg: rgba(255, 255, 255, 0.12);
-	--btn-secondary-hover-bg: rgba(255, 255, 255, 0.2);
-	/* Status colors */
-	--status-active-bg: rgba(16, 185, 129, 0.2);
-	/* emerald-500 @ 20% */
-	--status-active-text: #10b981;
-	--status-inactive-bg: rgba(239, 68, 68, 0.2);
-	/* red-500 @ 20% */
-	--status-inactive-text: #ef4444;
-	--status-maintenance-bg: rgba(245, 158, 11, 0.2);
-	/* amber-500 @ 20% */
-	--status-maintenance-text: #f59e0b;
-	/* Overlay gradient (login/video) */
-	--overlay-gradient: linear-gradient(
-		to bottom right,
-		rgba(11, 18, 32, 0.9),
-		rgba(11, 18, 32, 0.7),
-		rgba(22, 33, 63, 0.6),
-		rgba(16, 20, 29, 0.9)
-	);
-	/* #0B1220 -> blue-700 */
-	/* Inputs */
-	--input-bg: rgba(255, 255, 255, 0.05);
-	--input-text: #e5e7eb;
-	/* text-app */
-	--input-placeholder: rgba(229, 231, 235, 0.6);
-	--input-border: var(--glass-border);
-	/* Google Maps */
-	--info-window-text: #272727;
-	--info-window-bg: #ffffff;
-	--field-bg: rgba(77, 77, 77, 1);
-	--vignette-color: rgba(11, 21, 36, 0.65);
-	--vignette-stops: transparent 60%, black 85%;
-	color-scheme: dark;
+	--glass-bg: rgba(255, 255, 255, 0.08);
+	--glass-border: rgba(255, 255, 255, 0.2);
 }
 
-/* Tema oscuro (grises oscuros) */
-[data-theme='dark'] {
-	--accent-cyan: #22d3ee;
-	/* cyan-400 para acentos en oscuro */
-	--light-cream: #e5e7eb;
-	/* texto claro */
-	--glass-bg: rgba(77, 77, 77, 0.2);
-	--glass-border: rgba(255, 255, 255, 0.18);
-	--acent: #dce4e7;
-	/* Base */
-	--app-bg: #0f1115;
-	/* gris/neutro muy oscuro */
-	--app-text: #e5e7eb;
-	/* gris claro */
-	--panel-bg: rgba(255, 255, 255, 0.06);
-	--panel-border: rgba(255, 255, 255, 0.12);
-	/* Botones */
-	--btn-primary-bg: linear-gradient(135deg, #374151, #1f2937);
-	/* slate-700 -> gray-800 */
-	--btn-primary-hover-bg: linear-gradient(135deg, #4b5563, #111827);
-	--btn-secondary-bg: rgba(255, 255, 255, 0.12);
-	--btn-secondary-hover-bg: rgba(255, 255, 255, 0.2);
-	/* Status */
-	--status-active-bg: rgba(16, 185, 129, 0.18);
-	--status-active-text: #34d399;
-	--status-inactive-bg: rgba(239, 68, 68, 0.18);
-	--status-inactive-text: #f87171;
-	--status-maintenance-bg: rgba(245, 158, 11, 0.18);
-	--status-maintenance-text: #fbbf24;
-	/* Overlay gradient (login/video) */
-	--overlay-gradient: linear-gradient(
-		to bottom right,
-		rgba(17, 24, 39, 0.7),
-		rgba(31, 41, 55, 0.7)
-	);
-	/* gray-900 -> gray-800 */
-	/* Inputs */
-	--input-bg: rgba(255, 255, 255, 0.06);
-	--input-text: #e5e7eb;
-	--input-placeholder: rgba(229, 231, 235, 0.6);
-	--input-border: var(--glass-border);
-	--info-window-text: #00327c;
-	--info-window-bg: #ffffff;
-	--vignette-color: rgba(15, 17, 21, 0.65);
-	--vignette-stops: transparent 60%, black 85%;
-	color-scheme: dark;
-}
-
-/* Tema Matrix (Futuristic Green) */
-[data-theme='matrix'] {
-	--accent-cyan: #00ff9d;
-	/* Neon Green */
-	--light-cream: #e0f5e5;
-	/* Very light green text */
-	--glass-bg: rgba(10, 26, 20, 0.7);
-	/* Dark green glass */
-	--glass-border: rgba(0, 255, 157, 0.15);
-	/* Greenish border */
-	--acent: #00ff9d;
-
-	/* Base */
-	--app-bg: #050a08;
-	/* Almost black green */
-	--app-text: #d0e8d5;
-	/* Greenish gray */
-
-	--panel-bg: rgba(5, 15, 10, 0.85);
-	--panel-border: rgba(0, 255, 157, 0.1);
-
-	/* Botones */
-	--btn-primary-bg: linear-gradient(135deg, #008f58, #005c38);
-	--btn-primary-hover-bg: linear-gradient(135deg, #00b36e, #008f58);
-
-	--btn-secondary-bg: rgba(0, 255, 157, 0.08);
-	--btn-secondary-hover-bg: rgba(0, 255, 157, 0.15);
-
-	/* Status */
-	--status-active-bg: rgba(0, 255, 157, 0.15);
-	--status-active-text: #00ff9d;
-	--status-inactive-bg: rgba(239, 68, 68, 0.15);
-	--status-inactive-text: #f87171;
-	--status-maintenance-bg: rgba(245, 158, 11, 0.15);
-	--status-maintenance-text: #fbbf24;
-
-	/* Overlay */
-	--overlay-gradient: linear-gradient(to bottom right, rgba(5, 10, 8, 0.8), rgba(10, 26, 20, 0.8));
-
-	/* Inputs */
-	--input-bg: rgba(10, 26, 20, 0.5);
-	--input-text: #e0f5e5;
-	--input-placeholder: rgba(224, 245, 229, 0.5);
-	--input-border: var(--glass-border);
-
-	--info-window-text: #00ff9d;
-	--info-window-bg: #0a100d;
-	--vignette-color: rgba(5, 10, 8, 0.75);
-	--vignette-stops: transparent 60%, black 90%;
-
-	color-scheme: dark;
-}
-
-/* Tema DGray (Neutral Gray + Green Accent) */
-[data-theme='dgray'] {
-	--accent-cyan: #22c55e;
-	/* Green 500 */
-	--light-cream: #e4e4e7;
-	/* Zinc 200 */
-	--glass-bg: rgba(24, 24, 27, 0.7);
-	/* Zinc 950 */
-	--glass-border: rgba(39, 39, 42, 0.5);
-	/* Zinc 800 */
-	--acent: #22c55e;
-
-	/* Base */
-	--app-bg: #18181b;
-	/* Zinc 900 */
-	--app-text: #e4e4e7;
-	/* Zinc 200 */
-
-	--panel-bg: rgba(24, 24, 27, 0.9);
-	--panel-border: rgba(63, 63, 70, 0.3);
-
-	/* Botones */
-	--btn-primary-bg: linear-gradient(135deg, #15803d, #166534);
-	/* Green 700-800 */
-	--btn-primary-hover-bg: linear-gradient(135deg, #16a34a, #15803d);
-	/* Green 600-700 */
-
-	--btn-secondary-bg: rgba(255, 255, 255, 0.05);
-	--btn-secondary-hover-bg: rgba(255, 255, 255, 0.1);
-
-	/* Status */
-	--status-active-bg: rgba(34, 197, 94, 0.15);
-	--status-active-text: #22c55e;
-	--status-inactive-bg: rgba(239, 68, 68, 0.15);
-	--status-inactive-text: #f87171;
-	--status-maintenance-bg: rgba(245, 158, 11, 0.15);
-	--status-maintenance-text: #fbbf24;
-
-	/* Overlay */
-	--overlay-gradient: linear-gradient(
-		to bottom right,
-		rgba(24, 24, 27, 0.8),
-		rgba(39, 39, 42, 0.8)
-	);
-
-	/* Inputs */
-	--input-bg: rgba(39, 39, 42, 0.5);
-	--input-text: #e4e4e7;
-	--input-placeholder: rgba(161, 161, 170, 0.5);
-	--input-border: var(--glass-border);
-
-	--info-window-text: #22c55e;
-	--info-window-bg: #18181b;
-	--vignette-color: rgba(24, 24, 27, 0.75);
-	--vignette-stops: transparent 60%, black 90%;
-
-	color-scheme: dark;
-}
-
-/* Tema clásico (paleta estándar clara) */
-[data-theme='classic'] {
-	--accent-cyan: #2563eb;
-	/* azul estándar */
-	--light-cream: #f9fafb;
-	/* gris muy claro */
-	--glass-bg: rgba(216, 218, 221, 0.2);
-	--glass-border: rgba(0, 0, 0, 0.08);
-	--acent: #222222;
-	/* Nuevas variables */
-	--app-bg: #ffffff;
-	--app-text: #111827;
-	/* gray-900 */
-	--panel-bg: #ffffff;
-	--panel-border: rgba(0, 0, 0, 0.08);
-	--btn-primary-bg: #3e73e6;
-	--btn-primary-hover-bg: #2d5ad6;
-	--btn-secondary-bg: #e5e7eb;
-	/* gray-200 */
-	--btn-secondary-hover-bg: #d1d5db;
-	/* gray-300 */
-	/* Status colors */
-	--status-active-bg: #d1fae5;
-	/* emerald-100 */
-	--status-active-text: #065f46;
-	/* emerald-800 */
-	--status-inactive-bg: #fee2e2;
-	/* red-100 */
-	--status-inactive-text: #991b1b;
-	/* red-800 */
-	--status-maintenance-bg: #fef3c7;
-	/* amber-100 */
-	--status-maintenance-text: #92400e;
-	/* amber-800 */
-	/* Overlay gradient (login/video) */
-	--overlay-gradient: linear-gradient(
-		to bottom right,
-		rgba(255, 255, 255, 0.55),
-		rgba(255, 255, 255, 0.35)
-	);
-	/* Inputs */
-	--input-bg: #ffffff;
-	--input-text: #111827;
-	/* gray-900 */
-	--input-placeholder: #6b7280;
-	/* gray-500 */
-	--input-border: rgba(0, 0, 0, 0.12);
-	--info-window-text: #0b1524;
-	--info-window-bg: #ffffff;
-	--vignette-color: transparent;
-	--vignette-stops: transparent 60%, transparent 100%;
-}
-
-/* Tema Ancestral (Pirate Map / Old Scroll) */
-[data-theme='ancestral'] {
-	--accent-cyan: #d2691e;
-	/* Chocolate / Burnt Orange */
-	--light-cream: #f5e6c4;
-	/* Parchment White */
-	--glass-bg: rgba(60, 40, 20, 0.85);
-	/* Dark Brown Leather transparent */
-	--glass-border: rgba(184, 134, 11, 0.4);
-	/* Dark Goldenrod */
-	--acent: #d2691e;
-	/* Match accent */
-
-	/* Base */
-	--app-bg: #2b1d0e;
-	/* Very Dark Brown / Wood */
-	--app-text: #eecfa1;
-	/* Pale Gold / Parchment Text */
-
-	--panel-bg: rgba(40, 25, 10, 0.95);
-	--panel-border: rgba(139, 69, 19, 0.5);
-	/* Saddle Brown border */
-
-	/* Buttons */
-	--btn-primary-bg: linear-gradient(135deg, #8b4513, #a0522d);
-	/* SaddleBrown to Sienna */
-	--btn-primary-hover-bg: linear-gradient(135deg, #a0522d, #cd853f);
-	/* Sienna to Peru */
-
-	--btn-secondary-bg: rgba(210, 105, 30, 0.15);
-	--btn-secondary-hover-bg: rgba(210, 105, 30, 0.25);
-
-	/* Status Colors - Muted/Antique feel */
-	--status-active-bg: rgba(85, 107, 47, 0.3);
-	/* DarkOliveGreen */
-	--status-active-text: #9acd32;
-	/* YellowGreen */
-	--status-inactive-bg: rgba(139, 0, 0, 0.3);
-	/* DarkRed */
-	--status-inactive-text: #ff6347;
-	/* Tomato */
-	--status-maintenance-bg: rgba(184, 134, 11, 0.3);
-	/* DarkGoldenrod */
-	--status-maintenance-text: #ffd700;
-	/* Gold */
-
-	/* Overlay */
-	--overlay-gradient: linear-gradient(
-		to bottom right,
-		rgba(43, 29, 14, 0.9),
-		rgba(60, 40, 20, 0.8)
-	);
-
-	/* Inputs */
-	--input-bg: rgba(60, 40, 20, 0.6);
-	--input-text: #eecfa1;
-	--input-placeholder: rgba(238, 207, 161, 0.5);
-	--input-border: var(--panel-border);
-
-	--info-window-text: #2b1d0e;
-	--info-window-bg: #f5e6c4;
-	/* Parchment background for info windows */
-	--vignette-color: rgba(20, 10, 5, 0.8);
-	--vignette-stops: transparent 50%, black 95%;
-
-	color-scheme: dark;
-}
-
-/* Utilidades basadas en tema */
-.bg-app {
-	background: var(--app-bg);
-	color: var(--app-text);
-}
-
-.text-app {
-	color: var(--app-text);
-}
-
-.accent-border {
-	border-color: var(--accent-cyan);
-}
-
-.loading-overlay {
-	background: var(--glass-bg);
-}
-
-.toast-card {
-	background: var(--glass-bg);
-	color: var(--app-text);
-	border: 1px solid var(--glass-border);
-}
-
-/* Contenedor panel común */
-.panel {
-	background: var(--panel-bg);
-	border: 1px solid var(--panel-border);
-	color: var(--app-text);
-}
-
-.text-accent {
-	color: var(--accent-cyan);
-}
-
-.border-accent {
-	border-color: var(--accent-cyan);
-}
-
-.info-window-text {
-	color: var(--info-window-text);
-}
-
-/* Overlay layer for hero/login backgrounds */
-.overlay-layer {
-	background: var(--overlay-gradient);
-}
-
-/* Status badges */
-.badge {
-	@apply inline-flex items-center;
-	border-radius: 9999px;
-	font-weight: 500;
-}
-
-.badge-active {
-	background: var(--status-active-bg);
-	color: var(--status-active-text);
-}
-
-.badge-inactive {
-	background: var(--status-inactive-bg);
-	color: var(--status-inactive-text);
-}
-
-.badge-maintenance {
-	background: var(--status-maintenance-bg);
-	color: var(--status-maintenance-text);
+/* Superficies reutilizables (themeStore pone .dark en <html> al elegir tema oscuro) */
+@layer components {
+	.nexus-surface-page {
+		@apply bg-slate-100 text-slate-900;
+	}
+	html.dark .nexus-surface-page {
+		@apply bg-[#020617] text-slate-100;
+	}
+	.nexus-surface-panel {
+		@apply border border-slate-200/90 bg-white text-slate-900 shadow-sm;
+	}
+	html.dark .nexus-surface-panel {
+		@apply border-white/[0.08] bg-white/[0.04] text-white shadow-none;
+	}
+	.nexus-surface-deep {
+		@apply bg-slate-50 text-slate-900;
+	}
+	html.dark .nexus-surface-deep {
+		@apply bg-[#080d1a] text-white;
+	}
 }
 
 /* === Secciones genéricas === */
-section {
+section.page-section {
 	min-height: 100vh;
 	display: flex;
 	align-items: center;
@@ -415,7 +43,7 @@ section {
 	box-sizing: border-box;
 }
 
-section::before {
+section.page-section::before {
 	content: '';
 	position: absolute;
 	top: 0;
@@ -440,7 +68,7 @@ section::before {
 /* === Tarjetas / Contenedores === */
 .card {
 	background: var(--glass-bg);
-	backdrop-filter: blur(5px);
+	backdrop-filter: blur(20px);
 	border: 1px solid var(--glass-border);
 	border-radius: 20px;
 	padding: 2.5rem;
@@ -452,27 +80,32 @@ section::before {
 }
 
 .card:hover {
+	transform: translateY(-5px);
+	box-shadow:
+		0 15px 30px rgba(0, 0, 0, 0.3),
+		inset 0 1px 0 rgba(255, 255, 255, 0.2);
 	border-color: var(--accent-cyan);
 }
 
 /* === Formularios === */
 .input-field {
 	@apply mt-1 block w-full px-3 py-2 rounded-md shadow-sm;
-	border: 1px solid var(--input-border);
-	background: var(--input-bg);
-	color: var(--input-text);
+	border: 1px solid var(--glass-border);
+	background: rgba(255, 255, 255, 0.05);
+	color: var(--light-cream);
 	transition: all 0.2s ease;
 }
 
 .input-field:focus {
-	outline: none;
 	border-color: var(--accent-cyan);
+	outline: none;
+	box-shadow: 0 0 8px var(--accent-cyan);
 }
 
 /* Botones */
 .btn-primary {
 	@apply w-full flex justify-center py-2 px-4 rounded-md shadow-sm text-sm font-medium;
-	background: var(--btn-primary-bg);
+	background: linear-gradient(135deg, #2563eb, #1d4ed8);
 	color: white;
 	transition:
 		background 0.3s ease,
@@ -480,7 +113,7 @@ section::before {
 }
 
 .btn-primary:hover {
-	background: var(--btn-primary-hover-bg);
+	background: linear-gradient(135deg, #1e40af, #1d4ed8);
 	transform: translateY(-2px);
 }
 
@@ -499,38 +132,26 @@ section::before {
 }
 
 .nav-bar {
-	@apply fixed left-4 top-1/5 -translate-y-1/2 z-40 pt-5 pb-5 border-2 border-white/20 rounded-full shadow-lg transition-all duration-200;
-	background: var(--glass-bg);
-}
-
-.nav-bar:hover {
-	@apply shadow-xl;
-	box-shadow: 0 5px 5px 0 var(--acent);
+	@apply fixed z-40 flex flex-row items-center gap-1 px-2 py-2 bottom-4 left-1/2 -translate-x-1/2 backdrop-blur-3xl border-2 border-white/20 rounded-full shadow-lg shadow-sky-500/80 hover:shadow-xl sm:left-4 sm:top-1/5 sm:bottom-auto sm:-translate-y-1/2 sm:translate-x-0 sm:flex-col sm:gap-0 sm:px-5 sm:py-5;
 }
 
 .nav-bar .menu-separator {
-	@apply h-px text-amber-50 mt-2 mb-2 mx-2;
+	@apply w-px h-8 bg-white/25 sm:w-auto sm:h-px sm:min-w-full sm:bg-transparent border-0 text-amber-50 mx-1 sm:mt-2 sm:mb-2 sm:mx-2;
 }
-
 .nav-button {
 	@apply w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-200 hover:scale-110;
 }
 
 .nav-bar .menu-icon {
 	@apply w-8 h-8;
-	fill: var(--acent);
 }
 
 .nav-bar .menu-card {
-	@apply absolute left-16 top-0 w-80 max-w-[25vw] rounded-xl shadow-xl border border-white/20 p-4 transition-all duration-8000 ease-out;
-	background: var(--glass-bg);
-	backdrop-filter: blur(5px);
-	overflow: hidden;
-	/* clip backdrop at rounded corners */
-	will-change: backdrop-filter;
-	/* hint GPU */
-	background-clip: padding-box;
-	/* keep border crisp while background is translucent */
+	@apply fixed left-3 right-3 bottom-[5.25rem] w-auto max-h-[min(70vh,32rem)] overflow-y-auto sm:absolute sm:left-16 sm:right-auto sm:bottom-auto sm:top-0 sm:max-h-none sm:w-80 sm:max-w-[min(92vw,20rem)] backdrop-blur-3xl rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 transition-all duration-300 ease-out;
+}
+
+.nav-bar .menu-card--wide {
+	@apply sm:max-w-[min(96vw,24rem)];
 }
 
 .nav-bar .menu-card .controls {
@@ -538,86 +159,103 @@ section::before {
 }
 
 .nav-bar .menu-card .controls .large-button {
-	@apply w-full px-4 py-2 text-white rounded-lg shadow-sm transition-colors flex items-center gap-2;
-	background: var(--btn-primary-bg);
+	@apply w-full min-h-[2.75rem] px-3 sm:px-4 py-2 text-white rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 text-sm;
+}
+
+.nav-bar .menu-card .controls .large-button .btn-label {
+	@apply hidden min-[380px]:inline sm:inline;
 }
 
 .nav-bar .menu-card .controls .large-button .icon {
 	@apply w-6 h-6 text-white;
 }
 
-/* Botón secundario genérico */
-.btn-secondary {
-	@apply inline-flex items-center justify-center px-3 py-1 rounded-md text-sm;
-	background: var(--btn-secondary-bg);
-	color: var(--app-text);
+html[data-theme='light'] .nav-bar {
+	background: rgba(255, 255, 255, 0.94);
+	border-color: rgb(148 163 184 / 0.55);
+	box-shadow:
+		0 10px 40px rgb(15 23 42 / 0.12),
+		0 0 0 1px rgb(15 23 42 / 0.06);
 }
 
-.btn-secondary:hover {
-	background: var(--btn-secondary-hover-bg);
+html[data-theme='light'] .nav-bar .menu-separator {
+	background: rgb(148 163 184 / 0.45);
 }
 
-/* Clase especial para el título Nexus */
-.nexus-title {
-	font-family: 'Stack Sans Headline', sans-serif;
-	font-optical-sizing: auto;
-	font-weight: 900;
-	font-style: normal;
-
-	font-size: 3rem;
-	color: #dfdfdf;
-	margin-bottom: 1rem;
+html[data-theme='light'] .nav-button {
+	@apply text-white;
+	background: linear-gradient(165deg, #334155 0%, #1e293b 100%);
+	border: 1px solid rgb(71 85 105 / 0.45);
+	box-shadow:
+		0 2px 6px rgb(15 23 42 / 0.2),
+		inset 0 1px 0 rgb(255 255 255 / 0.08);
 }
 
-/* Video de fondo atenuado */
-.background-video {
-	opacity: 0.4;
-	filter: blur(5px);
+html[data-theme='light'] .nav-button:hover {
+	filter: brightness(1.07);
 }
 
-/* Fix para el botón cerrar de Google Maps con Tailwind */
-.gm-ui-hover-effect {
-	opacity: 0.8 !important;
+/* Panel central (hojas): borde más visible en claro */
+html[data-theme='light'] .center-sheet-panel {
+	border-color: rgb(148 163 184 / 0.85);
+	box-shadow:
+		0 25px 50px -12px rgb(15 23 42 / 0.18),
+		0 0 0 1px rgb(15 23 42 / 0.05);
 }
 
-.gm-ui-hover-effect > span {
-	background-color: #bd1f1f !important;
-	/* O el color que quieras para la X */
-	display: block !important;
-	/* Tailwind a veces lo oculta */
-	width: 20px !important;
-	height: 20px !important;
+.dashboard-fullscreen-btn {
+	@apply fixed z-[50] flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium shadow-lg transition-colors;
+	top: max(0.75rem, env(safe-area-inset-top));
+	right: max(0.75rem, env(safe-area-inset-right));
+	background: rgba(15, 23, 42, 0.92);
+	border-color: rgba(148, 163, 184, 0.35);
+	color: #f8fafc;
 }
 
-/* Opcional: Asegurar que la X (que es una imagen/svg) tenga dimensiones */
-.gm-ui-hover-effect img {
-	width: 100% !important;
-	height: 100% !important;
-	display: block !important;
+.dashboard-fullscreen-btn:hover {
+	background: rgba(30, 41, 59, 0.96);
 }
 
-/* 1. Fondo del contenedor principal */
-.gm-style-iw-c {
-	background-color: var(--info-window-bg) !important;
-	/* Opcional: Quitar padding nativo si quieres control total en tu HTML */
+html[data-theme='light'] .dashboard-fullscreen-btn {
+	background: rgba(255, 255, 255, 0.95);
+	border-color: rgb(148 163 184 / 0.55);
+	color: #0f172a;
+	box-shadow: 0 4px 20px rgb(15 23 42 / 0.12);
+}
+
+html[data-theme='light'] .dashboard-fullscreen-btn:hover {
+	background: #ffffff;
+}
+
+.dashboard-fullscreen-btn .btn-text {
+	@apply hidden sm:inline;
+}
+
+/* Google Maps: InfoWindow */
+.gm-style .gm-style-iw-c {
 	padding: 0 !important;
+	border-radius: 16px !important;
+	max-width: none !important;
+	box-shadow:
+		0 24px 48px rgba(0, 0, 0, 0.55),
+		0 0 0 1px rgba(255, 255, 255, 0.06) !important;
 }
-
-/* 2. Fondo del contenedor interno (por seguridad) */
-.gm-style-iw-d {
-	background-color: var(--info-window-bg) !important;
-	overflow: hidden !important;
-	padding: 15px !important;
-	/* Ayuda a evitar scrollbars no deseados */
+html[data-theme='light'] .gm-style .gm-style-iw-c {
+	box-shadow:
+		0 20px 44px rgba(15, 23, 42, 0.12),
+		0 0 0 1px rgba(148, 163, 184, 0.35) !important;
 }
-
-/* 3. CORRECCIÓN DE LA FLECHA (El hueco blanco principal) */
-/* En versiones recientes, la flecha suele ser un pseudo-elemento del contenedor tc */
-.gm-style-iw-tc::after {
-	background-color: var(--info-window-bg) !important;
+.gm-style .gm-style-iw-d {
+	overflow: visible !important;
+	max-height: none !important;
 }
-
-/* Si en tu versión la flecha usa un div normal, intenta esto también: */
-.gm-style-iw-t::after {
-	background-color: var(--info-window-bg) !important;
+.gm-style .gm-style-iw-chr {
+	position: relative;
+	height: 0 !important;
+}
+.gm-style .gm-style-iw-tc::after {
+	background: linear-gradient(165deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.95)) !important;
+}
+html[data-theme='light'] .gm-style .gm-style-iw-tc::after {
+	background: linear-gradient(165deg, #ffffff 0%, #f8fafc 55%, #f1f5f9 100%) !important;
 }
