@@ -15,9 +15,14 @@ function createAuthStore() {
 		 * @param {Object} userData - Datos del usuario
 		 */
 		login: (userData) => {
-			set(userData);
+			const normalized = {
+				...userData,
+				name: userData.name || userData.full_name || ''
+			};
+			set(normalized);
 			if (browser) {
-				localStorage.setItem('user', JSON.stringify(userData));
+				sessionStorage.removeItem('dev_logout');
+				localStorage.setItem('user', JSON.stringify(normalized));
 			}
 		},
 		/**
@@ -35,16 +40,18 @@ function createAuthStore() {
 		 * Inicializar el store desde localStorage si existe
 		 */
 		init: () => {
-			if (browser) {
-				const userData = localStorage.getItem('user');
-				if (userData) {
-					try {
-						set(JSON.parse(userData));
-					} catch (error) {
-						console.error('Error parsing user data from localStorage:', error);
-						// Limpiar datos corruptos
-						localStorage.removeItem('user');
-					}
+			if (!browser) return;
+			const userData = localStorage.getItem('user');
+			if (userData) {
+				try {
+					const parsed = JSON.parse(userData);
+					const normalized = {
+						...parsed,
+						name: parsed.name || parsed.full_name || ''
+					};
+					set(normalized);
+				} catch {
+					set(null);
 				}
 			}
 		},
@@ -55,7 +62,11 @@ function createAuthStore() {
 		update: (updates) => {
 			update((currentUser) => {
 				if (!currentUser) return null;
-				const updatedUser = { ...currentUser, ...updates };
+				const updatedUser = {
+					...currentUser,
+					...updates,
+					name: updates.name || updates.full_name || currentUser.name || currentUser.full_name || ''
+				};
 				if (browser) {
 					localStorage.setItem('user', JSON.stringify(updatedUser));
 				}
@@ -86,7 +97,6 @@ function createTokenStore() {
 			set(access_token);
 
 			if (browser) {
-				localStorage.setItem('token', access_token);
 				localStorage.setItem('token', access_token);
 				if (tokens.refresh_token) {
 					localStorage.setItem('refresh_token', tokens.refresh_token);

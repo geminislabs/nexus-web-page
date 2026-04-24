@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { user, authToken } from '$lib/stores/auth.js';
-	import '$lib//styles/dashboard.css';
+	import '$lib/styles/dashboard.css';
 
 	let { children } = $props();
 	let isAuthenticated = $state(false);

@@ -1,8 +1,9 @@
 @import 'tailwindcss';
 
-/* === Variables por tema === */
-/* Tema moderno (actual) */
-[data-theme='modern'] {
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* === Variables globales === */
+:root {
 	--accent-cyan: #00a6c0;
 	--light-cream: #fdfdf9;
 	--glass-bg: rgba(255, 255, 255, 0.12);
@@ -404,8 +405,30 @@
 	color: var(--status-maintenance-text);
 }
 
+/* Superficies reutilizables (themeStore pone .dark en <html> al elegir tema oscuro) */
+@layer components {
+	.nexus-surface-page {
+		@apply bg-slate-100 text-slate-900;
+	}
+	html.dark .nexus-surface-page {
+		@apply bg-[#020617] text-slate-100;
+	}
+	.nexus-surface-panel {
+		@apply border border-slate-200/90 bg-white text-slate-900 shadow-sm;
+	}
+	html.dark .nexus-surface-panel {
+		@apply border-white/[0.08] bg-white/[0.04] text-white shadow-none;
+	}
+	.nexus-surface-deep {
+		@apply bg-slate-50 text-slate-900;
+	}
+	html.dark .nexus-surface-deep {
+		@apply bg-[#080d1a] text-white;
+	}
+}
+
 /* === Secciones genéricas === */
-section {
+section.page-section {
 	min-height: 100vh;
 	display: flex;
 	align-items: center;
@@ -415,7 +438,7 @@ section {
 	box-sizing: border-box;
 }
 
-section::before {
+section.page-section::before {
 	content: '';
 	position: absolute;
 	top: 0;
@@ -499,17 +522,11 @@ section::before {
 }
 
 .nav-bar {
-	@apply fixed left-4 top-1/5 -translate-y-1/2 z-40 pt-5 pb-5 border-2 border-white/20 rounded-full shadow-lg transition-all duration-200;
-	background: var(--glass-bg);
-}
-
-.nav-bar:hover {
-	@apply shadow-xl;
-	box-shadow: 0 5px 5px 0 var(--acent);
+	@apply fixed z-40 flex flex-row items-center gap-1 px-2 py-2 bottom-4 left-1/2 -translate-x-1/2 backdrop-blur-3xl border-2 border-white/20 rounded-full shadow-lg shadow-sky-500/80 hover:shadow-xl sm:left-4 sm:top-1/5 sm:bottom-auto sm:-translate-y-1/2 sm:translate-x-0 sm:flex-col sm:gap-0 sm:px-5 sm:py-5;
 }
 
 .nav-bar .menu-separator {
-	@apply h-px text-amber-50 mt-2 mb-2 mx-2;
+	@apply w-px h-8 bg-white/25 sm:w-auto sm:h-px sm:min-w-full sm:bg-transparent border-0 text-amber-50 mx-1 sm:mt-2 sm:mb-2 sm:mx-2;
 }
 
 .nav-button {
@@ -522,15 +539,11 @@ section::before {
 }
 
 .nav-bar .menu-card {
-	@apply absolute left-16 top-0 w-80 max-w-[25vw] rounded-xl shadow-xl border border-white/20 p-4 transition-all duration-8000 ease-out;
-	background: var(--glass-bg);
-	backdrop-filter: blur(5px);
-	overflow: hidden;
-	/* clip backdrop at rounded corners */
-	will-change: backdrop-filter;
-	/* hint GPU */
-	background-clip: padding-box;
-	/* keep border crisp while background is translucent */
+	@apply fixed left-3 right-3 bottom-[5.25rem] w-auto max-h-[min(70vh,32rem)] overflow-y-auto sm:absolute sm:left-16 sm:right-auto sm:bottom-auto sm:top-0 sm:max-h-none sm:w-80 sm:max-w-[min(92vw,20rem)] backdrop-blur-3xl rounded-xl shadow-xl border border-white/20 p-3 sm:p-4 transition-all duration-300 ease-out;
+}
+
+.nav-bar .menu-card--wide {
+	@apply sm:max-w-[min(96vw,24rem)];
 }
 
 .nav-bar .menu-card .controls {
@@ -538,86 +551,103 @@ section::before {
 }
 
 .nav-bar .menu-card .controls .large-button {
-	@apply w-full px-4 py-2 text-white rounded-lg shadow-sm transition-colors flex items-center gap-2;
-	background: var(--btn-primary-bg);
+	@apply w-full min-h-[2.75rem] px-3 sm:px-4 py-2 text-white rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 text-sm;
+}
+
+.nav-bar .menu-card .controls .large-button .btn-label {
+	@apply hidden min-[380px]:inline sm:inline;
 }
 
 .nav-bar .menu-card .controls .large-button .icon {
 	@apply w-6 h-6 text-white;
 }
 
-/* Botón secundario genérico */
-.btn-secondary {
-	@apply inline-flex items-center justify-center px-3 py-1 rounded-md text-sm;
-	background: var(--btn-secondary-bg);
-	color: var(--app-text);
+html[data-theme='light'] .nav-bar {
+	background: rgba(255, 255, 255, 0.94);
+	border-color: rgb(148 163 184 / 0.55);
+	box-shadow:
+		0 10px 40px rgb(15 23 42 / 0.12),
+		0 0 0 1px rgb(15 23 42 / 0.06);
 }
 
-.btn-secondary:hover {
-	background: var(--btn-secondary-hover-bg);
+html[data-theme='light'] .nav-bar .menu-separator {
+	background: rgb(148 163 184 / 0.45);
 }
 
-/* Clase especial para el título Nexus */
-.nexus-title {
-	font-family: 'Stack Sans Headline', sans-serif;
-	font-optical-sizing: auto;
-	font-weight: 900;
-	font-style: normal;
-
-	font-size: 3rem;
-	color: #dfdfdf;
-	margin-bottom: 1rem;
+html[data-theme='light'] .nav-button {
+	@apply text-white;
+	background: linear-gradient(165deg, #334155 0%, #1e293b 100%);
+	border: 1px solid rgb(71 85 105 / 0.45);
+	box-shadow:
+		0 2px 6px rgb(15 23 42 / 0.2),
+		inset 0 1px 0 rgb(255 255 255 / 0.08);
 }
 
-/* Video de fondo atenuado */
-.background-video {
-	opacity: 0.4;
-	filter: blur(5px);
+html[data-theme='light'] .nav-button:hover {
+	filter: brightness(1.07);
 }
 
-/* Fix para el botón cerrar de Google Maps con Tailwind */
-.gm-ui-hover-effect {
-	opacity: 0.8 !important;
+/* Panel central (hojas): borde más visible en claro */
+html[data-theme='light'] .center-sheet-panel {
+	border-color: rgb(148 163 184 / 0.85);
+	box-shadow:
+		0 25px 50px -12px rgb(15 23 42 / 0.18),
+		0 0 0 1px rgb(15 23 42 / 0.05);
 }
 
-.gm-ui-hover-effect > span {
-	background-color: #bd1f1f !important;
-	/* O el color que quieras para la X */
-	display: block !important;
-	/* Tailwind a veces lo oculta */
-	width: 20px !important;
-	height: 20px !important;
+.dashboard-fullscreen-btn {
+	@apply fixed z-[50] flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium shadow-lg transition-colors;
+	top: max(0.75rem, env(safe-area-inset-top));
+	right: max(0.75rem, env(safe-area-inset-right));
+	background: rgba(15, 23, 42, 0.92);
+	border-color: rgba(148, 163, 184, 0.35);
+	color: #f8fafc;
 }
 
-/* Opcional: Asegurar que la X (que es una imagen/svg) tenga dimensiones */
-.gm-ui-hover-effect img {
-	width: 100% !important;
-	height: 100% !important;
-	display: block !important;
+.dashboard-fullscreen-btn:hover {
+	background: rgba(30, 41, 59, 0.96);
 }
 
-/* 1. Fondo del contenedor principal */
-.gm-style-iw-c {
-	background-color: var(--info-window-bg) !important;
-	/* Opcional: Quitar padding nativo si quieres control total en tu HTML */
+html[data-theme='light'] .dashboard-fullscreen-btn {
+	background: rgba(255, 255, 255, 0.95);
+	border-color: rgb(148 163 184 / 0.55);
+	color: #0f172a;
+	box-shadow: 0 4px 20px rgb(15 23 42 / 0.12);
+}
+
+html[data-theme='light'] .dashboard-fullscreen-btn:hover {
+	background: #ffffff;
+}
+
+.dashboard-fullscreen-btn .btn-text {
+	@apply hidden sm:inline;
+}
+
+/* Google Maps: InfoWindow */
+.gm-style .gm-style-iw-c {
 	padding: 0 !important;
+	border-radius: 16px !important;
+	max-width: none !important;
+	box-shadow:
+		0 24px 48px rgba(0, 0, 0, 0.55),
+		0 0 0 1px rgba(255, 255, 255, 0.06) !important;
 }
-
-/* 2. Fondo del contenedor interno (por seguridad) */
-.gm-style-iw-d {
-	background-color: var(--info-window-bg) !important;
-	overflow: hidden !important;
-	padding: 15px !important;
-	/* Ayuda a evitar scrollbars no deseados */
+html[data-theme='light'] .gm-style .gm-style-iw-c {
+	box-shadow:
+		0 20px 44px rgba(15, 23, 42, 0.12),
+		0 0 0 1px rgba(148, 163, 184, 0.35) !important;
 }
-
-/* 3. CORRECCIÓN DE LA FLECHA (El hueco blanco principal) */
-/* En versiones recientes, la flecha suele ser un pseudo-elemento del contenedor tc */
-.gm-style-iw-tc::after {
-	background-color: var(--info-window-bg) !important;
+.gm-style .gm-style-iw-d {
+	overflow: visible !important;
+	max-height: none !important;
 }
-
-/* Si en tu versión la flecha usa un div normal, intenta esto también: */
-.gm-style-iw-t::after {
-	background-color: var(--info-window-bg) !important;
+.gm-style .gm-style-iw-chr {
+	position: relative;
+	height: 0 !important;
+}
+.gm-style .gm-style-iw-tc::after {
+	background: linear-gradient(165deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.95)) !important;
+}
+html[data-theme='light'] .gm-style .gm-style-iw-tc::after {
+	background: linear-gradient(165deg, #ffffff 0%, #f8fafc 55%, #f1f5f9 100%) !important;
 }
