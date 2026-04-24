@@ -209,7 +209,6 @@
 			: n < 50
 				? 'text-amber-600 dark:text-amber-200'
 				: 'text-emerald-600 dark:text-emerald-300';
-
 </script>
 
 {#if $alertWizard}

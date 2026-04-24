@@ -16,8 +16,7 @@ class MapService {
 		this._mobileZoneEditorZoom = 12;
 		this._mobileZoneZoomLocked = false;
 		this._openVehiclePopupId = null;
-		this.apiKey =
-			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+		this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 		// ── Trip replay ───────────────────────────────────────
 		this._tripPolyline = null;
@@ -160,7 +159,9 @@ class MapService {
 			icon: {
 				url:
 					'data:image/svg+xml;charset=UTF-8,' +
-					encodeURIComponent(`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" fill="#3B82F6" stroke="#1E40AF" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="white"/></svg>`),
+					encodeURIComponent(
+						`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" fill="#3B82F6" stroke="#1E40AF" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="white"/></svg>`
+					),
 				scaledSize: new this.google.maps.Size(24, 24),
 				anchor: new this.google.maps.Point(12, 12)
 			},
@@ -204,10 +205,14 @@ class MapService {
 
 	getVehicleColor(status) {
 		switch (status) {
-			case 'active': return '#10B981';
-			case 'inactive': return '#EF4444';
-			case 'maintenance': return '#F59E0B';
-			default: return '#6B7280';
+			case 'active':
+				return '#10B981';
+			case 'inactive':
+				return '#EF4444';
+			case 'maintenance':
+				return '#F59E0B';
+			default:
+				return '#6B7280';
 		}
 	}
 
@@ -291,16 +296,23 @@ class MapService {
 	_escapeHtml(s) {
 		if (s == null) return '';
 		return String(s)
-			.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	_getStatusGradient(status) {
 		switch (status) {
-			case 'active': return 'linear-gradient(90deg,#34d399 0%,#22d3ee 55%,#38bdf8 100%)';
-			case 'inactive': return 'linear-gradient(90deg,#fb7185 0%,#f43f5e 100%)';
-			case 'maintenance': return 'linear-gradient(90deg,#fbbf24 0%,#f59e0b 100%)';
-			default: return 'linear-gradient(90deg,#94a3b8 0%,#64748b 100%)';
+			case 'active':
+				return 'linear-gradient(90deg,#34d399 0%,#22d3ee 55%,#38bdf8 100%)';
+			case 'inactive':
+				return 'linear-gradient(90deg,#fb7185 0%,#f43f5e 100%)';
+			case 'maintenance':
+				return 'linear-gradient(90deg,#fbbf24 0%,#f59e0b 100%)';
+			default:
+				return 'linear-gradient(90deg,#94a3b8 0%,#64748b 100%)';
 		}
 	}
 
@@ -322,7 +334,12 @@ class MapService {
 		const latRaw = vehicle.latitude ?? vehicle.lat;
 		const lngRaw = vehicle.longitude ?? vehicle.lng;
 		let coordsBlock = '';
-		if (latRaw != null && lngRaw != null && !Number.isNaN(Number(latRaw)) && !Number.isNaN(Number(lngRaw))) {
+		if (
+			latRaw != null &&
+			lngRaw != null &&
+			!Number.isNaN(Number(latRaw)) &&
+			!Number.isNaN(Number(lngRaw))
+		) {
 			const coordColor = isDark ? '#94a3b8' : '#64748b';
 			coordsBlock = `<p style="margin:0;font-family:ui-monospace,monospace;font-size:10px;color:${coordColor};">${Number(latRaw).toFixed(6)}, ${Number(lngRaw).toFixed(6)}</p>`;
 		}
@@ -400,28 +417,40 @@ class MapService {
 
 	getStatusBadgeStyleDark(status) {
 		switch (status) {
-			case 'active': return 'background:rgba(16,185,129,0.14);color:#6ee7b7;border:1px solid rgba(45,212,191,0.35);';
-			case 'inactive': return 'background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(248,113,113,0.35);';
-			case 'maintenance': return 'background:rgba(245,158,11,0.12);color:#fcd34d;border:1px solid rgba(251,191,36,0.35);';
-			default: return 'background:rgba(148,163,184,0.1);color:#cbd5e1;border:1px solid rgba(148,163,184,0.28);';
+			case 'active':
+				return 'background:rgba(16,185,129,0.14);color:#6ee7b7;border:1px solid rgba(45,212,191,0.35);';
+			case 'inactive':
+				return 'background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(248,113,113,0.35);';
+			case 'maintenance':
+				return 'background:rgba(245,158,11,0.12);color:#fcd34d;border:1px solid rgba(251,191,36,0.35);';
+			default:
+				return 'background:rgba(148,163,184,0.1);color:#cbd5e1;border:1px solid rgba(148,163,184,0.28);';
 		}
 	}
 
 	getStatusBadgeStyleLight(status) {
 		switch (status) {
-			case 'active': return 'background:#d1fae5;color:#047857;border:1px solid #6ee7b7;';
-			case 'inactive': return 'background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;';
-			case 'maintenance': return 'background:#fef3c7;color:#b45309;border:1px solid #fcd34d;';
-			default: return 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;';
+			case 'active':
+				return 'background:#d1fae5;color:#047857;border:1px solid #6ee7b7;';
+			case 'inactive':
+				return 'background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;';
+			case 'maintenance':
+				return 'background:#fef3c7;color:#b45309;border:1px solid #fcd34d;';
+			default:
+				return 'background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;';
 		}
 	}
 
 	getStatusText(status) {
 		switch (status) {
-			case 'active': return 'Activo';
-			case 'inactive': return 'Inactivo';
-			case 'maintenance': return 'Mantenimiento';
-			default: return 'Desconocido';
+			case 'active':
+				return 'Activo';
+			case 'inactive':
+				return 'Inactivo';
+			case 'maintenance':
+				return 'Mantenimiento';
+			default:
+				return 'Desconocido';
 		}
 	}
 

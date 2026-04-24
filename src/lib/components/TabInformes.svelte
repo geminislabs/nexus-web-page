@@ -71,7 +71,9 @@
 					>
 						Informes
 					</h3>
-					<p class="m-0 text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/30">
+					<p
+						class="m-0 text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-white/30"
+					>
 						En desarrollo
 					</p>
 				</div>
@@ -125,7 +127,9 @@
 		>
 			<div class="mb-3 flex items-center justify-between">
 				<div>
-					<p class="m-0 text-[12px] font-semibold text-slate-600 dark:text-white/60">Actividad semanal</p>
+					<p class="m-0 text-[12px] font-semibold text-slate-600 dark:text-white/60">
+						Actividad semanal
+					</p>
 					<p class="m-0 text-[10px] text-slate-500 dark:text-white/28">Km recorridos por día</p>
 				</div>
 				<div class="flex items-center gap-1 blur-sm" aria-hidden="true">
@@ -171,7 +175,9 @@
 		</div>
 
 		<div style="animation: fadeInUp 0.4s ease 480ms both">
-			<p class="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/28">
+			<p
+				class="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/28"
+			>
 				Funciones incluidas
 			</p>
 			<div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -186,8 +192,12 @@
 							<Icon icon={f.icon} width={13} aria-hidden="true" />
 						</span>
 						<div class="min-w-0">
-							<p class="m-0 text-[12px] font-semibold text-slate-700 dark:text-white/65">{f.label}</p>
-							<p class="m-0 mt-0.5 text-[10px] leading-snug text-slate-500 dark:text-white/30">{f.desc}</p>
+							<p class="m-0 text-[12px] font-semibold text-slate-700 dark:text-white/65">
+								{f.label}
+							</p>
+							<p class="m-0 mt-0.5 text-[10px] leading-snug text-slate-500 dark:text-white/30">
+								{f.desc}
+							</p>
 						</div>
 					</div>
 				{/each}

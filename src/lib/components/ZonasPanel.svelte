@@ -229,9 +229,7 @@
 		if (!browser) return;
 		/** El drawer de escritorio se desmonta al abrir «Crear zona»; el overlay en el dashboard sigue el mismo flujo H3. */
 		const handingOffToDesktopOverlay =
-			variant === 'desktop' &&
-			!useDesktopOverlayStore &&
-			get(desktopZonePanelSubView) !== 'zonas';
+			variant === 'desktop' && !useDesktopOverlayStore && get(desktopZonePanelSubView) !== 'zonas';
 		if (!handingOffToDesktopOverlay) {
 			mobileCrearZonaMapPassesPointer.set(false);
 		}
@@ -254,15 +252,11 @@
 
 	/** FAB inferior en lista de zonas (móvil). */
 	$: crearZonaFabBottom =
-		variant === 'mobile'
-			? 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 10px)'
-			: 'auto';
+		variant === 'mobile' ? 'calc(3.5rem + env(safe-area-inset-bottom, 0px) + 10px)' : 'auto';
 
 	/** Anclaje de controles flotantes al crear zona en móvil. */
 	$: mapOverlayBottom =
-		variant === 'mobile'
-			? 'calc(4.5rem + env(safe-area-inset-bottom, 0px) + 12px)'
-			: 'auto';
+		variant === 'mobile' ? 'calc(4.5rem + env(safe-area-inset-bottom, 0px) + 12px)' : 'auto';
 </script>
 
 <svelte:window
@@ -311,7 +305,8 @@
 					>
 						<div class="pointer-events-none absolute inset-x-0 flex justify-center px-16">
 							<h1
-								class="m-0 max-w-full truncate text-center text-[17px] font-bold tracking-tight {$theme === 'light'
+								class="m-0 max-w-full truncate text-center text-[17px] font-bold tracking-tight {$theme ===
+								'light'
 									? 'text-slate-900'
 									: 'text-white'}"
 							>
@@ -442,7 +437,10 @@
 						</div>
 					</div>
 
-					<div class="pointer-events-auto shrink-0 px-3 pt-1" style="padding-bottom: {crearZonaDockBottom};">
+					<div
+						class="pointer-events-auto shrink-0 px-3 pt-1"
+						style="padding-bottom: {crearZonaDockBottom};"
+					>
 						<div
 							class="mx-auto flex max-w-md items-center gap-2 rounded-2xl border p-2 shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl {$theme ===
 							'light'
@@ -460,7 +458,9 @@
 								Cancelar
 							</button>
 							<span
-								class="mx-0.5 h-8 w-px shrink-0 {$theme === 'light' ? 'bg-slate-200' : 'bg-white/10'}"
+								class="mx-0.5 h-8 w-px shrink-0 {$theme === 'light'
+									? 'bg-slate-200'
+									: 'bg-white/10'}"
 								aria-hidden="true"
 							></span>
 							<button
@@ -541,9 +541,14 @@
 								? 'border-slate-200'
 								: 'border-white/[0.08]'}"
 						>
-							<Icon icon="mdi:tag-outline" class="h-5 w-5 shrink-0 text-sky-500" aria-hidden="true" />
+							<Icon
+								icon="mdi:tag-outline"
+								class="h-5 w-5 shrink-0 text-sky-500"
+								aria-hidden="true"
+							/>
 							<input
-								class="min-w-0 flex-1 border-0 bg-transparent text-[15px] outline-none {$theme === 'light'
+								class="min-w-0 flex-1 border-0 bg-transparent text-[15px] outline-none {$theme ===
+								'light'
 									? 'text-slate-900 placeholder:text-slate-400'
 									: 'text-white placeholder:text-white/40'}"
 								placeholder="Nombre de la zona"
@@ -572,7 +577,8 @@
 					</div>
 					<button
 						type="button"
-						class="mt-4 w-full rounded-2xl border-0 py-3 text-sm font-semibold transition {$theme === 'light'
+						class="mt-4 w-full rounded-2xl border-0 py-3 text-sm font-semibold transition {$theme ===
+						'light'
 							? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
 							: 'bg-white/[0.08] text-white/85 hover:bg-white/[0.12]'}"
 						on:click={cancelGuardarSheet}
@@ -597,20 +603,24 @@
 				>
 					<Icon icon="mdi:chevron-left" class="h-6 w-6" aria-hidden="true" />
 				</button>
-				<h1 class="m-0 flex-1 text-center text-[17px] font-bold text-slate-900 dark:text-white">Zonas</h1>
+				<h1 class="m-0 flex-1 text-center text-[17px] font-bold text-slate-900 dark:text-white">
+					Zonas
+				</h1>
 				<span class="w-10 shrink-0" aria-hidden="true"></span>
 			</header>
 		{/if}
 
 		<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
 			<div
-				class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 {variant === 'mobile'
+				class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 {variant ===
+				'mobile'
 					? 'pb-28 pt-4'
 					: 'pb-3 pt-5'}"
 			>
 				{#if $zones.length === 0}
 					<div
-						class="flex flex-col items-center justify-center gap-3 px-6 text-center {variant === 'desktop'
+						class="flex flex-col items-center justify-center gap-3 px-6 text-center {variant ===
+						'desktop'
 							? 'min-h-0 flex-1 py-10 sm:py-12'
 							: 'py-20'}"
 					>
@@ -619,10 +629,13 @@
 							class="h-20 w-20 text-slate-500 dark:text-white/25"
 							aria-hidden="true"
 						/>
-						<h2 class="m-0 text-lg font-bold text-slate-800 dark:text-white/85">Sin zonas creadas</h2>
+						<h2 class="m-0 text-lg font-bold text-slate-800 dark:text-white/85">
+							Sin zonas creadas
+						</h2>
 						<p class="m-0 max-w-xs text-sm leading-relaxed text-slate-600 dark:text-white/40">
 							{#if variant === 'desktop'}
-								Dibuja hexágonos en el mapa para delimitar la zona. Pulsa «Crear zona» en la barra inferior.
+								Dibuja hexágonos en el mapa para delimitar la zona. Pulsa «Crear zona» en la barra
+								inferior.
 							{:else}
 								Crea tu primera zona geográfica pulsando el botón de abajo.
 							{/if}
@@ -630,65 +643,69 @@
 					</div>
 				{:else}
 					<ul class="m-0 flex list-none flex-col gap-3 p-0" aria-label="Zonas guardadas">
-					{#each $zones as z (z.id)}
-						<li class="relative">
-							<div
-								class="flex items-stretch gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#121a26]"
-							>
-								<div class="w-1 shrink-0 bg-sky-500" aria-hidden="true"></div>
+						{#each $zones as z (z.id)}
+							<li class="relative">
 								<div
-									class="flex min-w-0 flex-1 items-center gap-3 py-3 pl-3 pr-2"
-									role="group"
-									aria-label={z.name}
+									class="flex items-stretch gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#121a26]"
 								>
+									<div class="w-1 shrink-0 bg-sky-500" aria-hidden="true"></div>
 									<div
-										class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-sky-400"
-										aria-hidden="true"
+										class="flex min-w-0 flex-1 items-center gap-3 py-3 pl-3 pr-2"
+										role="group"
+										aria-label={z.name}
 									>
-										<Icon icon="mdi:map-marker" class="h-6 w-6" />
+										<div
+											class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-sky-400"
+											aria-hidden="true"
+										>
+											<Icon icon="mdi:map-marker" class="h-6 w-6" />
+										</div>
+										<div class="min-w-0 flex-1">
+											<p class="m-0 truncate text-[15px] font-bold text-slate-900 dark:text-white">
+												{z.name}
+											</p>
+											<p class="m-0 mt-0.5 truncate text-[13px] text-slate-600 dark:text-white/45">
+												{zoneSubtitle(z)}
+											</p>
+										</div>
+										<button
+											type="button"
+											class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-white/55 dark:hover:bg-white/[0.08] dark:hover:text-white"
+											aria-expanded={zoneMenuOpenId === z.id}
+											aria-label="Opciones de {z.name}"
+											on:click={() => (zoneMenuOpenId = zoneMenuOpenId === z.id ? null : z.id)}
+										>
+											<Icon icon="mdi:dots-horizontal" class="h-6 w-6" aria-hidden="true" />
+										</button>
 									</div>
-									<div class="min-w-0 flex-1">
-										<p class="m-0 truncate text-[15px] font-bold text-slate-900 dark:text-white">{z.name}</p>
-										<p class="m-0 mt-0.5 truncate text-[13px] text-slate-600 dark:text-white/45">{zoneSubtitle(z)}</p>
+								</div>
+								{#if zoneMenuOpenId === z.id}
+									<div
+										class="absolute right-2 top-[calc(100%-4px)] z-[60] min-w-[10.5rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-900 shadow-xl backdrop-blur-md dark:border-white/[0.12] dark:bg-[#151c2e] dark:text-white"
+										role="menu"
+									>
+										<button
+											type="button"
+											class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-white/[0.08]"
+											role="menuitem"
+											on:click={() => openEditZone(z)}
+										>
+											<Icon icon="mdi:pencil-outline" class="h-4 w-4" aria-hidden="true" />
+											Editar
+										</button>
+										<button
+											type="button"
+											class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15"
+											role="menuitem"
+											on:click={() => requestDeactivateZone(z)}
+										>
+											<Icon icon="mdi:delete-outline" class="h-4 w-4" aria-hidden="true" />
+											Desactivar
+										</button>
 									</div>
-									<button
-										type="button"
-										class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-white/55 dark:hover:bg-white/[0.08] dark:hover:text-white"
-										aria-expanded={zoneMenuOpenId === z.id}
-										aria-label="Opciones de {z.name}"
-										on:click={() => (zoneMenuOpenId = zoneMenuOpenId === z.id ? null : z.id)}
-									>
-										<Icon icon="mdi:dots-horizontal" class="h-6 w-6" aria-hidden="true" />
-									</button>
-								</div>
-							</div>
-							{#if zoneMenuOpenId === z.id}
-								<div
-									class="absolute right-2 top-[calc(100%-4px)] z-[60] min-w-[10.5rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-900 shadow-xl backdrop-blur-md dark:border-white/[0.12] dark:bg-[#151c2e] dark:text-white"
-									role="menu"
-								>
-									<button
-										type="button"
-										class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-white/[0.08]"
-										role="menuitem"
-										on:click={() => openEditZone(z)}
-									>
-										<Icon icon="mdi:pencil-outline" class="h-4 w-4" aria-hidden="true" />
-										Editar
-									</button>
-									<button
-										type="button"
-										class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15"
-										role="menuitem"
-										on:click={() => requestDeactivateZone(z)}
-									>
-										<Icon icon="mdi:delete-outline" class="h-4 w-4" aria-hidden="true" />
-										Desactivar
-									</button>
-								</div>
-							{/if}
-						</li>
-					{/each}
+								{/if}
+							</li>
+						{/each}
 					</ul>
 				{/if}
 			</div>
@@ -737,7 +754,9 @@
 			>
 				Cancelar
 			</button>
-			<h1 class="m-0 flex-1 text-center text-[16px] font-bold text-slate-900 dark:text-white">Editar Zona</h1>
+			<h1 class="m-0 flex-1 text-center text-[16px] font-bold text-slate-900 dark:text-white">
+				Editar Zona
+			</h1>
 			<button
 				type="button"
 				class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-sky-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/12 dark:bg-zinc-900 dark:text-sky-400 dark:hover:bg-zinc-800"
@@ -790,7 +809,8 @@
 		on:click|self={cancelDeactivateZone}
 	>
 		<div
-			class="w-full max-w-[min(100%,20rem)] rounded-[1.25rem] border px-5 pb-5 pt-5 shadow-xl {$theme === 'light'
+			class="w-full max-w-[min(100%,20rem)] rounded-[1.25rem] border px-5 pb-5 pt-5 shadow-xl {$theme ===
+			'light'
 				? 'border-slate-200/80 bg-slate-100 text-slate-900'
 				: 'border-white/[0.1] bg-[#2a3040] text-white'}"
 			role="alertdialog"
@@ -808,8 +828,8 @@
 					? 'text-slate-800'
 					: 'text-white/85'}"
 			>
-				¿Estás seguro que deseas desactivar la zona «{zoneDeactivateConfirm.name}»? La geocerca se eliminará del
-				mapa.
+				¿Estás seguro que deseas desactivar la zona «{zoneDeactivateConfirm.name}»? La geocerca se
+				eliminará del mapa.
 			</p>
 			<div class="flex gap-3">
 				<button
@@ -847,9 +867,9 @@
 	>
 		<div
 			class="flex max-w-[min(100%,20rem)] flex-col items-center gap-4 rounded-2xl border px-8 py-7 shadow-2xl {$theme ===
-				'light'
-					? 'border-slate-200/90 bg-white text-slate-900'
-					: 'border-white/[0.12] bg-[#1a2234] text-white'}"
+			'light'
+				? 'border-slate-200/90 bg-white text-slate-900'
+				: 'border-white/[0.12] bg-[#1a2234] text-white'}"
 		>
 			<Icon
 				icon="mdi:loading"
@@ -857,7 +877,8 @@
 				aria-hidden="true"
 			/>
 			<p
-				class="m-0 max-w-[16rem] text-center text-[15px] font-semibold leading-snug {$theme === 'light'
+				class="m-0 max-w-[16rem] text-center text-[15px] font-semibold leading-snug {$theme ===
+				'light'
 					? 'text-slate-800'
 					: 'text-white/90'}"
 			>

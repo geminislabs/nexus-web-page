@@ -23,9 +23,9 @@
 	aria-label="Navegación principal móvil"
 >
 	<p id="bottom-tab-db-hint" class="sr-only">
-		Esta barra solo cambia la vista de la aplicación; no ejecuta consultas SQL. El contador de alertas refleja
-		datos en cliente o de API y puede correlacionarse con filas de public.notifications (device_id, event, message,
-		status, read) cuando exista backend.
+		Esta barra solo cambia la vista de la aplicación; no ejecuta consultas SQL. El contador de
+		alertas refleja datos en cliente o de API y puede correlacionarse con filas de
+		public.notifications (device_id, event, message, status, read) cuando exista backend.
 	</p>
 	<div
 		role="tablist"
@@ -38,7 +38,8 @@
 				type="button"
 				id={`bottom-tab-${tab.id}`}
 				role="tab"
-				class="relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-1 py-2 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 {$activeTab === tab.id
+				class="relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 border-0 bg-transparent px-1 py-2 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 {$activeTab ===
+				tab.id
 					? 'text-blue-600 dark:text-blue-400'
 					: 'text-slate-500 hover:text-slate-800 dark:text-white/45 dark:hover:text-white/70'}"
 				aria-selected={$activeTab === tab.id}
@@ -46,7 +47,9 @@
 				aria-label={tabAriaLabel(tab)}
 				on:click={() => navActions.setTab(tab.id)}
 			>
-				<span class="relative flex h-[26px] w-[26px] items-center justify-center [&_.iconify]:h-[26px] [&_.iconify]:w-[26px]">
+				<span
+					class="relative flex h-[26px] w-[26px] items-center justify-center [&_.iconify]:h-[26px] [&_.iconify]:w-[26px]"
+				>
 					<Icon icon={tab.icon} width={26} height={26} aria-hidden="true" />
 					{#if tab.id === 'alertas' && $unreadAlarmCount > 0}
 						<span

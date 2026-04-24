@@ -52,7 +52,8 @@
 			)
 		: allH3Zones;
 	$: allZoneOptions = allH3Zones;
-	$: selectedZoneLabel = allZoneOptions.find((z) => z.id === wizard?.zone)?.name ?? wizard?.zone ?? '—';
+	$: selectedZoneLabel =
+		allZoneOptions.find((z) => z.id === wizard?.zone)?.name ?? wizard?.zone ?? '—';
 	$: displayStep = (() => {
 		if (!wizard) return 1;
 		if (wizard.type === 'ignition' && step >= 5) return 4;
@@ -134,10 +135,15 @@
 					<Icon icon="mdi:close" width={17} aria-hidden="true" />
 				</button>
 				<div class="min-w-0 flex-1">
-					<h2 id="caw-title" class="m-0 text-[15px] font-bold tracking-tight text-slate-900 dark:text-white">
+					<h2
+						id="caw-title"
+						class="m-0 text-[15px] font-bold tracking-tight text-slate-900 dark:text-white"
+					>
 						Crear alerta
 					</h2>
-					<p class="m-0 text-[10px] text-slate-500 dark:text-white/35">Paso {displayStep} de {effectiveSteps}</p>
+					<p class="m-0 text-[10px] text-slate-500 dark:text-white/35">
+						Paso {displayStep} de {effectiveSteps}
+					</p>
 				</div>
 				<!-- tipo badge si ya está seleccionado -->
 				{#if wizard.type}
@@ -232,7 +238,9 @@
 				<h3 class="m-0 mb-1.5 text-[17px] font-bold">
 					{wizard.type === 'ignition' ? '¿Cuándo notificar?' : '¿Qué evento de zona?'}
 				</h3>
-				<p class="mb-5 text-[12px] text-slate-600 dark:text-white/40">Elige la condición que disparará la alerta.</p>
+				<p class="mb-5 text-[12px] text-slate-600 dark:text-white/40">
+					Elige la condición que disparará la alerta.
+				</p>
 				<div class="grid grid-cols-2 gap-3">
 					{#if wizard.type === 'ignition'}
 						{#each [{ value: 'on', label: 'Encendido', icon: 'mdi:lightning-bolt', color: 'blue' }, { value: 'off', label: 'Apagado', icon: 'mdi:engine-off-outline', color: 'slate' }] as opt}
@@ -286,7 +294,9 @@
 					</button>
 				</div>
 				{#if $vehicles.length === 0}
-					<p class="py-8 text-center text-[13px] text-slate-600 dark:text-white/38">No hay unidades disponibles.</p>
+					<p class="py-8 text-center text-[13px] text-slate-600 dark:text-white/38">
+						No hay unidades disponibles.
+					</p>
 				{:else}
 					<div class="flex flex-col gap-2">
 						{#each $vehicles as vehicle}
@@ -346,70 +356,76 @@
 							class="mx-auto mb-2 opacity-25"
 							aria-hidden="true"
 						/>
-						<p class="m-0 text-[13px] font-semibold text-slate-600 dark:text-white/60">Sin zonas configuradas</p>
+						<p class="m-0 text-[13px] font-semibold text-slate-600 dark:text-white/60">
+							Sin zonas configuradas
+						</p>
 						<p class="m-0 mt-1 text-[11px] text-slate-500 dark:text-white/35">
 							Crea una zona H3 en configuración o selecciona celdas en el mapa para usarlas aquí.
 						</p>
 					</div>
 				{:else}
 					<div class="flex flex-col gap-2">
-							<p class="m-0 mb-1 mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/35">
-								Zonas H3 (por celda ID)
+						<p
+							class="m-0 mb-1 mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/35"
+						>
+							Zonas H3 (por celda ID)
+						</p>
+						<input
+							type="text"
+							class="w-full rounded-[12px] border border-slate-300 bg-white px-3 py-2 text-[12px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500/60 focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/[0.14] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/28"
+							placeholder="Filtrar zona por cell ID H3 (ej: 8a2a...)"
+							value={h3CellQuery}
+							on:input={(e) => (h3CellQuery = e.currentTarget.value)}
+							autocomplete="off"
+							aria-label="Buscar zona H3 por cell ID"
+						/>
+						{#if filteredH3Zones.length === 0}
+							<p
+								class="m-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white/45"
+							>
+								No hay zonas H3 que coincidan con ese cell ID.
 							</p>
-							<input
-								type="text"
-								class="w-full rounded-[12px] border border-slate-300 bg-white px-3 py-2 text-[12px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500/60 focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/[0.14] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/28"
-								placeholder="Filtrar zona por cell ID H3 (ej: 8a2a...)"
-								value={h3CellQuery}
-								on:input={(e) => (h3CellQuery = e.currentTarget.value)}
-								autocomplete="off"
-								aria-label="Buscar zona H3 por cell ID"
-							/>
-							{#if filteredH3Zones.length === 0}
-								<p
-									class="m-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[11px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white/45"
-								>
-									No hay zonas H3 que coincidan con ese cell ID.
-								</p>
-							{:else}
-								{#each filteredH3Zones as zone}
-									<button
-										type="button"
-										class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
+						{:else}
+							{#each filteredH3Zones as zone}
+								<button
+									type="button"
+									class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
 										{wizard.zone === zone.id
-											? 'border-blue-500 bg-blue-600/10'
-											: 'border-slate-200 bg-white hover:border-slate-300 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.1]'}"
-										on:click={() => alertActions.setZone(zone.id)}
-									>
-										<span
-											class="h-3.5 w-3.5 shrink-0 rounded"
-											style="background:{zone.color}"
-											aria-hidden="true"
-										></span>
-										<div class="min-w-0 flex-1">
-											<p class="m-0 text-[13px] font-semibold">{zone.name}</p>
-											<p class="m-0 mt-0.5 text-[11px] text-slate-600 dark:text-white/40">
-												{zone.source === 'h3-live'
-													? `Seleccion temporal · ${zone.cells.length} celdas H3`
-													: `${zone.cells.length} celdas H3`}
+										? 'border-blue-500 bg-blue-600/10'
+										: 'border-slate-200 bg-white hover:border-slate-300 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.1]'}"
+									on:click={() => alertActions.setZone(zone.id)}
+								>
+									<span
+										class="h-3.5 w-3.5 shrink-0 rounded"
+										style="background:{zone.color}"
+										aria-hidden="true"
+									></span>
+									<div class="min-w-0 flex-1">
+										<p class="m-0 text-[13px] font-semibold">{zone.name}</p>
+										<p class="m-0 mt-0.5 text-[11px] text-slate-600 dark:text-white/40">
+											{zone.source === 'h3-live'
+												? `Seleccion temporal · ${zone.cells.length} celdas H3`
+												: `${zone.cells.length} celdas H3`}
+										</p>
+										{#if zone.cells.length > 0}
+											<p
+												class="m-0 mt-1 truncate font-mono text-[10px] text-slate-500 dark:text-white/30"
+											>
+												{zone.cells.slice(0, 3).join(' · ')}{zone.cells.length > 3 ? '…' : ''}
 											</p>
-											{#if zone.cells.length > 0}
-												<p class="m-0 mt-1 truncate font-mono text-[10px] text-slate-500 dark:text-white/30">
-													{zone.cells.slice(0, 3).join(' · ')}{zone.cells.length > 3 ? '…' : ''}
-												</p>
-											{/if}
-										</div>
-										{#if wizard.zone === zone.id}
-											<Icon
-												icon="mdi:check-circle"
-												width={18}
-												class="text-blue-400 shrink-0"
-												aria-hidden="true"
-											/>
 										{/if}
-									</button>
-								{/each}
-							{/if}
+									</div>
+									{#if wizard.zone === zone.id}
+										<Icon
+											icon="mdi:check-circle"
+											width={18}
+											class="text-blue-400 shrink-0"
+											aria-hidden="true"
+										/>
+									{/if}
+								</button>
+							{/each}
+						{/if}
 					</div>
 				{/if}
 
@@ -419,7 +435,9 @@
 				<p class="mb-4 text-[12px] text-slate-600 dark:text-white/40">
 					Un nombre descriptivo para identificarla en el historial.
 				</p>
-				<label for="caw-name" class="mb-1.5 block text-[12px] font-medium text-slate-600 dark:text-white/55"
+				<label
+					for="caw-name"
+					class="mb-1.5 block text-[12px] font-medium text-slate-600 dark:text-white/55"
 					>Nombre visible</label
 				>
 				<input
@@ -437,7 +455,9 @@
 				<div
 					class="mt-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[0.07] dark:bg-white/[0.04]"
 				>
-					<p class="m-0 mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/30">
+					<p
+						class="m-0 mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/30"
+					>
 						Resumen
 					</p>
 					<dl class="m-0 space-y-2">
