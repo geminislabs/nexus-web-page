@@ -52,6 +52,10 @@
 	let newZoneDesc = '';
 	let saveToast = '';
 	let zoneDeactivateConfirm = /** @type {{ id: string; name: string } | null} */ (null);
+	/** Indica operación de API en curso (crear / editar / eliminar geocerca). */
+	let zoneRequestLoading = false;
+	/** @type {string} */
+	let zoneRequestMessage = '';
 
 	/** @type {HTMLDivElement | undefined} */
 	let portalHost = undefined;
@@ -113,6 +117,9 @@
 		const cells = get(selectedH3Cells);
 		const name = newZoneName.trim();
 		if (!name || cells.length === 0) return;
+		zoneRequestMessage = 'Guardando zona…';
+		zoneRequestLoading = true;
+		await tick();
 		try {
 			await alertActions.createZone(name, cells, '#0095ff', { description: newZoneDesc.trim() });
 		} catch (err) {
@@ -120,6 +127,8 @@
 			saveToast = 'No se pudo crear la zona';
 			setTimeout(() => (saveToast = ''), 2600);
 			return;
+		} finally {
+			zoneRequestLoading = false;
 		}
 		mapService.disableMobileZoneEditorZoomLock();
 		h3Actions.exitMobileZoneMap();
@@ -152,6 +161,9 @@
 		const name = editZoneName.trim();
 		if (!name) return;
 		const z = get(zones).find((x) => x.id === editingZoneId);
+		zoneRequestMessage = 'Guardando cambios…';
+		zoneRequestLoading = true;
+		await tick();
 		try {
 			await alertActions.updateZone(editingZoneId, {
 				name,
@@ -165,6 +177,8 @@
 			console.error('No se pudo actualizar la geocerca:', err);
 			saveToast = 'No se pudo actualizar la zona';
 			setTimeout(() => (saveToast = ''), 2600);
+		} finally {
+			zoneRequestLoading = false;
 		}
 	}
 
@@ -179,6 +193,9 @@
 
 	async function confirmDeactivateZone() {
 		if (!zoneDeactivateConfirm) return;
+		zoneRequestMessage = 'Eliminando zona…';
+		zoneRequestLoading = true;
+		await tick();
 		try {
 			await alertActions.deleteZone(zoneDeactivateConfirm.id);
 			zoneDeactivateConfirm = null;
@@ -188,6 +205,8 @@
 			console.error('No se pudo eliminar la geocerca:', err);
 			saveToast = 'No se pudo eliminar la zona';
 			setTimeout(() => (saveToast = ''), 2600);
+		} finally {
+			zoneRequestLoading = false;
 		}
 	}
 
@@ -506,7 +525,7 @@
 									? 'border-slate-200 bg-slate-100 text-slate-400'
 									: 'border-white/10 bg-white/[0.06] text-white/35'
 								: 'border-sky-500/50 bg-sky-500 text-white shadow-sm hover:bg-sky-600'}"
-							disabled={sheetGuardarDisabled}
+							disabled={sheetGuardarDisabled || zoneRequestLoading}
 							on:click={confirmGuardarZona}
 						>
 							Guardar
@@ -721,7 +740,8 @@
 			<h1 class="m-0 flex-1 text-center text-[16px] font-bold text-slate-900 dark:text-white">Editar Zona</h1>
 			<button
 				type="button"
-				class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-sky-600 hover:bg-slate-100 dark:border-white/12 dark:bg-zinc-900 dark:text-sky-400 dark:hover:bg-zinc-800"
+				class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-sky-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/12 dark:bg-zinc-900 dark:text-sky-400 dark:hover:bg-zinc-800"
+				disabled={zoneRequestLoading}
 				on:click={saveEditZone}
 			>
 				Guardar
@@ -804,15 +824,45 @@
 				</button>
 				<button
 					type="button"
-					class="min-h-[3rem] flex-1 rounded-full border-0 text-[15px] font-semibold transition-opacity hover:opacity-90 {$theme ===
+					class="min-h-[3rem] flex-1 rounded-full border-0 text-[15px] font-semibold transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 {$theme ===
 					'light'
 						? 'bg-slate-300/90 text-orange-600'
 						: 'bg-white/20 text-orange-400'}"
+					disabled={zoneRequestLoading}
 					on:click={confirmDeactivateZone}
 				>
 					Desactivar
 				</button>
 			</div>
+		</div>
+	</div>
+{/if}
+
+{#if zoneRequestLoading}
+	<div
+		class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 p-6 backdrop-blur-sm dark:bg-black/55"
+		role="status"
+		aria-live="polite"
+		aria-busy="true"
+	>
+		<div
+			class="flex max-w-[min(100%,20rem)] flex-col items-center gap-4 rounded-2xl border px-8 py-7 shadow-2xl {$theme ===
+				'light'
+					? 'border-slate-200/90 bg-white text-slate-900'
+					: 'border-white/[0.12] bg-[#1a2234] text-white'}"
+		>
+			<Icon
+				icon="mdi:loading"
+				class="h-10 w-10 shrink-0 animate-spin text-sky-500"
+				aria-hidden="true"
+			/>
+			<p
+				class="m-0 max-w-[16rem] text-center text-[15px] font-semibold leading-snug {$theme === 'light'
+					? 'text-slate-800'
+					: 'text-white/90'}"
+			>
+				{zoneRequestMessage}
+			</p>
 		</div>
 	</div>
 {/if}
