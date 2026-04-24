@@ -1,19 +1,28 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 
-// Crear el store para el usuario autenticado
-
+/**
+ * Store para el usuario autenticado
+ * Almacena los datos del usuario en memoria y localStorage
+ */
 function createAuthStore() {
 	const { subscribe, set, update } = writable(null);
 
 	return {
 		subscribe,
-
+		/**
+		 * Iniciar sesión y guardar datos del usuario
+		 * @param {Object} userData - Datos del usuario
+		 */
 		login: (userData) => {
-			set(userData);
+			const normalized = {
+				...userData,
+				name: userData.name || userData.full_name || ''
+			};
+			set(normalized);
 			if (browser) {
-				sessionStorage.removeItem(DEV_LOGOUT_KEY);
-				localStorage.setItem('user', JSON.stringify(userData));
+				sessionStorage.removeItem('dev_logout');
+				localStorage.setItem('user', JSON.stringify(normalized));
 			}
 		},
 		/**
@@ -24,21 +33,45 @@ function createAuthStore() {
 			if (browser) {
 				localStorage.removeItem('user');
 				localStorage.removeItem('token');
+				localStorage.removeItem('token_expires_at');
 			}
 		},
-
+		/**
+		 * Inicializar el store desde localStorage si existe
+		 */
 		init: () => {
 			if (!browser) return;
-
-			// Verificar localStorage para datos del usuario
 			const userData = localStorage.getItem('user');
 			if (userData) {
 				try {
-					set(JSON.parse(userData));
+					const parsed = JSON.parse(userData);
+					const normalized = {
+						...parsed,
+						name: parsed.name || parsed.full_name || ''
+					};
+					set(normalized);
 				} catch {
 					set(null);
 				}
 			}
+		},
+		/**
+		 * Actualizar datos del usuario
+		 * @param {Object} updates - Actualizaciones parciales
+		 */
+		update: (updates) => {
+			update((currentUser) => {
+				if (!currentUser) return null;
+				const updatedUser = {
+					...currentUser,
+					...updates,
+					name: updates.name || updates.full_name || currentUser.name || currentUser.full_name || ''
+				};
+				if (browser) {
+					localStorage.setItem('user', JSON.stringify(updatedUser));
+				}
+				return updatedUser;
+			});
 		}
 	};
 }
@@ -65,7 +98,6 @@ function createTokenStore() {
 
 			if (browser) {
 				localStorage.setItem('token', access_token);
-				localStorage.setItem('token', access_token);
 				if (tokens.refresh_token) {
 					localStorage.setItem('refresh_token', tokens.refresh_token);
 				}
@@ -83,15 +115,19 @@ function createTokenStore() {
 		 */
 		setToken: (token) => {
 			set(token);
-			if (browser) localStorage.setItem('token', token);
+			if (browser) {
+				localStorage.setItem('token', token);
+			}
 		},
 		/**
 		 * Obtener el access token actual
 		 * @returns {string|null} Access token o null
 		 */
 		getToken: () => {
-			if (!browser) return null;
-			return localStorage.getItem('token');
+			if (browser) {
+				return localStorage.getItem('token');
+			}
+			return null;
 		},
 		/**
 		 * Obtener el refresh token actual
@@ -139,15 +175,22 @@ function createTokenStore() {
 		 */
 		clearToken: () => {
 			set(null);
-			if (browser) localStorage.removeItem('token');
+			if (browser) {
+				localStorage.removeItem('token');
+				localStorage.removeItem('refresh_token');
+				localStorage.removeItem('token_expires_at');
+			}
 		},
 		/**
 		 * Inicializar el store desde localStorage si existe
 		 */
 		init: () => {
-			if (!browser) return;
-			const token = localStorage.getItem('token');
-			if (token) set(token);
+			if (browser) {
+				const token = localStorage.getItem('token');
+				if (token) {
+					set(token);
+				}
+			}
 		}
 	};
 }

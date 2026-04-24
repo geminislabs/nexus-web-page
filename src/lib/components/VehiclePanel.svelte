@@ -1,352 +1,310 @@
 <script>
+	import { goto } from '$app/navigation';
 	import Icon from '@iconify/svelte';
 	import CenterSheet from '$lib/components/CenterSheet.svelte';
-	import { theme } from '$lib/stores/themeStore.js';
-	import {
-		vehicles,
-		selectedVehicles,
-		loadingVehicles,
-		loadingPositions,
-		activeVehicles,
-		selectedVehicleCount,
-		vehicleActions
-	} from '$lib/stores/vehicleStore.js';
-	import { getStatusText, getStatusPillClass } from '$lib/utils/vehicleUtils.js';
-	import { mapService } from '$lib/services/mapService.js';
-	import { vehicleActions } from '$lib/stores/vehicleStore.js';
-	import { user } from '$lib/stores/auth.js';
+	import InviteUser from '$lib/components/InviteUser.svelte';
+	import { user, authToken } from '$lib/stores/auth.js';
+	import { theme, themeActions } from '$lib/stores/themeStore.js';
+	import { apiService } from '$lib/services/api.js';
+	import { slide } from 'svelte/transition';
 
-	export let showVehiclePanel = false;
-	export let showVehicleList = false;
+	export let showUserPanel = false;
+	export let userData = null;
 	export let onTogglePanel = () => {};
 	export let onClose = () => {};
 
-	const listRegionId = 'vehicle-panel-list-region';
-
 	$: isLightTheme = $theme === 'light';
 
-	async function toggleVehicleList() {
-		showVehicleList = !showVehicleList;
+	// ── Cambiar contraseña ────────────────────────────────────
+	let showPasswordChange = false;
+	let oldPassword = '';
+	let newPassword = '';
+	let pwdLoading = false;
+	let pwdError = '';
+	let pwdSuccess = '';
 
-		// Si se está abriendo la lista y no hay vehículos cargados, cargarlos
-		if (showVehicleList && $vehicles.length === 0) {
-			await vehicleActions.loadVehicles();
+	function togglePasswordChange() {
+		showPasswordChange = !showPasswordChange;
+		if (!showPasswordChange) {
+			oldPassword = '';
+			newPassword = '';
+			pwdError = '';
+			pwdSuccess = '';
 		}
 	}
 
-	function toggleVehicleSelection(vehicleId) {
-		vehicleActions.toggleVehicleSelection(vehicleId);
+	function validatePassword(password) {
+		if (password.length < 8) return 'Debe tener al menos 8 caracteres.';
+		if (password.length > 72) return 'No puede exceder los 72 caracteres.';
+		if (!/[A-Z]/.test(password)) return 'Debe incluir al menos una mayúscula.';
+		if (!/[0-9]/.test(password)) return 'Debe incluir al menos un número.';
+		if (!/[^A-Za-z0-9]/.test(password)) return 'Debe incluir al menos un carácter especial.';
+		return null;
 	}
 
-	function selectAllVehicles() {
-		vehicleActions.selectAllVehicles();
-	}
+	async function handleChangePassword() {
+		if (!oldPassword || !newPassword) {
+			pwdError = 'Por favor ingresa ambas contraseñas.';
+			return;
+		}
+		const validationError = validatePassword(newPassword);
+		if (validationError) { pwdError = validationError; return; }
 
-	function clearVehicleSelection() {
-		vehicleActions.clearSelection();
-	}
-
-	async function loadTrips(unitId) {
-		tripsLoading = true;
-		tripsError = null;
-		trips = [];
-
+		pwdLoading = true;
+		pwdError = '';
+		pwdSuccess = '';
 		try {
-			const response = await apiService.getTrips({
-				unit_id: unitId,
-				day: currentDate,
-				tz: 'America/Mexico_City'
+			const response = await apiService.changePassword({
+				old_password: oldPassword,
+				new_password: newPassword
 			});
-
-			if (response && response.trips) {
-				trips = response.trips;
+			pwdSuccess = response.message || 'Contraseña actualizada correctamente.';
+			oldPassword = '';
+			newPassword = '';
+			setTimeout(() => togglePasswordChange(), 2000);
+		} catch (error) {
+			if (Array.isArray(error.detail)) {
+				pwdError = error.detail.map((e) => e.msg).join(', ');
+			} else {
+				pwdError = error.detail || error.message || 'Error al cambiar la contraseña.';
 			}
-		} catch (err) {
-			console.error('Error al cargar trayectos:', err);
-			tripsError = 'Error al cargar trayectos';
 		} finally {
-			tripsLoading = false;
+			pwdLoading = false;
 		}
 	}
 
-	async function trackSelectedVehicles() {
-		const selectedVehiclesList = $vehicles.filter((v) => $selectedVehicles.includes(v.id));
-		const vehiclesWithCoords = selectedVehiclesList.filter(
-			(v) => (v.latitude || v.lat) && (v.longitude || v.lng)
-		);
+	// ── Invitar usuario ───────────────────────────────────────
+	let showInviteUser = false;
 
-		if (vehiclesWithCoords.length > 0) {
-			mapService.centerOnVehicles(vehiclesWithCoords);
-		}
-	}
-
-	function centerOnVehicle(vehicle) {
-		if ((vehicle.latitude || vehicle.lat) && (vehicle.longitude || vehicle.lng)) {
-			mapService.centerOnVehicle(vehicle);
-		}
-	}
-
-	function vehicleCoords(vehicle) {
-		const lat = vehicle.latitude ?? vehicle.lat;
-		const lng = vehicle.longitude ?? vehicle.lng;
-		if (lat == null || lng == null) return null;
-		return { lat, lng };
+	// ── Logout ────────────────────────────────────────────────
+	function handleLogout() {
+		user.logout();
+		authToken.clearToken();
+		goto('/login');
 	}
 </script>
 
+<!-- Botón disparador -->
 <button
 	type="button"
 	on:click={onTogglePanel}
-	aria-label="Abrir panel de control de vehículos"
+	aria-label="Abrir panel de cuenta y preferencias"
 	aria-haspopup="dialog"
-	aria-expanded={showVehiclePanel}
-	class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition-all duration-200 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 focus-visible:ring-offset-transparent {isLightTheme
-		? 'border border-slate-600/45 bg-gradient-to-br from-slate-700 to-slate-900 shadow-[0_2px_6px_rgb(15_23_42_/_0.2)] [box-shadow:inset_0_1px_0_rgb(255_255_255_/_0.08)] hover:brightness-[1.07]'
+	aria-expanded={showUserPanel}
+	class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition-all duration-200 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 {isLightTheme
+		? 'border border-slate-600/45 bg-gradient-to-br from-slate-700 to-slate-900 shadow-[0_2px_6px_rgb(15_23_42_/_0.2)] hover:brightness-[1.07]'
 		: 'border border-white/10 bg-white/10 hover:bg-white/[0.16]'}"
-	class:ring-2={showVehiclePanel}
-	class:ring-emerald-400={showVehiclePanel}
-	class:ring-offset-2={showVehiclePanel}
-	class:ring-offset-slate-900={showVehiclePanel && isLightTheme}
-	class:ring-offset-slate-950={showVehiclePanel && !isLightTheme}
+	class:ring-2={showUserPanel}
+	class:ring-blue-400={showUserPanel}
+	class:ring-offset-2={showUserPanel}
+	class:ring-offset-slate-900={showUserPanel && isLightTheme}
+	class:ring-offset-slate-950={showUserPanel && !isLightTheme}
 >
-	<Icon icon="mdi:car-side" class="h-8 w-8 shrink-0" aria-hidden="true" />
+	<Icon icon="mdi:account-circle" class="h-8 w-8 shrink-0" aria-hidden="true" />
 </button>
 
-<CenterSheet open={showVehiclePanel} title="Vehículos" onClose={() => onClose()}>
-	<div class="space-y-5">
-		<section class="space-y-3" aria-labelledby="vehicle-panel-actions-heading">
-			<h3 id="vehicle-panel-actions-heading" class="sr-only">Acciones del panel de vehículos</h3>
-			<button
-				type="button"
-				class="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-600/20 bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-900/20 transition-colors hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 dark:border-emerald-500/30 dark:shadow-emerald-950/40"
-				on:click={toggleVehicleList}
-				aria-expanded={showVehicleList}
-				aria-controls={listRegionId}
-			>
-				<Icon icon="mdi:view-list-outline" class="h-5 w-5 shrink-0" aria-hidden="true" />
-				{showVehicleList ? 'Ocultar lista de vehículos' : 'Ver lista de vehículos'}
-			</button>
+<CenterSheet open={showUserPanel} title="Cuenta" onClose={() => onClose()}>
+	<div class="space-y-4">
 
-			{#if showVehicleList}
-				<div
-					id={listRegionId}
-					role="region"
-					aria-label="Lista y selección de vehículos"
-					class="max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-600 dark:bg-slate-800/80"
-				>
-					<div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-						<h4 class="text-sm font-semibold text-slate-800 dark:text-slate-100">Selección</h4>
-						<div
-							class="flex flex-wrap gap-2"
-							role="group"
-							aria-label="Acciones de selección masiva"
-						>
-							<button
-								type="button"
-								class="rounded-lg border border-blue-600/30 bg-blue-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-								on:click={selectAllVehicles}
-							>
-								Seleccionar todos
-							</button>
-							<button
-								type="button"
-								class="rounded-lg border border-slate-400/40 bg-slate-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 dark:border-slate-500 dark:bg-slate-700 dark:hover:bg-slate-600"
-								on:click={clearVehicleSelection}
-							>
-								Limpiar selección
-							</button>
+		<!-- ── Perfil ── -->
+		<section
+			class="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+			aria-labelledby="up-profile-heading"
+		>
+			<h3 id="up-profile-heading" class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
+				Perfil de usuario
+			</h3>
+			{#if userData}
+				<dl class="mt-3 space-y-2.5 text-sm">
+					<div class="flex items-start gap-3">
+						<Icon icon="mdi:account" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+						<div class="min-w-0 flex-1">
+							<dt class="sr-only">Nombre</dt>
+							<dd class="break-words font-medium text-slate-900 dark:text-white">
+								{userData.name || userData.full_name || '—'}
+							</dd>
 						</div>
-						{#if currentDate}
-							<input
-								type="date"
-								bind:value={currentDate}
-								on:change={() => loadTrips(selectedUnitId)}
-								class="bg-transparent text-xs text-accent-cyan font-mono border-none focus:ring-0 cursor-pointer p-0 text-right w-24"
-								style="color-scheme: dark;"
-							/>
-						{/if}
 					</div>
-
-					{#if $loadingVehicles || $loadingPositions}
-						<div
-							class="flex items-center justify-center gap-2 py-6"
-							role="status"
-							aria-live="polite"
-							aria-busy="true"
-						>
-							<div
-								class="h-6 w-6 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-b-blue-600 dark:border-slate-600 dark:border-b-blue-400"
-								aria-hidden="true"
-							></div>
-							<span class="text-sm text-slate-600 dark:text-slate-300">
-								{$loadingVehicles ? 'Cargando vehículos…' : 'Actualizando posiciones…'}
-							</span>
+					<div class="flex items-start gap-3">
+						<Icon icon="mdi:email-outline" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+						<div class="min-w-0 flex-1">
+							<dt class="sr-only">Correo</dt>
+							<dd class="break-all font-medium text-slate-900 dark:text-white">{userData.email}</dd>
 						</div>
-					{:else if $vehicles.length > 0}
-						<ul class="list-none space-y-1 p-0">
-							{#each $vehicles as vehicle (vehicle.id)}
-								{@const coords = vehicleCoords(vehicle)}
-								<li
-									class="rounded-lg border border-transparent p-2 transition-colors hover:border-slate-200/80 hover:bg-white/90 dark:hover:border-slate-600/60 dark:hover:bg-slate-700/50"
-								>
-									<div class="flex items-start gap-3">
-										<input
-											id="vehicle-select-{vehicle.id}"
-											type="checkbox"
-											checked={$selectedVehicles.includes(vehicle.id)}
-											class="mt-1 size-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 dark:border-slate-500 dark:bg-slate-900 dark:text-blue-500"
-											aria-label="Incluir {vehicle.name} en la selección del mapa"
-											aria-describedby="vehicle-meta-{vehicle.id}"
-											on:change={() => toggleVehicleSelection(vehicle.id)}
-										/>
-										<div class="min-w-0 flex-1" id="vehicle-meta-{vehicle.id}">
-											<div class="flex items-start justify-between gap-2">
-												<button
-													type="button"
-													class="truncate text-left text-sm font-semibold text-slate-900 underline-offset-2 hover:text-blue-600 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:no-underline dark:text-slate-100 dark:hover:text-blue-400"
-													on:click={() => centerOnVehicle(vehicle)}
-													disabled={!coords}
-													aria-label="Centrar el mapa en {vehicle.name}"
-												>
-													{vehicle.name}
-												</button>
-												<span
-													class="inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold {getStatusPillClass(
-														vehicle.status
-													)}"
-												>
-													{getStatusText(vehicle.status)}
-												</span>
-											</div>
-											<dl class="mt-1 space-y-0.5 text-xs text-slate-600 dark:text-slate-400">
-												<div class="flex flex-wrap gap-x-1">
-													<dt class="font-medium text-slate-500 dark:text-slate-500">Conductor</dt>
-													<dd>{vehicle.driver || 'Sin conductor'}</dd>
-												</div>
-												<div class="flex flex-wrap gap-x-1">
-													<dt class="font-medium text-slate-500 dark:text-slate-500">Ubicación</dt>
-													<dd>{vehicle.location || 'Desconocida'}</dd>
-												</div>
-												{#if vehicle.deviceId}
-													<div class="flex flex-wrap gap-x-1">
-														<dt class="font-medium text-slate-500 dark:text-slate-500">
-															Dispositivo
-														</dt>
-														<dd class="font-mono text-[0.6875rem]">{vehicle.deviceId}</dd>
-													</div>
-												{/if}
-												{#if coords}
-													<div class="flex flex-wrap gap-x-1">
-														<dt class="font-medium text-slate-500 dark:text-slate-500">
-															Coordenadas
-														</dt>
-														<dd class="font-mono text-[0.6875rem]">
-															{coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}
-														</dd>
-													</div>
-												{/if}
-												{#if vehicle.speed !== undefined}
-													<div class="flex flex-wrap gap-x-1">
-														<dt class="font-medium text-slate-500 dark:text-slate-500">
-															Movimiento
-														</dt>
-														<dd>
-															{vehicle.speed} km/h · Batería {vehicle.battery ?? 0}%
-														</dd>
-													</div>
-												{/if}
-												{#if vehicle.lastUpdateFormatted}
-													<div class="flex flex-wrap gap-x-1">
-														<dt class="font-medium text-slate-500 dark:text-slate-500">
-															Última actualización
-														</dt>
-														<dd>{vehicle.lastUpdateFormatted}</dd>
-													</div>
-												{/if}
-											</dl>
-										</div>
-									</div>
-								</li>
-							{/each}
-						</ul>
-
-						{#if $selectedVehicleCount > 0}
-							<div
-								class="mt-3 border-t border-slate-200 pt-3 dark:border-slate-600"
-								role="status"
-								aria-live="polite"
-							>
-								<p class="mb-2 text-xs font-medium text-slate-600 dark:text-slate-300">
-									{$selectedVehicleCount} unidad{$selectedVehicleCount !== 1 ? 'es' : ''} seleccionada{$selectedVehicleCount !==
-									1
-										? 's'
-										: ''}
-								</p>
-								<button
-									type="button"
-									class="w-full rounded-lg border border-emerald-600/25 bg-emerald-600 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
-									on:click={trackSelectedVehicles}
-								>
-									Rastrear seleccionados en el mapa
-								</button>
+					</div>
+					{#if userData.id}
+						<div class="flex items-start gap-3">
+							<Icon icon="mdi:identifier" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+							<div class="min-w-0 flex-1">
+								<dt class="sr-only">ID</dt>
+								<dd class="font-mono text-[0.75rem] text-slate-600 dark:text-white/55 break-all">{userData.id}</dd>
 							</div>
-						{/if}
-					{:else}
-						<p class="py-6 text-center text-sm text-slate-500 dark:text-slate-400" role="status">
-							No hay vehículos disponibles
-						</p>
+						</div>
 					{/if}
-				</div>
+				</dl>
+			{:else}
+				<p class="mt-3 text-sm text-slate-500 dark:text-white/40">No hay información disponible.</p>
 			{/if}
+		</section>
 
+		<!-- ── Apariencia ── -->
+		<section
+			class="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+			aria-labelledby="up-theme-heading"
+		>
+			<div class="flex items-center justify-between gap-3">
+				<div>
+					<h3 id="up-theme-heading" class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
+						Apariencia
+					</h3>
+					<p class="m-0 mt-0.5 text-xs text-slate-500 dark:text-white/40">
+						Tema: <strong class="text-slate-700 dark:text-white/70">{$theme === 'dark' ? 'Oscuro' : 'Claro'}</strong>
+					</p>
+				</div>
+				<button
+					type="button"
+					class="flex h-9 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-white/15 dark:bg-white/[0.06] dark:text-white dark:hover:bg-white/[0.1]"
+					on:click={() => themeActions.toggle()}
+					aria-label={$theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+				>
+					{#if $theme === 'dark'}
+						<Icon icon="mdi:white-balance-sunny" class="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+						<span>Claro</span>
+					{:else}
+						<Icon icon="mdi:weather-night" class="h-4 w-4 shrink-0 text-indigo-400" aria-hidden="true" />
+						<span>Oscuro</span>
+					{/if}
+				</button>
+			</div>
+		</section>
+
+		<!-- ── Cambiar contraseña ── -->
+		<section
+			class="rounded-xl border border-slate-200 bg-white/95 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+			aria-labelledby="up-pwd-heading"
+		>
 			<button
 				type="button"
-				class="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-600/25 bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-blue-900/25 transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:pointer-events-none disabled:opacity-60 dark:border-blue-500/30 dark:shadow-blue-950/40"
-				on:click={refreshPositions}
-				disabled={$loadingPositions}
-				aria-busy={$loadingPositions}
+				class="flex w-full items-center justify-between px-4 py-3.5 text-left"
+				on:click={togglePasswordChange}
+				aria-expanded={showPasswordChange}
 			>
+				<span class="flex items-center gap-2.5">
+					<Icon icon="mdi:lock-outline" class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+					<h3 id="up-pwd-heading" class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
+						Cambiar contraseña
+					</h3>
+				</span>
 				<Icon
-					icon="mdi:refresh"
-					class="h-5 w-5 shrink-0 {$loadingPositions ? 'animate-spin' : ''}"
+					icon="mdi:chevron-down"
+					class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/35 transition-transform duration-200 {showPasswordChange ? 'rotate-180' : ''}"
 					aria-hidden="true"
 				/>
-				Actualizar posiciones
 			</button>
+
+			{#if showPasswordChange}
+				<div transition:slide={{ duration: 200 }} class="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-white/[0.06]">
+					{#if pwdError}
+						<p class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300">
+							{pwdError}
+						</p>
+					{/if}
+					{#if pwdSuccess}
+						<p class="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
+							{pwdSuccess}
+						</p>
+					{/if}
+
+					<div class="space-y-3">
+						<div>
+							<label for="up-old-pwd" class="mb-1 block text-xs font-medium text-slate-600 dark:text-white/50">
+								Contraseña actual
+							</label>
+							<input
+								id="up-old-pwd"
+								type="password"
+								bind:value={oldPassword}
+								class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15 dark:border-white/15 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30"
+								placeholder="••••••••"
+								disabled={pwdLoading}
+							/>
+						</div>
+						<div>
+							<label for="up-new-pwd" class="mb-1 block text-xs font-medium text-slate-600 dark:text-white/50">
+								Nueva contraseña
+							</label>
+							<input
+								id="up-new-pwd"
+								type="password"
+								bind:value={newPassword}
+								class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/15 dark:border-white/15 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30"
+								placeholder="••••••••"
+								disabled={pwdLoading}
+							/>
+							<p class="mt-1 text-[10px] text-slate-400 dark:text-white/30">
+								Mín. 8 caracteres, una mayúscula, un número y un carácter especial.
+							</p>
+						</div>
+						<button
+							type="button"
+							class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+							on:click={handleChangePassword}
+							disabled={pwdLoading}
+						>
+							{#if pwdLoading}
+								<Icon icon="mdi:loading" class="h-4 w-4 animate-spin" aria-hidden="true" />
+								Actualizando…
+							{:else}
+								Actualizar contraseña
+							{/if}
+						</button>
+					</div>
+				</div>
+			{/if}
 		</section>
 
-		<section
-			class="rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-600 dark:bg-slate-800/50"
-			aria-labelledby="vehicle-panel-status-heading"
-		>
-			<h3
-				id="vehicle-panel-status-heading"
-				class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+		<!-- ── Invitar usuario (solo masters) ── -->
+		{#if userData?.is_master}
+			<section
+				class="rounded-xl border border-slate-200 bg-white/95 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
+				aria-labelledby="up-invite-heading"
 			>
-				Estado del sistema
-			</h3>
-			<ul class="list-none space-y-2 p-0 text-xs text-slate-700 dark:text-slate-200">
-				<li class="flex items-center gap-2">
-					<span
-						class="h-2 w-2 shrink-0 animate-pulse rounded-full bg-emerald-500"
+				<button
+					type="button"
+					class="flex w-full items-center justify-between px-4 py-3.5 text-left"
+					on:click={() => (showInviteUser = !showInviteUser)}
+					aria-expanded={showInviteUser}
+				>
+					<span class="flex items-center gap-2.5">
+						<Icon icon="mdi:account-plus-outline" class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+						<h3 id="up-invite-heading" class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
+							Invitar usuario
+						</h3>
+					</span>
+					<Icon
+						icon="mdi:chevron-down"
+						class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/35 transition-transform duration-200 {showInviteUser ? 'rotate-180' : ''}"
 						aria-hidden="true"
-					></span>
-					<span
-						>Conectado · {$activeVehicles.length} unidad{$activeVehicles.length !== 1 ? 'es' : ''} activa{$activeVehicles.length !==
-						1
-							? 's'
-							: ''}</span
-					>
-				</li>
-				{#if $selectedVehicleCount > 0}
-					<li class="flex items-center gap-2">
-						<span class="h-2 w-2 shrink-0 rounded-full bg-blue-500" aria-hidden="true"></span>
-						<span>
-							{$selectedVehicleCount} en selección para seguimiento
-						</span>
-					</li>
+					/>
+				</button>
+
+				{#if showInviteUser}
+					<div transition:slide={{ duration: 200 }} class="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-white/[0.06]">
+						<InviteUser />
+					</div>
 				{/if}
-			</ul>
-		</section>
+			</section>
+		{/if}
+
+		<!-- ── Cerrar sesión ── -->
+		<button
+			type="button"
+			class="flex min-h-[2.75rem] w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+			on:click={handleLogout}
+			aria-label="Cerrar sesión"
+		>
+			<Icon icon="mdi:logout" class="h-4 w-4 shrink-0" aria-hidden="true" />
+			Cerrar sesión
+		</button>
 	</div>
 </CenterSheet>

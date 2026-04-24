@@ -7,6 +7,9 @@
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
 
+ 	// URL de la página principal de la compañía para registro y recuperación de contraseña
+	const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
+
 	let email = '';
 	let password = '';
 	let loading = false;
@@ -17,7 +20,6 @@
 	onMount(() => {
 		authToken.init();
 		user.init();
-		authToken.init();
 		const unsubscribe = user.subscribe((userData) => {
 			if (userData) {
 				goto('/dashboard');
@@ -27,8 +29,6 @@
 	});
 
 	async function handleLogin() {
-		if (loading) return;
-
 		if (!email || !password) {
 			error = 'Por favor, completa todos los campos';
 			return;
@@ -40,11 +40,6 @@
 		try {
 			// Llamar a la API de login (POST /api/v1/auth/login)
 			const response = await apiService.login({ email, password });
-			const apiUser = response?.user || {};
-			const normalizedUser = {
-				...apiUser,
-				name: apiUser.name || apiUser.full_name || ''
-			};
 
 			// La respuesta incluye: user (objeto completo), access_token, id_token, refresh_token, expires_in
 			// Verificar que el email esté verificado
@@ -144,9 +139,6 @@
 		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
 			by GeminisLabs
 		</p>
-		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
-			by GeminisLabs
-		</p>
 
 		<form
 			class="flex w-full flex-col gap-4"
@@ -241,11 +233,9 @@
 			<a
 				href="/register"
 				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
-			<a
-				href="/register"
-				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
-				>Regístrate</a
 			>
+				Regístrate
+			</a>
 		</p>
 	</main>
 </div>
