@@ -46,8 +46,8 @@
 </script>
 
 <section
-	class="relative flex h-full min-h-0 flex-col text-slate-900 dark:text-white {subView === 'crear_zona_map' ||
-	subView === 'guardar_zona'
+	class="relative flex h-full min-h-0 flex-col text-slate-900 dark:text-white {subView ===
+		'crear_zona_map' || subView === 'guardar_zona'
 		? 'bg-transparent'
 		: 'bg-slate-50 dark:bg-black'}"
 	class:pointer-events-none={subView === 'crear_zona_map' || subView === 'guardar_zona'}
@@ -73,7 +73,8 @@
 					role="tab"
 					aria-selected={subView === 'alarmas'}
 					aria-controls="tabpanel-alarmas"
-					class="relative flex flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 px-3 py-2 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {subView === 'alarmas'
+					class="relative flex flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 px-3 py-2 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {subView ===
+					'alarmas'
 						? 'bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.4)]'
 						: 'bg-transparent text-slate-600 dark:text-white/50 hover:text-slate-700 dark:text-white/70'}"
 					on:click={() => (subView = 'alarmas')}
@@ -95,7 +96,8 @@
 					role="tab"
 					aria-selected={subView === 'config'}
 					aria-controls="tabpanel-config"
-					class="relative flex flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 px-3 py-2 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {subView === 'config'
+					class="relative flex flex-1 items-center justify-center gap-1.5 rounded-[9px] border-0 px-3 py-2 text-sm font-medium transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {subView ===
+					'config'
 						? 'bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.4)]'
 						: 'bg-transparent text-slate-600 dark:text-white/50 hover:text-slate-700 dark:text-white/70'}"
 					on:click={() => (subView = 'config')}
@@ -120,20 +122,27 @@
 							<div class="text-slate-400 dark:text-white" aria-hidden="true">
 								<Icon icon="mdi:bell-off-outline" class="h-16 w-16 opacity-25" />
 							</div>
-							<h3 class="m-0 text-lg font-semibold text-slate-900 dark:text-white">Sin alarmas recientes</h3>
+							<h3 class="m-0 text-lg font-semibold text-slate-900 dark:text-white">
+								Sin alarmas recientes
+							</h3>
 							<p class="m-0 max-w-xs text-sm leading-relaxed text-slate-600 dark:text-white/40">
 								Cuando ocurra una alerta aparecerá aquí.
 							</p>
 						</div>
 					{:else}
-						<ul class="m-0 flex list-none flex-col gap-3.5 p-0" aria-label="Lista de alarmas recientes">
+						<ul
+							class="m-0 flex list-none flex-col gap-3.5 p-0"
+							aria-label="Lista de alarmas recientes"
+						>
 							{#each $alarmEvents as ev, idx (`${ev.at}-${idx}`)}
 								<li>
 									<article
 										class="flex items-stretch gap-3.5 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm dark:border-white/[0.07] dark:bg-[#121a28] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] {!ev.read
 											? 'ring-1 ring-sky-500/30 dark:shadow-[0_0_28px_-10px_rgba(56,189,248,0.35),inset_0_1px_0_rgba(255,255,255,0.05)]'
 											: ''}"
-										aria-label="{ev.vehicle || 'Unidad'}: {ev.name || 'Evento'}{!ev.read ? ', no leída' : ''}"
+										aria-label="{ev.vehicle || 'Unidad'}: {ev.name || 'Evento'}{!ev.read
+											? ', no leída'
+											: ''}"
 									>
 										<div
 											class="relative flex h-[52px] w-[52px] shrink-0 items-center justify-center self-center"
@@ -221,7 +230,11 @@
 										</span>
 									</span>
 								</span>
-								<Icon icon="mdi:chevron-right" class="h-5 w-5 shrink-0 text-slate-500 dark:text-white/30" aria-hidden="true" />
+								<Icon
+									icon="mdi:chevron-right"
+									class="h-5 w-5 shrink-0 text-slate-500 dark:text-white/30"
+									aria-hidden="true"
+								/>
 							</button>
 							<button
 								type="button"
@@ -236,7 +249,8 @@
 										<Icon icon="mdi:map-marker" class="h-6 w-6" />
 									</span>
 									<span class="min-w-0">
-										<span class="block truncate text-[15px] font-semibold text-slate-900 dark:text-white"
+										<span
+											class="block truncate text-[15px] font-semibold text-slate-900 dark:text-white"
 											>Zonas</span
 										>
 										<span class="mt-0.5 block text-[11px] text-slate-600 dark:text-white/40">
@@ -244,7 +258,11 @@
 										</span>
 									</span>
 								</span>
-								<Icon icon="mdi:chevron-right" class="h-5 w-5 shrink-0 text-slate-500 dark:text-white/30" aria-hidden="true" />
+								<Icon
+									icon="mdi:chevron-right"
+									class="h-5 w-5 shrink-0 text-slate-500 dark:text-white/30"
+									aria-hidden="true"
+								/>
 							</button>
 						</div>
 					</div>

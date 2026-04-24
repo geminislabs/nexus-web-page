@@ -7,7 +7,7 @@
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
 
- 	// URL de la página principal de la compañía para registro y recuperación de contraseña
+	// URL de la página principal de la compañía para registro y recuperación de contraseña
 	const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
 
 	let email = '';

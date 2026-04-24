@@ -48,7 +48,10 @@
 			return;
 		}
 		const validationError = validatePassword(newPassword);
-		if (validationError) { pwdError = validationError; return; }
+		if (validationError) {
+			pwdError = validationError;
+			return;
+		}
 
 		pwdLoading = true;
 		pwdError = '';
@@ -105,7 +108,6 @@
 
 <CenterSheet open={showUserPanel} title="Cuenta" onClose={() => onClose()}>
 	<div class="space-y-4">
-
 		<!-- ── Perfil ── -->
 		<section
 			class="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.04]"
@@ -117,7 +119,11 @@
 			{#if userData}
 				<dl class="mt-3 space-y-2.5 text-sm">
 					<div class="flex items-start gap-3">
-						<Icon icon="mdi:account" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+						<Icon
+							icon="mdi:account"
+							class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40"
+							aria-hidden="true"
+						/>
 						<div class="min-w-0 flex-1">
 							<dt class="sr-only">Nombre</dt>
 							<dd class="break-words font-medium text-slate-900 dark:text-white">
@@ -126,7 +132,11 @@
 						</div>
 					</div>
 					<div class="flex items-start gap-3">
-						<Icon icon="mdi:email-outline" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+						<Icon
+							icon="mdi:email-outline"
+							class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40"
+							aria-hidden="true"
+						/>
 						<div class="min-w-0 flex-1">
 							<dt class="sr-only">Correo</dt>
 							<dd class="break-all font-medium text-slate-900 dark:text-white">{userData.email}</dd>
@@ -134,10 +144,16 @@
 					</div>
 					{#if userData.id}
 						<div class="flex items-start gap-3">
-							<Icon icon="mdi:identifier" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+							<Icon
+								icon="mdi:identifier"
+								class="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/40"
+								aria-hidden="true"
+							/>
 							<div class="min-w-0 flex-1">
 								<dt class="sr-only">ID</dt>
-								<dd class="font-mono text-[0.75rem] text-slate-600 dark:text-white/55 break-all">{userData.id}</dd>
+								<dd class="font-mono text-[0.75rem] text-slate-600 dark:text-white/55 break-all">
+									{userData.id}
+								</dd>
 							</div>
 						</div>
 					{/if}
@@ -154,11 +170,16 @@
 		>
 			<div class="flex items-center justify-between gap-3">
 				<div>
-					<h3 id="up-theme-heading" class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
+					<h3
+						id="up-theme-heading"
+						class="m-0 text-sm font-semibold text-slate-900 dark:text-white"
+					>
 						Apariencia
 					</h3>
 					<p class="m-0 mt-0.5 text-xs text-slate-500 dark:text-white/40">
-						Tema: <strong class="text-slate-700 dark:text-white/70">{$theme === 'dark' ? 'Oscuro' : 'Claro'}</strong>
+						Tema: <strong class="text-slate-700 dark:text-white/70"
+							>{$theme === 'dark' ? 'Oscuro' : 'Claro'}</strong
+						>
 					</p>
 				</div>
 				<button
@@ -168,10 +189,18 @@
 					aria-label={$theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
 				>
 					{#if $theme === 'dark'}
-						<Icon icon="mdi:white-balance-sunny" class="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+						<Icon
+							icon="mdi:white-balance-sunny"
+							class="h-4 w-4 shrink-0 text-amber-400"
+							aria-hidden="true"
+						/>
 						<span>Claro</span>
 					{:else}
-						<Icon icon="mdi:weather-night" class="h-4 w-4 shrink-0 text-indigo-400" aria-hidden="true" />
+						<Icon
+							icon="mdi:weather-night"
+							class="h-4 w-4 shrink-0 text-indigo-400"
+							aria-hidden="true"
+						/>
 						<span>Oscuro</span>
 					{/if}
 				</button>
@@ -190,34 +219,50 @@
 				aria-expanded={showPasswordChange}
 			>
 				<span class="flex items-center gap-2.5">
-					<Icon icon="mdi:lock-outline" class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
+					<Icon
+						icon="mdi:lock-outline"
+						class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/40"
+						aria-hidden="true"
+					/>
 					<h3 id="up-pwd-heading" class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
 						Cambiar contraseña
 					</h3>
 				</span>
 				<Icon
 					icon="mdi:chevron-down"
-					class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/35 transition-transform duration-200 {showPasswordChange ? 'rotate-180' : ''}"
+					class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/35 transition-transform duration-200 {showPasswordChange
+						? 'rotate-180'
+						: ''}"
 					aria-hidden="true"
 				/>
 			</button>
 
 			{#if showPasswordChange}
-				<div transition:slide={{ duration: 200 }} class="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-white/[0.06]">
+				<div
+					transition:slide={{ duration: 200 }}
+					class="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-white/[0.06]"
+				>
 					{#if pwdError}
-						<p class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300">
+						<p
+							class="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300"
+						>
 							{pwdError}
 						</p>
 					{/if}
 					{#if pwdSuccess}
-						<p class="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
+						<p
+							class="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300"
+						>
 							{pwdSuccess}
 						</p>
 					{/if}
 
 					<div class="space-y-3">
 						<div>
-							<label for="up-old-pwd" class="mb-1 block text-xs font-medium text-slate-600 dark:text-white/50">
+							<label
+								for="up-old-pwd"
+								class="mb-1 block text-xs font-medium text-slate-600 dark:text-white/50"
+							>
 								Contraseña actual
 							</label>
 							<input
@@ -230,7 +275,10 @@
 							/>
 						</div>
 						<div>
-							<label for="up-new-pwd" class="mb-1 block text-xs font-medium text-slate-600 dark:text-white/50">
+							<label
+								for="up-new-pwd"
+								class="mb-1 block text-xs font-medium text-slate-600 dark:text-white/50"
+							>
 								Nueva contraseña
 							</label>
 							<input
@@ -276,20 +324,32 @@
 					aria-expanded={showInviteUser}
 				>
 					<span class="flex items-center gap-2.5">
-						<Icon icon="mdi:account-plus-outline" class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/40" aria-hidden="true" />
-						<h3 id="up-invite-heading" class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
+						<Icon
+							icon="mdi:account-plus-outline"
+							class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/40"
+							aria-hidden="true"
+						/>
+						<h3
+							id="up-invite-heading"
+							class="m-0 text-sm font-semibold text-slate-900 dark:text-white"
+						>
 							Invitar usuario
 						</h3>
 					</span>
 					<Icon
 						icon="mdi:chevron-down"
-						class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/35 transition-transform duration-200 {showInviteUser ? 'rotate-180' : ''}"
+						class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/35 transition-transform duration-200 {showInviteUser
+							? 'rotate-180'
+							: ''}"
 						aria-hidden="true"
 					/>
 				</button>
 
 				{#if showInviteUser}
-					<div transition:slide={{ duration: 200 }} class="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-white/[0.06]">
+					<div
+						transition:slide={{ duration: 200 }}
+						class="border-t border-slate-100 px-4 pb-4 pt-3 dark:border-white/[0.06]"
+					>
 						<InviteUser />
 					</div>
 				{/if}

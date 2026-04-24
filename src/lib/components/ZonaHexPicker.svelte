@@ -223,8 +223,8 @@
 	aria-describedby="zhp-help"
 >
 	<p id="zhp-help" class="sr-only">
-		Mapa interactivo: toca las celdas hexagonales para incluirlas en la zona. Usa el botón
-		inferior para confirmar o el de retroceso para cancelar.
+		Mapa interactivo: toca las celdas hexagonales para incluirlas en la zona. Usa el botón inferior
+		para confirmar o el de retroceso para cancelar.
 	</p>
 
 	<header
@@ -255,8 +255,12 @@
 			class={`absolute bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-10 inline-flex size-14 cursor-pointer items-center justify-center rounded-full border-0 text-white transition-[background-color,opacity,box-shadow] duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-[0.45] disabled:shadow-none [&_svg]:size-[1.625rem] [&_svg]:shrink-0 ${selectedCells.size > 0 ? 'bg-orange-600 shadow-[0_4px_16px_rgba(234,88,12,0.45)]' : 'bg-blue-600 shadow-[0_4px_16px_rgba(37,99,235,0.45)]'}`}
 			disabled={selectedCells.size === 0}
 			on:click={removeLastCell}
-			aria-label={selectedCells.size > 0 ? 'Quitar la última celda seleccionada' : 'Sin celdas para quitar'}
-			title={selectedCells.size > 0 ? 'Quitar última celda' : 'Selecciona celdas en el mapa primero'}
+			aria-label={selectedCells.size > 0
+				? 'Quitar la última celda seleccionada'
+				: 'Sin celdas para quitar'}
+			title={selectedCells.size > 0
+				? 'Quitar última celda'
+				: 'Selecciona celdas en el mapa primero'}
 		>
 			{#if selectedCells.size > 0}
 				<Icon icon="mdi:eraser" aria-hidden="true" />
@@ -274,7 +278,8 @@
 				<p
 					class="m-0 rounded-full bg-black/75 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-[8px]"
 				>
-					{selectedCells.size} celda{selectedCells.size !== 1 ? 's' : ''} seleccionada{selectedCells.size !== 1
+					{selectedCells.size} celda{selectedCells.size !== 1 ? 's' : ''} seleccionada{selectedCells.size !==
+					1
 						? 's'
 						: ''}
 				</p>
@@ -306,19 +311,24 @@
 		>
 			<form
 				method="dialog"
-				class="absolute bottom-0 left-0 right-0 mx-auto box-border flex w-full max-w-lg flex-col gap-2.5 rounded-t-[1.125rem] border p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgb(0_0_0_/.2)] {$theme === 'light'
+				class="absolute bottom-0 left-0 right-0 mx-auto box-border flex w-full max-w-lg flex-col gap-2.5 rounded-t-[1.125rem] border p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgb(0_0_0_/.2)] {$theme ===
+				'light'
 					? 'border-slate-200 bg-white'
 					: 'border-white/10 bg-[#1c1c1e] shadow-[0_-8px_32px_rgb(0_0_0_/.35)]'}"
 				on:submit|preventDefault={handleSave}
 			>
 				<h3
 					id="zhp-dialog-title"
-					class="m-0 text-[1.0625rem] font-bold {$theme === 'light' ? 'text-slate-900' : 'text-white'}"
+					class="m-0 text-[1.0625rem] font-bold {$theme === 'light'
+						? 'text-slate-900'
+						: 'text-white'}"
 				>
 					Nombre de la zona
 				</h3>
 				<label
-					class="text-[0.8125rem] font-semibold {$theme === 'light' ? 'text-slate-600' : 'text-white/65'}"
+					class="text-[0.8125rem] font-semibold {$theme === 'light'
+						? 'text-slate-600'
+						: 'text-white/65'}"
 					for="zhp-zone-name">Nombre visible</label
 				>
 				<input
@@ -329,7 +339,8 @@
 					name="zoneName"
 					autocomplete="off"
 					placeholder="Ej: Centro histórico"
-					class="box-border w-full rounded-xl border px-4 py-3 text-base outline-none {$theme === 'light'
+					class="box-border w-full rounded-xl border px-4 py-3 text-base outline-none {$theme ===
+					'light'
 						? 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.2)]'
 						: 'border-white/15 bg-white/[0.07] text-white placeholder:text-white/30 focus:border-blue-600/85 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.25)]'}"
 					on:keydown={handleNameKeydown}
@@ -337,10 +348,12 @@
 				<div class="mt-1 flex gap-2.5">
 					<button
 						type="button"
-						class="flex-1 cursor-pointer rounded-xl border px-3 py-3 text-[0.9375rem] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 {$theme === 'light'
+						class="flex-1 cursor-pointer rounded-xl border px-3 py-3 text-[0.9375rem] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400 {$theme ===
+						'light'
 							? 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100'
 							: 'border-white/15 bg-transparent text-white/85 hover:bg-white/10'}"
-						on:click={dismissNameDialog}>Cancelar</button>
+						on:click={dismissNameDialog}>Cancelar</button
+					>
 					<button
 						type="submit"
 						class="flex-[2] cursor-pointer rounded-xl border-0 bg-blue-600 px-3 py-3 text-[0.9375rem] font-semibold text-white transition-[filter] hover:brightness-[1.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-300"
