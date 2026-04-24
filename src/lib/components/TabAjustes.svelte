@@ -8,7 +8,12 @@
 
 	let subView = 'main'; // 'main' | 'unidades'
 
-	function getInitial(name) {
+	function getUserDisplayName(u) {
+		return u?.name || u?.full_name || '';
+	}
+
+	function getInitial(u) {
+		const name = getUserDisplayName(u);
 		return name ? name.charAt(0).toUpperCase() : '?';
 	}
 
@@ -42,17 +47,23 @@
 						class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 text-2xl font-bold text-white"
 						aria-hidden="true"
 					>
-						{getInitial($user.name)}
+						{getInitial($user)}
 					</div>
 					<div class="min-w-0 flex-1">
-						<h2 id="ajustes-user-name" class="m-0 truncate text-base font-semibold text-slate-900 dark:text-white">
-							{$user.name}
+						<h2
+							id="ajustes-user-name"
+							class="m-0 truncate text-base font-semibold text-slate-900 dark:text-white"
+						>
+							{getUserDisplayName($user)}
 						</h2>
-						<p class="m-0 mt-1 truncate text-[0.8125rem] text-slate-600 dark:text-white/45">{$user.email}</p>
+						<p class="m-0 mt-1 truncate text-[0.8125rem] text-slate-600 dark:text-white/45">
+							{$user.email}
+						</p>
 					</div>
 				</article>
 			{/if}
 
+			<!-- Apariencia -->
 			<div aria-labelledby="ajustes-aspecto-heading">
 				<h3
 					id="ajustes-aspecto-heading"
@@ -89,13 +100,15 @@
 							aria-label={$theme === 'dark'
 								? 'Tema oscuro activo. Pulse para usar tema claro'
 								: 'Tema claro activo. Pulse para usar tema oscuro'}
-							class="relative h-[26px] w-11 shrink-0 cursor-pointer rounded-full border-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {$theme === 'dark'
+							class="relative h-[26px] w-11 shrink-0 cursor-pointer rounded-full border-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {$theme ===
+							'dark'
 								? 'bg-blue-600'
 								: 'bg-amber-400'}"
 							on:click={() => themeActions.toggle()}
 						>
 							<span
-								class="pointer-events-none absolute left-[3px] top-[3px] block h-5 w-5 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.3)] transition-transform {$theme === 'dark'
+								class="pointer-events-none absolute left-[3px] top-[3px] block h-5 w-5 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.3)] transition-transform {$theme ===
+								'dark'
 									? 'translate-x-[18px]'
 									: ''}"
 								aria-hidden="true"
@@ -105,6 +118,7 @@
 				</div>
 			</div>
 
+			<!-- Gestión -->
 			<div aria-labelledby="ajustes-gestion-heading">
 				<h3
 					id="ajustes-gestion-heading"
@@ -139,6 +153,7 @@
 				</div>
 			</div>
 
+			<!-- Cuenta -->
 			<div aria-labelledby="ajustes-cuenta-heading">
 				<h3
 					id="ajustes-cuenta-heading"
@@ -168,6 +183,7 @@
 				</div>
 			</div>
 
+			<!-- Info -->
 			<div aria-labelledby="ajustes-info-heading">
 				<h3
 					id="ajustes-info-heading"
@@ -220,7 +236,9 @@
 				{:else if $vehicles.length === 0}
 					<div class="flex flex-col items-center gap-3 px-6 py-12 text-center" role="status">
 						<Icon icon="mdi:car-off" class="h-20 w-20 shrink-0 opacity-20" aria-hidden="true" />
-						<h3 class="m-0 text-lg font-semibold text-slate-900 dark:text-white">No hay unidades disponibles</h3>
+						<h3 class="m-0 text-lg font-semibold text-slate-900 dark:text-white">
+							No hay unidades disponibles
+						</h3>
 						<p class="m-0 max-w-xs text-sm leading-relaxed text-slate-600 dark:text-white/40">
 							Las unidades registradas aparecerán en esta lista.
 						</p>
@@ -242,17 +260,20 @@
 										aria-hidden="true"
 									></div>
 									<div class="min-w-0 flex-1">
-										<p id="unit-name-{v.id}" class="m-0 text-[0.9375rem] font-medium text-slate-900 dark:text-white">
+										<p
+											id="unit-name-{v.id}"
+											class="m-0 text-[0.9375rem] font-medium text-slate-900 dark:text-white"
+										>
 											{v.name}
 										</p>
 										<p class="m-0 mt-0.5 text-xs leading-snug text-slate-600 dark:text-white/45">
 											{v.driver || 'Sin conductor'}
-											{#if v.speed !== undefined}
-												· {v.speed} km/h
-											{/if}
+											{#if v.speed !== undefined}· {v.speed} km/h{/if}
 										</p>
 										{#if v.lastUpdateFormatted}
-											<p class="m-0 mt-0.5 text-[0.6875rem] text-slate-500 dark:text-white/30">{v.lastUpdateFormatted}</p>
+											<p class="m-0 mt-0.5 text-[0.6875rem] text-slate-500 dark:text-white/30">
+												{v.lastUpdateFormatted}
+											</p>
 										{/if}
 									</div>
 									<span

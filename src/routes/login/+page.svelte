@@ -7,6 +7,9 @@
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
 
+ 	// URL de la página principal de la compañía para registro y recuperación de contraseña
+	const COMPANY_URL = import.meta.env.VITE_COMPANY_URL || 'http://localhost:5174';
+
 	let email = '';
 	let password = '';
 	let loading = false;
@@ -16,7 +19,6 @@
 	// Redirigir si ya está autenticado
 	onMount(() => {
 		user.init();
-		authToken.init();
 		const unsubscribe = user.subscribe((userData) => {
 			if (userData) {
 				goto('/dashboard');
@@ -26,8 +28,6 @@
 	});
 
 	async function handleLogin() {
-		if (loading) return;
-
 		if (!email || !password) {
 			error = 'Por favor, completa todos los campos';
 			return;
@@ -38,11 +38,6 @@
 
 		try {
 			const response = await apiService.login({ email, password });
-			const apiUser = response?.user || {};
-			const normalizedUser = {
-				...apiUser,
-				name: apiUser.name || apiUser.full_name || ''
-			};
 
 			// Guardar token y datos del usuario
 			authToken.setToken(response.access_token);
@@ -105,9 +100,6 @@
 		>
 			NEXUS
 		</h1>
-		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
-			by GeminisLabs
-		</p>
 		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
 			by GeminisLabs
 		</p>
@@ -205,11 +197,9 @@
 			<a
 				href="/register"
 				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
-			<a
-				href="/register"
-				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
-				>Regístrate</a
 			>
+				Regístrate
+			</a>
 		</p>
 	</main>
 </div>

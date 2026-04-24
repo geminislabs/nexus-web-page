@@ -1,7 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { user } from '$lib/stores/auth.js';
+	import { user, authToken } from '$lib/stores/auth.js';
 	import '$lib/styles/dashboard.css';
 
 	let { children } = $props();

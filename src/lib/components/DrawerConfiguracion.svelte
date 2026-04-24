@@ -265,8 +265,15 @@
 		{#if displaySection === 'apariencia'}
 			<div class="px-4 py-4">
 				<div class="mb-3 flex items-center gap-2">
-					<Icon icon="mdi:theme-light-dark" width={14} class="text-slate-500 dark:text-white/35" aria-hidden="true" />
-					<h3 class="m-0 text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">Apariencia</h3>
+					<Icon
+						icon="mdi:theme-light-dark"
+						width={14}
+						class="text-slate-500 dark:text-white/35"
+						aria-hidden="true"
+					/>
+					<h3 class="m-0 text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">
+						Apariencia
+					</h3>
 				</div>
 				<div class="flex gap-2.5">
 					<!-- Dark -->
@@ -350,7 +357,9 @@
 									aria-hidden="true"
 								/>Claro
 							</span>
-							<span class="block text-[10px] text-slate-500 dark:text-white/28">Contraste diurno</span>
+							<span class="block text-[10px] text-slate-500 dark:text-white/28"
+								>Contraste diurno</span
+							>
 						</div>
 					</button>
 				</div>
@@ -467,7 +476,9 @@
 				</div>
 				<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
 					{#if $loadingVehicles}
-						<div class="flex items-center justify-center gap-3 py-12 text-slate-500 dark:text-white/38">
+						<div
+							class="flex items-center justify-center gap-3 py-12 text-slate-500 dark:text-white/38"
+						>
 							<span
 								class="h-5 w-5 animate-spin rounded-full border-2 border-blue-600/20 border-t-blue-500"
 							></span>
@@ -501,7 +512,8 @@
 											class="h-2 w-2 shrink-0 rounded-full {statusColor(v.status)}"
 											aria-hidden="true"
 										></span>
-										<span class="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-900 dark:text-white"
+										<span
+											class="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-900 dark:text-white"
 											>{v.name}</span
 										>
 										<span
@@ -521,7 +533,9 @@
 										>
 									</div>
 									{#if v.speed !== undefined}
-										<div class="flex gap-3 border-t border-slate-100 pt-1.5 dark:border-white/[0.05]">
+										<div
+											class="flex gap-3 border-t border-slate-100 pt-1.5 dark:border-white/[0.05]"
+										>
 											<div class="flex items-baseline gap-0.5">
 												<span class="text-[14px] font-bold {speedColor(v.speed)}">{v.speed}</span>
 												<span class="text-[9px] text-slate-500 dark:text-white/25">km/h</span>
@@ -534,17 +548,25 @@
 											</div>
 										</div>
 									{/if}
-									{#if v.lastUpdateFormatted}<div class="text-[9px] text-slate-500 dark:text-white/22">
+									{#if v.lastUpdateFormatted}<div
+											class="text-[9px] text-slate-500 dark:text-white/22"
+										>
 											{v.lastUpdateFormatted}
 										</div>{/if}
-									<div class="mt-1 flex flex-wrap gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/[0.05]">
+									<div
+										class="mt-1 flex flex-wrap gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/[0.05]"
+									>
 										<button
 											type="button"
 											class="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
 											on:click={() => fetchVehicleDetail(v.id)}
 											disabled={actionLoading}
 										>
-											<Icon icon="mdi:database-search-outline" width={11} aria-hidden="true" />Obtener
+											<Icon
+												icon="mdi:database-search-outline"
+												width={11}
+												aria-hidden="true"
+											/>Obtener
 										</button>
 										<button
 											type="button"
@@ -592,7 +614,8 @@
 									></span>
 									<div class="min-w-0 flex-1">
 										<div class="flex items-center gap-2">
-											<span class="min-w-0 flex-1 truncate text-[12px] font-semibold text-slate-900 dark:text-white"
+											<span
+												class="min-w-0 flex-1 truncate text-[12px] font-semibold text-slate-900 dark:text-white"
 												>{v.name}</span
 											>
 											<span
@@ -660,8 +683,14 @@
 						class="shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.06] dark:bg-[#080d1a]"
 					>
 						<div class="mb-2 flex items-center gap-2">
-							<Icon icon="mdi:pencil-outline" width={13} class="text-emerald-600 dark:text-emerald-300" />
-							<span class="text-[12px] font-semibold text-slate-900 dark:text-white">Editar unidad</span>
+							<Icon
+								icon="mdi:pencil-outline"
+								width={13}
+								class="text-emerald-600 dark:text-emerald-300"
+							/>
+							<span class="text-[12px] font-semibold text-slate-900 dark:text-white"
+								>Editar unidad</span
+							>
 						</div>
 						<div class="grid gap-2 sm:grid-cols-2">
 							<input
@@ -740,8 +769,14 @@
 					</div>
 					<p class="m-0 mt-1 truncate"><strong>ID:</strong> {vehicleDetail.id}</p>
 					<p class="m-0 truncate"><strong>Nombre:</strong> {vehicleDetail.name}</p>
-					<p class="m-0 truncate"><strong>Descripción:</strong> {vehicleDetail.description || '—'}</p>
-					<p class="m-0 truncate"><strong>Dispositivo:</strong> {vehicleDetail.deviceId || 'Sin asignar'}</p>
+					<p class="m-0 truncate">
+						<strong>Descripción:</strong>
+						{vehicleDetail.description || '—'}
+					</p>
+					<p class="m-0 truncate">
+						<strong>Dispositivo:</strong>
+						{vehicleDetail.deviceId || 'Sin asignar'}
+					</p>
 				</div>
 			{/if}
 			{#if vehicleToDelete}
@@ -772,7 +807,7 @@
 				</div>
 			{/if}
 
-		<!-- ═══ ZONAS ═══ -->
+			<!-- ═══ ZONAS ═══ -->
 		{:else if displaySection === 'zonas'}
 			<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
 				<ZonasPanel
@@ -782,7 +817,6 @@
 					on:requestCloseDrawer={() => dispatch('close')}
 				/>
 			</div>
-
 		{:else if displaySection === 'alertas'}
 			<div class="px-4 py-4">
 				<div class="mb-1 flex items-center gap-2">
@@ -828,7 +862,8 @@
 										{ev.name || 'Alerta'}
 									</p>
 									<p class="m-0 mt-0.5 text-[10px] text-slate-600 dark:text-white/33">
-										{ev.vehicle || 'Unidad'} · <time datetime={ev.at}>{formatAlarmWhen(ev.at)}</time>
+										{ev.vehicle || 'Unidad'} ·
+										<time datetime={ev.at}>{formatAlarmWhen(ev.at)}</time>
 									</p>
 								</div>
 								<span
@@ -840,7 +875,6 @@
 					</ul>
 				{/if}
 			</div>
-
 		{:else if displaySection === 'gestionar_alertas'}
 			<div class="px-4 py-4">
 				<div class="mb-4 flex items-center gap-2">
@@ -850,14 +884,18 @@
 						class="text-slate-500 dark:text-white/35"
 						aria-hidden="true"
 					/>
-					<h3 class="m-0 text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">Gestionar alertas</h3>
-					<button
-						type="button"
-						class="ml-auto flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/28 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"
-						on:click={() => alertActions.openWizard()}
-					>
-						<Icon icon="mdi:plus-circle-outline" width={13} aria-hidden="true" />Nueva alerta
-					</button>
+					<h3 class="m-0 text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">
+						Gestionar alertas
+					</h3>
+					{#if $alerts.length > 0}
+						<button
+							type="button"
+							class="ml-auto flex items-center gap-1.5 ..."
+							on:click={() => alertActions.openWizard()}
+						>
+							<Icon icon="mdi:plus-circle-outline" width={13} aria-hidden="true" />Nueva alerta
+						</button>
+					{/if}
 				</div>
 				{#if $alerts.length === 0}
 					<div class="flex flex-col items-center gap-3 py-10">
@@ -872,8 +910,12 @@
 							/>
 						</div>
 						<div class="text-center">
-							<p class="m-0 text-[13px] font-semibold text-slate-800 dark:text-white/70">Sin alertas configuradas</p>
-							<p class="m-0 mt-1 max-w-[220px] text-[11px] leading-relaxed text-slate-600 dark:text-white/35">
+							<p class="m-0 text-[13px] font-semibold text-slate-800 dark:text-white/70">
+								Sin alertas configuradas
+							</p>
+							<p
+								class="m-0 mt-1 max-w-[220px] text-[11px] leading-relaxed text-slate-600 dark:text-white/35"
+							>
 								Crea alertas de ignición o zona para recibir notificaciones en tiempo real.
 							</p>
 						</div>
@@ -894,8 +936,8 @@
 								<div
 									class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
 								{alert.type === 'ignition'
-									? 'bg-blue-100 text-blue-800 dark:bg-blue-600/15 dark:text-blue-300'
-									: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'}"
+										? 'bg-blue-100 text-blue-800 dark:bg-blue-600/15 dark:text-blue-300'
+										: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'}"
 								>
 									<Icon
 										icon={alert.type === 'ignition'
@@ -906,7 +948,11 @@
 									/>
 								</div>
 								<div class="min-w-0 flex-1">
-									<p class="m-0 text-[13px] font-semibold leading-snug text-slate-900 dark:text-white">{alert.name}</p>
+									<p
+										class="m-0 text-[13px] font-semibold leading-snug text-slate-900 dark:text-white"
+									>
+										{alert.name}
+									</p>
 									<p class="m-0 mt-0.5 text-[10px] text-slate-600 dark:text-white/38">
 										{alertCondLabel(alert.condition)} · {alert.units.length} unidad{alert.units
 											.length !== 1

@@ -66,8 +66,18 @@
 	$: canonicalUrl =
 		$page?.url?.origin && $page?.url?.pathname ? `${$page.url.origin}${$page.url.pathname}` : '';
 
+	function closeZoneOverlayIfActive() {
+		if (get(desktopZonePanelSubView) !== 'zonas') {
+			mapService.disableMobileZoneEditorZoomLock?.();
+			h3Actions.exitMobileZoneMap();
+			mapService.setMapTheme?.(get(theme) === 'light' ? 'light' : 'dark');
+			requestAnimationFrame(() => mapService.resizeMap?.());
+			desktopZonePanelSubView.set('zonas');
+		}
+	}
 	function toggleDrawer(name) {
 		showUserMenu = false;
+		closeZoneOverlayIfActive();
 		openDrawer = openDrawer === name ? '' : name;
 	}
 	function closeDrawer() {
@@ -81,6 +91,7 @@
 	function openConfigDrawer(section) {
 		const drawerId = getConfigDrawerId(section);
 		showUserMenu = false;
+		closeZoneOverlayIfActive();
 		openDrawer = openDrawer === drawerId ? '' : drawerId;
 	}
 
@@ -89,16 +100,22 @@
 	}
 
 	$: isConfigDrawerOpen = openDrawer.startsWith('configuracion:');
-	// Lectura directa de `openDrawer` para que la reactividad (Svelte 5) no se pierda en una función auxiliar.
 	$: activeConfigSection =
 		openDrawer.startsWith('configuracion:') && openDrawer.length > 'configuracion:'.length
 			? openDrawer.slice('configuracion:'.length)
 			: 'apariencia';
 	$: configDrawerTitle =
-		configSidebarItems.find((item) => item.id === activeConfigSection)?.title ??
-		configSidebarItems.find((item) => item.id === activeConfigSection)?.label ??
+		configSidebarItems.find((i) => i.id === activeConfigSection)?.title ??
+		configSidebarItems.find((i) => i.id === activeConfigSection)?.label ??
 		'Configuración';
 
+	function getUserDisplayName(u) {
+		return u?.name || u?.full_name || '';
+	}
+	function getInitial(u) {
+		const name = getUserDisplayName(u);
+		return name ? name.charAt(0).toUpperCase() : '?';
+	}
 	function handleBodyClick(e) {
 		if (!e.target.closest('[data-dashboard-user-menu]')) showUserMenu = false;
 	}
@@ -106,13 +123,7 @@
 	function handleGlobalKeydown(e) {
 		if (e.key === 'Escape') {
 			showUserMenu = false;
-			if (get(desktopZonePanelSubView) !== 'zonas') {
-				mapService.disableMobileZoneEditorZoomLock();
-				h3Actions.exitMobileZoneMap();
-				mapService.setMapTheme(get(theme) === 'light' ? 'light' : 'dark');
-				requestAnimationFrame(() => mapService.resizeMap());
-				desktopZonePanelSubView.set('zonas');
-			}
+			closeZoneOverlayIfActive();
 			closeDrawer();
 		}
 	}
@@ -133,19 +144,9 @@
 		isAppFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
 	}
 
-	function getInitial(name) {
-		return name ? name.charAt(0).toUpperCase() : '?';
-	}
-
 	function onMobileMapTap() {
 		showMobileUnitsSheet = false;
 	}
-
-	async function openMobileUnitsSheet() {
-		if ($vehicles.length === 0) await vehicleActions.loadVehicles();
-		showMobileUnitsSheet = true;
-	}
-
 	function closeMobileUnitsSheet() {
 		showMobileUnitsSheet = false;
 	}
@@ -175,15 +176,9 @@
 				goto('/login');
 				return;
 			}
-			alertActions.syncZonesFromApi().catch((err) => {
-				console.error('No se pudieron sincronizar las geocercas:', err);
-			});
-			alertActions.syncAlertRulesFromApi().catch((err) => {
-				console.error('No se pudieron sincronizar las reglas de alerta:', err);
-			});
-			alertActions.syncAlarmEventsFromApi().catch((err) => {
-				console.error('No se pudo sincronizar el historial de alertas:', err);
-			});
+			alertActions.syncZonesFromApi().catch(console.error);
+			alertActions.syncAlertRulesFromApi().catch(console.error);
+			alertActions.syncAlarmEventsFromApi().catch(console.error);
 		});
 		if (browser) {
 			document.addEventListener('fullscreenchange', syncFullscreen);
@@ -207,24 +202,10 @@
 	<title>Dashboard — NEXUS | GeminisLabs</title>
 	<meta
 		name="description"
-		content="Panel de control NEXUS: mapa en vivo, informes, alertas y configuración de flota. Acceso restringido a usuarios autenticados."
+		content="Panel de control NEXUS: mapa en vivo, informes, alertas y configuración de flota."
 	/>
 	<meta name="robots" content="noindex, nofollow" />
-	{#if canonicalUrl}
-		<link rel="canonical" href={canonicalUrl} />
-	{/if}
-	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Dashboard — NEXUS" />
-	<meta
-		property="og:description"
-		content="Monitorización y gestión de flotas en tiempo real con NEXUS."
-	/>
-	{#if canonicalUrl}
-		<meta property="og:url" content={canonicalUrl} />
-	{/if}
-	<meta name="twitter:card" content="summary" />
-	<meta name="twitter:title" content="Dashboard — NEXUS" />
-	<meta name="twitter:description" content="Panel de control para flotas y unidades." />
+	{#if canonicalUrl}<link rel="canonical" href={canonicalUrl} />{/if}
 </svelte:head>
 
 <div
@@ -232,13 +213,13 @@
 >
 	<a
 		href="#main-dashboard"
-		class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[200] focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+		class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[200] focus:rounded-lg focus:bg-blue-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
 	>
 		Saltar al contenido principal
 	</a>
-
 	<h1 class="sr-only">Dashboard NEXUS — seguimiento de flota</h1>
 
+	<!-- ── Sidebar ── -->
 	<aside
 		class="fixed bottom-0 left-0 top-0 z-50 hidden w-[72px] flex-col items-center gap-1 border-r border-slate-200 bg-white py-4 backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#080b16]/[0.97] sm:flex"
 		aria-label="Barra lateral de aplicación"
@@ -246,11 +227,11 @@
 		<header class="mb-1 flex w-10 shrink-0 flex-col items-center justify-center">
 			<a
 				href="/dashboard"
-				class="flex h-[34px] w-10 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080b16]"
+				class="flex h-[34px] w-10 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
 			>
 				<img
 					src={logoUrl}
-					alt="NEXUS — inicio"
+					alt="NEXUS"
 					class="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]"
 					width="40"
 					height="34"
@@ -282,7 +263,7 @@
 							class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-[0.9375rem] font-bold text-white"
 							aria-hidden="true"
 						>
-							{getInitial(userData.name)}
+							{getInitial(userData)}
 						</span>
 					{:else}
 						<Icon icon="mdi:account-circle" class="h-[22px] w-[22px] shrink-0" aria-hidden="true" />
@@ -304,37 +285,41 @@
 									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-[1.1rem] font-bold text-white"
 									aria-hidden="true"
 								>
-									{getInitial(userData.name)}
+									{getInitial(userData)}
 								</div>
 								<div class="min-w-0 flex-1">
 									<div class="flex items-center gap-1.5">
 										<p
-											id="dashboard-user-menu-name"
 											class="m-0 min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-slate-900 dark:text-white"
 										>
-											{userData.name}
+											{getUserDisplayName(userData)}
 										</p>
 										<button
 											type="button"
-											class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/55 dark:text-white/70
-												{isConfigDrawerOpen && activeConfigSection === 'apariencia'
-												? 'border-blue-500/45 bg-blue-600/22 text-blue-300 shadow-[0_0_12px_rgba(37,99,235,0.25)]'
-												: 'border-slate-200 bg-slate-100 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-900 dark:border-white/[0.12] dark:bg-white/[0.06] dark:hover:border-white/20 dark:hover:bg-white/[0.1] dark:hover:text-white'}"
+											class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 dark:text-white/70
+											{isConfigDrawerOpen && activeConfigSection === 'apariencia'
+												? 'border-blue-500/45 bg-blue-600/22 text-blue-300'
+												: 'border-slate-200 bg-slate-100 hover:border-slate-300 hover:bg-slate-200 dark:border-white/[0.12] dark:bg-white/[0.06] dark:hover:bg-white/[0.1]'}"
 											aria-label="Configuración"
-											title="Configuración"
 											on:click|stopPropagation={() => openConfigDrawer('apariencia')}
 										>
-											<Icon icon="mdi:cog-outline" class="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+											<Icon
+												icon="mdi:cog-outline"
+												class="h-[18px] w-[18px] shrink-0"
+												aria-hidden="true"
+											/>
 										</button>
 									</div>
-									<p class="mt-0.5 truncate text-xs text-slate-500 dark:text-white/45">{userData.email}</p>
+									<p class="mt-0.5 truncate text-xs text-slate-500 dark:text-white/45">
+										{userData.email}
+									</p>
 								</div>
 							</div>
 							<div class="my-3 h-px bg-slate-200 dark:bg-white/[0.08]" role="presentation"></div>
 						{/if}
 						<button
 							type="button"
-							class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 justify-center"
+							class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-0 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20"
 							on:click={() => {
 								user.logout?.();
 								goto('/login');
@@ -389,20 +374,17 @@
 					aria-label={isAppFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
 					title={isAppFullscreen ? 'Salir' : 'Pantalla completa'}
 				>
-					{#if isAppFullscreen}
-						<Icon
-							icon="mdi:fullscreen-exit"
-							class="h-[22px] w-[22px] shrink-0"
-							aria-hidden="true"
-						/>
-					{:else}
-						<Icon icon="mdi:fullscreen" class="h-[22px] w-[22px] shrink-0" aria-hidden="true" />
-					{/if}
+					<Icon
+						icon={isAppFullscreen ? 'mdi:fullscreen-exit' : 'mdi:fullscreen'}
+						class="h-[22px] w-[22px] shrink-0"
+						aria-hidden="true"
+					/>
 				</button>
 			{/if}
 		</nav>
 	</aside>
 
+	<!-- ── Main ── -->
 	<main
 		id="main-dashboard"
 		class="fixed bottom-0 left-0 right-0 top-0 sm:left-[72px]"
@@ -452,59 +434,66 @@
 				role="status"
 			>
 				<p
-					class="w-full rounded-2xl border border-emerald-500/35 bg-slate-900/92 px-4 py-2.5 text-center text-[13px] font-semibold text-white shadow-lg backdrop-blur-md dark:border-emerald-400/30 dark:bg-black/88"
+					class="w-full rounded-2xl border border-emerald-500/35 bg-slate-900/92 px-4 py-2.5 text-center text-[13px] font-semibold text-white shadow-lg backdrop-blur-md"
 				>
 					{$zoneUiToast}
 				</p>
 			</div>
 		{/if}
 
+		<!-- ── Panel móvil de unidades ── -->
 		{#if $activeTab === 'seguimiento'}
 			<div
 				class="pointer-events-none fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom,0px)+2px)] z-[220] flex sm:hidden"
 				aria-label="Panel de unidades"
 			>
 				<div class="pointer-events-auto relative w-full">
+					<!-- Hint visible cuando el sheet está cerrado -->
 					{#if !showMobileUnitsSheet}
 						<button
 							type="button"
-							class="mx-auto mb-1 flex w-20 items-center justify-center rounded-full border border-cyan-500/35 bg-white/95 px-2 py-1 shadow-lg backdrop-blur-sm dark:border-cyan-300/30 dark:bg-slate-900/92 dark:shadow-[0_10px_28px_rgba(0,0,0,0.55)]"
-							on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
+							class="mx-auto mb-2 flex items-center gap-2 rounded-2xl border border-slate-300 bg-white/98 px-4 py-2.5 text-[13px] font-semibold text-slate-700 shadow-[0_4px_20px_rgba(15,23,42,0.18)] backdrop-blur-md transition-all hover:bg-white active:scale-[0.98] dark:border-white/20 dark:bg-slate-900/95 dark:text-white dark:shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+							on:click={() => (showMobileUnitsSheet = true)}
 							aria-label="Mostrar panel de unidades"
 						>
-							<div class="h-1 w-10 rounded-full bg-cyan-500/70 dark:bg-cyan-200/80" aria-hidden="true"></div>
-						</button>
-						<button
-							type="button"
-							class="mx-auto mb-1 block rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-md backdrop-blur-sm dark:border-white/12 dark:bg-slate-900/90 dark:text-white/75 dark:shadow-[0_8px_22px_rgba(0,0,0,0.45)]"
-							on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
-							aria-label="Mostrar panel de unidades"
-						>
-							Selecciona una unidad para ver más posiciones
+							<Icon icon="mdi:car-side" class="h-4 w-4 shrink-0 text-cyan-500" aria-hidden="true" />
+							<span>Ver unidades</span>
+							<Icon
+								icon="mdi:chevron-up"
+								class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/40"
+								aria-hidden="true"
+							/>
 						</button>
 					{/if}
+
+					<!-- Sheet deslizable -->
 					<div
-						class="absolute inset-x-0 bottom-full mb-1 rounded-t-[24px] border border-slate-200 bg-white shadow-[0_-12px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-transform duration-300 ease-out dark:border-white/10 dark:border-b-white/[0.04] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.97)_0%,rgba(2,6,23,0.97)_100%)] dark:shadow-[0_-18px_46px_rgba(0,0,0,0.52),inset_0_1px_0_rgba(255,255,255,0.08)]"
+						class="absolute inset-x-0 bottom-full mb-1 rounded-t-[24px] border border-slate-200 bg-white shadow-[0_-12px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl transition-transform duration-300 ease-out dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.97)_0%,rgba(2,6,23,0.97)_100%)] dark:shadow-[0_-18px_46px_rgba(0,0,0,0.52)]"
 						style:transform={showMobileUnitsSheet
 							? 'translateY(0)'
 							: 'translateY(calc(100% + 10px))'}
 					>
+						<!-- Handle -->
 						<button
 							type="button"
-							class="block w-full cursor-pointer border-0 border-b border-slate-200 bg-transparent px-4 pb-2 pt-3 text-center dark:border-white/[0.07]"
-							on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
-							aria-label={showMobileUnitsSheet
-								? 'Ocultar panel de unidades'
-								: 'Mostrar panel de unidades'}
+							class="flex w-full flex-col items-center gap-1 border-0 bg-transparent px-4 pb-2 pt-3"
+							on:click={closeMobileUnitsSheet}
+							aria-label="Ocultar panel de unidades"
 						>
-							<p class="m-0 text-center text-[12px] font-semibold text-slate-700 dark:text-white/78">
-								Selecciona una unidad para ver más posiciones
-							</p>
+							<div
+								class="h-1 w-10 rounded-full bg-slate-300 dark:bg-white/20"
+								aria-hidden="true"
+							></div>
 						</button>
-						<div class="flex items-center justify-between px-4 pt-2">
+
+						<div class="flex items-center justify-between px-4 pb-2">
 							<div>
-								<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">Seguimiento de unidades</p>
-								<p class="m-0 text-[11px] text-slate-500 dark:text-white/40">{$vehicles.length} registradas</p>
+								<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
+									Seguimiento de unidades
+								</p>
+								<p class="m-0 text-[11px] text-slate-500 dark:text-white/40">
+									{$vehicles.length} registradas
+								</p>
 							</div>
 							<button
 								type="button"
@@ -514,26 +503,28 @@
 								Ocultar
 							</button>
 						</div>
-						<div class="max-h-[50vh] overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
+
+						<div class="max-h-[50vh] overflow-y-auto overscroll-contain px-3 pb-3">
 							{#if $loadingVehicles}
-								<div class="flex h-40 items-center justify-center" role="status" aria-live="polite">
+								<div class="flex h-40 items-center justify-center">
 									<div
 										class="h-8 w-8 animate-spin rounded-full border-2 border-blue-600/20 border-t-blue-500"
-										aria-hidden="true"
 									></div>
 								</div>
 							{:else if $vehicles.length === 0}
-								<div class="flex h-40 flex-col items-center justify-center gap-2 text-slate-500 dark:text-white/35">
+								<div
+									class="flex h-32 flex-col items-center justify-center gap-2 text-slate-500 dark:text-white/35"
+								>
 									<Icon icon="mdi:car-off" width={28} aria-hidden="true" />
 									<p class="m-0 text-xs">No hay unidades disponibles</p>
 								</div>
 							{:else}
-								<ul class="m-0 list-none space-y-2 p-0" aria-label="Lista de unidades">
+								<ul class="m-0 list-none space-y-2 p-0">
 									{#each $vehicles as v (v.id)}
 										<li>
 											<button
 												type="button"
-												class="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left transition-colors hover:border-cyan-400/50 hover:bg-cyan-50/80 focus-visible:outline focus-visible:ring-2 focus-visible:ring-cyan-400/45 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-cyan-400/30 dark:hover:bg-white/[0.07]"
+												class="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left transition-colors hover:border-cyan-400/50 hover:bg-cyan-50/80 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-cyan-400/30 dark:hover:bg-white/[0.07]"
 												disabled={!mobileVehicleHasCoords(v)}
 												on:click={() => onMobileVehicleRowClick(v)}
 												aria-label="Ver {v.name} en el mapa"
@@ -547,18 +538,17 @@
 													aria-hidden="true"
 												></div>
 												<div class="min-w-0 flex-1">
-													<p class="m-0 truncate text-[13px] font-semibold text-slate-900 dark:text-white">{v.name}</p>
-													<p class="m-0 mt-0.5 truncate text-[11px] text-slate-600 dark:text-white/45">
-														{v.driver || 'Sin conductor'}
-														{#if v.speed !== undefined}
-															· {v.speed} km/h
-														{/if}
+													<p
+														class="m-0 truncate text-[13px] font-semibold text-slate-900 dark:text-white"
+													>
+														{v.name}
 													</p>
-													{#if v.lastUpdateFormatted}
-														<p class="m-0 mt-0.5 text-[10px] text-slate-500 dark:text-white/30">
-															{v.lastUpdateFormatted}
-														</p>
-													{/if}
+													<p
+														class="m-0 mt-0.5 truncate text-[11px] text-slate-600 dark:text-white/45"
+													>
+														{v.driver || 'Sin conductor'}{#if v.speed !== undefined}
+															· {v.speed} km/h{/if}
+													</p>
 												</div>
 												<span
 													class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold {getStatusPillClass(
@@ -574,18 +564,18 @@
 							{/if}
 						</div>
 						<div
-							class="h-2 shrink-0 opacity-90"
-							aria-hidden="true"
-							style="background: linear-gradient(90deg, transparent, rgb(16, 185, 129), rgb(14, 165, 233), transparent);"
+							class="h-2 shrink-0"
+							style="background: linear-gradient(90deg, transparent, rgb(16,185,129), rgb(14,165,233), transparent);"
 						></div>
 					</div>
 				</div>
 			</div>
 		{/if}
 
+		<!-- ── Tabs móvil ── -->
 		{#if $activeTab === 'informes'}
 			<div
-				class="fixed inset-0 z-[52] max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 touch-pan-y dark:bg-[#080d1a] sm:hidden"
+				class="fixed inset-0 z-[52] max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] overflow-y-auto overscroll-contain bg-slate-50 touch-pan-y dark:bg-[#080d1a] sm:hidden"
 				role="region"
 				aria-label="Informes"
 				transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
@@ -614,7 +604,6 @@
 				<TabAjustes />
 			</div>
 		{/if}
-
 	</main>
 
 	<div class="sm:hidden" aria-hidden="true">

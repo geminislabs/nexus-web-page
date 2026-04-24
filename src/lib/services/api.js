@@ -4,8 +4,6 @@ import { get } from 'svelte/store';
 // Configuración de las APIs
 const ADMIN_API_URL = import.meta.env.VITE_ADMIN_API_URL || 'http://localhost:8000';
 const COMM_API_URL = import.meta.env.VITE_COMM_API_URL || 'http://34.237.30.30:8080';
-// Configuración base de la API
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100/api/v1';
 
 /**
  * Servicio de API para comunicación con SISCOM-ADMIN-API y SISCOM-API
@@ -46,11 +44,10 @@ class ApiService {
 			let response = await fetch(url, config);
 
 			// Intercept 401 errors for token refresh
-			// Intercept 401 errors for token refresh
 			if (response.status === 401) {
 				// Avoid infinite loops if the refresh endpoint itself returns 401
-				if (endpoint.includes('/auth/refresh')) {
-					throw new Error('Refresh token expired');
+				if (endpoint.includes('/auth/')) {
+					throw new Error('Unauthorized');
 				}
 
 				try {
@@ -499,9 +496,6 @@ class ApiService {
 			method: 'POST',
 			body: JSON.stringify({ device_id })
 		});
-	// Métodos específicos para vehículos
-	async getVehicles() {
-		return this.request('/units', { method: 'GET' });
 	}
 
 	/**
@@ -512,28 +506,6 @@ class ApiService {
 	 */
 	async unassignDeviceFromUnit(assignment_id) {
 		return this.request(`/api/v1/user-units/${assignment_id}`, {
-			method: 'DELETE'
-		});
-	async getVehicle(vehicleId) {
-		return this.request(`/units/${vehicleId}`, { method: 'GET' });
-	}
-
-	async createVehicle(data) {
-		return this.request('/units', {
-			method: 'POST',
-			body: JSON.stringify(data)
-		});
-	}
-
-	async updateVehicle(vehicleId, data) {
-		return this.request(`/units/${vehicleId}`, {
-			method: 'PATCH',
-			body: JSON.stringify(data)
-		});
-	}
-
-	async deleteVehicle(vehicleId) {
-		return this.request(`/units/${vehicleId}`, {
 			method: 'DELETE'
 		});
 	}
@@ -605,7 +577,8 @@ class ApiService {
 		});
 	}
 
-	// Métodos específicos para geocercas
+	// ── Geofences ─────────────────────────────────────────────
+
 	async getGeofences() {
 		return this.request('/geofences', { method: 'GET' });
 	}
@@ -629,12 +602,11 @@ class ApiService {
 	}
 
 	async deleteGeofence(geofenceId) {
-		return this.request(`/geofences/${geofenceId}`, {
-			method: 'DELETE'
-		});
+		return this.request(`/geofences/${geofenceId}`, { method: 'DELETE' });
 	}
 
-	// Métodos específicos para reglas de alerta
+	// ── Alert Rules ───────────────────────────────────────────
+
 	async getAlertRules() {
 		return this.request('/alert_rules', { method: 'GET' });
 	}
@@ -658,12 +630,11 @@ class ApiService {
 	}
 
 	async deleteAlertRule(ruleId) {
-		return this.request(`/alert_rules/${ruleId}`, {
-			method: 'DELETE'
-		});
+		return this.request(`/alert_rules/${ruleId}`, { method: 'DELETE' });
 	}
 
-	// Historial de alertas generadas
+	// ── Alerts (historial) ────────────────────────────────────
+
 	async getAlerts(params = {}) {
 		const qs = new URLSearchParams();
 		Object.entries(params).forEach(([key, value]) => {
