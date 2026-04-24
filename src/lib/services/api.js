@@ -577,64 +577,130 @@ class ApiService {
 		});
 	}
 
-	// ── Geofences ─────────────────────────────────────────────
+	// ── Geocercas (zonas H3) ─────────────────────────────────
 
+	/**
+	 * Listar geocercas del cliente
+	 * GET /api/v1/geofences
+	 * @returns {Promise<Array>} Lista de geocercas
+	 */
 	async getGeofences() {
-		return this.request('/geofences', { method: 'GET' });
+		return this.request('/api/v1/geofences', { method: 'GET' });
 	}
 
+	/**
+	 * Obtener una geocerca por ID
+	 * GET /api/v1/geofences/{geofenceId}
+	 * @param {string} geofenceId - ID de la geocerca
+	 * @returns {Promise<Object>} Geocerca
+	 */
 	async getGeofence(geofenceId) {
-		return this.request(`/geofences/${geofenceId}`, { method: 'GET' });
+		return this.request(`/api/v1/geofences/${geofenceId}`, { method: 'GET' });
 	}
 
+	/**
+	 * Crear geocerca (p. ej. celdas H3, nombre, estado)
+	 * POST /api/v1/geofences
+	 * @param {Object} data - Cuerpo de creación
+	 * @returns {Promise<Object>} Geocerca creada
+	 */
 	async createGeofence(data) {
-		return this.request('/geofences', {
+		return this.request('/api/v1/geofences', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
 	}
 
+	/**
+	 * Actualizar geocerca
+	 * PATCH /api/v1/geofences/{geofenceId}
+	 * @param {string} geofenceId - ID de la geocerca
+	 * @param {Object} data - Campos a modificar
+	 * @returns {Promise<Object>} Geocerca actualizada
+	 */
 	async updateGeofence(geofenceId, data) {
-		return this.request(`/geofences/${geofenceId}`, {
+		return this.request(`/api/v1/geofences/${geofenceId}`, {
 			method: 'PATCH',
 			body: JSON.stringify(data)
 		});
 	}
 
+	/**
+	 * Eliminar geocerca
+	 * DELETE /api/v1/geofences/{geofenceId}
+	 * @param {string} geofenceId - ID de la geocerca
+	 * @returns {Promise<Object>} Confirmación
+	 */
 	async deleteGeofence(geofenceId) {
-		return this.request(`/geofences/${geofenceId}`, { method: 'DELETE' });
+		return this.request(`/api/v1/geofences/${geofenceId}`, { method: 'DELETE' });
 	}
 
-	// ── Alert Rules ───────────────────────────────────────────
+	// ── Alert rules (reglas de notificación) ─────────────────
 
+	/**
+	 * Listar reglas de alerta del cliente
+	 * GET /api/v1/alert_rules
+	 * @returns {Promise<Array>} Lista de reglas
+	 */
 	async getAlertRules() {
-		return this.request('/alert_rules', { method: 'GET' });
+		return this.request('/api/v1/alert_rules', { method: 'GET' });
 	}
 
+	/**
+	 * Obtener una regla de alerta por ID
+	 * GET /api/v1/alert_rules/{ruleId}
+	 * @param {string} ruleId - ID de la regla
+	 * @returns {Promise<Object>} Regla
+	 */
 	async getAlertRule(ruleId) {
-		return this.request(`/alert_rules/${ruleId}`, { method: 'GET' });
+		return this.request(`/api/v1/alert_rules/${ruleId}`, { method: 'GET' });
 	}
 
+	/**
+	 * Crear regla de alerta (ignición, geocerca, etc.)
+	 * POST /api/v1/alert_rules
+	 * @param {Object} data - { name, type, config, unit_ids }
+	 * @returns {Promise<Object>} Regla creada
+	 */
 	async createAlertRule(data) {
-		return this.request('/alert_rules', {
+		return this.request('/api/v1/alert_rules', {
 			method: 'POST',
 			body: JSON.stringify(data)
 		});
 	}
 
+	/**
+	 * Actualizar regla de alerta
+	 * PATCH /api/v1/alert_rules/{ruleId}
+	 * @param {string} ruleId - ID de la regla
+	 * @param {Object} data - Campos a modificar
+	 * @returns {Promise<Object>} Regla actualizada
+	 */
 	async updateAlertRule(ruleId, data) {
-		return this.request(`/alert_rules/${ruleId}`, {
+		return this.request(`/api/v1/alert_rules/${ruleId}`, {
 			method: 'PATCH',
 			body: JSON.stringify(data)
 		});
 	}
 
+	/**
+	 * Eliminar regla de alerta
+	 * DELETE /api/v1/alert_rules/{ruleId}
+	 * @param {string} ruleId - ID de la regla
+	 * @returns {Promise<Object>} Confirmación
+	 */
 	async deleteAlertRule(ruleId) {
-		return this.request(`/alert_rules/${ruleId}`, { method: 'DELETE' });
+		return this.request(`/api/v1/alert_rules/${ruleId}`, { method: 'DELETE' });
 	}
 
-	// ── Alerts (historial) ────────────────────────────────────
+	// ── Alerts (historial de eventos) ───────────────────────
 
+	/**
+	 * Listar alertas disparadas (historial)
+	 * GET /api/v1/alerts
+	 * @param {Object} [params] - Query opcional (unit_id, desde/hasta, etc.)
+	 * @returns {Promise<Array>} Eventos de alerta
+	 */
 	async getAlerts(params = {}) {
 		const qs = new URLSearchParams();
 		Object.entries(params).forEach(([key, value]) => {
@@ -642,7 +708,7 @@ class ApiService {
 			qs.set(key, String(value));
 		});
 		const query = qs.toString();
-		return this.request(`/alerts${query ? `?${query}` : ''}`, { method: 'GET' });
+		return this.request(`/api/v1/alerts${query ? `?${query}` : ''}`, { method: 'GET' });
 	}
 }
 
