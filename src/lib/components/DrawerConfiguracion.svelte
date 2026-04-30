@@ -888,9 +888,9 @@
 					</h3>
 					{#if $alerts.length > 0}
 						<button
-						type="button"
-						class="ml-auto flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/28 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"
-						on:click={() => alertActions.openWizard()}
+							type="button"
+							class="ml-auto flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/28 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"
+							on:click={() => alertActions.openWizard()}
 						>
 							<Icon icon="mdi:plus-circle-outline" width={13} aria-hidden="true" />Nueva alerta
 						</button>
