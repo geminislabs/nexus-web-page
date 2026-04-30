@@ -19,6 +19,7 @@
 	// Redirigir si ya está autenticado
 	onMount(() => {
 		user.init();
+		authToken.init();
 		const unsubscribe = user.subscribe((userData) => {
 			if (userData) {
 				goto('/dashboard');
@@ -28,6 +29,8 @@
 	});
 
 	async function handleLogin() {
+		if (loading) return;
+
 		if (!email || !password) {
 			error = 'Por favor, completa todos los campos';
 			return;
@@ -38,6 +41,11 @@
 
 		try {
 			const response = await apiService.login({ email, password });
+			const apiUser = response?.user || {};
+			const normalizedUser = {
+				...apiUser,
+				name: apiUser.name || apiUser.full_name || ''
+			};
 
 			// Guardar token y datos del usuario
 			authToken.setToken(response.access_token);
@@ -197,9 +205,8 @@
 			<a
 				href="/register"
 				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+				>Regístrate</a
 			>
-				Regístrate
-			</a>
 		</p>
 	</main>
 </div>

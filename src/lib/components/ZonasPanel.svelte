@@ -83,19 +83,16 @@
 			dispatch('requestCloseDrawer');
 			requestAnimationFrame(() => {
 				mapService.resizeMap();
-				mapService.enableMobileZoneEditorZoomLock();
 			});
 			return;
 		}
 		setZoneSubView('crear_zona_map');
 		requestAnimationFrame(() => {
 			mapService.resizeMap();
-			mapService.enableMobileZoneEditorZoomLock();
 		});
 	}
 
 	function backFromCrearZonaMap() {
-		mapService.disableMobileZoneEditorZoomLock();
 		h3Actions.exitMobileZoneMap();
 		mapService.setMapTheme(get(theme) === 'light' ? 'light' : 'dark');
 		requestAnimationFrame(() => mapService.resizeMap());
@@ -130,7 +127,6 @@
 		} finally {
 			zoneRequestLoading = false;
 		}
-		mapService.disableMobileZoneEditorZoomLock();
 		h3Actions.exitMobileZoneMap();
 		mapService.setMapTheme(get(theme) === 'light' ? 'light' : 'dark');
 		requestAnimationFrame(() => mapService.resizeMap());
@@ -234,7 +230,6 @@
 			mobileCrearZonaMapPassesPointer.set(false);
 		}
 		if (get(mobileZoneMapActive) && !handingOffToDesktopOverlay) {
-			mapService.disableMobileZoneEditorZoomLock();
 			h3Actions.exitMobileZoneMap();
 			mapService.setMapTheme(get(theme) === 'light' ? 'light' : 'dark');
 			requestAnimationFrame(() => mapService.resizeMap());

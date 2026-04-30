@@ -2,8 +2,7 @@ name: Build and Deploy Nexus Web Page to EC2
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [master, develop]
   pull_request:
     branches: [master, develop]
 
@@ -52,31 +51,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VITE_BYPASS_AUTH=true
             NODE_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
-  validate-release-tag:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref_type == 'tag'
-    outputs:
-      is_valid: ${{ steps.validate_tag.outputs.is_valid }}
-    steps:
-      - name: Validate tag format (vX.Y.Z)
-        id: validate_tag
-        run: |
-          TAG="${{ github.ref_name }}"
-          if [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "is_valid=true" >> "$GITHUB_OUTPUT"
-            echo "Tag valido para deploy: $TAG"
-          else
-            echo "is_valid=false" >> "$GITHUB_OUTPUT"
-            echo "Tag invalido para deploy: $TAG"
-          fi
-
   deploy-to-ec2-test:
-    needs: [build-and-test, validate-release-tag]
+    needs: build-and-test
     runs-on: ubuntu-latest
-    if: needs.validate-release-tag.outputs.is_valid == 'true'
+    if: github.ref == 'refs/heads/develop'
     environment: test
 
     steps:
@@ -105,7 +85,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VITE_BYPASS_AUTH=true
             VITE_COMPANY_URL=${{ secrets.VITE_COMPANY_URL }}
             VITE_COMM_API_URL=${{ secrets.VITE_COMM_API_URL }}
             VITE_ADMIN_API_URL=${{ secrets.VITE_ADMIN_API_URL }}

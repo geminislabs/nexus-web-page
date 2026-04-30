@@ -4,7 +4,6 @@ import {
 	SuperClusterAlgorithm
 } from '@googlemaps/markerclusterer/dist/index.esm.mjs';
 import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyles';
-import { unitIcons } from '$lib/data/unitIcons.js';
 
 class MapService {
 	constructor() {
@@ -13,30 +12,26 @@ class MapService {
 		this.markers = new Map();
 		this.vehicleClusterer = null;
 		this._mapClickCloseListener = null;
+		/** Zoom fijo al crear zona en móvil */
 		this._mobileZoneEditorZoom = 12;
+		/** @type {boolean} */
 		this._mobileZoneZoomLocked = false;
+		/** @type {string | null} */
 		this._openVehiclePopupId = null;
-		this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-
-		// ── Trip replay ───────────────────────────────────────
-		this._tripPolyline = null;
-		this._tripAnimationMarker = null;
-		this._tripAnimationFrame = null;
-		this._tripAnimationPaused = false;
-		this._tripAnimationProgress = 0; // 0..1
-		this._tripAnimationPoints = [];
-		this._tripAnimationDuration = 0;
-		this._tripAnimationStartTime = null;
-		this._tripAnimationOnFinish = null;
+		this.apiKey =
+			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
 	}
 
-	// ── Theme helpers ─────────────────────────────────────────
-
+	/** Alineado con themeStore (`html.dark` en tema oscuro). */
 	_isDarkVehiclePopupTheme() {
 		if (typeof document === 'undefined') return true;
 		return document.documentElement.classList.contains('dark');
 	}
 
+	/**
+	 * Si hay un popup de unidad abierto, vuelve a renderizarlo con el tema indicado.
+	 * @param {'light' | 'dark'} mode
+	 */
 	refreshOpenVehicleInfoWindowTheme(mode) {
 		const id = this._openVehiclePopupId;
 		if (!id || !this.google) return;
@@ -47,41 +42,16 @@ class MapService {
 		);
 	}
 
+	/** @param {google.maps.Marker | null} m */
 	_setMarkerMap(m, map) {
 		if (!m) return;
 		m.setMap(map);
-	}
-
-	// ── Marker icon helpers ───────────────────────────────────
-
-	/**
-	 * Devuelve icon config para un vehículo:
-	 * - Si tiene icon_type en unitIcons → usa la imagen PNG
-	 * - Si no → círculo SVG coloreado por estado
-	 */
-	_getVehicleIcon(vehicle) {
-		const iconType = vehicle?.icon_type;
-		if (iconType && unitIcons[iconType]) {
-			return {
-				url: unitIcons[iconType],
-				scaledSize: new this.google.maps.Size(40, 40),
-				anchor: new this.google.maps.Point(20, 20)
-			};
-		}
-		// Fallback: círculo SVG con color de estado
-		return {
-			url: this._vehicleIconDataUrl(this.getVehicleColor(vehicle?.status)),
-			scaledSize: new this.google.maps.Size(32, 32),
-			anchor: new this.google.maps.Point(16, 16)
-		};
 	}
 
 	_vehicleIconDataUrl(hexColor) {
 		const svg = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="14" fill="${hexColor}" stroke="white" stroke-width="2"/><path d="M8 16h16M12 12h8M12 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>`;
 		return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
 	}
-
-	// ── Initialize ────────────────────────────────────────────
 
 	async initialize(mapElement) {
 		try {
@@ -96,7 +66,7 @@ class MapService {
 			const isMobileLayout =
 				typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
 
-			this.map = new this.google.maps.Map(mapElement, {
+			const mapOptions = {
 				center: { lat: 19.4326, lng: -99.1332 },
 				zoom: 13,
 				mapTypeId: this.google.maps.MapTypeId.ROADMAP,
@@ -109,8 +79,9 @@ class MapService {
 				scaleControl: false,
 				styles: darkBlueCarStyle,
 				backgroundColor: DBLUE.bg
-			});
+			};
 
+			this.map = new this.google.maps.Map(mapElement, mapOptions);
 			if (this._mapClickCloseListener) {
 				this.google.maps.event.removeListener(this._mapClickCloseListener);
 			}
@@ -120,17 +91,16 @@ class MapService {
 
 			await this.setUserLocation();
 
-			// retorna undefined intencionalmente; usar mapService.map directamente
+			return this.map;
 		} catch (error) {
-			console.error('Error initializing MapEngine:', error);
+			console.error('Error inicializando Google Maps:', error);
 			throw error;
 		}
 	}
 
-	// ── User location ─────────────────────────────────────────
-
 	async setUserLocation() {
 		if (!navigator.geolocation) return;
+
 		return new Promise((resolve) => {
 			navigator.geolocation.getCurrentPosition(
 				(position) => {
@@ -138,6 +108,7 @@ class MapService {
 						lat: position.coords.latitude,
 						lng: position.coords.longitude
 					};
+
 					this.map.setCenter(userLocation);
 					this.addUserLocationMarker(userLocation);
 					resolve(userLocation);
@@ -152,6 +123,7 @@ class MapService {
 
 	addUserLocationMarker(location) {
 		if (!this.google || !this.map) return;
+
 		const marker = new this.google.maps.Marker({
 			position: location,
 			map: this.map,
@@ -159,32 +131,42 @@ class MapService {
 			icon: {
 				url:
 					'data:image/svg+xml;charset=UTF-8,' +
-					encodeURIComponent(
-						`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8" fill="#3B82F6" stroke="#1E40AF" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="white"/></svg>`
-					),
+					encodeURIComponent(`
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<circle cx="12" cy="12" r="8" fill="#3B82F6" stroke="#1E40AF" stroke-width="2"/>
+						<circle cx="12" cy="12" r="3" fill="white"/>
+					</svg>
+				`),
 				scaledSize: new this.google.maps.Size(24, 24),
 				anchor: new this.google.maps.Point(12, 12)
 			},
 			zIndex: 5000
 		});
+
 		this.markers.set('user-location', marker);
 		return marker;
 	}
 
-	// ── Vehicle markers ───────────────────────────────────────
-
 	addVehicleMarker(vehicle) {
 		const lat = vehicle.latitude || vehicle.lat;
 		const lng = vehicle.longitude || vehicle.lng;
-		if (!this.google || !this.map || lat == null || lng == null) return;
+
+		if (!this.google || !this.map || lat == null || lng == null) {
+			return;
+		}
 
 		const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
+		const color = this.getVehicleColor(vehicle.status);
 
 		const marker = new this.google.maps.Marker({
 			position,
 			map: null,
 			title: vehicle.name,
-			icon: this._getVehicleIcon(vehicle),
+			icon: {
+				url: this._vehicleIconDataUrl(color),
+				scaledSize: new this.google.maps.Size(32, 32),
+				anchor: new this.google.maps.Point(16, 16)
+			},
 			zIndex: 1
 		});
 
@@ -216,83 +198,7 @@ class MapService {
 		}
 	}
 
-	addVehicleMarkers(vehicles) {
-		if (!Array.isArray(vehicles)) return;
-		this.clearVehicleMarkers();
-		const markerList = [];
-		vehicles.forEach((vehicle) => {
-			const m = this.addVehicleMarker(vehicle);
-			if (m) markerList.push(m);
-		});
-		if (markerList.length > 0 && this.map) {
-			this.vehicleClusterer = new MarkerClusterer({
-				map: this.map,
-				markers: markerList,
-				algorithm: new SuperClusterAlgorithm({ maxZoom: 17, radius: 72 })
-			});
-		}
-	}
-
-	updateVehicleMarker(vehicle) {
-		const entry = this.markers.get(vehicle.id);
-		if (entry) {
-			const lat = vehicle.latitude || vehicle.lat;
-			const lng = vehicle.longitude || vehicle.lng;
-			if (lat != null && lng != null) {
-				entry.marker.setPosition({ lat: parseFloat(lat), lng: parseFloat(lng) });
-				entry.marker.setIcon(this._getVehicleIcon(vehicle));
-				entry.infoWindow.setContent(this.createVehicleInfoContent(vehicle, entry.infoWindow));
-				entry.popupVehicle = vehicle;
-				if (this.vehicleClusterer) {
-					this.vehicleClusterer.removeMarker(entry.marker, true);
-					this.vehicleClusterer.addMarker(entry.marker);
-				}
-			}
-		} else {
-			const m = this.addVehicleMarker(vehicle);
-			if (m && this.vehicleClusterer) this.vehicleClusterer.addMarker(m);
-		}
-	}
-
-	removeMarker(id) {
-		const markerData = this.markers.get(id);
-		if (!markerData) return;
-		const raw = markerData.marker ?? markerData;
-		if (id !== 'user-location' && this.vehicleClusterer) {
-			this.vehicleClusterer.removeMarker(raw);
-		} else {
-			this._setMarkerMap(raw, null);
-		}
-		this.markers.delete(id);
-	}
-
-	clearVehicleMarkers() {
-		if (this.vehicleClusterer) {
-			this.vehicleClusterer.setMap(null);
-			this.vehicleClusterer = null;
-		}
-		for (const [key, data] of [...this.markers.entries()]) {
-			if (key === 'user-location') continue;
-			const m = data.marker ?? data;
-			this._setMarkerMap(m, null);
-			this.markers.delete(key);
-		}
-	}
-
-	clearAllMarkers() {
-		if (this.vehicleClusterer) {
-			this.vehicleClusterer.setMap(null);
-			this.vehicleClusterer = null;
-		}
-		this.markers.forEach((markerData) => {
-			const m = markerData.marker ?? markerData;
-			this._setMarkerMap(m, null);
-		});
-		this.markers.clear();
-	}
-
-	// ── InfoWindow ────────────────────────────────────────────
-
+	/** @param {unknown} s */
 	_escapeHtml(s) {
 		if (s == null) return '';
 		return String(s)
@@ -316,6 +222,11 @@ class MapService {
 		}
 	}
 
+	/**
+	 * @param {unknown} vehicle
+	 * @param {object | undefined} infoWindow
+	 * @param {'light' | 'dark' | undefined} [forcedTheme] Si viene del store al cambiar tema; si no, se usa el DOM.
+	 */
 	createVehicleInfoContent(vehicle, infoWindow, forcedTheme) {
 		const isDark = forcedTheme != null ? forcedTheme === 'dark' : this._isDarkVehiclePopupTheme();
 		const speed = Number(vehicle.speed) || 0;
@@ -340,19 +251,31 @@ class MapService {
 			!Number.isNaN(Number(latRaw)) &&
 			!Number.isNaN(Number(lngRaw))
 		) {
+			const la = Number(latRaw).toFixed(6);
+			const lo = Number(lngRaw).toFixed(6);
 			const coordColor = isDark ? '#94a3b8' : '#64748b';
-			coordsBlock = `<p style="margin:0;font-family:ui-monospace,monospace;font-size:10px;color:${coordColor};">${Number(latRaw).toFixed(6)}, ${Number(lngRaw).toFixed(6)}</p>`;
+			coordsBlock = `<p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:10px;color:${coordColor};letter-spacing:0.02em;">${la}, ${lo}</p>`;
 		}
 
 		const divTop = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.22)';
 		const deviceBlock = deviceId
-			? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid ${divTop};"><span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;">Dispositivo</span><span style="font-size:11px;color:${isDark ? '#cbd5e1' : '#334155'};font-weight:500;">${deviceId}</span></div>`
+			? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid ${divTop};">
+					<span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;">Dispositivo</span>
+					<span style="font-size:11px;color:${isDark ? '#cbd5e1' : '#334155'};font-weight:500;">${deviceId}</span>
+				</div>`
 			: '';
 
 		const cardBg = isDark
-			? 'linear-gradient(165deg,rgba(15,23,42,0.99) 0%,rgba(17,24,39,0.98) 100%)'
+			? 'linear-gradient(165deg,rgba(15,23,42,0.99) 0%,rgba(17,24,39,0.98) 42%,rgba(15,23,42,0.99) 100%)'
 			: 'linear-gradient(165deg,#ffffff 0%,#f8fafc 50%,#f1f5f9 100%)';
+		const cardShadow = isDark
+			? 'inset 0 1px 0 rgba(255,255,255,0.07),0 18px 40px rgba(0,0,0,0.45)'
+			: 'inset 0 1px 0 rgba(255,255,255,0.9),0 18px 40px rgba(15,23,42,0.1)';
+		const cardBorder = isDark
+			? '1px solid rgba(148,163,184,0.14)'
+			: '1px solid rgba(148,163,184,0.35)';
 		const cardColor = isDark ? '#e2e8f0' : '#0f172a';
+
 		const titleColor = isDark ? '#f8fafc' : '#0f172a';
 		const mutedColor = isDark ? '#94a3b8' : '#64748b';
 		const metricBg = isDark
@@ -362,23 +285,50 @@ class MapService {
 		const locBox = isDark
 			? 'background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.1);'
 			: 'background:#ffffff;border:1px solid rgba(148,163,184,0.22);';
+		const locText = isDark ? '#e2e8f0' : '#0f172a';
 		const footerBorder = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(148,163,184,0.2)';
+		const signalMuted = isDark ? '#94a3b8' : '#64748b';
+		const coordsHeading = isDark ? '#475569' : '#94a3b8';
 		const coordsDash = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.25)';
+
 		const closeBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
 		const closeColor = isDark ? '#cbd5e1' : '#64748b';
+		const closeInset = isDark
+			? 'inset 0 1px 0 rgba(255,255,255,0.06)'
+			: 'inset 0 1px 0 rgba(255,255,255,0.7)';
+		const closeHoverBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.1)';
+		const closeHoverColor = isDark ? '#f8fafc' : '#0f172a';
 
 		const wrapper = document.createElement('div');
+		wrapper.className = 'nexus-viw-card';
 		wrapper.setAttribute('data-nexus-vehicle-popup', '');
-		wrapper.style.cssText = `position:relative;min-width:268px;max-width:304px;border-radius:16px;overflow:hidden;background:${cardBg};border:1px solid ${isDark ? 'rgba(148,163,184,0.14)' : 'rgba(148,163,184,0.35)'};color:${cardColor};font-family:ui-sans-serif,system-ui,sans-serif;line-height:1.4;`;
+		wrapper.setAttribute('data-popup-theme', isDark ? 'dark' : 'light');
+		wrapper.style.cssText = [
+			'position:relative',
+			'min-width:268px',
+			'max-width:304px',
+			'border-radius:16px',
+			'overflow:hidden',
+			`background:${cardBg}`,
+			`box-shadow:${cardShadow}`,
+			`border:${cardBorder}`,
+			'font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif',
+			`color:${cardColor}`,
+			'line-height:1.4'
+		].join(';');
 
 		wrapper.innerHTML = `
 			<div style="height:3px;width:100%;background:${barGradient};opacity:0.95;"></div>
 			<button type="button" data-action="close-popup" aria-label="Cerrar"
-				style="position:absolute;right:10px;top:14px;z-index:2;width:30px;height:30px;border:none;border-radius:9999px;cursor:pointer;background:${closeBg};color:${closeColor};font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>
+				style="position:absolute;right:10px;top:14px;z-index:2;width:30px;height:30px;border:none;border-radius:9999px;cursor:pointer;
+				background:${closeBg};color:${closeColor};font-size:18px;font-weight:400;line-height:1;display:flex;align-items:center;justify-content:center;
+				box-shadow:${closeInset};transition:background 0.15s ease,color 0.15s ease;">
+				×
+			</button>
 			<div style="padding:16px 16px 14px 16px;">
 				<div style="display:flex;align-items:flex-start;gap:10px;padding-right:28px;margin-bottom:12px;">
 					<div style="flex:1;min-width:0;">
-						<h3 style="margin:0 0 6px 0;font-size:17px;font-weight:800;color:${titleColor};line-height:1.2;">${name}</h3>
+						<h3 style="margin:0 0 6px 0;font-size:17px;font-weight:800;letter-spacing:-0.03em;color:${titleColor};line-height:1.2;">${name}</h3>
 						<p style="margin:0;font-size:12px;color:${mutedColor};font-weight:500;">${driver}</p>
 					</div>
 					<span style="flex-shrink:0;display:inline-flex;align-items:center;padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;${statusBadge}">${statusLabel}</span>
@@ -386,32 +336,47 @@ class MapService {
 				<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
 					<div style="border-radius:12px;padding:10px 10px 8px;${metricBg}">
 						<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Velocidad</div>
-						<div style="font-size:22px;font-weight:800;color:${metricValue};">${speed}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:2px;">km/h</span></div>
+						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${speed}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:2px;">km/h</span></div>
 					</div>
 					<div style="border-radius:12px;padding:10px 10px 8px;${metricBg}">
 						<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Batería</div>
-						<div style="font-size:22px;font-weight:800;color:${metricValue};">${battery}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:1px;">%</span></div>
+						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${battery}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:1px;">%</span></div>
 					</div>
 				</div>
 				<div style="border-radius:12px;padding:10px 12px;${locBox}margin-bottom:10px;">
 					<div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Ubicación</div>
-					<p style="margin:0;font-size:12px;font-weight:600;color:${isDark ? '#e2e8f0' : '#0f172a'};line-height:1.35;">${location}</p>
+					<p style="margin:0;font-size:12px;font-weight:600;color:${locText};line-height:1.35;">${location}</p>
 				</div>
 				${deviceBlock}
 				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;margin-top:4px;border-top:1px solid ${footerBorder};">
 					<span style="font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">Última señal</span>
-					<span style="font-size:11px;color:${mutedColor};font-weight:500;">${lastUpdate}</span>
+					<span style="font-size:11px;color:${signalMuted};font-weight:500;">${lastUpdate}</span>
 				</div>
-				${coordsBlock ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed ${coordsDash};">${coordsBlock}</div>` : ''}
+				${coordsBlock ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed ${coordsDash};"><div style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${coordsHeading};margin-bottom:4px;">Coordenadas</div>${coordsBlock}</div>` : ''}
 			</div>
 		`;
-
 		const closeBtn = wrapper.querySelector('[data-action="close-popup"]');
 		closeBtn?.addEventListener('click', (e) => {
 			e.stopPropagation();
 			this._openVehiclePopupId = null;
 			infoWindow?.close();
 		});
+		closeBtn?.addEventListener(
+			'mouseenter',
+			() => {
+				closeBtn.style.background = closeHoverBg;
+				closeBtn.style.color = closeHoverColor;
+			},
+			{ passive: true }
+		);
+		closeBtn?.addEventListener(
+			'mouseleave',
+			() => {
+				closeBtn.style.background = closeBg;
+				closeBtn.style.color = closeColor;
+			},
+			{ passive: true }
+		);
 		return wrapper;
 	}
 
@@ -454,7 +419,101 @@ class MapService {
 		}
 	}
 
-	// ── InfoWindow open/close ─────────────────────────────────
+	removeMarker(id) {
+		const markerData = this.markers.get(id);
+		if (!markerData) return;
+		const raw = markerData.marker ?? markerData;
+		if (id !== 'user-location' && this.vehicleClusterer) {
+			this.vehicleClusterer.removeMarker(raw);
+		} else {
+			this._setMarkerMap(raw, null);
+		}
+		this.markers.delete(id);
+	}
+
+	clearVehicleMarkers() {
+		if (this.vehicleClusterer) {
+			this.vehicleClusterer.setMap(null);
+			this.vehicleClusterer = null;
+		}
+		for (const [key, data] of [...this.markers.entries()]) {
+			if (key === 'user-location') continue;
+			const m = data.marker ?? data;
+			this._setMarkerMap(m, null);
+			this.markers.delete(key);
+		}
+	}
+
+	clearAllMarkers() {
+		if (this.vehicleClusterer) {
+			this.vehicleClusterer.setMap(null);
+			this.vehicleClusterer = null;
+		}
+		this.markers.forEach((markerData) => {
+			const m = markerData.marker ?? markerData;
+			this._setMarkerMap(m, null);
+		});
+		this.markers.clear();
+	}
+
+	addVehicleMarkers(vehicles) {
+		if (!Array.isArray(vehicles)) return;
+
+		this.clearVehicleMarkers();
+
+		const markerList = [];
+		vehicles.forEach((vehicle) => {
+			const m = this.addVehicleMarker(vehicle);
+			if (m) markerList.push(m);
+		});
+
+		if (markerList.length > 0 && this.map) {
+			this.vehicleClusterer = new MarkerClusterer({
+				map: this.map,
+				markers: markerList,
+				algorithm: new SuperClusterAlgorithm({
+					maxZoom: 17,
+					radius: 72
+				})
+			});
+		}
+	}
+
+	updateVehicleMarker(vehicle) {
+		const existingMarkerData = this.markers.get(vehicle.id);
+
+		if (existingMarkerData) {
+			const lat = vehicle.latitude || vehicle.lat;
+			const lng = vehicle.longitude || vehicle.lng;
+
+			if (lat != null && lng != null) {
+				const newPosition = { lat: parseFloat(lat), lng: parseFloat(lng) };
+				existingMarkerData.marker.setPosition(newPosition);
+
+				existingMarkerData.infoWindow.setContent(
+					this.createVehicleInfoContent(vehicle, existingMarkerData.infoWindow)
+				);
+				existingMarkerData.popupVehicle = vehicle;
+
+				existingMarkerData.marker.setIcon({
+					url: this._vehicleIconDataUrl(this.getVehicleColor(vehicle.status)),
+					scaledSize: new this.google.maps.Size(32, 32),
+					anchor: new this.google.maps.Point(16, 16)
+				});
+
+				if (this.vehicleClusterer) {
+					const m = existingMarkerData.marker;
+					this.vehicleClusterer.removeMarker(m, true);
+					this.vehicleClusterer.addMarker(m);
+				}
+			}
+		} else {
+			const m = this.addVehicleMarker(vehicle);
+			if (m && this.vehicleClusterer) {
+				this.vehicleClusterer.addMarker(m);
+			}
+		}
+	}
 
 	closeAllVehicleInfoWindows() {
 		this._openVehiclePopupId = null;
@@ -463,13 +522,21 @@ class MapService {
 		}
 	}
 
+	/**
+	 * Abre el InfoWindow de la unidad (mismo contenido que al pulsar el marcador).
+	 * Si el marcador está en un cluster, se ancla por la posición del `Marker`.
+	 * @param {{ id: string }} vehicle
+	 * @param {{ refreshContent?: boolean }} [opts]
+	 */
 	openVehicleInfoWindow(vehicle, opts = {}) {
 		const refreshContent = opts.refreshContent !== false;
 		if (!this.map || !this.google || !vehicle?.id) return;
+
 		const entry = this.markers.get(vehicle.id);
 		if (!entry?.infoWindow || !entry.marker) return;
 
 		this.closeAllVehicleInfoWindows();
+
 		if (refreshContent) {
 			entry.infoWindow.setContent(this.createVehicleInfoContent(vehicle, entry.infoWindow));
 		}
@@ -487,53 +554,71 @@ class MapService {
 		this._openVehiclePopupId = vehicle.id;
 	}
 
-	// ── Center / Zoom ─────────────────────────────────────────
-
 	centerOnVehicles(vehicles) {
 		if (!vehicles.length || !this.map) return;
+
 		const bounds = new this.google.maps.LatLngBounds();
-		let hasCoords = false;
-		vehicles.forEach((v) => {
-			const lat = v.latitude || v.lat;
-			const lng = v.longitude || v.lng;
+		let hasValidCoordinates = false;
+
+		vehicles.forEach((vehicle) => {
+			const lat = vehicle.latitude || vehicle.lat;
+			const lng = vehicle.longitude || vehicle.lng;
+
 			if (lat != null && lng != null) {
 				bounds.extend({ lat: parseFloat(lat), lng: parseFloat(lng) });
-				hasCoords = true;
+				hasValidCoordinates = true;
 			}
 		});
-		if (hasCoords) this.map.fitBounds(bounds);
+
+		if (hasValidCoordinates) {
+			this.map.fitBounds(bounds);
+		}
 	}
 
 	centerOnVehicle(vehicle, opts = {}) {
 		const showPopup = opts.showPopup !== false;
 		const lat = vehicle.latitude || vehicle.lat;
 		const lng = vehicle.longitude || vehicle.lng;
+
 		if (lat == null || lng == null || !this.map || !this.google) return;
 
 		this.map.setCenter({ lat: parseFloat(lat), lng: parseFloat(lng) });
 		this.map.setZoom(15);
+
 		if (!showPopup) return;
+
 		this.google.maps.event.addListenerOnce(this.map, 'idle', () => {
 			this.openVehicleInfoWindow(vehicle);
 		});
 	}
 
 	setCenter(lat, lng) {
-		if (this.map) this.map.setCenter({ lat, lng });
+		if (this.map) {
+			this.map.setCenter({ lat, lng });
+		}
 	}
 
 	setZoom(zoom) {
-		if (this.map) this.map.setZoom(zoom);
+		if (this.map) {
+			this.map.setZoom(zoom);
+		}
 	}
 
-	// ── Theme ─────────────────────────────────────────────────
-
+	/**
+	 * @param {'light' | 'dark'} mode
+	 */
 	setMapTheme(mode) {
 		if (!this.map) return;
 		if (mode === 'light') {
-			this.map.setOptions({ styles: grayBlueMapStyle, backgroundColor: COLORS.grayLight });
+			this.map.setOptions({
+				styles: grayBlueMapStyle,
+				backgroundColor: COLORS.grayLight
+			});
 		} else {
-			this.map.setOptions({ styles: darkBlueCarStyle, backgroundColor: DBLUE.bg });
+			this.map.setOptions({
+				styles: darkBlueCarStyle,
+				backgroundColor: DBLUE.bg
+			});
 		}
 	}
 
@@ -542,197 +627,40 @@ class MapService {
 		this.google.maps.event.trigger(this.map, 'resize');
 	}
 
+	/**
+	 * En móvil (≤639px) oculta el control de zoom de Google; en escritorio lo muestra.
+	 * @param {boolean} compact true = layout móvil
+	 */
 	setNavigationControlsCompact(compact) {
 		if (!this.map) return;
-		this.map.setOptions({ zoomControl: !compact });
+		this.map.setOptions({
+			zoomControl: !compact
+		});
 	}
 
-	// ── Zone editor zoom lock ─────────────────────────────────
-
+	/**
+	 * Fija zoom y límites min/max para el editor de zona (móvil).
+	 * Mantiene el centro actual; solo ajusta el nivel de zoom al de referencia.
+	 */
 	enableMobileZoneEditorZoomLock() {
 		if (!this.map || this._mobileZoneZoomLocked) return;
 		const z = this._mobileZoneEditorZoom;
 		this._mobileZoneZoomLocked = true;
-		this.map.setOptions({ zoom: z, minZoom: z, maxZoom: z });
+		this.map.setOptions({
+			zoom: z,
+			minZoom: z,
+			maxZoom: z
+		});
 	}
 
+	/** Restaura zoom libre tras salir del editor de zona. */
 	disableMobileZoneEditorZoomLock() {
 		if (!this.map || !this._mobileZoneZoomLocked) return;
 		this._mobileZoneZoomLocked = false;
-		this.map.setOptions({ minZoom: 0, maxZoom: 22 });
-	}
-
-	// ── Trip replay (rescatado del viejo, implementado nativamente) ──
-
-	/**
-	 * Dibuja una polilínea del trayecto en el mapa.
-	 * @param {Array<{lat: number, lng: number} | {latitude: number, longitude: number}>} points
-	 */
-	drawTripPolyline(points) {
-		if (!this.map || !this.google || !Array.isArray(points)) return;
-		this._clearTripPolyline();
-
-		const path = points
-			.map((p) => ({
-				lat: parseFloat(p.lat ?? p.latitude),
-				lng: parseFloat(p.lng ?? p.longitude)
-			}))
-			.filter((p) => !Number.isNaN(p.lat) && !Number.isNaN(p.lng));
-
-		if (path.length < 2) return;
-
-		this._tripPolyline = new this.google.maps.Polyline({
-			path,
-			geodesic: true,
-			strokeColor: '#3B82F6',
-			strokeOpacity: 0.85,
-			strokeWeight: 4,
-			map: this.map
+		this.map.setOptions({
+			minZoom: 0,
+			maxZoom: 22
 		});
-
-		// Ajustar bounds al trayecto
-		const bounds = new this.google.maps.LatLngBounds();
-		path.forEach((p) => bounds.extend(p));
-		this.map.fitBounds(bounds, { top: 60, right: 20, bottom: 60, left: 20 });
-	}
-
-	_clearTripPolyline() {
-		if (this._tripPolyline) {
-			this._tripPolyline.setMap(null);
-			this._tripPolyline = null;
-		}
-	}
-
-	_clearTripAnimationMarker() {
-		if (this._tripAnimationMarker) {
-			this._tripAnimationMarker.setMap(null);
-			this._tripAnimationMarker = null;
-		}
-		if (this._tripAnimationFrame) {
-			cancelAnimationFrame(this._tripAnimationFrame);
-			this._tripAnimationFrame = null;
-		}
-	}
-
-	/**
-	 * Anima un marcador a lo largo de los puntos del trayecto.
-	 * @param {Array} points
-	 * @param {number} totalDurationMs Duración total de la animación en ms
-	 * @param {() => void} [onFinish]
-	 */
-	animateTrip(points, totalDurationMs = 20000, onFinish) {
-		if (!this.map || !this.google || !Array.isArray(points) || points.length < 2) return;
-
-		this._clearTripAnimationMarker();
-		this.drawTripPolyline(points);
-
-		const path = points
-			.map((p) => ({
-				lat: parseFloat(p.lat ?? p.latitude),
-				lng: parseFloat(p.lng ?? p.longitude)
-			}))
-			.filter((p) => !Number.isNaN(p.lat) && !Number.isNaN(p.lng));
-
-		this._tripAnimationPoints = path;
-		this._tripAnimationDuration = totalDurationMs;
-		this._tripAnimationOnFinish = onFinish ?? null;
-		this._tripAnimationPaused = false;
-		this._tripAnimationProgress = 0;
-		this._tripAnimationStartTime = null;
-
-		this._tripAnimationMarker = new this.google.maps.Marker({
-			position: path[0],
-			map: this.map,
-			title: 'Reproduciendo trayecto',
-			icon: {
-				url: this._vehicleIconDataUrl('#3B82F6'),
-				scaledSize: new this.google.maps.Size(36, 36),
-				anchor: new this.google.maps.Point(18, 18)
-			},
-			zIndex: 200
-		});
-
-		const animate = (timestamp) => {
-			if (this._tripAnimationPaused) return;
-			if (!this._tripAnimationStartTime) {
-				this._tripAnimationStartTime = timestamp - this._tripAnimationProgress * totalDurationMs;
-			}
-
-			const elapsed = timestamp - this._tripAnimationStartTime;
-			const t = Math.min(elapsed / totalDurationMs, 1);
-			this._tripAnimationProgress = t;
-
-			// Interpolar posición a lo largo del path
-			const idx = t * (path.length - 1);
-			const i = Math.floor(idx);
-			const frac = idx - i;
-			const from = path[Math.min(i, path.length - 1)];
-			const to = path[Math.min(i + 1, path.length - 1)];
-			const lat = from.lat + (to.lat - from.lat) * frac;
-			const lng = from.lng + (to.lng - from.lng) * frac;
-
-			this._tripAnimationMarker?.setPosition({ lat, lng });
-
-			if (t < 1) {
-				this._tripAnimationFrame = requestAnimationFrame(animate);
-			} else {
-				this._tripAnimationOnFinish?.();
-				this._clearTripAnimationMarker();
-			}
-		};
-
-		this._tripAnimationFrame = requestAnimationFrame(animate);
-	}
-
-	pauseAnimation() {
-		if (!this._tripAnimationFrame) return;
-		this._tripAnimationPaused = true;
-		cancelAnimationFrame(this._tripAnimationFrame);
-		this._tripAnimationFrame = null;
-	}
-
-	resumeAnimation() {
-		if (!this._tripAnimationPaused || !this._tripAnimationPoints.length) return;
-		this._tripAnimationPaused = false;
-		this._tripAnimationStartTime = null; // se recalcula en el primer frame
-
-		const animate = (timestamp) => {
-			if (this._tripAnimationPaused) return;
-			if (!this._tripAnimationStartTime) {
-				this._tripAnimationStartTime =
-					timestamp - this._tripAnimationProgress * this._tripAnimationDuration;
-			}
-			const elapsed = timestamp - this._tripAnimationStartTime;
-			const t = Math.min(elapsed / this._tripAnimationDuration, 1);
-			this._tripAnimationProgress = t;
-
-			const path = this._tripAnimationPoints;
-			const idx = t * (path.length - 1);
-			const i = Math.floor(idx);
-			const frac = idx - i;
-			const from = path[Math.min(i, path.length - 1)];
-			const to = path[Math.min(i + 1, path.length - 1)];
-			this._tripAnimationMarker?.setPosition({
-				lat: from.lat + (to.lat - from.lat) * frac,
-				lng: from.lng + (to.lng - from.lng) * frac
-			});
-
-			if (t < 1) {
-				this._tripAnimationFrame = requestAnimationFrame(animate);
-			} else {
-				this._tripAnimationOnFinish?.();
-				this._clearTripAnimationMarker();
-			}
-		};
-		this._tripAnimationFrame = requestAnimationFrame(animate);
-	}
-
-	stopAnimation() {
-		this._clearTripAnimationMarker();
-		this._clearTripPolyline();
-		this._tripAnimationProgress = 0;
-		this._tripAnimationPaused = false;
-		this._tripAnimationPoints = [];
 	}
 }
 

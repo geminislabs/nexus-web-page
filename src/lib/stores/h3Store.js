@@ -40,6 +40,23 @@ export const zoneCreateBanner = writable(/** @type {null | 'contiguous'} */ (nul
 export const selectedH3Count = derived(selectedH3Cells, ($cells) => $cells.length);
 export const hasSelectedH3Cell = derived(selectedH3Cells, ($cells) => $cells.length > 0);
 
+/**
+ * Traduce el delta vertical visible del mapa (latitud) a resolución H3.
+ * @param {number} latitudeDelta
+ * @returns {number}
+ */
+export function resolutionForLatitudeDelta(latitudeDelta) {
+	if (latitudeDelta < 0.015) return 10;
+	if (latitudeDelta < 0.04) return 9;
+	if (latitudeDelta < 0.12) return 8;
+	if (latitudeDelta < 0.35) return 7;
+	if (latitudeDelta < 1.0) return 6;
+	if (latitudeDelta < 3.0) return 5;
+	if (latitudeDelta < 8.0) return 4;
+	if (latitudeDelta < 20.0) return 3;
+	return 2;
+}
+
 /** @param {string[]} nodes */
 function largestConnectedComponent(nodes) {
 	const arr = [...new Set(nodes)];
@@ -88,6 +105,12 @@ export const h3Actions = {
 	setResolution(resolution) {
 		if (get(mobileZoneMapActive)) return;
 		h3Resolution.set(resolution);
+	},
+	setResolutionForMobile(latitudeDelta) {
+		const next = resolutionForLatitudeDelta(Math.abs(Number(latitudeDelta) || 0));
+		if (get(h3Resolution) !== next) {
+			h3Resolution.set(next);
+		}
 	},
 
 	toggleCell(h3Index) {

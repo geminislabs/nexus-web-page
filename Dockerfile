@@ -16,10 +16,6 @@ RUN echo "@JesusCabrera84:registry=https://npm.pkg.github.com/" > .npmrc && \
 # Copiar el código fuente
 COPY . .
 
-# Permitir inyectar variables de entorno en tiempo de build (para Vite)
-ARG VITE_BYPASS_AUTH=false
-ENV VITE_BYPASS_AUTH=$VITE_BYPASS_AUTH
-
 ARG VITE_COMPANY_URL
 ENV VITE_COMPANY_URL=$VITE_COMPANY_URL
 

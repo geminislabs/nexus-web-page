@@ -63,7 +63,6 @@
 				</article>
 			{/if}
 
-			<!-- Apariencia -->
 			<div aria-labelledby="ajustes-aspecto-heading">
 				<h3
 					id="ajustes-aspecto-heading"
@@ -118,7 +117,6 @@
 				</div>
 			</div>
 
-			<!-- Gestión -->
 			<div aria-labelledby="ajustes-gestion-heading">
 				<h3
 					id="ajustes-gestion-heading"
@@ -153,7 +151,6 @@
 				</div>
 			</div>
 
-			<!-- Cuenta -->
 			<div aria-labelledby="ajustes-cuenta-heading">
 				<h3
 					id="ajustes-cuenta-heading"
@@ -183,7 +180,6 @@
 				</div>
 			</div>
 
-			<!-- Info -->
 			<div aria-labelledby="ajustes-info-heading">
 				<h3
 					id="ajustes-info-heading"
@@ -268,7 +264,9 @@
 										</p>
 										<p class="m-0 mt-0.5 text-xs leading-snug text-slate-600 dark:text-white/45">
 											{v.driver || 'Sin conductor'}
-											{#if v.speed !== undefined}· {v.speed} km/h{/if}
+											{#if v.speed !== undefined}
+												· {v.speed} km/h
+											{/if}
 										</p>
 										{#if v.lastUpdateFormatted}
 											<p class="m-0 mt-0.5 text-[0.6875rem] text-slate-500 dark:text-white/30">
