@@ -4,6 +4,9 @@ import {
 	SuperClusterAlgorithm
 } from '@googlemaps/markerclusterer/dist/index.esm.mjs';
 import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyles';
+import { unitIcons } from '$lib/data/unitIcons.js';
+import { ICON_REGISTRY } from '../../icons/index.js';
+import { deriveStrokeColor } from '../../icons/iconStyles.js';
 
 class MapService {
 	constructor() {
@@ -48,9 +51,27 @@ class MapService {
 		m.setMap(map);
 	}
 
-	_vehicleIconDataUrl(hexColor) {
+	_getVehicleIconConfig(hexColor, iconType) {
+		const pathD = ICON_REGISTRY['car']; // For now, default to the car path
+		if (pathD) {
+			const strokeColor = deriveStrokeColor(hexColor);
+			const svg = `<svg width="28" height="54" viewBox="0 0 54 105" fill="none" xmlns="http://www.w3.org/2000/svg">
+				<path d="${pathD}" fill="${hexColor}" stroke="${strokeColor}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>`;
+			return {
+				url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+				scaledSize: new this.google.maps.Size(28, 54),
+				anchor: new this.google.maps.Point(14, 27)
+			};
+		}
+
+		// Fallback
 		const svg = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="14" fill="${hexColor}" stroke="white" stroke-width="2"/><path d="M8 16h16M12 12h8M12 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>`;
-		return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+		return {
+			url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+			scaledSize: new this.google.maps.Size(32, 32),
+			anchor: new this.google.maps.Point(16, 16)
+		};
 	}
 
 	async initialize(mapElement) {
@@ -156,17 +177,14 @@ class MapService {
 		}
 
 		const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
-		const color = this.getVehicleColor(vehicle.status);
+		const color = vehicle.color || this.getVehicleColor(vehicle.status);
+		const iconType = vehicle.icon;
 
 		const marker = new this.google.maps.Marker({
 			position,
 			map: null,
 			title: vehicle.name,
-			icon: {
-				url: this._vehicleIconDataUrl(color),
-				scaledSize: new this.google.maps.Size(32, 32),
-				anchor: new this.google.maps.Point(16, 16)
-			},
+			icon: this._getVehicleIconConfig(color, iconType),
 			zIndex: 1
 		});
 
@@ -495,11 +513,12 @@ class MapService {
 				);
 				existingMarkerData.popupVehicle = vehicle;
 
-				existingMarkerData.marker.setIcon({
-					url: this._vehicleIconDataUrl(this.getVehicleColor(vehicle.status)),
-					scaledSize: new this.google.maps.Size(32, 32),
-					anchor: new this.google.maps.Point(16, 16)
-				});
+				existingMarkerData.marker.setIcon(
+					this._getVehicleIconConfig(
+						vehicle.color || this.getVehicleColor(vehicle.status),
+						vehicle.icon
+					)
+				);
 
 				if (this.vehicleClusterer) {
 					const m = existingMarkerData.marker;
