@@ -117,18 +117,18 @@ La aplicación está configurada para trabajar con SISCOM-ADMIN-API (FastAPI). L
 - `POST /api/v1/clients/` - Crear nuevo cliente (registro público)
 - `GET /api/v1/clients/` - Obtener datos del cliente actual
 
-### Ejemplo de respuesta de login:
+### Ejemplo de respuesta de login
 
 ```json
 {
-	"access_token": "eyJhbGciOiJSUzI1...",
-	"id_token": "eyJhbGciOiJSUzI1...",
-	"refresh_token": "eyJjdHkiOiJKV1Q...",
-	"expires_in": 3600,
-	"token_type": "Bearer",
-	"user_id": "123e4567-e89b-12d3-a456-426614174000",
-	"email": "usuario@ejemplo.com",
-	"email_verified": true
+ "access_token": "eyJhbGciOiJSUzI1...",
+ "id_token": "eyJhbGciOiJSUzI1...",
+ "refresh_token": "eyJjdHkiOiJKV1Q...",
+ "expires_in": 3600,
+ "token_type": "Bearer",
+ "user_id": "123e4567-e89b-12d3-a456-426614174000",
+ "email": "usuario@ejemplo.com",
+ "email_verified": true
 }
 ```
 
@@ -171,9 +171,9 @@ Edita `src/routes/dashboard/+page.svelte`:
 
 ```javascript
 const mapOptions = {
-	center: { lat: TU_LATITUD, lng: TU_LONGITUD },
-	zoom: 13
-	// ...
+ center: { lat: TU_LATITUD, lng: TU_LONGITUD },
+ zoom: 13
+ // ...
 };
 ```
 
