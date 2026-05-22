@@ -2,7 +2,6 @@ import { writable, derived, get } from 'svelte/store';
 import { apiService } from '$lib/services/api.js';
 import { positionService } from '$lib/services/positionService.js';
 import { mapService } from '$lib/services/mapService.js';
-import { bypassAuthInDev } from '$lib/config/env.js';
 import { formatLastUpdate } from '$lib/utils/vehicleUtils.js';
 
 // Estado principal de vehículos
@@ -11,106 +10,6 @@ export const selectedVehicles = writable([]);
 export const loadingVehicles = writable(false);
 export const vehiclePositions = writable(new Map());
 export const loadingPositions = writable(false);
-
-// Datos de ejemplo para entorno mock (bypass activo)
-const EXAMPLE_VEHICLES = [
-	{
-		id: 'VH001',
-		name: 'Unidad 01 — Sedán',
-		driver: 'Carlos Mendoza',
-		deviceId: 'test-123',
-		status: 'active',
-		location: 'Centro Histórico',
-		latitude: 20.5888,
-		longitude: -100.3899,
-		speed: 47,
-		battery: 78,
-		fuel: 78,
-		lastUpdate: new Date(Date.now() - 2 * 60000).toISOString(),
-		lastUpdateFormatted: 'Hace 2 minutos',
-		coordinates: { lat: 20.5888, lng: -100.3899 }
-	},
-	{
-		id: 'VH002',
-		name: 'Unidad 02 — Pickup',
-		driver: 'María González',
-		deviceId: '0848086002',
-		status: 'active',
-		location: 'Juriquilla',
-		latitude: 20.7079,
-		longitude: -100.4405,
-		speed: 0,
-		battery: 92,
-		fuel: 92,
-		lastUpdate: new Date(Date.now() - 5 * 60000).toISOString(),
-		lastUpdateFormatted: 'Hace 5 minutos',
-		coordinates: { lat: 20.7079, lng: -100.4405 }
-	},
-	{
-		id: 'VH003',
-		name: 'Unidad 03 — Van',
-		driver: 'Roberto Sánchez',
-		deviceId: '0848086003',
-		status: 'active',
-		location: 'Cimatario',
-		latitude: 20.552,
-		longitude: -100.354,
-		speed: 32,
-		battery: 55,
-		fuel: 55,
-		lastUpdate: new Date(Date.now() - 1 * 60000).toISOString(),
-		lastUpdateFormatted: 'Hace 1 minuto',
-		coordinates: { lat: 20.552, lng: -100.354 }
-	},
-	{
-		id: 'VH004',
-		name: 'Unidad 04 — Camión',
-		driver: 'Ana López',
-		deviceId: '0848086004',
-		status: 'inactive',
-		location: 'Peñuelas',
-		latitude: 20.542,
-		longitude: -100.318,
-		speed: 0,
-		battery: 12,
-		fuel: 15,
-		lastUpdate: new Date(Date.now() - 3 * 60 * 60000).toISOString(),
-		lastUpdateFormatted: 'Hace 3 horas',
-		coordinates: { lat: 20.542, lng: -100.318 }
-	},
-	{
-		id: 'VH005',
-		name: 'Unidad 05 — SUV',
-		driver: 'Luis Herrera',
-		deviceId: '0848086005',
-		status: 'maintenance',
-		location: 'Taller Central — Zibatá',
-		latitude: 20.675,
-		longitude: -100.354,
-		speed: 0,
-		battery: 45,
-		fuel: 45,
-		lastUpdate: new Date(Date.now() - 12 * 60 * 60000).toISOString(),
-		lastUpdateFormatted: 'Hace 12 horas',
-		coordinates: { lat: 20.675, lng: -100.354 }
-	},
-	{
-		id: 'VH006',
-		name: 'Unidad 06 — Motocicleta',
-		driver: 'Diana Torres',
-		deviceId: '0848086006',
-		status: 'active',
-		location: 'Desarrollo San Pablo',
-		latitude: 20.576,
-		longitude: -100.359,
-		speed: 58,
-		battery: 88,
-		fuel: 88,
-		lastUpdate: new Date(Date.now() - 30000).toISOString(),
-		lastUpdateFormatted: 'Hace menos de 1 minuto',
-		coordinates: { lat: 20.576, lng: -100.359 }
-	}
-];
 
 export const activeVehicles = derived(vehicles, ($vehicles) =>
 	$vehicles.filter((vehicle) => vehicle.status === 'active')
@@ -149,11 +48,30 @@ function mapUnitToVehicle(unit) {
 		name: unit?.name || 'Unidad',
 		description: unit?.description || '',
 		driver: '',
-		deviceId: unit?.device_id || null,
+		deviceId: unit?.device_id || unit?.deviceId || null,
 		status: unit?.deleted_at ? 'inactive' : 'active',
 		location: unit?.description || '',
 		lastUpdate: createdAt,
 		lastUpdateFormatted: createdAt ? formatLastUpdate(createdAt) : ''
+	};
+}
+
+/** GET /units/{id} no incluye device_id; conservar datos ya cargados del listado. */
+function mergeVehicleDetail(existing, mapped) {
+	if (!existing) return mapped;
+	return {
+		...existing,
+		...mapped,
+		deviceId: mapped.deviceId || existing.deviceId || null,
+		latitude: mapped.latitude ?? existing.latitude,
+		longitude: mapped.longitude ?? existing.longitude,
+		speed: mapped.speed ?? existing.speed,
+		battery: mapped.battery ?? existing.battery,
+		fuel: mapped.fuel ?? existing.fuel,
+		lastUpdate: mapped.lastUpdate || existing.lastUpdate,
+		lastUpdateFormatted: mapped.lastUpdateFormatted || existing.lastUpdateFormatted,
+		coordinates: mapped.coordinates || existing.coordinates,
+		status: existing.latitude != null ? existing.status : mapped.status
 	};
 }
 
@@ -170,20 +88,13 @@ export const vehicleActions = {
 	async loadVehicles() {
 		loadingVehicles.set(true);
 		try {
-			if (bypassAuthInDev) {
-				vehicles.set(EXAMPLE_VEHICLES.map((v) => ({ ...v })));
-				return;
-			}
-
-			try {
-				const unitList = await apiService.getVehicles();
-				const apiVehicles = Array.isArray(unitList) ? unitList.map(mapUnitToVehicle) : [];
-				vehicles.set(mergeVehicleLists(apiVehicles));
-				await this.loadVehiclePositions();
-			} catch (error) {
-				console.error('Error cargando unidades desde API:', error);
-				vehicles.set([]);
-			}
+			const unitList = await apiService.getVehicles();
+			const apiVehicles = Array.isArray(unitList) ? unitList.map(mapUnitToVehicle) : [];
+			vehicles.set(mergeVehicleLists(apiVehicles));
+			await this.loadVehiclePositions();
+		} catch (error) {
+			console.error('Error cargando unidades desde API:', error);
+			vehicles.set([]);
 		} finally {
 			loadingVehicles.set(false);
 		}
@@ -191,10 +102,6 @@ export const vehicleActions = {
 
 	// Cargar posiciones de vehículos
 	async loadVehiclePositions() {
-		if (bypassAuthInDev) {
-			loadingPositions.set(false);
-			return;
-		}
 		loadingPositions.set(true);
 		try {
 			const currentVehicles = get(vehicles);
@@ -354,12 +261,24 @@ export const vehicleActions = {
 
 	async fetchVehicle(vehicleId) {
 		if (!vehicleId) return null;
-		if (bypassAuthInDev) {
-			return this.getVehicleById(vehicleId);
+
+		const existing = this.getVehicleById(vehicleId);
+		const unit = await apiService.getVehicle(vehicleId);
+		let mapped = mergeVehicleDetail(existing, mapUnitToVehicle(unit));
+
+		if (!mapped.deviceId) {
+			const units = await apiService.getUnits();
+			const fromList = Array.isArray(units)
+				? units.find((u) => String(u?.id) === String(vehicleId))
+				: null;
+			if (fromList?.device_id || fromList?.deviceId) {
+				mapped = {
+					...mapped,
+					deviceId: fromList.device_id || fromList.deviceId
+				};
+			}
 		}
 
-		const unit = await apiService.getVehicle(vehicleId);
-		const mapped = mapUnitToVehicle(unit);
 		vehicles.update((list) => {
 			const exists = list.some((v) => v.id === mapped.id);
 			if (!exists) return [mapped, ...list];
@@ -369,19 +288,6 @@ export const vehicleActions = {
 	},
 
 	async createVehicle(payload) {
-		if (bypassAuthInDev) {
-			const newVehicle = {
-				id: `VH${Date.now()}`,
-				name: payload?.name?.trim() || 'Unidad',
-				description: payload?.description?.trim() || '',
-				driver: '',
-				deviceId: null,
-				status: 'active',
-				location: payload?.description?.trim() || ''
-			};
-			vehicles.update((list) => [newVehicle, ...list]);
-			return newVehicle;
-		}
 		const created = await apiService.createVehicle(sanitizeVehicleUpdatePayload(payload));
 		const mapped = mapUnitToVehicle(created);
 		vehicles.update((list) => [mapped, ...list.filter((v) => v.id !== mapped.id)]);
@@ -390,18 +296,6 @@ export const vehicleActions = {
 
 	async updateVehicle(vehicleId, payload) {
 		if (!vehicleId) return null;
-		if (bypassAuthInDev) {
-			const sanitized = sanitizeVehicleUpdatePayload(payload);
-			let updated = null;
-			vehicles.update((list) =>
-				list.map((v) => {
-					if (v.id !== vehicleId) return v;
-					updated = { ...v, ...sanitized, location: sanitized.description ?? v.location };
-					return updated;
-				})
-			);
-			return updated;
-		}
 		const updatedUnit = await apiService.updateVehicle(
 			vehicleId,
 			sanitizeVehicleUpdatePayload(payload)
@@ -413,9 +307,7 @@ export const vehicleActions = {
 
 	async deleteVehicle(vehicleId) {
 		if (!vehicleId) return;
-		if (!bypassAuthInDev) {
-			await apiService.deleteVehicle(vehicleId);
-		}
+		await apiService.deleteVehicle(vehicleId);
 		vehicles.update((list) => list.filter((v) => v.id !== vehicleId));
 		selectedVehicles.update((list) => list.filter((id) => id !== vehicleId));
 	}

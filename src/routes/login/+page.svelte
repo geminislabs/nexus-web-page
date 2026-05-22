@@ -3,7 +3,6 @@
 	import { page } from '$app/stores';
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { apiService } from '$lib/services/api.js';
-	import { bypassAuthInDev } from '$lib/config/env.js';
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
@@ -13,8 +12,6 @@
 	let loading = false;
 	let error = '';
 	let showPassword = false;
-
-	const DEV_USER = { id: 1, name: 'Alan Antonio', email: 'alan.antonio@geminislabs.com' };
 
 	// Redirigir si ya está autenticado
 	onMount(() => {
@@ -36,13 +33,6 @@
 			return;
 		}
 
-		if (bypassAuthInDev) {
-			authToken.setToken('mock-dev-token');
-			user.login(DEV_USER);
-			goto('/dashboard');
-			return;
-		}
-
 		loading = true;
 		error = '';
 
@@ -54,8 +44,12 @@
 				name: apiUser.name || apiUser.full_name || ''
 			};
 
-			// Guardar token y datos del usuario
-			authToken.setToken(response.access_token);
+			authToken.setSession({
+				access_token: response.access_token,
+				refresh_token: response.refresh_token,
+				id_token: response.id_token,
+				expires_in: response.expires_in
+			});
 			user.login(normalizedUser);
 
 			// Redirigir al dashboard
@@ -205,18 +199,6 @@
 					Iniciar sesión
 				{/if}
 			</button>
-
-			{#if bypassAuthInDev}
-				<div
-					class="-mt-1 flex items-center justify-center gap-2 text-center text-xs text-slate-500 dark:text-white/35"
-				>
-					<span
-						class="shrink-0 rounded border border-amber-500/30 bg-amber-500/20 px-1.5 py-0.5 text-[0.625rem] font-bold tracking-wider text-amber-400"
-						>DEV</span
-					>
-					Cualquier credencial funciona en modo desarrollo
-				</div>
-			{/if}
 		</form>
 
 		<p class="mt-5 text-center text-[0.8125rem] text-slate-600 dark:text-white/[0.38]">

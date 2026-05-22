@@ -23,6 +23,7 @@
 	import { theme } from '$lib/stores/themeStore.js';
 	import { get } from 'svelte/store';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
+	import ConfirmModal from './ConfirmModal.svelte';
 
 	export let isLoading = true;
 	export let onMapTap = () => {};
@@ -51,8 +52,29 @@
 		if ($selectedH3Cells.length > 0) h3Actions.popLastSelection();
 	}
 
-	function removeAlertRule(id) {
-		alertActions.deleteAlert(id);
+	/** @type {{ id: string, name: string } | null} */
+	let alertToDelete = null;
+	let deleteAlertLoading = false;
+
+	function requestDeleteAlert(alert) {
+		alertToDelete = { id: alert.id, name: alert?.name || 'Alerta' };
+	}
+
+	function cancelDeleteAlert() {
+		alertToDelete = null;
+	}
+
+	async function confirmDeleteAlert() {
+		if (!alertToDelete?.id || deleteAlertLoading) return;
+		deleteAlertLoading = true;
+		try {
+			await alertActions.deleteAlert(alertToDelete.id);
+			alertToDelete = null;
+		} catch (err) {
+			console.error('No se pudo eliminar alerta:', err);
+		} finally {
+			deleteAlertLoading = false;
+		}
 	}
 
 	function removeAlarmEvent(id) {
@@ -364,18 +386,17 @@
 																{al.name || 'Alerta'}
 															</p>
 															<p class="m-0 mt-0.5 text-[10px] text-slate-600 dark:text-white/38">
-																{al.type === 'zone' ? 'Zona' : 'Ignición'} · {al.enabled
-																	? 'Activa'
-																	: 'Inactiva'}
+																{al.type === 'zone' ? 'Zona' : 'Ignición'} · {al.units?.length ?? 0}
+																unidad{(al.units?.length ?? 0) !== 1 ? 'es' : ''}
 															</p>
 														</div>
 														<button
 															type="button"
 															class="rounded-md border border-red-200 bg-red-50 px-1.5 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
-															on:click={() => removeAlertRule(al.id)}
+															on:click={() => requestDeleteAlert(al)}
 															aria-label="Eliminar alerta {al.name || al.id}"
 														>
-															<Icon icon="mdi:close" width={11} aria-hidden="true" />
+															<Icon icon="mdi:delete-outline" width={11} aria-hidden="true" />
 														</button>
 													</div>
 												</li>
@@ -435,3 +456,21 @@
 		</div>
 	{/if}
 </section>
+
+<ConfirmModal
+	open={!!alertToDelete}
+	title="Eliminar alerta"
+	confirmLabel="Eliminar"
+	cancelLabel="Cancelar"
+	destructive
+	loading={deleteAlertLoading}
+	zIndexClass="z-[200]"
+	on:cancel={cancelDeleteAlert}
+	on:confirm={confirmDeleteAlert}
+>
+	{#if alertToDelete}
+		<p class="m-0">
+			¿Eliminar la alerta <strong>{alertToDelete.name}</strong>? Esta acción no se puede deshacer.
+		</p>
+	{/if}
+</ConfirmModal>

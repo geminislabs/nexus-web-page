@@ -25,6 +25,7 @@
 	import MapContainer from '$lib/components/MapContainer.svelte';
 	import TopDrawer from '$lib/components/TopDrawer.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
+	import AdminPanel from '$lib/components/AdminPanel.svelte';
 
 	import BottomTabBar from '$lib/components/BottomTabBar.svelte';
 	import TabInformes from '$lib/components/TabInformes.svelte';
@@ -51,7 +52,7 @@
 		'border-blue-500/40 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-500/45 dark:bg-blue-600/[0.22] dark:text-blue-400 dark:shadow-[0_0_16px_rgba(37,99,235,0.25),inset_0_1px_0_rgba(255,255,255,0.08)]';
 	const sidebarBtnUserOpen =
 		'border-blue-400/40 bg-blue-50 text-blue-700 hover:border-blue-500/50 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:border-blue-500/40 dark:hover:bg-blue-600/20';
-	const configSidebarItems = [
+	const baseConfigSidebarItems = [
 		{ id: 'unidades', label: 'Unidades', icon: 'mdi:car-side' },
 		{ id: 'zonas', label: 'Zonas', icon: 'mdi:hexagon-multiple-outline' },
 		{ id: 'gestionar_alertas', label: 'Gestionar', icon: 'mdi:format-list-bulleted' },
@@ -62,6 +63,17 @@
 			title: 'Historial de alarmas'
 		}
 	];
+	$: configSidebarItems = userData?.is_master
+		? [
+				...baseConfigSidebarItems,
+				{
+					id: 'administracion',
+					label: 'Admin',
+					icon: 'mdi:shield-account-outline',
+					title: 'Administración'
+				}
+			]
+		: baseConfigSidebarItems;
 
 	$: canonicalUrl =
 		$page?.url?.origin && $page?.url?.pathname ? `${$page.url.origin}${$page.url.pathname}` : '';
@@ -432,20 +444,27 @@
 		<TopDrawer
 			open={isConfigDrawerOpen}
 			title={configDrawerTitle}
-			icon="mdi:cog-outline"
-			accentColor="#10b981"
+			icon={activeConfigSection === 'administracion'
+				? 'mdi:shield-account-outline'
+				: 'mdi:cog-outline'}
+			accentColor={activeConfigSection === 'administracion' ? '#2563eb' : '#10b981'}
 			sidebarWidth={SW}
+			bodyPaddingClass={activeConfigSection === 'administracion' ? 'py-4 px-0' : 'p-0'}
 			passiveBackdrop={$mobileCrearZonaMapPassesPointer || $desktopZonePanelSubView !== 'zonas'}
 			on:close={closeDrawer}
 		>
-			{#key activeConfigSection}
-				<DrawerConfiguracion
-					initialSection={activeConfigSection}
-					showSectionSidebar={false}
-					on:close={closeDrawer}
-					on:navigate={(e) => openConfigDrawer(e.detail.section)}
-				/>
-			{/key}
+			{#if activeConfigSection === 'administracion'}
+				<AdminPanel embedded={true} />
+			{:else}
+				{#key activeConfigSection}
+					<DrawerConfiguracion
+						initialSection={activeConfigSection}
+						showSectionSidebar={false}
+						on:close={closeDrawer}
+						on:navigate={(e) => openConfigDrawer(e.detail.section)}
+					/>
+				{/key}
+			{/if}
 		</TopDrawer>
 
 		{#if $desktopZonePanelSubView !== 'zonas'}

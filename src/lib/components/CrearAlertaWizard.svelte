@@ -90,11 +90,6 @@
 	function conditionLabel(c) {
 		return { on: 'Encendido', off: 'Apagado', enter: 'Entrada', exit: 'Salida' }[c] ?? '—';
 	}
-	function notificationEventSlug(w) {
-		if (!w?.type || !w?.condition) return '—';
-		if (w.type === 'ignition') return w.condition === 'on' ? 'ignition_on' : 'ignition_off';
-		return w.condition === 'enter' ? 'geofence_entered' : 'geofence_exited';
-	}
 </script>
 
 <svelte:window on:keydown={onKeydown} />
@@ -467,14 +462,6 @@
 								<dd class="m-0 text-[12px] font-semibold text-slate-900 dark:text-white">{dd}</dd>
 							</div>
 						{/each}
-						<div
-							class="flex items-center justify-between gap-3 border-t border-slate-200 pt-2 dark:border-white/[0.07]"
-						>
-							<dt class="m-0 text-[11px] text-slate-500 dark:text-white/35">Evento DB</dt>
-							<dd class="m-0 font-mono text-[11px] font-semibold text-emerald-300/85">
-								{notificationEventSlug(wizard)}
-							</dd>
-						</div>
 					</dl>
 				</div>
 			{/if}

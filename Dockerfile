@@ -17,17 +17,20 @@ RUN echo "@JesusCabrera84:registry=https://npm.pkg.github.com/" > .npmrc && \
 COPY . .
 
 # Permitir inyectar variables de entorno en tiempo de build (para Vite)
-ARG VITE_BYPASS_AUTH=false
-ENV VITE_BYPASS_AUTH=$VITE_BYPASS_AUTH
-
 ARG VITE_COMPANY_URL
 ENV VITE_COMPANY_URL=$VITE_COMPANY_URL
 
 ARG VITE_COMM_API_URL
 ENV VITE_COMM_API_URL=$VITE_COMM_API_URL
 
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 ARG VITE_ADMIN_API_URL
 ENV VITE_ADMIN_API_URL=$VITE_ADMIN_API_URL
+
+ARG VITE_POSITION_STREAM_WS_BASE
+ENV VITE_POSITION_STREAM_WS_BASE=$VITE_POSITION_STREAM_WS_BASE
 
 # Sincronizar SvelteKit (genera .svelte-kit/tsconfig.json y tipos)
 RUN npx svelte-kit sync

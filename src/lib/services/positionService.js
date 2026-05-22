@@ -1,7 +1,6 @@
 /**
  * Servicio para consultar posiciones de vehículos desde la API de comunicaciones (SISCOM-API)
  */
-import { bypassAuthInDev } from '$lib/config/env.js';
 
 import { vehicleActions } from '../stores/vehicleStore.js';
 
@@ -12,29 +11,6 @@ class PositionService {
 	constructor() {
 		this.cache = new Map();
 		this.cacheTimeout = 30000; // 30 segundos
-	}
-
-	/** Posición estable en dev sin llamar al backend */
-	_mockPosition(deviceId) {
-		const id = String(deviceId ?? '0');
-		let h = 0;
-		for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-		const now = new Date().toISOString();
-		const lat = 20.5888 + (Math.abs(h) % 200) / 10000;
-		const lng = -100.3899 + (Math.abs(h >> 8) % 200) / 10000;
-		return {
-			deviceId: id,
-			latitude: lat,
-			longitude: lng,
-			lastUpdate: now,
-			altitude: 0,
-			speed: 25 + (Math.abs(h) % 40),
-			battery: 60 + (Math.abs(h >> 4) % 35),
-			status: 'En ruta',
-			isOnline: true,
-			lastUpdateFormatted: this.formatLastUpdate(now),
-			coordinates: { lat, lng }
-		};
 	}
 
 	/**
@@ -64,48 +40,12 @@ class PositionService {
 	 * @returns {Promise<Object>} Datos de posición
 	 */
 	async getLastPosition(deviceId) {
-		if (bypassAuthInDev) {
-			return this._mockPosition(deviceId);
+		const results = await this.getMultiplePositions([deviceId]);
+		const match = results.find((p) => String(p?.deviceId) === String(deviceId));
+		if (!match) {
+			throw new Error(`Sin posición para dispositivo ${deviceId}`);
 		}
-		try {
-			const cacheKey = `position_${deviceId}`;
-			const cached = this.cache.get(cacheKey);
-
-			// Verificar cache
-			if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
-				return cached.data;
-			}
-
-			const response = await fetch(
-				`${COMM_API_URL}/api/v1/devices/${deviceId}/communications/latest`,
-				{
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				}
-			);
-
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-
-			const data = await response.json();
-
-			// Normalizar los datos
-			const normalizedData = this.normalizePositionData(data);
-
-			// Guardar en cache
-			this.cache.set(cacheKey, {
-				data: normalizedData,
-				timestamp: Date.now()
-			});
-
-			return normalizedData;
-		} catch (error) {
-			console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
-			throw error;
-		}
+		return match;
 	}
 
 	/**
@@ -114,15 +54,26 @@ class PositionService {
 	 * @returns {Promise<Object[]>} Array de datos de posición
 	 */
 	async getMultiplePositions(deviceIds) {
-		const promises = deviceIds.map((deviceId) =>
-			this.getLastPosition(deviceId).catch((error) => {
-				console.warn(`Error obteniendo posición para ${deviceId}:`, error);
-				return null;
-			})
-		);
+		if (!Array.isArray(deviceIds) || deviceIds.length === 0) return [];
 
-		const results = await Promise.all(promises);
-		return results.filter((result) => result !== null);
+		try {
+			const rawList = await this.getLatestCommunications(deviceIds);
+			const list = Array.isArray(rawList) ? rawList : (rawList?.communications ?? []);
+
+			return list
+				.map((row) => {
+					try {
+						return this.normalizePositionData(row);
+					} catch (e) {
+						console.warn('Error normalizando posición:', e);
+						return null;
+					}
+				})
+				.filter(Boolean);
+		} catch (error) {
+			console.error('Error obteniendo posiciones:', error);
+			return [];
+		}
 	}
 
 	/**
@@ -131,22 +82,31 @@ class PositionService {
 	 * @returns {Object} Datos normalizados
 	 */
 	normalizePositionData(rawData) {
+		const deviceId = rawData.device_id ?? rawData.deviceId;
+		const latitude = parseFloat(rawData.latitude ?? rawData.lat);
+		const longitude = parseFloat(rawData.longitude ?? rawData.lng);
+		const lastUpdate =
+			rawData.gps_datetime ?? rawData.received_at ?? rawData.timelastposition ?? null;
+		const engineStatus = rawData.engine_status ?? rawData.status;
+
+		if (!deviceId || Number.isNaN(latitude) || Number.isNaN(longitude)) {
+			throw new Error('Posición incompleta');
+		}
+
 		return {
-			deviceId: rawData.deviceId,
-			latitude: parseFloat(rawData.latitude),
-			longitude: parseFloat(rawData.longitude),
-			lastUpdate: rawData.timelastposition,
+			deviceId: String(deviceId),
+			latitude,
+			longitude,
+			lastUpdate,
 			altitude: parseFloat(rawData.altitude || 0),
 			speed: parseFloat(rawData.speed || 0),
-			battery: parseFloat(rawData.battery || 0),
-			status: rawData.status || 'Desconocido',
-			// Campos adicionales calculados
-			isOnline: rawData.status !== 'Apagado',
-			lastUpdateFormatted: this.formatLastUpdate(rawData.timelastposition),
-			coordinates: {
-				lat: parseFloat(rawData.latitude),
-				lng: parseFloat(rawData.longitude)
-			}
+			battery: parseFloat(
+				rawData.main_battery_voltage ?? rawData.backup_battery_voltage ?? rawData.battery ?? 0
+			),
+			status: engineStatus || 'Desconocido',
+			isOnline: String(engineStatus ?? '').toUpperCase() === 'ON',
+			lastUpdateFormatted: this.formatLastUpdate(lastUpdate),
+			coordinates: { lat: latitude, lng: longitude }
 		};
 	}
 
