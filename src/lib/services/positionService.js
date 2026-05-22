@@ -58,7 +58,7 @@ class PositionService {
 
 		try {
 			const rawList = await this.getLatestCommunications(deviceIds);
-			const list = Array.isArray(rawList) ? rawList : rawList?.communications ?? [];
+			const list = Array.isArray(rawList) ? rawList : (rawList?.communications ?? []);
 
 			return list
 				.map((row) => {

@@ -358,7 +358,6 @@
 					</ul>
 				{/if}
 			</div>
-
 		{:else if activeSection === 'unidades'}
 			<div class="tab-content">
 				{#if loadingUnits}
@@ -622,7 +621,6 @@
 					</div>
 				{/if}
 			</div>
-
 		{:else if activeSection === 'usuarios'}
 			<div class="tab-content">
 				<div class="info-card">
