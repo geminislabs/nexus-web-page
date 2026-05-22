@@ -52,7 +52,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VITE_BYPASS_AUTH=true
             NODE_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
   validate-release-tag:
@@ -105,10 +104,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            VITE_BYPASS_AUTH=true
             VITE_COMPANY_URL=${{ secrets.VITE_COMPANY_URL }}
             VITE_COMM_API_URL=${{ secrets.VITE_COMM_API_URL }}
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_ADMIN_API_URL=${{ secrets.VITE_ADMIN_API_URL }}
+            VITE_POSITION_STREAM_WS_BASE=${{ secrets.VITE_POSITION_STREAM_WS_BASE }}
             NODE_AUTH_TOKEN=${{ secrets.GITHUB_TOKEN }}
 
       - name: Save Docker image

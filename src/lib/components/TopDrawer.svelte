@@ -13,6 +13,7 @@
 	export let headingId = '';
 	export let bodyPaddingClass = 'px-6 py-4';
 	export let headerPaddingClass = 'px-6';
+	export let bodyScrollable = true;
 	export let passiveBackdrop = false;
 
 	const dispatch = createEventDispatcher();
@@ -122,7 +123,9 @@
 			</header>
 
 			<div
-				class="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch] {bodyPaddingClass}"
+				class="min-h-0 flex-1 overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch] {bodyScrollable
+					? 'overflow-x-hidden overflow-y-auto'
+					: 'flex flex-col overflow-hidden'} {bodyPaddingClass}"
 				role="region"
 				aria-label="Contenido de {title}"
 			>

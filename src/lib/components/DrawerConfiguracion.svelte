@@ -17,7 +17,10 @@
 		unreadAlarmCount
 	} from '$lib/stores/alertStore.js';
 	import CrearAlertaWizard from './CrearAlertaWizard.svelte';
+	import ConfirmModal from './ConfirmModal.svelte';
 	import ZonasPanel from './ZonasPanel.svelte';
+	import AdminPanel from './AdminPanel.svelte';
+	import { user } from '$lib/stores/auth.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { getStatusText } from '$lib/utils/vehicleUtils.js';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
@@ -48,6 +51,8 @@
 	let editVehicleDescription = '';
 	let vehicleDetail = null;
 	let vehicleDetailOpen = false;
+	/** @type {{ id: string, name: string } | null} */
+	let alertToDelete = null;
 
 	$: filteredVehicles = $vehicles.filter((v) => {
 		const matchStatus = filterStatus === 'all' || v.status === filterStatus;
@@ -70,7 +75,7 @@
 	}
 
 	// ── Sidebar sections ──────────────────────────────────────
-	const sections = [
+	const baseSections = [
 		{ id: 'apariencia', label: 'Apariencia', icon: 'mdi:theme-light-dark' },
 		{ id: 'unidades', label: 'Unidades', icon: 'mdi:car-side' },
 		{ id: 'zonas', label: 'Zonas', icon: 'mdi:hexagon-multiple-outline' },
@@ -82,6 +87,17 @@
 			icon: 'mdi:bell-badge-outline'
 		}
 	];
+	$: sections = $user?.is_master
+		? [
+				...baseSections,
+				{
+					id: 'administracion',
+					label: 'Admin',
+					title: 'Administración',
+					icon: 'mdi:shield-account-outline'
+				}
+			]
+		: baseSections;
 
 	onMount(async () => {
 		if ($vehicles.length === 0) await vehicleActions.loadVehicles();
@@ -178,6 +194,26 @@
 			actionLoading = false;
 		}
 	}
+	function requestDeleteAlert(alert) {
+		alertToDelete = { id: alert.id, name: alert.name || 'Alerta' };
+	}
+	function cancelDeleteAlert() {
+		alertToDelete = null;
+	}
+	async function confirmDeleteAlert() {
+		if (!alertToDelete?.id || actionLoading) return;
+		actionLoading = true;
+		try {
+			await alertActions.deleteAlert(alertToDelete.id);
+			showHint('Alerta eliminada', true);
+			alertToDelete = null;
+		} catch (error) {
+			console.error('Error eliminando alerta:', error);
+			showHint('No se pudo eliminar la alerta', false);
+		} finally {
+			actionLoading = false;
+		}
+	}
 	function sectionBadge(id) {
 		if (id === 'unidades') return $vehicles.length;
 		if (id === 'zonas') return $zones.length;
@@ -216,7 +252,7 @@
 {/if}
 
 <div
-	class="flex h-full min-h-0 overflow-hidden bg-slate-100 text-slate-900 text-[13px] dark:bg-[#080d1a] dark:text-white/90"
+	class="flex min-h-0 flex-1 flex-col overflow-hidden bg-slate-100 text-slate-900 text-[13px] dark:bg-[#080d1a] dark:text-white/90"
 	role="region"
 	aria-label="Preferencias y herramientas del mapa"
 >
@@ -258,7 +294,8 @@
 
 	<!-- PANEL -->
 	<div
-		class="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain bg-white dark:bg-transparent"
+		class="flex min-h-0 min-w-0 flex-1 flex-col overscroll-contain bg-white dark:bg-transparent
+			{displaySection === 'zonas' ? 'overflow-hidden' : 'overflow-y-auto'}"
 	>
 		<!-- ═══ APARIENCIA ═══ -->
 		{#if displaySection === 'apariencia'}
@@ -807,6 +844,8 @@
 			{/if}
 
 			<!-- ═══ ZONAS ═══ -->
+		{:else if displaySection === 'administracion'}
+			<AdminPanel embedded={true} />
 		{:else if displaySection === 'zonas'}
 			<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
 				<ZonasPanel
@@ -960,30 +999,9 @@
 								<div class="flex shrink-0 items-center gap-2">
 									<button
 										type="button"
-										class="relative h-5 w-9 shrink-0 rounded-full border-0 transition-colors duration-200 {alert.enabled
-											? 'bg-blue-500'
-											: 'bg-slate-300 dark:bg-white/[0.12]'}"
-										on:click={() =>
-											alertActions.toggleAlert(alert.id).catch((err) => {
-												console.error('No se pudo cambiar estado de alerta:', err);
-											})}
-										role="switch"
-										aria-checked={alert.enabled}
-										aria-label={alert.enabled ? 'Desactivar' : 'Activar'}
-									>
-										<span
-											class="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 {alert.enabled
-												? 'translate-x-4'
-												: ''}"
-										></span>
-									</button>
-									<button
-										type="button"
 										class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
-										on:click={() =>
-											alertActions.deleteAlert(alert.id).catch((err) => {
-												console.error('No se pudo eliminar alerta:', err);
-											})}
+										on:click={() => requestDeleteAlert(alert)}
+										aria-label={`Eliminar la alerta «${alert.name}»`}
 									>
 										<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
 									</button>
@@ -996,3 +1014,20 @@
 		{/if}
 	</div>
 </div>
+
+<ConfirmModal
+	open={!!alertToDelete}
+	title="Eliminar alerta"
+	confirmLabel="Eliminar"
+	cancelLabel="Cancelar"
+	destructive
+	loading={actionLoading}
+	on:cancel={cancelDeleteAlert}
+	on:confirm={confirmDeleteAlert}
+>
+	{#if alertToDelete}
+		<p class="m-0">
+			¿Eliminar la alerta <strong>{alertToDelete.name}</strong>? Esta acción no se puede deshacer.
+		</p>
+	{/if}
+</ConfirmModal>

@@ -1,19 +1,27 @@
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
-import { bypassAuthInDev } from '$lib/config/env.js';
 
-// Mock user para desarrollo
-const mockUser = {
-	id: 1,
-	name: 'Usuario Dev',
-	email: 'dev@tracker-monitor.com'
-};
+const LS_TOKEN = 'token';
+const LS_REFRESH = 'refresh_token';
+const LS_ID = 'id_token';
+const LS_EXPIRES_AT = 'token_expires_at';
 
-// Crear el store para el usuario autenticado
-const DEV_LOGOUT_KEY = 'nexus-dev-logged-out';
+/** @param {string | null | undefined} token */
+function readJwtExpiryMs(token) {
+	if (!token || typeof token !== 'string') return null;
+	const parts = token.split('.');
+	if (parts.length < 2) return null;
+	try {
+		const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+		if (typeof payload.exp === 'number') return payload.exp * 1000;
+	} catch {
+		return null;
+	}
+	return null;
+}
 
 function createAuthStore() {
-	const { subscribe, set, update } = writable(null);
+	const { subscribe, set } = writable(null);
 
 	return {
 		subscribe,
@@ -21,7 +29,6 @@ function createAuthStore() {
 		login: (userData) => {
 			set(userData);
 			if (browser) {
-				sessionStorage.removeItem(DEV_LOGOUT_KEY);
 				localStorage.setItem('user', JSON.stringify(userData));
 			}
 		},
@@ -29,26 +36,16 @@ function createAuthStore() {
 			set(null);
 			if (browser) {
 				localStorage.removeItem('user');
-				localStorage.removeItem('token');
-				if (bypassAuthInDev) sessionStorage.setItem(DEV_LOGOUT_KEY, '1');
+				localStorage.removeItem(LS_TOKEN);
+				localStorage.removeItem(LS_REFRESH);
+				localStorage.removeItem(LS_ID);
+				localStorage.removeItem(LS_EXPIRES_AT);
 			}
 		},
 
 		init: () => {
 			if (!browser) return;
 
-			// En modo desarrollo, usar mock user automáticamente
-			if (bypassAuthInDev) {
-				const wasLoggedOut = sessionStorage.getItem(DEV_LOGOUT_KEY);
-				if (!wasLoggedOut) {
-					set(mockUser);
-					localStorage.setItem('user', JSON.stringify(mockUser));
-					return;
-				}
-				set(null);
-				return;
-			}
-			// En producción, verificar localStorage
 			const userData = localStorage.getItem('user');
 			if (userData) {
 				try {
@@ -63,34 +60,78 @@ function createAuthStore() {
 
 export const user = createAuthStore();
 
-// Store para el token de autenticación
 function createTokenStore() {
 	const { subscribe, set } = writable(null);
+
+	/** @param {string | null | undefined} accessToken */
+	function persistAccessToken(accessToken) {
+		set(accessToken ?? null);
+		if (!browser) return;
+		if (accessToken) localStorage.setItem(LS_TOKEN, accessToken);
+		else localStorage.removeItem(LS_TOKEN);
+	}
 
 	return {
 		subscribe,
 		setToken: (token) => {
-			set(token);
-			if (browser) localStorage.setItem('token', token);
+			persistAccessToken(token);
 		},
 		getToken: () => {
 			if (!browser) return null;
-			// En modo desarrollo, devolver token mock
-			if (bypassAuthInDev) return 'mock-dev-token';
-			return localStorage.getItem('token');
+			return localStorage.getItem(LS_TOKEN);
+		},
+		getRefreshToken: () => {
+			if (!browser) return null;
+			return localStorage.getItem(LS_REFRESH);
+		},
+		getIdToken: () => {
+			if (!browser) return null;
+			return localStorage.getItem(LS_ID);
+		},
+		/**
+		 * Persiste tokens tras login o refresh.
+		 * @param {{ access_token?: string, refresh_token?: string, id_token?: string, expires_in?: number }} session
+		 */
+		setSession: (session) => {
+			if (!session) return;
+			if (session.access_token) persistAccessToken(session.access_token);
+			if (browser) {
+				if (session.refresh_token) localStorage.setItem(LS_REFRESH, session.refresh_token);
+				if (session.id_token) localStorage.setItem(LS_ID, session.id_token);
+				if (typeof session.expires_in === 'number') {
+					localStorage.setItem(LS_EXPIRES_AT, String(Date.now() + session.expires_in * 1000));
+				} else if (session.access_token) {
+					const jwtExp = readJwtExpiryMs(session.access_token);
+					if (jwtExp) localStorage.setItem(LS_EXPIRES_AT, String(jwtExp));
+				}
+			}
+		},
+		/**
+		 * @param {number} [thresholdSeconds=300]
+		 */
+		isTokenExpiringSoon: (thresholdSeconds = 300) => {
+			if (!browser) return false;
+			const token = localStorage.getItem(LS_TOKEN);
+			if (!token) return false;
+
+			const stored = localStorage.getItem(LS_EXPIRES_AT);
+			const expiresAt = stored ? Number(stored) : readJwtExpiryMs(token);
+			if (!expiresAt || Number.isNaN(expiresAt)) return false;
+
+			return Date.now() + thresholdSeconds * 1000 >= expiresAt;
 		},
 		clearToken: () => {
 			set(null);
-			if (browser) localStorage.removeItem('token');
+			if (browser) {
+				localStorage.removeItem(LS_TOKEN);
+				localStorage.removeItem(LS_REFRESH);
+				localStorage.removeItem(LS_ID);
+				localStorage.removeItem(LS_EXPIRES_AT);
+			}
 		},
 		init: () => {
 			if (!browser) return;
-			if (bypassAuthInDev) {
-				const wasLoggedOut = sessionStorage.getItem(DEV_LOGOUT_KEY);
-				if (!wasLoggedOut) set('mock-dev-token');
-				return;
-			}
-			const token = localStorage.getItem('token');
+			const token = localStorage.getItem(LS_TOKEN);
 			if (token) set(token);
 		}
 	};

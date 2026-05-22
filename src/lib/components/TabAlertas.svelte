@@ -9,6 +9,7 @@
 	} from '$lib/stores/alertStore.js';
 	import { theme } from '$lib/stores/themeStore.js';
 	import CrearAlertaWizard from './CrearAlertaWizard.svelte';
+	import ConfirmModal from './ConfirmModal.svelte';
 	import ZonasPanel from './ZonasPanel.svelte';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
 	import { onMount } from 'svelte';
@@ -34,6 +35,31 @@
 		enter: 'Entrada a zona',
 		exit: 'Salida de zona'
 	};
+
+	/** @type {{ id: string, name: string } | null} */
+	let alertToDelete = null;
+	let deleteAlertLoading = false;
+
+	function requestDeleteAlert(alert) {
+		alertToDelete = { id: alert.id, name: alert.name || 'Alerta' };
+	}
+
+	function cancelDeleteAlert() {
+		alertToDelete = null;
+	}
+
+	async function confirmDeleteAlert() {
+		if (!alertToDelete?.id || deleteAlertLoading) return;
+		deleteAlertLoading = true;
+		try {
+			await alertActions.deleteAlert(alertToDelete.id);
+			alertToDelete = null;
+		} catch (err) {
+			console.error('No se pudo eliminar alerta:', err);
+		} finally {
+			deleteAlertLoading = false;
+		}
+	}
 
 	onMount(() => {
 		alertActions.syncAlertRulesFromApi().catch((err) => {
@@ -335,31 +361,8 @@
 									<div class="flex shrink-0 items-center gap-2">
 										<button
 											type="button"
-											role="switch"
-											aria-checked={alert.enabled}
-											aria-label={`Alerta «${alert.name}»: ${alert.enabled ? 'activa' : 'desactivada'}. Pulse para cambiar.`}
-											class="relative h-[26px] w-11 shrink-0 cursor-pointer rounded-full border-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 {alert.enabled
-												? 'bg-blue-600'
-												: 'bg-zinc-600'}"
-											on:click={() =>
-												alertActions.toggleAlert(alert.id).catch((err) => {
-													console.error('No se pudo cambiar estado de alerta:', err);
-												})}
-										>
-											<span
-												class="pointer-events-none absolute left-[3px] top-[3px] block h-5 w-5 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.3)] transition-transform {alert.enabled
-													? 'translate-x-[18px]'
-													: ''}"
-												aria-hidden="true"
-											></span>
-										</button>
-										<button
-											type="button"
 											class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-red-500/15 text-red-400 transition-colors hover:bg-red-500/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
-											on:click={() =>
-												alertActions.deleteAlert(alert.id).catch((err) => {
-													console.error('No se pudo eliminar alerta:', err);
-												})}
+											on:click={() => requestDeleteAlert(alert)}
 											aria-label={`Eliminar la alerta «${alert.name}»`}
 										>
 											<Icon icon="mdi:delete-outline" class="h-4 w-4" aria-hidden="true" />
@@ -384,3 +387,20 @@
 		</div>
 	{/if}
 </section>
+
+<ConfirmModal
+	open={!!alertToDelete}
+	title="Eliminar alerta"
+	confirmLabel="Eliminar"
+	cancelLabel="Cancelar"
+	destructive
+	loading={deleteAlertLoading}
+	on:cancel={cancelDeleteAlert}
+	on:confirm={confirmDeleteAlert}
+>
+	{#if alertToDelete}
+		<p class="m-0">
+			¿Eliminar la alerta <strong>{alertToDelete.name}</strong>? Esta acción no se puede deshacer.
+		</p>
+	{/if}
+</ConfirmModal>

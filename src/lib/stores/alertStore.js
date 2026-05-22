@@ -1,65 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
 import { withZoneDbRow } from '$lib/utils/zoneDbMapper.js';
-import { bypassAuthInDev } from '$lib/config/env.js';
 import { apiService } from '$lib/services/api.js';
-
-function cloneDeep(value) {
-	return JSON.parse(JSON.stringify(value));
-}
-
-const INITIAL_MOCK_ALERTS = [
-	{
-		id: 'alert_mock_ign_on',
-		type: 'ignition',
-		condition: 'on',
-		units: ['unit_001', 'unit_004'],
-		zone: null,
-		name: 'Ignición encendida - Operación',
-		notificationMethod: 'push',
-		notificationEvent: 'ignition_on',
-		enabled: true,
-		createdAt: '2026-04-10T08:12:00.000Z'
-	},
-	{
-		id: 'alert_mock_zone_enter',
-		type: 'zone',
-		condition: 'enter',
-		units: ['unit_002'],
-		zone: 'zone_mock_deposito',
-		name: 'Entrada a depósito central',
-		notificationMethod: 'push',
-		notificationEvent: 'geofence_entered',
-		enabled: true,
-		createdAt: '2026-04-10T08:18:00.000Z'
-	}
-];
-
-const INITIAL_MOCK_ALARM_EVENTS = [
-	{
-		id: 'ev_mock_01',
-		name: 'Ignición encendida',
-		type: 'ignition',
-		vehicle: 'Unidad 04',
-		read: false,
-		at: '2026-04-16T13:05:00.000Z'
-	},
-	{
-		id: 'ev_mock_02',
-		name: 'Entrada a depósito central',
-		type: 'zone',
-		vehicle: 'Unidad 02',
-		read: false,
-		at: '2026-04-16T12:47:00.000Z'
-	},
-	{
-		id: 'ev_mock_03',
-		name: 'Ignición apagada',
-		type: 'ignition',
-		vehicle: 'Unidad 01',
-		read: true,
-		at: '2026-04-16T11:54:00.000Z'
-	}
-];
 
 export const alerts = writable([]);
 export const alertWizard = writable(null);
@@ -306,12 +247,6 @@ export const alertActions = {
 			createdAt: new Date().toISOString()
 		};
 
-		if (bypassAuthInDev) {
-			alerts.update((list) => [...list, newAlert]);
-			alertWizard.set(null);
-			return;
-		}
-
 		const createdRule = await apiService.createAlertRule({
 			name: newAlert.name,
 			type: newAlert.type,
@@ -329,40 +264,8 @@ export const alertActions = {
 	},
 
 	async deleteAlert(id) {
-		if (!bypassAuthInDev) {
-			await apiService.deleteAlertRule(id);
-		}
+		await apiService.deleteAlertRule(id);
 		alerts.update((list) => list.filter((a) => a.id !== id));
-	},
-	async toggleAlert(id) {
-		if (bypassAuthInDev) {
-			alerts.update((list) => list.map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a)));
-			return;
-		}
-
-		const current = get(alerts).find((a) => a.id === id);
-		if (!current) return;
-
-		// La API no expone "disable"; simulamos el apagado eliminando la regla.
-		if (current.enabled) {
-			await apiService.deleteAlertRule(id);
-			alerts.update((list) => list.filter((a) => a.id !== id));
-			return;
-		}
-
-		const recreated = await apiService.createAlertRule({
-			name: current.name,
-			type: current.type,
-			config: {
-				condition: current.condition,
-				notification_method: current.notificationMethod || 'push',
-				notification_event: current.notificationEvent || notificationEventFromWizard(current),
-				...(current.zone ? { zone_id: current.zone } : {})
-			},
-			unit_ids: current.units
-		});
-		const mapped = mapRuleToAlert(recreated);
-		alerts.update((list) => [...list.filter((a) => a.id !== id), mapped]);
 	},
 
 	/**
@@ -387,12 +290,6 @@ export const alertActions = {
 			}
 		});
 		logGeofenceGenerationPreview(localZone);
-
-		const shouldUseApi = !bypassAuthInDev;
-		if (!shouldUseApi) {
-			zones.update((list) => [...list, localZone]);
-			return localZone.id;
-		}
 
 		const h3Indexes = (Array.isArray(cells) ? cells : [])
 			.map(h3HexToDecimalString)
@@ -425,12 +322,6 @@ export const alertActions = {
 			metadata: meta
 		});
 
-		const shouldUseApi = !bypassAuthInDev;
-		if (!shouldUseApi) {
-			zones.update((list) => list.map((z) => (z.id === id ? nextLocal : z)));
-			return;
-		}
-
 		const updatedGeofence = await apiService.updateGeofence(id, {
 			name: nextLocal.name,
 			description: nextLocal.metadata?.description || null,
@@ -449,36 +340,25 @@ export const alertActions = {
 		zones.set(/** @type {any[]} */ (out));
 	},
 	async deleteZone(id) {
-		if (!bypassAuthInDev) {
-			await apiService.deleteGeofence(id);
-		}
+		await apiService.deleteGeofence(id);
 		zones.update((list) => list.filter((z) => z.id !== id));
 		// Remove from any alerts using this zone
 		alerts.update((list) => list.map((a) => (a.zone === id ? { ...a, zone: null } : a)));
 	},
 
 	async syncZonesFromApi() {
-		if (bypassAuthInDev) return;
 		const geofences = await apiService.getGeofences();
 		const mapped = Array.isArray(geofences) ? geofences.map(mapGeofenceToZone) : [];
 		zones.set(mapped);
 	},
 
 	async syncAlertRulesFromApi() {
-		if (bypassAuthInDev) {
-			alerts.set(cloneDeep(INITIAL_MOCK_ALERTS));
-			return;
-		}
 		const rules = await apiService.getAlertRules();
 		const mapped = Array.isArray(rules) ? rules.map(mapRuleToAlert) : [];
 		alerts.set(mapped);
 	},
 
 	async syncAlarmEventsFromApi() {
-		if (bypassAuthInDev) {
-			alarmEvents.set(cloneDeep(INITIAL_MOCK_ALARM_EVENTS));
-			return;
-		}
 		const events = await apiService.getAlerts();
 		const mapped = Array.isArray(events) ? events.map(mapAlarmEvent) : [];
 		alarmEvents.set(mapped);
@@ -495,10 +375,6 @@ export const alertActions = {
 	},
 	markAllRead() {
 		alarmEvents.update((list) => list.map((e) => ({ ...e, read: true })));
-	},
-	resetMockData() {
-		alerts.set(cloneDeep(INITIAL_MOCK_ALERTS));
-		alarmEvents.set(cloneDeep(INITIAL_MOCK_ALARM_EVENTS));
 	}
 };
 
