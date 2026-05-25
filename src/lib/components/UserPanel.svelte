@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import Icon from '@iconify/svelte';
 	import CenterSheet from '$lib/components/CenterSheet.svelte';
-	import { user, authToken } from '$lib/stores/auth.js';
+	import { logoutSession } from '$lib/services/sessionService.js';
 	import { theme, themeActions } from '$lib/stores/themeStore.js';
 
 	export let showUserPanel = false;
@@ -12,9 +12,8 @@
 
 	$: isLightTheme = $theme === 'light';
 
-	function handleLogout() {
-		user.logout();
-		authToken.clearToken();
+	async function handleLogout() {
+		await logoutSession();
 		goto('/login');
 	}
 </script>

@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { user, authToken } from '$lib/stores/auth.js';
-	import { apiService } from '$lib/services/api.js';
+	import { apiService, ApiError } from '$lib/services/api.js';
+	import { getRecoverPasswordUrl, persistLoginResponse } from '$lib/services/sessionService.js';
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
@@ -13,17 +14,31 @@
 	let error = '';
 	let showPassword = false;
 
-	// Redirigir si ya está autenticado
+	const recoverPasswordUrl = getRecoverPasswordUrl();
+
 	onMount(() => {
 		user.init();
 		authToken.init();
 		const unsubscribe = user.subscribe((userData) => {
-			if (userData) {
+			if (userData && authToken.getToken()) {
 				goto('/dashboard');
 			}
 		});
 		return unsubscribe;
 	});
+
+	function loginErrorMessage(err) {
+		if (err instanceof ApiError) {
+			if (err.status === 403) {
+				return err.displayMessage || 'Debes verificar tu correo antes de iniciar sesión.';
+			}
+			if (err.status === 401) {
+				return 'Credenciales inválidas. Por favor, intenta de nuevo.';
+			}
+			return err.displayMessage || 'No se pudo iniciar sesión.';
+		}
+		return 'Credenciales inválidas. Por favor, intenta de nuevo.';
+	}
 
 	async function handleLogin() {
 		if (loading) return;
@@ -38,24 +53,10 @@
 
 		try {
 			const response = await apiService.login({ email, password });
-			const apiUser = response?.user || {};
-			const normalizedUser = {
-				...apiUser,
-				name: apiUser.name || apiUser.full_name || ''
-			};
-
-			authToken.setSession({
-				access_token: response.access_token,
-				refresh_token: response.refresh_token,
-				id_token: response.id_token,
-				expires_in: response.expires_in
-			});
-			user.login(normalizedUser);
-
-			// Redirigir al dashboard
+			persistLoginResponse(response);
 			goto('/dashboard');
 		} catch (err) {
-			error = 'Credenciales inválidas. Por favor, intenta de nuevo.';
+			error = loginErrorMessage(err);
 		} finally {
 			loading = false;
 		}
@@ -185,6 +186,17 @@
 					</button>
 				</div>
 			</div>
+
+			{#if recoverPasswordUrl}
+				<p class="m-0 text-center text-[0.8125rem]">
+					<a
+						href={recoverPasswordUrl}
+						class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+					>
+						¿Olvidaste tu contraseña?
+					</a>
+				</p>
+			{/if}
 
 			<button
 				type="submit"
