@@ -18,6 +18,8 @@ class MapService {
 		this._mobileZoneZoomLocked = false;
 		/** @type {string | null} */
 		this._openVehiclePopupId = null;
+		/** @type {((vehicle: any) => void) | null} */
+		this._onVehicleMarkerClick = null;
 		this.apiKey =
 			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
 	}
@@ -48,8 +50,27 @@ class MapService {
 		m.setMap(map);
 	}
 
-	_vehicleIconDataUrl(hexColor) {
-		const svg = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="14" fill="${hexColor}" stroke="white" stroke-width="2"/><path d="M8 16h16M12 12h8M12 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>`;
+	setOnVehicleMarkerClick(handler) {
+		this._onVehicleMarkerClick = typeof handler === 'function' ? handler : null;
+	}
+
+	_getVehicleGlyphPath(iconType) {
+		if (iconType?.includes('motorbike')) {
+			return '<path d="M9 18a2.2 2.2 0 1 0 0 4.4A2.2 2.2 0 0 0 9 18zm14 0a2.2 2.2 0 1 0 0 4.4A2.2 2.2 0 0 0 23 18zM10.7 19.2h4.8l2.5-3.6h2.7l1.3 2.1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+		}
+		if (
+			iconType?.includes('truck') ||
+			iconType?.includes('trailer') ||
+			iconType?.includes('backhoe')
+		) {
+			return '<path d="M7 18h11v-6H7v6zm11 0h4l2-2.2V14h-6v4zM10 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm10 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+		}
+		return '<path d="M8 16h16M12 12h8M12 20h8" stroke="white" stroke-width="2" stroke-linecap="round"/>';
+	}
+
+	_vehicleIconDataUrl(hexColor, iconType = 'vehicle-car-sedan') {
+		const glyphPath = this._getVehicleGlyphPath(iconType);
+		const svg = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="16" cy="16" r="14" fill="${hexColor}" stroke="white" stroke-width="2"/>${glyphPath}</svg>`;
 		return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
 	}
 
@@ -68,10 +89,13 @@ class MapService {
 
 			const mapOptions = {
 				center: { lat: 19.4326, lng: -99.1332 },
-				zoom: 13,
+				zoom: 10,
 				mapTypeId: this.google.maps.MapTypeId.ROADMAP,
-				disableDefaultUI: false,
+				disableDefaultUI: true,
 				zoomControl: !isMobileLayout,
+				zoomControlOptions: {
+					position: this.google.maps.ControlPosition.LEFT_BOTTOM
+				},
 				fullscreenControl: false,
 				mapTypeControl: false,
 				streetViewControl: false,
@@ -156,14 +180,14 @@ class MapService {
 		}
 
 		const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
-		const color = this.getVehicleColor(vehicle.status);
+		const color = this.getVehicleColor(vehicle);
 
 		const marker = new this.google.maps.Marker({
 			position,
 			map: null,
 			title: vehicle.name,
 			icon: {
-				url: this._vehicleIconDataUrl(color),
+				url: this._vehicleIconDataUrl(color, vehicle.icon_type),
 				scaledSize: new this.google.maps.Size(32, 32),
 				anchor: new this.google.maps.Point(16, 16)
 			},
@@ -178,6 +202,7 @@ class MapService {
 		infoWindow.setContent(this.createVehicleInfoContent(vehicle, infoWindow));
 
 		marker.addListener('click', () => {
+			this._onVehicleMarkerClick?.(vehicle);
 			this.openVehicleInfoWindow(vehicle, { refreshContent: false });
 		});
 
@@ -185,7 +210,10 @@ class MapService {
 		return marker;
 	}
 
-	getVehicleColor(status) {
+	getVehicleColor(vehicle) {
+		if (vehicle?.profile_color_hex) return vehicle.profile_color_hex;
+		if (vehicle?.profile_color?.startsWith?.('#')) return vehicle.profile_color;
+		const status = vehicle?.status;
 		switch (status) {
 			case 'active':
 				return '#10B981';
@@ -234,8 +262,15 @@ class MapService {
 		const lastUpdate = this._escapeHtml(vehicle.lastUpdateFormatted || 'No disponible');
 		const name = this._escapeHtml(vehicle.name || 'Unidad');
 		const driver = this._escapeHtml(vehicle.driver || 'No asignado');
+		const brandModel = [vehicle.brand, vehicle.model].filter(Boolean).join(' ').trim();
+		const brandModelText = this._escapeHtml(brandModel || 'Sin modelo');
+		const plateText = this._escapeHtml(vehicle.plate || '');
 		const location = this._escapeHtml(vehicle.location || 'Desconocida');
 		const deviceId = vehicle.deviceId ? this._escapeHtml(String(vehicle.deviceId)) : '';
+		// Telemetría igual que CommunicationDTO en Android/iOS
+		const mainVoltage = Number(vehicle.mainBatteryVoltage ?? vehicle.main_battery_voltage);
+		const backupVoltage = Number(vehicle.backupBatteryVoltage ?? vehicle.backup_battery_voltage);
+		const satellites = Number(vehicle.satellites);
 		const statusLabel = this._escapeHtml(this.getStatusText(vehicle.status));
 		const statusBadge = isDark
 			? this.getStatusBadgeStyleDark(vehicle.status)
@@ -256,6 +291,15 @@ class MapService {
 			const coordColor = isDark ? '#94a3b8' : '#64748b';
 			coordsBlock = `<p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:10px;color:${coordColor};letter-spacing:0.02em;">${la}, ${lo}</p>`;
 		}
+
+		const hasMainVoltage = !Number.isNaN(mainVoltage) && mainVoltage > 0;
+		const hasBackupVoltage = !Number.isNaN(backupVoltage) && backupVoltage > 0;
+		const hasSatellites = !Number.isNaN(satellites) && satellites > 0;
+		const telemetryItems = [
+			hasMainVoltage ? `Principal ${mainVoltage.toFixed(1)}V` : null,
+			hasBackupVoltage ? `Respaldo ${backupVoltage.toFixed(1)}V` : null,
+			hasSatellites ? `${satellites} sat` : null
+		].filter(Boolean);
 
 		const divTop = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.22)';
 		const deviceBlock = deviceId
@@ -330,6 +374,7 @@ class MapService {
 					<div style="flex:1;min-width:0;">
 						<h3 style="margin:0 0 6px 0;font-size:17px;font-weight:800;letter-spacing:-0.03em;color:${titleColor};line-height:1.2;">${name}</h3>
 						<p style="margin:0;font-size:12px;color:${mutedColor};font-weight:500;">${driver}</p>
+						<p style="margin:2px 0 0 0;font-size:11px;color:${mutedColor};font-weight:500;">${brandModelText}${plateText ? ` · ${plateText}` : ''}</p>
 					</div>
 					<span style="flex-shrink:0;display:inline-flex;align-items:center;padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;${statusBadge}">${statusLabel}</span>
 				</div>
@@ -347,6 +392,7 @@ class MapService {
 					<div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Ubicación</div>
 					<p style="margin:0;font-size:12px;font-weight:600;color:${locText};line-height:1.35;">${location}</p>
 				</div>
+				${telemetryItems.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${telemetryItems.map((label) => `<span style="display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.02em;background:${isDark ? 'rgba(15,23,42,0.68)' : '#e2e8f0'};color:${isDark ? '#cbd5e1' : '#334155'};border:1px solid ${isDark ? 'rgba(148,163,184,0.2)' : 'rgba(100,116,139,0.22)'};">${label}</span>`).join('')}</div>` : ''}
 				${deviceBlock}
 				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;margin-top:4px;border-top:1px solid ${footerBorder};">
 					<span style="font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">Última señal</span>
@@ -496,7 +542,7 @@ class MapService {
 				existingMarkerData.popupVehicle = vehicle;
 
 				existingMarkerData.marker.setIcon({
-					url: this._vehicleIconDataUrl(this.getVehicleColor(vehicle.status)),
+					url: this._vehicleIconDataUrl(this.getVehicleColor(vehicle), vehicle.icon_type),
 					scaledSize: new this.google.maps.Size(32, 32),
 					anchor: new this.google.maps.Point(16, 16)
 				});
@@ -583,7 +629,7 @@ class MapService {
 		if (lat == null || lng == null || !this.map || !this.google) return;
 
 		this.map.setCenter({ lat: parseFloat(lat), lng: parseFloat(lng) });
-		this.map.setZoom(15);
+		this.map.setZoom(8);
 
 		if (!showPopup) return;
 

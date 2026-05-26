@@ -95,6 +95,9 @@
 			map = await mapService.initialize(mapElement);
 			isLoading = false;
 			syncMapNavigationControls();
+			mapService.setOnVehicleMarkerClick((vehicle) => {
+				vehicleActions.setActiveUnit?.(vehicle?.id);
+			});
 
 			const mql = window.matchMedia(MOBILE_MQ);
 			const onViewportNav = () => syncMapNavigationControls();

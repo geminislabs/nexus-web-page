@@ -16,7 +16,12 @@
 		zoneUiToast
 	} from '$lib/stores/h3Store.js';
 	import { theme } from '$lib/stores/themeStore.js';
-	import { vehicles, vehicleActions, loadingVehicles } from '$lib/stores/vehicleStore.js';
+	import {
+		vehicles,
+		activeUnit,
+		vehicleActions,
+		loadingVehicles
+	} from '$lib/stores/vehicleStore.js';
 	import { getStatusText, getStatusPillClass } from '$lib/utils/vehicleUtils.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
@@ -33,6 +38,8 @@
 	import TabAlertas from '$lib/components/TabAlertas.svelte';
 	import TabAjustes from '$lib/components/TabAjustes.svelte';
 	import ZonasPanel from '$lib/components/ZonasPanel.svelte';
+	import TrackingContextPanel from '$lib/components/TrackingContextPanel.svelte';
+	import VehicleListPanel from '$lib/components/VehicleListPanel.svelte';
 
 	let isLoading = true;
 	let userData = null;
@@ -40,6 +47,7 @@
 	let showUserMenu = false;
 	let showMobileUnitsSheet = false;
 	let prevMobileTab = 'seguimiento';
+	let trackingPanelView = 'unit-info';
 
 	let openDrawer = ''; // '' | 'informes' | 'configuracion'
 
@@ -112,6 +120,15 @@
 		configSidebarItems.find((item) => item.id === activeConfigSection)?.label ??
 		'Configuración';
 
+	function onTrackingPanelViewChange(nextView) {
+		trackingPanelView = nextView;
+	}
+
+	function centerOnActiveUnit() {
+		if (!$activeUnit) return;
+		mapService.centerOnVehicle($activeUnit);
+	}
+
 	function handleBodyClick(e) {
 		if (!e.target.closest('[data-dashboard-user-menu]')) showUserMenu = false;
 	}
@@ -170,8 +187,11 @@
 	}
 
 	function onMobileVehicleRowClick(v) {
-		if (!mobileVehicleHasCoords(v)) return;
-		mapService.centerOnVehicle(v);
+		vehicleActions.setActiveUnit(v.id);
+		trackingPanelView = 'unit-info';
+		if (mobileVehicleHasCoords(v)) {
+			mapService.centerOnVehicle(v);
+		}
 		closeMobileUnitsSheet();
 	}
 
@@ -484,6 +504,25 @@
 			<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
 		{/if}
 
+		<!-- PR-04: TrackingContextPanel flotante para desktop/tablet -->
+		{#if $activeUnit}
+			<div class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block">
+				<div class="pointer-events-auto overflow-hidden rounded-2xl shadow-2xl">
+					<TrackingContextPanel
+						unit={$activeUnit}
+						units={$vehicles}
+						panelView={trackingPanelView}
+						onPanelViewChange={onTrackingPanelViewChange}
+						onSelectUnit={(u) => {
+							vehicleActions.setActiveUnit(u.id);
+							mapService.centerOnVehicle(u);
+						}}
+						onCenterUnit={centerOnActiveUnit}
+					/>
+				</div>
+			</div>
+		{/if}
+
 		{#if $zoneUiToast}
 			<div
 				class="pointer-events-none fixed left-1/2 top-[max(5.5rem,calc(env(safe-area-inset-top,0px)+4.5rem))] z-[200] flex w-full max-w-[min(92vw,22rem)] -translate-x-1/2 justify-center px-4 sm:left-[calc(50%+36px)]"
@@ -497,7 +536,7 @@
 			</div>
 		{/if}
 
-		{#if $activeTab === 'seguimiento'}
+		{#if $activeTab === 'seguimiento' && (!$activeUnit || showMobileUnitsSheet)}
 			<div
 				class="pointer-events-none fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom,0px)+2px)] z-[220] flex sm:hidden"
 				aria-label="Panel de unidades"
@@ -582,8 +621,7 @@
 										<li>
 											<button
 												type="button"
-												class="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left transition-colors hover:border-cyan-400/50 hover:bg-cyan-50/80 focus-visible:outline focus-visible:ring-2 focus-visible:ring-cyan-400/45 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-cyan-400/30 dark:hover:bg-white/[0.07]"
-												disabled={!mobileVehicleHasCoords(v)}
+												class="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left transition-colors hover:border-cyan-400/50 hover:bg-cyan-50/80 focus-visible:outline focus-visible:ring-2 focus-visible:ring-cyan-400/45 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-cyan-400/30 dark:hover:bg-white/[0.07]"
 												on:click={() => onMobileVehicleRowClick(v)}
 												aria-label="Ver {v.name} en el mapa"
 											>
@@ -670,6 +708,26 @@
 			</div>
 		{/if}
 	</main>
+
+	{#if $activeTab === 'seguimiento' && $activeUnit && !showMobileUnitsSheet}
+		<div
+			class="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px)+8px)] left-2 right-2 z-[55] sm:hidden"
+			transition:fly={{ y: 20, duration: 200, easing: cubicOut }}
+		>
+			<TrackingContextPanel
+				unit={$activeUnit}
+				units={$vehicles}
+				panelView={trackingPanelView}
+				onPanelViewChange={onTrackingPanelViewChange}
+				onCenterUnit={centerOnActiveUnit}
+				onSelectUnit={(id) => {
+					vehicleActions.setActiveUnit(id);
+					const v = $vehicles.find((u) => u.id === id);
+					if (v) mapService.centerOnVehicle(v);
+				}}
+			/>
+		</div>
+	{/if}
 
 	<div class="sm:hidden" aria-hidden="true">
 		<BottomTabBar />
