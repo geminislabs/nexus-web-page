@@ -158,17 +158,6 @@ class PositionService {
 	 * @returns {Object} Datos normalizados tipo CommunicationDTO
 	 */
 	normalizePositionData(rawData) {
-		const deviceId = rawData.device_id ?? rawData.deviceId;
-		const latitude = parseFloat(rawData.latitude ?? rawData.lat);
-		const longitude = parseFloat(rawData.longitude ?? rawData.lng);
-		const lastUpdate =
-			rawData.gps_datetime ?? rawData.received_at ?? rawData.timelastposition ?? null;
-		const engineStatus = rawData.engine_status ?? rawData.status;
-
-		if (!deviceId || Number.isNaN(latitude) || Number.isNaN(longitude)) {
-			throw new Error('Posición incompleta');
-		}
-
 		const attrs = rawData?.attributes || {};
 
 		// Extraer campos exactamente como Android/iOS CommunicationDTO

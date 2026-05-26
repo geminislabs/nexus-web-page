@@ -506,9 +506,7 @@
 
 		<!-- PR-04: TrackingContextPanel flotante para desktop/tablet -->
 		{#if $activeUnit}
-			<div
-				class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block"
-			>
+			<div class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block">
 				<div class="pointer-events-auto overflow-hidden rounded-2xl shadow-2xl">
 					<TrackingContextPanel
 						unit={$activeUnit}
@@ -724,7 +722,7 @@
 				onCenterUnit={centerOnActiveUnit}
 				onSelectUnit={(id) => {
 					vehicleActions.setActiveUnit(id);
-					const v = $vehicles.find(u => u.id === id);
+					const v = $vehicles.find((u) => u.id === id);
 					if (v) mapService.centerOnVehicle(v);
 				}}
 			/>
