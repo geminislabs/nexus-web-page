@@ -1,7 +1,8 @@
 <script>
 	import Icon from '@iconify/svelte';
 	import { goto } from '$app/navigation';
-	import { user, authToken } from '$lib/stores/auth.js';
+	import { user } from '$lib/stores/auth.js';
+	import { logoutSession } from '$lib/services/sessionService.js';
 	import { vehicles, vehicleActions, loadingVehicles } from '$lib/stores/vehicleStore.js';
 	import { getStatusText, getStatusPillClass } from '$lib/utils/vehicleUtils.js';
 	import { theme, themeActions } from '$lib/stores/themeStore.js';
@@ -12,9 +13,8 @@
 		return name ? name.charAt(0).toUpperCase() : '?';
 	}
 
-	function handleLogout() {
-		user.logout();
-		authToken.clearToken();
+	async function handleLogout() {
+		await logoutSession();
 		goto('/login');
 	}
 

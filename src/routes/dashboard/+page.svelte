@@ -7,6 +7,7 @@
 	import { scale, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import { user } from '$lib/stores/auth.js';
+	import { validateSessionWithApi, logoutSession } from '$lib/services/sessionService.js';
 	import { activeTab } from '$lib/stores/navigationStore.js';
 	import {
 		h3Actions,
@@ -180,23 +181,35 @@
 	}
 
 	onMount(() => {
-		user.init();
-		const unsubscribe = user.subscribe((data) => {
-			userData = data;
-			if (!data) {
+		let unsubscribe = () => {};
+
+		(async () => {
+			const sessionOk = await validateSessionWithApi();
+			if (!sessionOk) {
 				goto('/login');
 				return;
 			}
-			alertActions.syncZonesFromApi().catch((err) => {
-				console.error('No se pudieron sincronizar las geocercas:', err);
+
+			isLoading = false;
+
+			unsubscribe = user.subscribe((data) => {
+				userData = data;
+				if (!data) {
+					goto('/login');
+					return;
+				}
+				alertActions.syncZonesFromApi().catch((err) => {
+					console.error('No se pudieron sincronizar las geocercas:', err);
+				});
+				alertActions.syncAlertRulesFromApi().catch((err) => {
+					console.error('No se pudieron sincronizar las reglas de alerta:', err);
+				});
+				alertActions.syncAlarmEventsFromApi().catch((err) => {
+					console.error('No se pudo sincronizar el historial de alertas:', err);
+				});
 			});
-			alertActions.syncAlertRulesFromApi().catch((err) => {
-				console.error('No se pudieron sincronizar las reglas de alerta:', err);
-			});
-			alertActions.syncAlarmEventsFromApi().catch((err) => {
-				console.error('No se pudo sincronizar el historial de alertas:', err);
-			});
-		});
+		})();
+
 		if (browser) {
 			document.addEventListener('fullscreenchange', syncFullscreen);
 			document.addEventListener('webkitfullscreenchange', syncFullscreen);
@@ -353,8 +366,8 @@
 						<button
 							type="button"
 							class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 justify-center"
-							on:click={() => {
-								user.logout?.();
+							on:click={async () => {
+								await logoutSession();
 								goto('/login');
 							}}
 						>

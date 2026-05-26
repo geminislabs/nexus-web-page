@@ -1,7 +1,7 @@
 <script>
 	import { fade, fly } from 'svelte/transition';
 	import { goto } from '$app/navigation';
-	import { user, authToken } from '$lib/stores/auth.js';
+	import { logoutSession } from '$lib/services/sessionService.js';
 	import UserPanel from './UserPanel.svelte';
 	import VehiclePanel from './VehiclePanel.svelte';
 	import AdminPanel from './AdminPanel.svelte';
@@ -23,9 +23,8 @@
 		activeMenu = null;
 	}
 
-	function handleLogout() {
-		user.logout();
-		authToken.clearToken();
+	async function handleLogout() {
+		await logoutSession();
 		goto('/login');
 	}
 </script>
