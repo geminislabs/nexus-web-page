@@ -46,6 +46,45 @@ class PositionService {
 			throw new Error(`Sin posición para dispositivo ${deviceId}`);
 		}
 		return match;
+		try {
+			const cacheKey = `position_${deviceId}`;
+			const cached = this.cache.get(cacheKey);
+
+			// Verificar cache
+			if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
+				return cached.data;
+			}
+
+			const response = await fetch(
+				`${COMM_API_URL}/api/v1/devices/${deviceId}/communications/latest`,
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
+			const data = await response.json();
+
+			// Normalizar los datos
+			const normalizedData = this.normalizePositionData(data);
+
+			// Guardar en cache
+			this.cache.set(cacheKey, {
+				data: normalizedData,
+				timestamp: Date.now()
+			});
+
+			return normalizedData;
+		} catch (error) {
+			console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
+			throw error;
+		}
 	}
 
 	/**
@@ -77,9 +116,46 @@ class PositionService {
 	}
 
 	/**
-	 * Normaliza los datos de posición de la API
+	 * Helper: extrae string de múltiples keys posibles (como Android/iOS)
+	 */
+	_str(obj, ...keys) {
+		for (const k of keys) {
+			const v = obj?.[k];
+			if (v != null && v !== '') return String(v);
+		}
+		return null;
+	}
+
+	/**
+	 * Helper: extrae number de múltiples keys posibles (como Android/iOS)
+	 */
+	_num(obj, ...keys) {
+		for (const k of keys) {
+			const v = obj?.[k];
+			if (v == null) continue;
+			const n = typeof v === 'number' ? v : parseFloat(v);
+			if (!Number.isNaN(n)) return n;
+		}
+		return null;
+	}
+
+	/**
+	 * Helper: extrae int de múltiples keys posibles (como Android/iOS)
+	 */
+	_int(obj, ...keys) {
+		for (const k of keys) {
+			const v = obj?.[k];
+			if (v == null) continue;
+			const n = typeof v === 'number' ? Math.floor(v) : parseInt(v, 10);
+			if (!Number.isNaN(n)) return n;
+		}
+		return null;
+	}
+
+	/**
+	 * Normaliza los datos de comunicación de la API (igual que CommunicationDTO en Android/iOS)
 	 * @param {Object} rawData - Datos crudos de la API
-	 * @returns {Object} Datos normalizados
+	 * @returns {Object} Datos normalizados tipo CommunicationDTO
 	 */
 	normalizePositionData(rawData) {
 		const deviceId = rawData.device_id ?? rawData.deviceId;
@@ -92,6 +168,81 @@ class PositionService {
 		if (!deviceId || Number.isNaN(latitude) || Number.isNaN(longitude)) {
 			throw new Error('Posición incompleta');
 		}
+
+		const attrs = rawData?.attributes || {};
+
+		// Extraer campos exactamente como Android/iOS CommunicationDTO
+		const deviceId = this._str(rawData, 'deviceId', 'device_id', 'DEVICE_ID') || '';
+		const latitude = this._num(rawData, 'latitude', 'LATITUD') ?? 0;
+		const longitude = this._num(rawData, 'longitude', 'LONGITUD') ?? 0;
+		const speed = this._num(rawData, 'speed', 'SPEED');
+		const course = this._num(rawData, 'course', 'COURSE');
+		const gpsDatetime = this._str(rawData, 'gpsDatetime', 'gps_datetime', 'GPS_DATETIME');
+		const gpsEpoch = this._int(rawData, 'gpsEpoch', 'gps_epoch', 'GPS_EPOCH');
+
+		// mainBatteryVoltage: buscar en root y luego en attributes (igual que Android/iOS)
+		let mainBatteryVoltage = this._num(
+			rawData,
+			'mainBatteryVoltage',
+			'main_battery_voltage',
+			'MAIN_VOLTAGE',
+			'main_voltage',
+			'battery_voltage',
+			'battery'
+		);
+		if (mainBatteryVoltage == null) {
+			mainBatteryVoltage = this._num(
+				attrs,
+				'main_battery_voltage',
+				'MAIN_VOLTAGE',
+				'main_voltage',
+				'battery_voltage',
+				'battery',
+				'voltage',
+				'io220',
+				'power'
+			);
+		}
+
+		// backupBatteryVoltage: buscar en root y luego en attributes
+		let backupBatteryVoltage = this._num(
+			rawData,
+			'backupBatteryVoltage',
+			'backup_battery_voltage',
+			'BACKUP_VOLTAGE',
+			'backup_voltage',
+			'battery_level'
+		);
+		if (backupBatteryVoltage == null) {
+			backupBatteryVoltage = this._num(
+				attrs,
+				'backup_battery_voltage',
+				'BACKUP_VOLTAGE',
+				'backup_voltage',
+				'battery_level',
+				'batteryLevel',
+				'io219'
+			);
+		}
+
+		const odometer = this._int(rawData, 'odometer', 'ODOMETER');
+		const engineStatus = this._str(rawData, 'engineStatus', 'engine_status', 'ENGINE_STATUS');
+		const fixStatus = this._str(rawData, 'fixStatus', 'fix_status', 'FIX_STATUS');
+		// "stellites" es un typo conocido del firmware
+		const satellites = this._int(rawData, 'satellites', 'stellites', 'SATELLITES');
+		const rxLvl = this._int(rawData, 'rxLvl', 'rx_lvl', 'RX_LVL');
+		const networkStatus = this._str(rawData, 'networkStatus', 'network_status', 'NETWORK_STATUS');
+		const msgClass = this._str(rawData, 'msgClass', 'msg_class', 'MSG_CLASS');
+		const deliveryType = this._str(rawData, 'deliveryType', 'delivery_type', 'DELIVERY_TYPE');
+		const receivedEpoch = this._int(rawData, 'receivedEpoch', 'received_epoch');
+		const receivedAt = this._str(rawData, 'receivedAt', 'received_at');
+		const alertType = this._str(rawData, 'alertType', 'alert_type', 'ALERT_TYPE');
+
+		// lastUpdate: preferir gps_datetime, luego received_at, luego timelastposition
+		const lastUpdate = gpsDatetime || receivedAt || rawData?.timelastposition || null;
+
+		// isOnline: basado en engineStatus (ON = online) como en las apps nativas
+		const isOnline = engineStatus?.toUpperCase() === 'ON';
 
 		return {
 			deviceId: String(deviceId),

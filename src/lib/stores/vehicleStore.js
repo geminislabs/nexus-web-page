@@ -7,6 +7,7 @@ import { formatLastUpdate } from '$lib/utils/vehicleUtils.js';
 // Estado principal de vehículos
 export const vehicles = writable([]);
 export const selectedVehicles = writable([]);
+export const activeUnitId = writable(null);
 export const loadingVehicles = writable(false);
 export const vehiclePositions = writable(new Map());
 export const loadingPositions = writable(false);
@@ -14,6 +15,11 @@ export const loadingPositions = writable(false);
 export const activeVehicles = derived(vehicles, ($vehicles) =>
 	$vehicles.filter((vehicle) => vehicle.status === 'active')
 );
+
+export const activeUnit = derived([vehicles, activeUnitId], ([$vehicles, $activeUnitId]) => {
+	if (!$activeUnitId) return null;
+	return $vehicles.find((vehicle) => vehicle.id === $activeUnitId) || null;
+});
 
 // Store derivado para contar vehículos seleccionados
 export const selectedVehicleCount = derived(selectedVehicles, ($selected) => $selected.length);
@@ -310,5 +316,9 @@ export const vehicleActions = {
 		await apiService.deleteVehicle(vehicleId);
 		vehicles.update((list) => list.filter((v) => v.id !== vehicleId));
 		selectedVehicles.update((list) => list.filter((id) => id !== vehicleId));
+	},
+
+	setActiveUnit(unitId) {
+		activeUnitId.set(unitId);
 	}
 };
