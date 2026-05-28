@@ -39,6 +39,7 @@
 	import TabAjustes from '$lib/components/TabAjustes.svelte';
 	import ZonasPanel from '$lib/components/ZonasPanel.svelte';
 	import TrackingContextPanel from '$lib/components/TrackingContextPanel.svelte';
+	import TripHistoryPanel from '$lib/components/TripHistoryPanel.svelte';
 	import VehicleListPanel from '$lib/components/VehicleListPanel.svelte';
 
 	let isLoading = true;
@@ -121,6 +122,9 @@
 		'Configuración';
 
 	function onTrackingPanelViewChange(nextView) {
+		if (trackingPanelView === 'trips' && nextView !== 'trips') {
+			mapService.clearTripRoute();
+		}
 		trackingPanelView = nextView;
 	}
 
@@ -508,17 +512,26 @@
 		{#if $activeUnit}
 			<div class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block">
 				<div class="pointer-events-auto overflow-hidden rounded-2xl shadow-2xl">
-					<TrackingContextPanel
-						unit={$activeUnit}
-						units={$vehicles}
-						panelView={trackingPanelView}
-						onPanelViewChange={onTrackingPanelViewChange}
-						onSelectUnit={(u) => {
-							vehicleActions.setActiveUnit(u.id);
-							mapService.centerOnVehicle(u);
-						}}
-						onCenterUnit={centerOnActiveUnit}
-					/>
+					{#if trackingPanelView === 'trips'}
+						<div class="max-h-[70vh] bg-[#0c1829]">
+							<TripHistoryPanel
+								unit={$activeUnit}
+								onBack={() => onTrackingPanelViewChange('unit-info')}
+							/>
+						</div>
+					{:else}
+						<TrackingContextPanel
+							unit={$activeUnit}
+							units={$vehicles}
+							panelView={trackingPanelView}
+							onPanelViewChange={onTrackingPanelViewChange}
+							onSelectUnit={(u) => {
+								vehicleActions.setActiveUnit(u.id);
+								mapService.centerOnVehicle(u);
+							}}
+							onCenterUnit={centerOnActiveUnit}
+						/>
+					{/if}
 				</div>
 			</div>
 		{/if}
@@ -714,18 +727,29 @@
 			class="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px)+8px)] left-2 right-2 z-[55] sm:hidden"
 			transition:fly={{ y: 20, duration: 200, easing: cubicOut }}
 		>
-			<TrackingContextPanel
-				unit={$activeUnit}
-				units={$vehicles}
-				panelView={trackingPanelView}
-				onPanelViewChange={onTrackingPanelViewChange}
-				onCenterUnit={centerOnActiveUnit}
-				onSelectUnit={(id) => {
-					vehicleActions.setActiveUnit(id);
-					const v = $vehicles.find((u) => u.id === id);
-					if (v) mapService.centerOnVehicle(v);
-				}}
-			/>
+			{#if trackingPanelView === 'trips'}
+				<div
+					class="max-h-[60vh] overflow-hidden rounded-2xl bg-[#0c1829] shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
+				>
+					<TripHistoryPanel
+						unit={$activeUnit}
+						onBack={() => onTrackingPanelViewChange('unit-info')}
+					/>
+				</div>
+			{:else}
+				<TrackingContextPanel
+					unit={$activeUnit}
+					units={$vehicles}
+					panelView={trackingPanelView}
+					onPanelViewChange={onTrackingPanelViewChange}
+					onCenterUnit={centerOnActiveUnit}
+					onSelectUnit={(id) => {
+						vehicleActions.setActiveUnit(id);
+						const v = $vehicles.find((u) => u.id === id);
+						if (v) mapService.centerOnVehicle(v);
+					}}
+				/>
+			{/if}
 		</div>
 	{/if}
 

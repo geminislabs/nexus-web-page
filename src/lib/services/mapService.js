@@ -617,7 +617,12 @@ class MapService {
 		});
 
 		if (hasValidCoordinates) {
-			this.map.fitBounds(bounds);
+			this.map.fitBounds(bounds, { padding: 80 });
+			this.google.maps.event.addListenerOnce(this.map, 'idle', () => {
+				if (this.map.getZoom() > 12) {
+					this.map.setZoom(12);
+				}
+			});
 		}
 	}
 
@@ -707,6 +712,269 @@ class MapService {
 			minZoom: 0,
 			maxZoom: 22
 		});
+	}
+
+	// ── Trip Route (Polyline) ─────────────────────────────────────────────────
+
+	/** @type {google.maps.Polyline | null} */
+	_tripPolyline = null;
+	/** @type {google.maps.Marker | null} */
+	_tripStartMarker = null;
+	/** @type {google.maps.Marker | null} */
+	_tripEndMarker = null;
+
+	/**
+	 * Dibuja la ruta del trayecto en el mapa
+	 * @param {Array<{lat: number, lon: number}>} points
+	 */
+	drawTripRoute(points) {
+		if (!this.map || !this.google || !points?.length) return;
+
+		this.clearTripRoute();
+
+		const path = points.map((p) => ({
+			lat: parseFloat(p.lat),
+			lng: parseFloat(p.lon ?? p.lng)
+		}));
+
+		this._tripPolyline = new this.google.maps.Polyline({
+			path,
+			geodesic: true,
+			strokeColor: '#10b981',
+			strokeOpacity: 1,
+			strokeWeight: 5,
+			map: this.map
+		});
+
+		if (path.length > 0) {
+			this._tripStartMarker = new this.google.maps.Marker({
+				position: path[0],
+				map: this.map,
+				icon: {
+					path: this.google.maps.SymbolPath.CIRCLE,
+					scale: 8,
+					fillColor: '#22c55e',
+					fillOpacity: 1,
+					strokeColor: '#fff',
+					strokeWeight: 2
+				},
+				title: 'Inicio'
+			});
+		}
+
+		if (path.length > 1) {
+			this._tripEndMarker = new this.google.maps.Marker({
+				position: path[path.length - 1],
+				map: this.map,
+				icon: {
+					path: this.google.maps.SymbolPath.CIRCLE,
+					scale: 8,
+					fillColor: '#ef4444',
+					fillOpacity: 1,
+					strokeColor: '#fff',
+					strokeWeight: 2
+				},
+				title: 'Fin'
+			});
+		}
+	}
+
+	/** Limpia la ruta del trayecto del mapa */
+	clearTripRoute() {
+		if (this._tripPolyline) {
+			this._tripPolyline.setMap(null);
+			this._tripPolyline = null;
+		}
+		if (this._tripStartMarker) {
+			this._tripStartMarker.setMap(null);
+			this._tripStartMarker = null;
+		}
+		if (this._tripEndMarker) {
+			this._tripEndMarker.setMap(null);
+			this._tripEndMarker = null;
+		}
+	}
+
+	/**
+	 * Ajusta el mapa para mostrar todos los puntos del trayecto
+	 * @param {Array<{lat: number, lon: number}>} points
+	 */
+	fitBoundsToPoints(points) {
+		if (!this.map || !this.google || !points?.length) return;
+
+		const bounds = new this.google.maps.LatLngBounds();
+		for (const p of points) {
+			bounds.extend({
+				lat: parseFloat(p.lat),
+				lng: parseFloat(p.lon ?? p.lng)
+			});
+		}
+		this.map.fitBounds(bounds, { padding: 50 });
+	}
+
+	// ── Trip Playback ─────────────────────────────────────────────────────────
+
+	/** @type {google.maps.Marker | null} */
+	_playbackMarker = null;
+	/** @type {number | null} */
+	_playbackInterval = null;
+	/** @type {number} */
+	_playbackIndex = 0;
+	/** @type {Array<{lat: number, lng: number}>} */
+	_playbackPath = [];
+	/** @type {((progress: number) => void) | null} */
+	_onPlaybackProgress = null;
+	/** @type {(() => void) | null} */
+	_onPlaybackComplete = null;
+	/** @type {boolean} */
+	_playbackPaused = false;
+
+	/**
+	 * Inicia la reproducción animada del trayecto
+	 * @param {Array<{lat: number, lon: number}>} points
+	 * @param {{ onProgress?: (progress: number) => void, onComplete?: () => void }} callbacks
+	 */
+	startTripPlayback(points, callbacks = {}) {
+		if (!this.map || !this.google || !points?.length) return;
+
+		this.stopTripPlayback();
+
+		this._playbackPath = points.map((p) => ({
+			lat: parseFloat(p.lat),
+			lng: parseFloat(p.lon ?? p.lng)
+		}));
+		this._playbackIndex = 0;
+		this._onPlaybackProgress = callbacks.onProgress || null;
+		this._onPlaybackComplete = callbacks.onComplete || null;
+		this._playbackPaused = false;
+
+		this._playbackMarker = new this.google.maps.Marker({
+			position: this._playbackPath[0],
+			map: this.map,
+			icon: {
+				path: this.google.maps.SymbolPath.CIRCLE,
+				scale: 10,
+				fillColor: '#ef4444',
+				fillOpacity: 1,
+				strokeColor: '#fff',
+				strokeWeight: 3
+			},
+			zIndex: 1000,
+			title: 'Posición actual'
+		});
+
+		const PLAYBACK_SPEED_MS = 400;
+
+		this._playbackInterval = setInterval(() => {
+			if (this._playbackPaused) return;
+
+			this._playbackIndex++;
+
+			if (this._playbackIndex >= this._playbackPath.length) {
+				this.stopTripPlayback();
+				this._onPlaybackComplete?.();
+				return;
+			}
+
+			const pos = this._playbackPath[this._playbackIndex];
+			this._playbackMarker?.setPosition(pos);
+			this.map.panTo(pos);
+
+			const progress = this._playbackIndex / (this._playbackPath.length - 1);
+			this._onPlaybackProgress?.(progress);
+		}, PLAYBACK_SPEED_MS);
+	}
+
+	/** Pausa la reproducción */
+	pauseTripPlayback() {
+		this._playbackPaused = true;
+	}
+
+	/** Reanuda la reproducción */
+	resumeTripPlayback() {
+		this._playbackPaused = false;
+	}
+
+	/** Detiene y resetea la reproducción */
+	stopTripPlayback() {
+		if (this._playbackInterval) {
+			clearInterval(this._playbackInterval);
+			this._playbackInterval = null;
+		}
+		if (this._playbackMarker) {
+			this._playbackMarker.setMap(null);
+			this._playbackMarker = null;
+		}
+		this._playbackIndex = 0;
+		this._playbackPath = [];
+		this._playbackPaused = false;
+	}
+
+	// ── Trip Alerts ───────────────────────────────────────────────────────────
+
+	/** @type {google.maps.Marker[]} */
+	_tripAlertMarkers = [];
+
+	/**
+	 * Muestra marcadores de alertas en el mapa
+	 * @param {Array<{lat: number, lon: number, type: string}>} alerts
+	 */
+	showTripAlerts(alerts) {
+		if (!this.map || !this.google || !alerts?.length) return;
+
+		this.hideTripAlerts();
+
+		for (const alert of alerts) {
+			if (alert.lat == null || alert.lon == null) continue;
+
+			const marker = new this.google.maps.Marker({
+				position: {
+					lat: parseFloat(alert.lat),
+					lng: parseFloat(alert.lon ?? alert.lng)
+				},
+				map: this.map,
+				icon: {
+					path: this.google.maps.SymbolPath.CIRCLE,
+					scale: 8,
+					fillColor: '#f59e0b',
+					fillOpacity: 1,
+					strokeColor: '#fff',
+					strokeWeight: 2
+				},
+				title: alert.type || 'Alerta',
+				zIndex: 500
+			});
+
+			const infoWindow = new this.google.maps.InfoWindow({
+				content: `<div style="background:#0c1829;color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;">
+					<span style="color:#f59e0b;">⚠</span> ${alert.type || 'Alerta'}
+				</div>`
+			});
+
+			let isOpen = false;
+			marker.addListener('click', () => {
+				if (isOpen) {
+					infoWindow.close();
+					isOpen = false;
+				} else {
+					infoWindow.open(this.map, marker);
+					isOpen = true;
+				}
+			});
+			infoWindow.addListener('closeclick', () => {
+				isOpen = false;
+			});
+
+			this._tripAlertMarkers.push(marker);
+		}
+	}
+
+	/** Oculta marcadores de alertas */
+	hideTripAlerts() {
+		for (const marker of this._tripAlertMarkers) {
+			marker.setMap(null);
+		}
+		this._tripAlertMarkers = [];
 	}
 }
 
