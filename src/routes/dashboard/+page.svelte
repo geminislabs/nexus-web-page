@@ -16,13 +16,7 @@
 		zoneUiToast
 	} from '$lib/stores/h3Store.js';
 	import { theme } from '$lib/stores/themeStore.js';
-	import {
-		vehicles,
-		activeUnit,
-		vehicleActions,
-		loadingVehicles
-	} from '$lib/stores/vehicleStore.js';
-	import { getStatusText, getStatusPillClass } from '$lib/utils/vehicleUtils.js';
+	import { vehicles, activeUnit, vehicleActions } from '$lib/stores/vehicleStore.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
 	import logoUrl from '$lib/assets/logo.png';
@@ -38,9 +32,11 @@
 	import TabAlertas from '$lib/components/TabAlertas.svelte';
 	import TabAjustes from '$lib/components/TabAjustes.svelte';
 	import ZonasPanel from '$lib/components/ZonasPanel.svelte';
-	import TrackingContextPanel from '$lib/components/TrackingContextPanel.svelte';
-	import TripHistoryPanel from '$lib/components/TripHistoryPanel.svelte';
+	import TrackingSubPanel from '$lib/components/TrackingSubPanel.svelte';
 	import VehicleListPanel from '$lib/components/VehicleListPanel.svelte';
+	import UnitsPickerSheet from '$lib/components/UnitsPickerSheet.svelte';
+	import { eventActions } from '$lib/stores/eventStore.js';
+	import { requestedPanelView } from '$lib/stores/navigationStore.js';
 
 	let isLoading = true;
 	let userData = null;
@@ -88,6 +84,11 @@
 	$: canonicalUrl =
 		$page?.url?.origin && $page?.url?.pathname ? `${$page.url.origin}${$page.url.pathname}` : '';
 
+	$: if ($requestedPanelView) {
+		trackingPanelView = $requestedPanelView;
+		requestedPanelView.set(null);
+	}
+
 	function toggleDrawer(name) {
 		showUserMenu = false;
 		openDrawer = openDrawer === name ? '' : name;
@@ -124,8 +125,17 @@
 	function onTrackingPanelViewChange(nextView) {
 		if (trackingPanelView === 'trips' && nextView !== 'trips') {
 			mapService.clearTripRoute();
+			mapService.hideTripAlerts();
+			mapService.stopTripPlayback();
+		}
+		if (trackingPanelView === 'events' && nextView !== 'events') {
+			eventActions.clear();
 		}
 		trackingPanelView = nextView;
+	}
+
+	function backToUnitInfoPanel() {
+		onTrackingPanelViewChange('unit-info');
 	}
 
 	function centerOnActiveUnit() {
@@ -487,6 +497,7 @@
 			accentColor={activeConfigSection === 'administracion' ? '#2563eb' : '#10b981'}
 			sidebarWidth={SW}
 			bodyPaddingClass={activeConfigSection === 'administracion' ? 'py-4 px-0' : 'p-0'}
+			bodyScrollable={activeConfigSection !== 'zonas' && activeConfigSection !== 'unidades'}
 			passiveBackdrop={$mobileCrearZonaMapPassesPointer || $desktopZonePanelSubView !== 'zonas'}
 			on:close={closeDrawer}
 		>
@@ -509,29 +520,23 @@
 		{/if}
 
 		<!-- PR-04: TrackingContextPanel flotante para desktop/tablet -->
-		{#if $activeUnit}
+		{#if $activeUnit && !isConfigDrawerOpen && openDrawer !== 'informes'}
 			<div class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block">
 				<div class="pointer-events-auto overflow-hidden rounded-2xl shadow-2xl">
-					{#if trackingPanelView === 'trips'}
-						<div class="max-h-[70vh] bg-[#0c1829]">
-							<TripHistoryPanel
-								unit={$activeUnit}
-								onBack={() => onTrackingPanelViewChange('unit-info')}
-							/>
-						</div>
-					{:else}
-						<TrackingContextPanel
+					<div class="max-h-[70vh] bg-[#0c1829]">
+						<TrackingSubPanel
 							unit={$activeUnit}
 							units={$vehicles}
 							panelView={trackingPanelView}
 							onPanelViewChange={onTrackingPanelViewChange}
+							onBackToUnitInfo={backToUnitInfoPanel}
 							onSelectUnit={(u) => {
 								vehicleActions.setActiveUnit(u.id);
 								mapService.centerOnVehicle(u);
 							}}
 							onCenterUnit={centerOnActiveUnit}
 						/>
-					{/if}
+					</div>
 				</div>
 			</div>
 		{/if}
@@ -576,115 +581,11 @@
 							Selecciona una unidad para ver más posiciones
 						</button>
 					{/if}
-					<div
-						class="absolute inset-x-0 bottom-full mb-1 rounded-t-[24px] border border-slate-200 bg-white shadow-[0_-12px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl transition-transform duration-300 ease-out dark:border-white/10 dark:border-b-white/[0.04] dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.97)_0%,rgba(2,6,23,0.97)_100%)] dark:shadow-[0_-18px_46px_rgba(0,0,0,0.52),inset_0_1px_0_rgba(255,255,255,0.08)]"
-						style:transform={showMobileUnitsSheet
-							? 'translateY(0)'
-							: 'translateY(calc(100% + 10px))'}
-					>
-						<button
-							type="button"
-							class="block w-full cursor-pointer border-0 border-b border-slate-200 bg-transparent px-4 pb-2 pt-3 text-center dark:border-white/[0.07]"
-							on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
-							aria-label={showMobileUnitsSheet
-								? 'Ocultar panel de unidades'
-								: 'Mostrar panel de unidades'}
-						>
-							<p
-								class="m-0 text-center text-[12px] font-semibold text-slate-700 dark:text-white/78"
-							>
-								Selecciona una unidad para ver más posiciones
-							</p>
-						</button>
-						<div class="flex items-center justify-between px-4 pt-2">
-							<div>
-								<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">
-									Seguimiento de unidades
-								</p>
-								<p class="m-0 text-[11px] text-slate-500 dark:text-white/40">
-									{$vehicles.length} registradas
-								</p>
-							</div>
-							<button
-								type="button"
-								class="rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:border-white/12 dark:bg-white/5 dark:text-white/70"
-								on:click={closeMobileUnitsSheet}
-							>
-								Ocultar
-							</button>
-						</div>
-						<div class="max-h-[50vh] overflow-y-auto overscroll-contain px-3 pb-3 pt-2">
-							{#if $loadingVehicles}
-								<div class="flex h-40 items-center justify-center" role="status" aria-live="polite">
-									<div
-										class="h-8 w-8 animate-spin rounded-full border-2 border-blue-600/20 border-t-blue-500"
-										aria-hidden="true"
-									></div>
-								</div>
-							{:else if $vehicles.length === 0}
-								<div
-									class="flex h-40 flex-col items-center justify-center gap-2 text-slate-500 dark:text-white/35"
-								>
-									<Icon icon="mdi:car-off" width={28} aria-hidden="true" />
-									<p class="m-0 text-xs">No hay unidades disponibles</p>
-								</div>
-							{:else}
-								<ul class="m-0 list-none space-y-2 p-0" aria-label="Lista de unidades">
-									{#each $vehicles as v (v.id)}
-										<li>
-											<button
-												type="button"
-												class="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-left transition-colors hover:border-cyan-400/50 hover:bg-cyan-50/80 focus-visible:outline focus-visible:ring-2 focus-visible:ring-cyan-400/45 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-cyan-400/30 dark:hover:bg-white/[0.07]"
-												on:click={() => onMobileVehicleRowClick(v)}
-												aria-label="Ver {v.name} en el mapa"
-											>
-												<div
-													class="h-2.5 w-2.5 shrink-0 rounded-full {v.status === 'active'
-														? 'bg-emerald-400'
-														: v.status === 'maintenance'
-															? 'bg-amber-400'
-															: 'bg-red-400'}"
-													aria-hidden="true"
-												></div>
-												<div class="min-w-0 flex-1">
-													<p
-														class="m-0 truncate text-[13px] font-semibold text-slate-900 dark:text-white"
-													>
-														{v.name}
-													</p>
-													<p
-														class="m-0 mt-0.5 truncate text-[11px] text-slate-600 dark:text-white/45"
-													>
-														{v.driver || 'Sin conductor'}
-														{#if v.speed !== undefined}
-															· {v.speed} km/h
-														{/if}
-													</p>
-													{#if v.lastUpdateFormatted}
-														<p class="m-0 mt-0.5 text-[10px] text-slate-500 dark:text-white/30">
-															{v.lastUpdateFormatted}
-														</p>
-													{/if}
-												</div>
-												<span
-													class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold {getStatusPillClass(
-														v.status
-													)}"
-												>
-													{getStatusText(v.status)}
-												</span>
-											</button>
-										</li>
-									{/each}
-								</ul>
-							{/if}
-						</div>
-						<div
-							class="h-2 shrink-0 opacity-90"
-							aria-hidden="true"
-							style="background: linear-gradient(90deg, transparent, rgb(16, 185, 129), rgb(14, 165, 233), transparent);"
-						></div>
-					</div>
+					<UnitsPickerSheet
+						open={showMobileUnitsSheet}
+						onSelect={onMobileVehicleRowClick}
+						onClose={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
+					/>
 				</div>
 			</div>
 		{/if}
@@ -727,21 +628,15 @@
 			class="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px)+8px)] left-2 right-2 z-[55] sm:hidden"
 			transition:fly={{ y: 20, duration: 200, easing: cubicOut }}
 		>
-			{#if trackingPanelView === 'trips'}
-				<div
-					class="max-h-[60vh] overflow-hidden rounded-2xl bg-[#0c1829] shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
-				>
-					<TripHistoryPanel
-						unit={$activeUnit}
-						onBack={() => onTrackingPanelViewChange('unit-info')}
-					/>
-				</div>
-			{:else}
-				<TrackingContextPanel
+			<div
+				class="max-h-[60vh] overflow-hidden rounded-2xl bg-[#0c1829] shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
+			>
+				<TrackingSubPanel
 					unit={$activeUnit}
 					units={$vehicles}
 					panelView={trackingPanelView}
 					onPanelViewChange={onTrackingPanelViewChange}
+					onBackToUnitInfo={backToUnitInfoPanel}
 					onCenterUnit={centerOnActiveUnit}
 					onSelectUnit={(id) => {
 						vehicleActions.setActiveUnit(id);
@@ -749,7 +644,7 @@
 						if (v) mapService.centerOnVehicle(v);
 					}}
 				/>
-			{/if}
+			</div>
 		</div>
 	{/if}
 

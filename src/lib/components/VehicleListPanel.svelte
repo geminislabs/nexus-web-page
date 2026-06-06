@@ -10,8 +10,10 @@
 		vehicleActions
 	} from '$lib/stores/vehicleStore.js';
 	import { mapService } from '$lib/services/mapService.js';
+	import { requestedPanelView } from '$lib/stores/navigationStore.js';
 
 	let collapsed = false;
+	let expandedId = null; // id de la unidad con perfil expandido
 
 	onMount(async () => {
 		if ($vehicles.length === 0) {
@@ -22,6 +24,18 @@
 	function selectVehicle(v) {
 		vehicleActions.setActiveUnit(v.id);
 		mapService.centerOnVehicle(v);
+	}
+
+	function toggleExpand(v, e) {
+		e.stopPropagation();
+		expandedId = expandedId === v.id ? null : v.id;
+	}
+
+	function goToTrips(v, e) {
+		e.stopPropagation();
+		vehicleActions.setActiveUnit(v.id);
+		mapService.centerOnVehicle(v);
+		requestedPanelView.set('trips');
 	}
 
 	function vehicleHasCoords(v) {
@@ -61,6 +75,17 @@
 		return 'text-amber-400';
 	}
 
+	// GPS fix — usa fixStatus si disponible, sino inferencia
+	function hasValidGpsFix(v) {
+		const fixRaw = v?.fixStatus ?? v?.fix_status ?? v?.fix;
+		if (fixRaw != null) return String(fixRaw).toUpperCase() === 'VALID';
+		return vehicleHasCoords(v) && (v?.lastUpdate != null || v?.gpsDatetime != null);
+	}
+
+	function profileDetail(v) {
+		return [v.brand, v.model, v.color, v.plate].filter(Boolean).join(' / ') || null;
+	}
+
 	$: activeCount = $activeVehicles?.length ?? 0;
 </script>
 
@@ -90,7 +115,7 @@
 
 	{#if !collapsed}
 		<!-- Lista -->
-		<div class="max-h-[300px] overflow-y-auto overscroll-contain">
+		<div class="max-h-[400px] overflow-y-auto overscroll-contain">
 			{#if $loadingVehicles}
 				<div class="flex h-20 items-center justify-center gap-2">
 					<div
@@ -107,28 +132,154 @@
 				<ul class="m-0 list-none space-y-0.5 p-2" aria-label="Lista de unidades">
 					{#each $vehicles as v (v.id)}
 						{@const hasCoords = vehicleHasCoords(v)}
-						<li>
-							<button
-								type="button"
-								class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.06] focus-visible:outline focus-visible:ring-2 focus-visible:ring-sky-400/40 disabled:cursor-not-allowed disabled:opacity-40"
-								disabled={!hasCoords}
-								on:click={() => selectVehicle(v)}
-								aria-label="Ver {v.name} en el mapa"
-							>
-								<div
-									class="h-2.5 w-2.5 shrink-0 rounded-full {getStatusDot(v)}"
-									aria-hidden="true"
-								></div>
-								<div class="min-w-0 flex-1">
-									<p class="m-0 truncate text-[13px] font-semibold text-white">{v.name}</p>
-									<p class="m-0 mt-0.5 text-[11px] text-white/40">
-										{v.driver || 'Sin conductor'}
-									</p>
+						{@const validFix = hasValidGpsFix(v)}
+						{@const isExpanded = expandedId === v.id}
+						<li class="overflow-hidden rounded-xl {isExpanded ? 'bg-white/[0.04]' : ''}">
+							<!-- Fila principal -->
+							<div class="flex items-center gap-2">
+								<!-- Icono / expand toggle -->
+								<button
+									type="button"
+									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white/50 transition-colors hover:bg-white/[0.08] hover:text-white/80 focus-visible:outline focus-visible:ring-2 focus-visible:ring-sky-400/40"
+									on:click={(e) => toggleExpand(v, e)}
+									aria-label="{isExpanded ? 'Ocultar' : 'Ver'} perfil de {v.name}"
+									aria-expanded={isExpanded}
+								>
+									<Icon icon={isExpanded ? 'mdi:chevron-up' : 'mdi:car-side'} class="h-5 w-5" />
+								</button>
+								<!-- Nombre + estado -->
+								<button
+									type="button"
+									class="flex min-w-0 flex-1 items-center gap-2 py-2.5 text-left transition-colors hover:text-white focus-visible:outline focus-visible:ring-2 focus-visible:ring-sky-400/40 disabled:cursor-not-allowed disabled:opacity-40"
+									disabled={!hasCoords}
+									on:click={() => selectVehicle(v)}
+									aria-label="Ver {v.name} en el mapa"
+								>
+									<div
+										class="h-2.5 w-2.5 shrink-0 rounded-full {getStatusDot(v)}"
+										aria-hidden="true"
+									></div>
+									<div class="min-w-0 flex-1">
+										<p class="m-0 truncate text-[13px] font-semibold text-white">{v.name}</p>
+										<p class="m-0 mt-0.5 text-[11px] text-white/40">
+											{v.driver || 'Sin conductor'}
+										</p>
+									</div>
+								</button>
+								<!-- GPS fix badge + status -->
+								<div class="flex shrink-0 items-center gap-1.5 pr-2">
+									<span
+										class="rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide {validFix
+											? 'bg-emerald-500/20 text-emerald-400'
+											: 'bg-red-500/20 text-red-400'}"
+										title="GPS fix {validFix ? 'VALID' : 'INVALID'}"
+									>
+										{validFix ? 'FIX' : 'NO FIX'}
+									</span>
+									<span class="text-[11px] font-semibold {getStatusColor(v)}">
+										{getStatusLabel(v)}
+									</span>
 								</div>
-								<span class="shrink-0 text-[11px] font-semibold {getStatusColor(v)}">
-									{getStatusLabel(v)}
-								</span>
-							</button>
+							</div>
+
+							<!-- Perfil expandido -->
+							{#if isExpanded}
+								<div class="border-t border-white/[0.06] px-3 pb-3 pt-2.5">
+									<!-- Sección: Información general -->
+									<p
+										class="m-0 mb-1.5 text-[9px] font-bold uppercase tracking-widest text-cyan-400/70"
+									>
+										General
+									</p>
+									<dl class="m-0 space-y-1">
+										<div class="flex items-baseline justify-between gap-2">
+											<dt class="text-[11px] text-white/40">Nombre</dt>
+											<dd class="m-0 truncate text-[11px] font-medium text-white">{v.name}</dd>
+										</div>
+										{#if v.description}
+											<div class="flex items-baseline justify-between gap-2">
+												<dt class="text-[11px] text-white/40">Descripción</dt>
+												<dd class="m-0 truncate text-[11px] font-medium text-white">
+													{v.description}
+												</dd>
+											</div>
+										{/if}
+									</dl>
+
+									<!-- Sección: Vehículo -->
+									{#if v.brand || v.model || v.year || v.color || v.plate || v.vin}
+										<p
+											class="m-0 mb-1.5 mt-2.5 text-[9px] font-bold uppercase tracking-widest text-cyan-400/70"
+										>
+											Vehículo
+										</p>
+										<dl class="m-0 space-y-1">
+											{#if v.brand || v.model}
+												<div class="flex items-baseline justify-between gap-2">
+													<dt class="text-[11px] text-white/40">Marca / Modelo</dt>
+													<dd class="m-0 truncate text-[11px] font-medium text-white">
+														{[v.brand, v.model].filter(Boolean).join(' ') || '—'}
+													</dd>
+												</div>
+											{/if}
+											{#if v.year}
+												<div class="flex items-baseline justify-between gap-2">
+													<dt class="text-[11px] text-white/40">Año</dt>
+													<dd class="m-0 text-[11px] font-medium text-white">{v.year}</dd>
+												</div>
+											{/if}
+											{#if v.color}
+												<div class="flex items-baseline justify-between gap-2">
+													<dt class="text-[11px] text-white/40">Color</dt>
+													<dd class="m-0 text-[11px] font-medium capitalize text-white">
+														{v.color}
+													</dd>
+												</div>
+											{/if}
+											{#if v.plate}
+												<div class="flex items-baseline justify-between gap-2">
+													<dt class="text-[11px] text-white/40">Placa</dt>
+													<dd class="m-0 text-[11px] font-medium uppercase text-white">
+														{v.plate}
+													</dd>
+												</div>
+											{/if}
+											{#if v.vin}
+												<div class="flex items-baseline justify-between gap-2">
+													<dt class="text-[11px] text-white/40">VIN</dt>
+													<dd class="m-0 truncate font-mono text-[10px] text-white/70">{v.vin}</dd>
+												</div>
+											{/if}
+										</dl>
+									{/if}
+
+									<!-- Sección: Dispositivo -->
+									<p
+										class="m-0 mb-1.5 mt-2.5 text-[9px] font-bold uppercase tracking-widest text-cyan-400/70"
+									>
+										Dispositivo
+									</p>
+									<dl class="m-0">
+										<div class="flex items-baseline justify-between gap-2">
+											<dt class="text-[11px] text-white/40">Device ID</dt>
+											<dd class="m-0 truncate font-mono text-[10px] text-white/70">
+												{v.deviceId || 'Sin asignar'}
+											</dd>
+										</div>
+									</dl>
+
+									<!-- Botón Trayectos -->
+									<button
+										type="button"
+										class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 py-2 text-[12px] font-semibold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+										disabled={!hasCoords}
+										on:click={(e) => goToTrips(v, e)}
+									>
+										<Icon icon="mdi:source-branch" class="h-4 w-4" />
+										Trayectos
+									</button>
+								</div>
+							{/if}
 						</li>
 					{/each}
 				</ul>

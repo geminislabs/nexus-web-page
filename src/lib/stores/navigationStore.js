@@ -3,6 +3,8 @@ import { writable } from 'svelte/store';
 // 'seguimiento' | 'alertas' | 'informes' | 'ajustes'
 export const activeTab = writable('seguimiento');
 
+export const requestedPanelView = writable(null);
+
 export const alertasSubView = writable('list'); // 'list' | 'config' | 'gestionar' | 'crear' | 'zonas' | 'crearZona'
 export const ajustesSubView = writable('main'); // 'main' | 'unidades'
 

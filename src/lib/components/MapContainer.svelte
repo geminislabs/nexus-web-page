@@ -9,7 +9,7 @@
 		isPositionStreamEnabled,
 		startVehiclePositionStream
 	} from '$lib/services/vehiclePositionStream.js';
-	import { vehicles, vehicleActions } from '$lib/stores/vehicleStore.js';
+	import { vehicles, vehicleActions, activeUnitId } from '$lib/stores/vehicleStore.js';
 	import {
 		showH3Grid,
 		h3Resolution,
@@ -170,6 +170,11 @@
 				syncPositionStream();
 			});
 
+			mapService.setHighlightedVehicle(get(activeUnitId));
+			const unsubActiveUnit = activeUnitId.subscribe((id) => {
+				mapService.setHighlightedVehicle(id);
+			});
+
 			const unsubGrid = showH3Grid.subscribe((v) => h3GridOverlayService.setVisible(v));
 			const unsubRes = h3Resolution.subscribe((r) => h3GridOverlayService.setResolution(r));
 			const unsubCells = selectedH3Cells.subscribe((c) => h3GridOverlayService.setSelectedCells(c));
@@ -188,6 +193,7 @@
 				stopPositionStream();
 				lastPositionStreamKey = '';
 				unsubVehicles();
+				unsubActiveUnit();
 				unsubGrid();
 				unsubRes();
 				unsubCells();

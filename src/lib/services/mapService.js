@@ -4,6 +4,13 @@ import {
 	SuperClusterAlgorithm
 } from '@googlemaps/markerclusterer/dist/index.esm.mjs';
 import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyles';
+import {
+	buildVehicleMarkerDataUrl,
+	getStatusHexColor,
+	resolveProfileColorHex,
+	getVehicleMarkerMetrics,
+	VEHICLE_MARKER_SIZE
+} from '$lib/utils/vehicleMarkerIcon.js';
 
 class MapService {
 	constructor() {
@@ -20,6 +27,16 @@ class MapService {
 		this._openVehiclePopupId = null;
 		/** @type {((vehicle: any) => void) | null} */
 		this._onVehicleMarkerClick = null;
+		/** @type {Map<string, ReturnType<typeof setInterval>>} */
+		this._blinkTimers = new Map();
+		/** @type {string | null} */
+		this._highlightedVehicleId = null;
+		/** @type {ReturnType<typeof setInterval> | null} */
+		this._highlightPulseTimer = null;
+		this._highlightPulsePhase = 0;
+		/** @type {ReturnType<typeof setInterval> | null} */
+		this._ringRotationTimer = null;
+		this._ringRotation = 0;
 		this.apiKey =
 			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
 	}
@@ -52,6 +69,99 @@ class MapService {
 
 	setOnVehicleMarkerClick(handler) {
 		this._onVehicleMarkerClick = typeof handler === 'function' ? handler : null;
+	}
+
+	_stopMarkerBlink(vehicleId) {
+		const timer = this._blinkTimers.get(vehicleId);
+		if (timer) {
+			clearInterval(timer);
+			this._blinkTimers.delete(vehicleId);
+		}
+	}
+
+	_stopHighlightPulse() {
+		if (this._highlightPulseTimer) {
+			clearInterval(this._highlightPulseTimer);
+			this._highlightPulseTimer = null;
+		}
+		this._highlightPulsePhase = 0;
+	}
+
+	_stopRingRotation() {
+		if (this._ringRotationTimer) {
+			clearInterval(this._ringRotationTimer);
+			this._ringRotationTimer = null;
+		}
+	}
+
+	_startRingRotation() {
+		if (this._ringRotationTimer || !this._highlightedVehicleId) return;
+		this._ringRotationTimer = setInterval(() => {
+			if (!this._highlightedVehicleId) {
+				this._stopRingRotation();
+				return;
+			}
+			// Sentido contrario a las agujas del reloj (ángulo decreciente en canvas).
+			this._ringRotation -= 0.018;
+			this._applyVehicleMarkerIcon(this._highlightedVehicleId);
+		}, 110);
+	}
+
+	/** @param {string} vehicleId */
+	async _applyVehicleMarkerIcon(vehicleId) {
+		const entry = this.markers.get(vehicleId);
+		if (!entry?.marker || !this.google) return;
+		const vehicle = entry.popupVehicle;
+		if (!vehicle) return;
+
+		const isHighlighted = this._highlightedVehicleId === vehicleId;
+		const showNameLabel = isHighlighted && Boolean(vehicle.name);
+		const url = await buildVehicleMarkerDataUrl(vehicle, {
+			badgeVisible: true,
+			showRings: true,
+			isHighlighted,
+			pulsePhase: 0,
+			ringRotation: isHighlighted ? this._ringRotation : 0,
+			showNameLabel,
+			labelText: showNameLabel ? String(vehicle.name) : ''
+		});
+		const metrics = getVehicleMarkerMetrics({ showNameLabel });
+		entry.marker.setIcon({
+			url,
+			scaledSize: new this.google.maps.Size(metrics.width, metrics.height),
+			anchor: new this.google.maps.Point(metrics.anchorX, metrics.anchorY)
+		});
+		entry.marker.setZIndex(isHighlighted ? 1200 : 1);
+	}
+
+	/** @param {string | null} vehicleId */
+	setHighlightedVehicle(vehicleId) {
+		const nextId = vehicleId || null;
+		if (this._highlightedVehicleId === nextId) return;
+
+		const prevId = this._highlightedVehicleId;
+		this._highlightedVehicleId = nextId;
+		this._stopHighlightPulse();
+		this._stopRingRotation();
+
+		if (prevId) this._applyVehicleMarkerIcon(prevId);
+		if (nextId) {
+			this._highlightPulsePhase = 0;
+			this._ringRotation = 0;
+			this._applyVehicleMarkerIcon(nextId);
+			this._startRingRotation();
+		}
+	}
+
+	/** @param {string} vehicleId @param {any} vehicle */
+	_startMarkerBlink(vehicleId, vehicle) {
+		this._stopMarkerBlink(vehicleId);
+		const entry = this.markers.get(vehicleId);
+		if (!entry?.marker) return;
+
+		entry._badgeVisible = true;
+		entry.popupVehicle = vehicle;
+		this._applyVehicleMarkerIcon(vehicleId);
 	}
 
 	_getVehicleGlyphPath(iconType) {
@@ -180,16 +290,15 @@ class MapService {
 		}
 
 		const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
-		const color = this.getVehicleColor(vehicle);
 
 		const marker = new this.google.maps.Marker({
 			position,
 			map: null,
 			title: vehicle.name,
 			icon: {
-				url: this._vehicleIconDataUrl(color, vehicle.icon_type),
-				scaledSize: new this.google.maps.Size(32, 32),
-				anchor: new this.google.maps.Point(16, 16)
+				url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+				scaledSize: new this.google.maps.Size(VEHICLE_MARKER_SIZE, VEHICLE_MARKER_SIZE),
+				anchor: new this.google.maps.Point(VEHICLE_MARKER_SIZE / 2, VEHICLE_MARKER_SIZE / 2)
 			},
 			zIndex: 1
 		});
@@ -206,24 +315,23 @@ class MapService {
 			this.openVehicleInfoWindow(vehicle, { refreshContent: false });
 		});
 
-		this.markers.set(vehicle.id, { marker, infoWindow, popupVehicle: vehicle });
+		this.markers.set(vehicle.id, {
+			marker,
+			infoWindow,
+			popupVehicle: vehicle,
+			_badgeVisible: true
+		});
+		this._startMarkerBlink(vehicle.id, vehicle);
 		return marker;
 	}
 
+	/** Color de perfil del vehículo (no confundir con estatus). */
 	getVehicleColor(vehicle) {
-		if (vehicle?.profile_color_hex) return vehicle.profile_color_hex;
-		if (vehicle?.profile_color?.startsWith?.('#')) return vehicle.profile_color;
-		const status = vehicle?.status;
-		switch (status) {
-			case 'active':
-				return '#10B981';
-			case 'inactive':
-				return '#EF4444';
-			case 'maintenance':
-				return '#F59E0B';
-			default:
-				return '#6B7280';
-		}
+		return resolveProfileColorHex(vehicle);
+	}
+
+	getStatusColor(vehicle) {
+		return getStatusHexColor(vehicle?.status);
 	}
 
 	/** @param {unknown} s */
@@ -468,6 +576,7 @@ class MapService {
 	removeMarker(id) {
 		const markerData = this.markers.get(id);
 		if (!markerData) return;
+		this._stopMarkerBlink(id);
 		const raw = markerData.marker ?? markerData;
 		if (id !== 'user-location' && this.vehicleClusterer) {
 			this.vehicleClusterer.removeMarker(raw);
@@ -478,12 +587,15 @@ class MapService {
 	}
 
 	clearVehicleMarkers() {
+		this._stopHighlightPulse();
+		this._stopRingRotation();
 		if (this.vehicleClusterer) {
 			this.vehicleClusterer.setMap(null);
 			this.vehicleClusterer = null;
 		}
 		for (const [key, data] of [...this.markers.entries()]) {
 			if (key === 'user-location') continue;
+			this._stopMarkerBlink(key);
 			const m = data.marker ?? data;
 			this._setMarkerMap(m, null);
 			this.markers.delete(key);
@@ -523,6 +635,12 @@ class MapService {
 				})
 			});
 		}
+
+		if (this._highlightedVehicleId) {
+			const id = this._highlightedVehicleId;
+			this._highlightedVehicleId = null;
+			this.setHighlightedVehicle(id);
+		}
 	}
 
 	updateVehicleMarker(vehicle) {
@@ -540,12 +658,7 @@ class MapService {
 					this.createVehicleInfoContent(vehicle, existingMarkerData.infoWindow)
 				);
 				existingMarkerData.popupVehicle = vehicle;
-
-				existingMarkerData.marker.setIcon({
-					url: this._vehicleIconDataUrl(this.getVehicleColor(vehicle), vehicle.icon_type),
-					scaledSize: new this.google.maps.Size(32, 32),
-					anchor: new this.google.maps.Point(16, 16)
-				});
+				this._startMarkerBlink(vehicle.id, vehicle);
 
 				if (this.vehicleClusterer) {
 					const m = existingMarkerData.marker;

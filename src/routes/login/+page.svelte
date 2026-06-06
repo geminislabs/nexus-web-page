@@ -3,7 +3,8 @@
 	import { page } from '$app/stores';
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { apiService, ApiError } from '$lib/services/api.js';
-	import { getRecoverPasswordUrl, persistLoginResponse } from '$lib/services/sessionService.js';
+	import { persistLoginResponse } from '$lib/services/sessionService.js';
+	import { isOnboardingComplete } from '$lib/utils/onboardingStorage.js';
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
@@ -14,9 +15,11 @@
 	let error = '';
 	let showPassword = false;
 
-	const recoverPasswordUrl = getRecoverPasswordUrl();
-
 	onMount(() => {
+		if (!isOnboardingComplete()) {
+			goto('/onboarding');
+			return;
+		}
 		user.init();
 		authToken.init();
 		const unsubscribe = user.subscribe((userData) => {
@@ -187,16 +190,14 @@
 				</div>
 			</div>
 
-			{#if recoverPasswordUrl}
-				<p class="m-0 text-center text-[0.8125rem]">
-					<a
-						href={recoverPasswordUrl}
-						class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
-					>
-						¿Olvidaste tu contraseña?
-					</a>
-				</p>
-			{/if}
+			<p class="m-0 text-center text-[0.8125rem]">
+				<a
+					href="/forgot-password"
+					class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+				>
+					¿Olvidaste tu contraseña?
+				</a>
+			</p>
 
 			<button
 				type="submit"

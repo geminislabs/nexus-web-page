@@ -218,6 +218,24 @@ class ApiService {
 		});
 	}
 
+	/** @param {string} email */
+	async forgotPassword(email) {
+		return this._rawRequest('/auth/forgot-password', {
+			method: 'POST',
+			skipAuth: true,
+			body: JSON.stringify({ email })
+		});
+	}
+
+	/** @param {{ email: string, code: string, new_password: string }} payload */
+	async resetPassword(payload) {
+		return this._rawRequest('/auth/reset-password', {
+			method: 'POST',
+			skipAuth: true,
+			body: JSON.stringify(payload)
+		});
+	}
+
 	// ── Usuario / usuarios ────────────────────────────────────────────────────
 
 	async getCurrentUser() {
@@ -333,6 +351,28 @@ class ApiService {
 		});
 	}
 
+	/** Asigna o reemplaza dispositivo (endpoint jerárquico, como móvil). */
+	async assignUnitDevice(unitId, deviceId) {
+		return this.request(`/units/${encodeURIComponent(unitId)}/device`, {
+			method: 'POST',
+			body: JSON.stringify({ device_id: deviceId })
+		});
+	}
+
+	async getUnitAssignedDevice(unitId) {
+		return this.request(`/units/${encodeURIComponent(unitId)}/device`, { method: 'GET' });
+	}
+
+	async unassignUnitDevice(unitId) {
+		const assignments = await this.getUnitDevices({ active_only: true });
+		const list = Array.isArray(assignments) ? assignments : [];
+		const match = list.find((a) => String(a.unit_id) === String(unitId));
+		if (!match?.id) {
+			throw new ApiError('No hay dispositivo asignado a esta unidad');
+		}
+		return this.unassignDeviceFromUnit(match.id);
+	}
+
 	/** @param {string} assignmentId */
 	async unassignDeviceFromUnit(assignmentId) {
 		return this.request(`/unit-devices/${encodeURIComponent(assignmentId)}`, {
@@ -388,6 +428,13 @@ class ApiService {
 		return this.request(`/geofences/${encodeURIComponent(geofenceId)}`, {
 			method: 'PATCH',
 			body: JSON.stringify(data)
+		});
+	}
+
+	async toggleGeofenceActive(geofenceId, isActive) {
+		return this.request(`/geofences/${encodeURIComponent(geofenceId)}`, {
+			method: 'PATCH',
+			body: JSON.stringify({ is_active: isActive })
 		});
 	}
 

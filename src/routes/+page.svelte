@@ -1,9 +1,10 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { isOnboardingComplete } from '$lib/utils/onboardingStorage.js';
 
 	onMount(() => {
-		goto('/login');
+		goto(isOnboardingComplete() ? '/login' : '/onboarding');
 	});
 </script>
 
