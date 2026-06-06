@@ -19,7 +19,6 @@ export function normalizeZoneNameKey(name) {
 		.toLowerCase();
 }
 
-/** @param {string | null} [excludeId] */
 export function isZoneNameTaken(name, excludeId = null) {
 	const key = normalizeZoneNameKey(name);
 	if (!key) return false;
@@ -50,11 +49,11 @@ function normalizeImportedZone(raw) {
 }
 
 const INITIAL_WIZARD = {
-	step: 1, // 1..5
-	type: null, // 'ignition' | 'zone'
-	condition: null, // 'on' | 'off' | 'enter' | 'exit'
-	units: [], // vehicle ids
-	zone: null, // zone id
+	step: 1,
+	type: null,
+	condition: null,
+	units: [],
+	zone: null,
 	name: '',
 	notificationMethod: 'push'
 };
@@ -159,7 +158,6 @@ function logGeofenceGenerationPreview(zone) {
 	if (!zone || typeof zone !== 'object') return;
 	const geofenceRow = zone.dbRow && typeof zone.dbRow === 'object' ? zone.dbRow : null;
 	if (!geofenceRow) return;
-
 	const payload = {
 		geofence_id: geofenceRow.geofence_id,
 		device_id: geofenceRow.device_id,
@@ -170,24 +168,9 @@ function logGeofenceGenerationPreview(zone) {
 		radius: geofenceRow.radius,
 		status: geofenceRow.status
 	};
-
 	console.groupCollapsed('[ZONA->GEOFENCE] Vista previa de integración');
 	console.log('Zona guardada en frontend:', zone);
 	console.log('Fila compatible con public.geofences:', payload);
-	console.log('Ejemplo PostgREST (insert):', {
-		method: 'POST',
-		url: 'http://localhost:4000/geofences',
-		body: payload
-	});
-	console.log('Ejemplo estado inicial en geofence_states:', {
-		method: 'POST',
-		url: 'http://localhost:4000/geofence_states',
-		body: {
-			device_id: payload.device_id,
-			geofence_id: payload.geofence_id,
-			is_inside: false
-		}
-	});
 	console.groupEnd();
 }
 
@@ -233,7 +216,6 @@ export const alertActions = {
 	async saveAlert() {
 		const w = get(alertWizard);
 		if (!w) return;
-
 		const newAlert = {
 			id: createId('alert'),
 			type: w.type,
@@ -246,7 +228,6 @@ export const alertActions = {
 			enabled: true,
 			createdAt: new Date().toISOString()
 		};
-
 		const createdRule = await apiService.createAlertRule({
 			name: newAlert.name,
 			type: newAlert.type,
@@ -268,12 +249,29 @@ export const alertActions = {
 		alerts.update((list) => list.filter((a) => a.id !== id));
 	},
 
-	/**
-	 * @param {string} name
-	 * @param {string[]} cells
-	 * @param {string} [color]
-	 * @param {{ description?: string }} [opts]
-	 */
+	// ── NUEVO: toggle enable/disable sin borrar ──────────────────────────────
+	async toggleAlertEnabled(id) {
+		const current = get(alerts).find((a) => a.id === id);
+		if (!current) return;
+		const next = !current.enabled;
+		// Optimistic update
+		alerts.update((list) => list.map((a) => (a.id === id ? { ...a, enabled: next } : a)));
+		try {
+			await apiService.updateAlertRule(id, { is_active: next });
+		} catch (err) {
+			// Rollback on error
+			alerts.update((list) => list.map((a) => (a.id === id ? { ...a, enabled: !next } : a)));
+			throw err;
+		}
+	},
+
+	// ── NUEVO: actualizar nombre y unidades de una regla ─────────────────────
+	async updateAlert(id, patch) {
+		const updated = await apiService.updateAlertRule(id, patch);
+		const mapped = mapRuleToAlert(updated);
+		alerts.update((list) => list.map((a) => (a.id === id ? mapped : a)));
+	},
+
 	async createZone(name, cells, color = '#3B82F6', opts = {}) {
 		const description =
 			typeof opts.description === 'string' ? opts.description.trim().slice(0, 2000) : '';
@@ -290,18 +288,15 @@ export const alertActions = {
 			}
 		});
 		logGeofenceGenerationPreview(localZone);
-
 		const h3Indexes = (Array.isArray(cells) ? cells : [])
 			.map(h3HexToDecimalString)
 			.filter((v) => typeof v === 'string');
-
 		const createdGeofence = await apiService.createGeofence({
 			name,
 			description: description || null,
 			config: { alertType: 'inside' },
 			h3_indexes: h3Indexes
 		});
-
 		const syncedZone = mapGeofenceToZone(createdGeofence);
 		zones.update((list) => [...list, syncedZone]);
 		return syncedZone.id;
@@ -309,19 +304,13 @@ export const alertActions = {
 	async updateZone(id, patch) {
 		const currentZone = get(zones).find((z) => z.id === id);
 		if (!currentZone) return;
-
 		const meta = {
 			...(currentZone.metadata && typeof currentZone.metadata === 'object'
 				? currentZone.metadata
 				: {}),
 			...(patch.metadata && typeof patch.metadata === 'object' ? patch.metadata : {})
 		};
-		const nextLocal = withZoneDbRow({
-			...currentZone,
-			...patch,
-			metadata: meta
-		});
-
+		const nextLocal = withZoneDbRow({ ...currentZone, ...patch, metadata: meta });
 		const updatedGeofence = await apiService.updateGeofence(id, {
 			name: nextLocal.name,
 			description: nextLocal.metadata?.description || null,
@@ -337,13 +326,39 @@ export const alertActions = {
 			return;
 		}
 		const out = items.map((x) => normalizeImportedZone(x)).filter(Boolean);
-		zones.set(/** @type {any[]} */ (out));
+		zones.set(out);
 	},
 	async deleteZone(id) {
 		await apiService.deleteGeofence(id);
 		zones.update((list) => list.filter((z) => z.id !== id));
-		// Remove from any alerts using this zone
 		alerts.update((list) => list.map((a) => (a.zone === id ? { ...a, zone: null } : a)));
+	},
+
+	async toggleZoneActive(id, isActive) {
+		// Optimistic update
+		zones.update((list) =>
+			list.map((z) =>
+				z.id === id
+					? { ...z, metadata: { ...(z.metadata || {}), status: isActive ? 'active' : 'inactive' } }
+					: z
+			)
+		);
+		try {
+			await apiService.toggleGeofenceActive(id, isActive);
+		} catch (err) {
+			// Rollback
+			zones.update((list) =>
+				list.map((z) =>
+					z.id === id
+						? {
+								...z,
+								metadata: { ...(z.metadata || {}), status: isActive ? 'inactive' : 'active' }
+							}
+						: z
+				)
+			);
+			throw err;
+		}
 	},
 
 	async syncZonesFromApi() {

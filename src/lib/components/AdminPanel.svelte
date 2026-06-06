@@ -421,6 +421,9 @@
 								<div class="detail-card__icon-row">
 									<IconPicker
 										currentIcon={unitProfile.icon_type}
+										colorHex={unitProfile.color
+											? vehicleColors.find((c) => c.slug === unitProfile.color)?.hex
+											: null}
 										editable={$user?.is_master}
 										onSelect={(slug) => handleProfileUpdate('icon_type', slug)}
 									/>

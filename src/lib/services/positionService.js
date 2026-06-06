@@ -246,7 +246,12 @@ class PositionService {
 			status: engineStatus || 'Desconocido',
 			isOnline: String(engineStatus ?? '').toUpperCase() === 'ON',
 			lastUpdateFormatted: this.formatLastUpdate(lastUpdate),
-			coordinates: { lat: latitude, lng: longitude }
+			coordinates: { lat: latitude, lng: longitude },
+			fixStatus,
+			engineStatus,
+			satellites,
+			rxLvl,
+			mainBatteryVoltage
 		};
 	}
 

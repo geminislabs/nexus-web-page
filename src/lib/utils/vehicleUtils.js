@@ -1,6 +1,14 @@
+import { vehicleColors } from '$lib/data/vehicleColors';
+
 /**
  * Utilidades para el manejo de vehículos
  */
+
+/** @param {string | null | undefined} slug */
+export function colorSlugToHex(slug) {
+	if (!slug) return null;
+	return vehicleColors.find((c) => c.slug === slug)?.hex ?? null;
+}
 
 export function getStatusColor(status) {
 	switch (status) {

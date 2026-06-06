@@ -17,14 +17,18 @@
 		unreadAlarmCount
 	} from '$lib/stores/alertStore.js';
 	import CrearAlertaWizard from './CrearAlertaWizard.svelte';
+	import EditAlertWizard from './EditAlertWizard.svelte';
 	import ConfirmModal from './ConfirmModal.svelte';
 	import ZonasPanel from './ZonasPanel.svelte';
 	import AdminPanel from './AdminPanel.svelte';
+	import UnitProfileDetails from './Unit/UnitProfileDetails.svelte';
+	import UnitEditPanel from './Unit/UnitEditPanel.svelte';
 	import { user } from '$lib/stores/auth.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { getStatusText } from '$lib/utils/vehicleUtils.js';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
 	import { onMount, createEventDispatcher } from 'svelte';
+	import { get } from 'svelte/store';
 
 	const dispatch = createEventDispatcher();
 
@@ -32,13 +36,12 @@
 	export let showSectionSidebar = true;
 
 	let activeSection = initialSection;
-	/** Con barra interna: tabs locales. Sin ella: el padre manda la sección vía `initialSection`. */
 	$: displaySection = showSectionSidebar ? activeSection : initialSection;
 	let toolHint = '';
 	let toolHintOk = true;
 	let drawerZoneSubView = 'zonas';
 
-	// ── Unidades: vista, paginación, filtros ──────────────────
+	// ── Unidades ──────────────────────────────────────────────
 	let vehicleView = 'grid';
 	let vehiclePage = 1;
 	const PAGE_SIZE = 10;
@@ -46,14 +49,43 @@
 	let filterSearch = '';
 	let actionLoading = false;
 	let vehicleToDelete = null;
-	let editVehicleId = '';
-	let editVehicleName = '';
-	let editVehicleDescription = '';
+	/** @type {Record<string, unknown> | null} */
+	let editingVehicle = null;
+	/** @type {Record<string, unknown> | null} */
 	let vehicleDetail = null;
 	let vehicleDetailOpen = false;
+
+	// ── Alertas: delete ───────────────────────────────────────
 	/** @type {{ id: string, name: string } | null} */
 	let alertToDelete = null;
 
+	// ── Alertas: toggle ───────────────────────────────────────
+	let alertTogglingId = null;
+
+	async function handleAlertToggle(alert) {
+		if (alertTogglingId) return;
+		alertTogglingId = alert.id;
+		try {
+			await alertActions.toggleAlertEnabled(alert.id);
+		} catch {
+			// rollback handled in store
+		} finally {
+			alertTogglingId = null;
+		}
+	}
+
+	// ── Alertas: edit (wizard completo) ───────────────────────
+	let alertEditTarget = null;
+
+	function openAlertEdit(alert) {
+		alertEditTarget = alert;
+	}
+	function closeAlertEdit() {
+		alertEditTarget = null;
+		showHint('Alerta actualizada', true);
+	}
+
+	// ── Filtros unidades ──────────────────────────────────────
 	$: filteredVehicles = $vehicles.filter((v) => {
 		const matchStatus = filterStatus === 'all' || v.status === filterStatus;
 		const q = filterSearch.toLowerCase();
@@ -67,7 +99,6 @@
 	});
 	$: totalPages = Math.max(1, Math.ceil(filteredVehicles.length / PAGE_SIZE));
 	$: pagedVehicles = filteredVehicles.slice((vehiclePage - 1) * PAGE_SIZE, vehiclePage * PAGE_SIZE);
-	// reset page when filters change
 	$: {
 		filterStatus;
 		filterSearch;
@@ -103,7 +134,7 @@
 		if ($vehicles.length === 0) await vehicleActions.loadVehicles();
 	});
 
-	// ── helpers ───────────────────────────────────────────────
+	// ── Helpers ───────────────────────────────────────────────
 	const alertCondLabel = (c) =>
 		({ on: 'Encendido', off: 'Apagado', enter: 'Entrada', exit: 'Salida' })[c] ?? c;
 	const alarmTypeLabel = (t) =>
@@ -125,12 +156,12 @@
 	}
 	async function fetchVehicleDetail(vehicleId) {
 		if (!vehicleId || actionLoading) return;
+		editingVehicle = null;
 		actionLoading = true;
 		try {
 			const data = await vehicleActions.fetchVehicle(vehicleId);
 			vehicleDetail = data;
 			vehicleDetailOpen = true;
-			showHint('Detalle de unidad actualizado', true);
 		} catch (error) {
 			console.error('Error obteniendo detalle de unidad:', error);
 			showHint('No se pudo obtener el detalle de la unidad', false);
@@ -139,36 +170,28 @@
 		}
 	}
 	function openEditVehicle(v) {
-		editVehicleId = v.id;
-		editVehicleName = v.name || '';
-		editVehicleDescription = v.description || '';
+		vehicleDetailOpen = false;
+		vehicleDetail = null;
+		editingVehicle = get(vehicles).find((x) => x.id === v.id) || v;
 	}
-	function cancelEditVehicle() {
-		editVehicleId = '';
-		editVehicleName = '';
-		editVehicleDescription = '';
+	function backToVehicleList() {
+		vehicleDetailOpen = false;
+		vehicleDetail = null;
+		editingVehicle = null;
 	}
-	async function saveVehicleEdit() {
-		if (!editVehicleId || actionLoading) return;
-		const name = editVehicleName.trim();
-		if (!name) {
-			showHint('El nombre de la unidad es obligatorio', false);
-			return;
-		}
-		actionLoading = true;
-		try {
-			await vehicleActions.updateVehicle(editVehicleId, {
-				name,
-				description: editVehicleDescription
-			});
-			showHint('Unidad actualizada', true);
-			cancelEditVehicle();
-		} catch (error) {
-			console.error('Error actualizando unidad:', error);
-			showHint('No se pudo actualizar la unidad', false);
-		} finally {
-			actionLoading = false;
-		}
+	$: vehicleSubView = editingVehicle
+		? 'edit'
+		: vehicleDetailOpen && vehicleDetail
+			? 'detail'
+			: 'list';
+	$: if (displaySection !== 'unidades') backToVehicleList();
+	function onVehicleEditSaved() {
+		showHint('Unidad actualizada', true);
+		backToVehicleList();
+	}
+	function onVehicleEditDeleted() {
+		showHint('Unidad eliminada', true);
+		backToVehicleList();
 	}
 	function requestDeleteVehicle(v) {
 		vehicleToDelete = v;
@@ -251,6 +274,10 @@
 	<CrearAlertaWizard on:close={() => alertActions.closeWizard()} />
 {/if}
 
+{#if alertEditTarget}
+	<EditAlertWizard alert={alertEditTarget} on:close={closeAlertEdit} />
+{/if}
+
 <div
 	class="flex min-h-0 flex-1 flex-col overflow-hidden bg-slate-100 text-slate-900 text-[13px] dark:bg-[#080d1a] dark:text-white/90"
 	role="region"
@@ -295,7 +322,9 @@
 	<!-- PANEL -->
 	<div
 		class="flex min-h-0 min-w-0 flex-1 flex-col overscroll-contain bg-white dark:bg-transparent
-			{displaySection === 'zonas' ? 'overflow-hidden' : 'overflow-y-auto'}"
+			{displaySection === 'zonas' || displaySection === 'unidades'
+				? 'overflow-hidden'
+				: 'overflow-y-auto'}"
 	>
 		<!-- ═══ APARIENCIA ═══ -->
 		{#if displaySection === 'apariencia'}
@@ -403,7 +432,62 @@
 
 			<!-- ═══ UNIDADES ═══ -->
 		{:else if displaySection === 'unidades'}
-			<div class="flex h-full min-h-0 flex-col">
+			<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+				{#if vehicleSubView !== 'list'}
+					<div
+						class="shrink-0 flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-white/[0.06] dark:bg-[#080d1a]"
+					>
+						<button
+							type="button"
+							class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/80 dark:hover:bg-white/[0.08]"
+							on:click={backToVehicleList}
+							title="Volver a unidades"
+							aria-label="Volver a unidades"
+						>
+							<Icon icon="mdi:chevron-left" width={20} aria-hidden="true" />
+						</button>
+						<div class="min-w-0 flex-1">
+							<p class="m-0 truncate text-[13px] font-bold text-slate-900 dark:text-white">
+								{vehicleSubView === 'detail' ? 'Detalles de la unidad' : 'Editar unidad'}
+							</p>
+							<p class="m-0 truncate text-[11px] text-slate-500 dark:text-white/45">
+								{vehicleSubView === 'detail' ? vehicleDetail?.name : editingVehicle?.name}
+							</p>
+						</div>
+						{#if vehicleSubView === 'detail' && vehicleDetail}
+							<button
+								type="button"
+								class="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+								on:click={() => openEditVehicle(vehicleDetail)}
+							>
+								<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />Editar
+							</button>
+						{/if}
+					</div>
+					<div
+						class="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain touch-pan-y scroll-pb-6 [-webkit-overflow-scrolling:touch]"
+					>
+						{#if vehicleSubView === 'detail' && vehicleDetail}
+							<div class="px-1 py-3 pb-10">
+								<UnitProfileDetails
+									unit={vehicleDetail}
+									variant="drawer"
+									active={vehicleDetailOpen}
+								/>
+							</div>
+						{:else if editingVehicle}
+							<div class="px-4 py-4 pb-12">
+								<UnitEditPanel
+									unit={editingVehicle}
+									compact={false}
+									on:cancel={backToVehicleList}
+									on:saved={onVehicleEditSaved}
+									on:deleted={onVehicleEditDeleted}
+								/>
+							</div>
+						{/if}
+					</div>
+				{:else}
 				<div
 					class="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3 space-y-2.5 dark:border-white/[0.06] dark:bg-[#080d1a]"
 				>
@@ -537,7 +621,7 @@
 							{#each pagedVehicles as v}
 								<li
 									class="flex flex-col gap-2 rounded-xl border p-3 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.05]
-								{v.status === 'active'
+									{v.status === 'active'
 										? 'border-emerald-300 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/[0.03]'
 										: v.status === 'maintenance'
 											? 'border-amber-300 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/[0.03]'
@@ -638,7 +722,7 @@
 							{#each pagedVehicles as v}
 								<li
 									class="flex items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.05]
-								{v.status === 'active'
+									{v.status === 'active'
 										? 'border-emerald-300 dark:border-emerald-500/18'
 										: v.status === 'maintenance'
 											? 'border-amber-300 dark:border-amber-500/18'
@@ -714,54 +798,7 @@
 						</ul>
 					{/if}
 				</div>
-				{#if editVehicleId}
-					<div
-						class="shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.06] dark:bg-[#080d1a]"
-					>
-						<div class="mb-2 flex items-center gap-2">
-							<Icon
-								icon="mdi:pencil-outline"
-								width={13}
-								class="text-emerald-600 dark:text-emerald-300"
-							/>
-							<span class="text-[12px] font-semibold text-slate-900 dark:text-white"
-								>Editar unidad</span
-							>
-						</div>
-						<div class="grid gap-2 sm:grid-cols-2">
-							<input
-								type="text"
-								class="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] text-slate-900 outline-none focus:border-emerald-500/50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white"
-								placeholder="Nombre"
-								bind:value={editVehicleName}
-							/>
-							<input
-								type="text"
-								class="h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] text-slate-900 outline-none focus:border-emerald-500/50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white"
-								placeholder="Descripción"
-								bind:value={editVehicleDescription}
-							/>
-						</div>
-						<div class="mt-2 flex justify-end gap-2">
-							<button
-								type="button"
-								class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
-								on:click={cancelEditVehicle}
-								disabled={actionLoading}
-							>
-								Cancelar
-							</button>
-							<button
-								type="button"
-								class="h-8 rounded-lg border border-emerald-500/25 bg-emerald-600 px-3 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-								on:click={saveVehicleEdit}
-								disabled={actionLoading}
-							>
-								Guardar
-							</button>
-						</div>
-					</div>
-				{/if}
+
 				{#if totalPages > 1}
 					<div
 						class="flex shrink-0 items-center justify-between border-t border-slate-200 px-4 py-2.5 dark:border-white/[0.06]"
@@ -788,66 +825,38 @@
 						</button>
 					</div>
 				{/if}
-			</div>
-			{#if vehicleDetailOpen && vehicleDetail}
-				<div
-					class="border-t border-slate-200 bg-slate-50 px-4 py-2 text-[11px] text-slate-700 dark:border-white/[0.06] dark:bg-[#080d1a] dark:text-white/60"
-				>
-					<div class="flex items-center justify-between gap-2">
-						<span class="font-semibold">Detalle unidad</span>
-						<button
-							type="button"
-							class="rounded-md px-1.5 py-0.5 text-[10px] text-slate-500 hover:bg-slate-200 dark:text-white/40 dark:hover:bg-white/[0.08]"
-							on:click={() => (vehicleDetailOpen = false)}
-						>
-							Cerrar
-						</button>
-					</div>
-					<p class="m-0 mt-1 truncate"><strong>ID:</strong> {vehicleDetail.id}</p>
-					<p class="m-0 truncate"><strong>Nombre:</strong> {vehicleDetail.name}</p>
-					<p class="m-0 truncate">
-						<strong>Descripción:</strong>
-						{vehicleDetail.description || '—'}
-					</p>
-					<p class="m-0 truncate">
-						<strong>Dispositivo:</strong>
-						{vehicleDetail.deviceId || 'Sin asignar'}
-					</p>
-				</div>
-			{/if}
-			{#if vehicleToDelete}
-				<div
-					class="border-t border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/25 dark:bg-red-600/10"
-				>
-					<p class="m-0 text-[11px] text-red-800 dark:text-red-300">
-						¿Eliminar unidad <strong>{vehicleToDelete.name}</strong>? (soft delete en API)
-					</p>
-					<div class="mt-2 flex justify-end gap-2">
-						<button
-							type="button"
-							class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
-							on:click={cancelDeleteVehicle}
-							disabled={actionLoading}
-						>
-							Cancelar
-						</button>
-						<button
-							type="button"
-							class="h-8 rounded-lg border border-red-500/25 bg-red-600 px-3 text-[11px] font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-							on:click={confirmDeleteVehicle}
-							disabled={actionLoading}
-						>
-							Eliminar
-						</button>
-					</div>
-				</div>
-			{/if}
 
-			<!-- ═══ ZONAS ═══ -->
+				{#if vehicleToDelete}
+					<div
+						class="shrink-0 border-t border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/25 dark:bg-red-600/10"
+					>
+						<p class="m-0 text-[11px] text-red-800 dark:text-red-300">
+							¿Eliminar unidad <strong>{vehicleToDelete.name}</strong>? (soft delete en API)
+						</p>
+						<div class="mt-2 flex justify-end gap-2">
+							<button
+								type="button"
+								class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
+								on:click={cancelDeleteVehicle}
+								disabled={actionLoading}>Cancelar</button
+							>
+							<button
+								type="button"
+								class="h-8 rounded-lg border border-red-500/25 bg-red-600 px-3 text-[11px] font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+								on:click={confirmDeleteVehicle}
+								disabled={actionLoading}>Eliminar</button
+							>
+						</div>
+					</div>
+				{/if}
+				{/if}
+			</div>
+
+			<!-- ═══ ADMINISTRACIÓN / ZONAS / HISTORIAL / GESTIONAR ═══ -->
 		{:else if displaySection === 'administracion'}
 			<AdminPanel embedded={true} />
 		{:else if displaySection === 'zonas'}
-			<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
 				<ZonasPanel
 					variant="desktop"
 					bind:subView={drawerZoneSubView}
@@ -891,7 +900,7 @@
 							>
 								<span
 									class="h-1.5 w-1.5 shrink-0 rounded-full {!ev.read
-										? 'bg-blue-500 shadow-[0_0_6px_rgba(96,165,250,.7)] dark:bg-blue-400 dark:shadow-[0_0_6px_rgba(96,165,250,.7)]'
+										? 'bg-blue-500 shadow-[0_0_6px_rgba(96,165,250,.7)] dark:bg-blue-400'
 										: 'bg-slate-300 dark:bg-white/18'}"
 									aria-hidden="true"
 								></span>
@@ -965,46 +974,80 @@
 					</div>
 				{:else}
 					<ul class="flex flex-col gap-2 list-none p-0 m-0">
-						{#each $alerts as alert}
-							<li
-								class="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.07] dark:bg-white/[0.03]"
-							>
+						{#each $alerts as alert (alert.id)}
+							<li>
 								<div
-									class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg
-								{alert.type === 'ignition'
-										? 'bg-blue-100 text-blue-800 dark:bg-blue-600/15 dark:text-blue-300'
-										: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'}"
+									class="flex items-center gap-2.5 rounded-xl border p-3 transition-colors {alert.enabled
+										? 'border-slate-200 bg-slate-50 dark:border-white/[0.07] dark:bg-white/[0.03]'
+										: 'border-slate-200/60 bg-slate-50/60 opacity-60 dark:border-white/[0.04] dark:bg-white/[0.02]'}"
 								>
-									<Icon
-										icon={alert.type === 'ignition'
-											? 'mdi:lightning-bolt'
-											: 'mdi:map-marker-radius'}
-										width={15}
-										aria-hidden="true"
-									/>
-								</div>
-								<div class="min-w-0 flex-1">
-									<p
-										class="m-0 text-[13px] font-semibold leading-snug text-slate-900 dark:text-white"
+									<div
+										class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {alert.type ===
+										'ignition'
+											? 'bg-blue-100 text-blue-800 dark:bg-blue-600/15 dark:text-blue-300'
+											: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'}"
 									>
-										{alert.name}
-									</p>
-									<p class="m-0 mt-0.5 text-[10px] text-slate-600 dark:text-white/38">
-										{alertCondLabel(alert.condition)} · {alert.units.length} unidad{alert.units
-											.length !== 1
-											? 'es'
-											: ''}
-									</p>
-								</div>
-								<div class="flex shrink-0 items-center gap-2">
-									<button
-										type="button"
-										class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
-										on:click={() => requestDeleteAlert(alert)}
-										aria-label={`Eliminar la alerta «${alert.name}»`}
-									>
-										<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
-									</button>
+										<Icon
+											icon={alert.type === 'ignition'
+												? 'mdi:lightning-bolt'
+												: 'mdi:map-marker-radius'}
+											width={15}
+											aria-hidden="true"
+										/>
+									</div>
+									<div class="min-w-0 flex-1">
+										<p
+											class="m-0 text-[13px] font-semibold leading-snug text-slate-900 dark:text-white"
+										>
+											{alert.name}
+										</p>
+										<p class="m-0 mt-0.5 text-[10px] text-slate-600 dark:text-white/38">
+											{alertCondLabel(alert.condition)} · {alert.units.length} unidad{alert.units
+												.length !== 1
+												? 'es'
+												: ''}
+										</p>
+									</div>
+									<div class="flex shrink-0 items-center gap-1.5">
+										<!-- Toggle enable/disable -->
+										<button
+											type="button"
+											role="switch"
+											aria-checked={alert.enabled}
+											aria-label="{alert.enabled ? 'Desactivar' : 'Activar'} «{alert.name}»"
+											class="relative h-5 w-9 shrink-0 cursor-pointer rounded-full border-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed {alert.enabled
+												? 'bg-blue-600'
+												: 'bg-slate-300 dark:bg-white/20'}"
+											disabled={alertTogglingId === alert.id}
+											on:click={() => handleAlertToggle(alert)}
+										>
+											<span
+												class="pointer-events-none absolute left-[2px] top-[2px] block h-[17px] w-[17px] rounded-full bg-white shadow transition-transform {alert.enabled
+													? 'translate-x-4'
+													: 'translate-x-0'}"
+											></span>
+										</button>
+										<!-- Editar -->
+										<button
+											type="button"
+											class="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/55 dark:hover:bg-white/[0.1]"
+											on:click={() => openAlertEdit(alert)}
+											aria-label="Editar «{alert.name}»"
+											title="Editar"
+										>
+											<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />
+										</button>
+										<!-- Eliminar -->
+										<button
+											type="button"
+											class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+											on:click={() => requestDeleteAlert(alert)}
+											aria-label="Eliminar «{alert.name}»"
+											title="Eliminar"
+										>
+											<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
+										</button>
+									</div>
 								</div>
 							</li>
 						{/each}

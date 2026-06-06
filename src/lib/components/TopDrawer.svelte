@@ -60,7 +60,7 @@
 
 {#if open}
 	<div
-		class="fixed top-0 right-0 bottom-0 z-[44] max-sm:hidden bg-transparent {passiveBackdrop
+		class="fixed top-0 right-0 bottom-0 z-[110] max-sm:hidden bg-transparent {passiveBackdrop
 			? 'pointer-events-none'
 			: 'pointer-events-auto'}"
 		style:left="{sidebarWidth}px"
@@ -70,7 +70,7 @@
 		transition:fade={{ duration: 200 }}
 	>
 		<div
-			class="pointer-events-auto absolute left-0 right-0 top-0 flex h-[clamp(480px,68vh,780px)] max-h-[780px] flex-col overflow-hidden border-b border-slate-200 bg-white/95 text-slate-900 shadow-xl backdrop-blur-[40px] [-webkit-backdrop-filter:blur(40px)] dark:border-white/[0.07] dark:bg-[rgb(8_11_22_/0.97)] dark:text-white dark:shadow-[0_24px_80px_rgba(0,0,0,0.75),0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]"
+			class="pointer-events-auto absolute left-0 right-0 top-0 flex h-[clamp(520px,74vh,860px)] max-h-[860px] flex-col overflow-hidden border-b border-slate-200 bg-white/95 text-slate-900 shadow-xl backdrop-blur-[40px] [-webkit-backdrop-filter:blur(40px)] dark:border-white/[0.07] dark:bg-[rgb(8_11_22_/0.97)] dark:text-white dark:shadow-[0_24px_80px_rgba(0,0,0,0.75),0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby={headingIdResolved}

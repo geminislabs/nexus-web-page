@@ -1,10 +1,17 @@
 <script>
 	import { unitIcons } from '$lib/data/unitIcons';
 	import { fade } from 'svelte/transition';
+	import ColoredVehicleIcon from './ColoredVehicleIcon.svelte';
 
 	export let currentIcon = 'vehicle-car-sedan';
 	export let onSelect = (slug) => {};
 	export let editable = false;
+	/** Color del vehículo (hex). Solo pinta la silueta, no el fondo del botón. */
+	export let colorHex = null;
+
+	const DEFAULT_COLOR = '#334155';
+
+	$: iconColor = colorHex || DEFAULT_COLOR;
 
 	let isOpen = false;
 
@@ -19,48 +26,45 @@
 		isOpen = false;
 	}
 
-	// Close dropdown when clicking outside
 	function handleOutsideClick(event) {
 		if (isOpen && !event.target.closest('.icon-picker-container')) {
 			isOpen = false;
 		}
+	}
+
+	function iconSrc(slug) {
+		return unitIcons[slug] ?? unitIcons['vehicle-car-sedan'];
 	}
 </script>
 
 <svelte:window on:click={handleOutsideClick} />
 
 <div class="relative icon-picker-container">
-	<!-- Trigger / Current Icon -->
 	<button
-		class="w-12 h-12 rounded-lg bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] flex items-center justify-center transition-all duration-200 relative group overflow-hidden"
+		type="button"
+		class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 shadow-sm transition-all duration-200 group dark:border-white/15 dark:bg-white/[0.08]"
 		class:cursor-pointer={editable}
 		class:cursor-default={!editable}
-		class:hover:border-accent-cyan={editable}
-		class:ring-1={isOpen}
-		class:ring-accent-cyan={isOpen}
+		class:hover:border-cyan-400={editable}
+		class:ring-2={isOpen}
+		class:ring-cyan-400={isOpen}
 		on:click|stopPropagation={toggleDropdown}
 		title={editable ? 'Cambiar icono' : 'Icono de unidad'}
 	>
-		{#if currentIcon && unitIcons[currentIcon]}
-			<img
-				src={unitIcons[currentIcon]}
+		<div class="relative z-10 transition-transform duration-200 group-hover:scale-105">
+			<ColoredVehicleIcon
+				src={iconSrc(currentIcon)}
+				colorHex={iconColor}
+				sizeClass="h-8 w-8"
 				alt={currentIcon}
-				class="w-8 h-8 object-contain transition-transform duration-200 group-hover:scale-110"
 			/>
-		{:else}
-			<!-- Default fallback -->
-			<img
-				src={unitIcons['vehicle-car-sedan']}
-				alt="Default"
-				class="w-8 h-8 object-contain opacity-50"
-			/>
-		{/if}
+		</div>
 
 		{#if editable}
 			<div
-				class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200"
+				class="absolute inset-0 z-20 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
 			>
-				<svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path
 						stroke-linecap="round"
 						stroke-linejoin="round"
@@ -72,23 +76,24 @@
 		{/if}
 	</button>
 
-	<!-- Dropdown -->
 	{#if isOpen}
 		<div
-			class="absolute top-full left-0 mt-2 p-3 bg-[var(--btn-secondary-bg)] border border-[var(--panel-border)] rounded-xl shadow-2xl z-50 w-max min-w-[200px]"
+			class="absolute left-0 top-full z-50 mt-2 w-max min-w-[200px] rounded-xl border border-slate-200 bg-white p-3 shadow-2xl dark:border-white/10 dark:bg-zinc-900"
 			transition:fade={{ duration: 100 }}
 		>
 			<div class="grid grid-cols-3 gap-2">
 				{#each Object.entries(unitIcons) as [slug, src]}
 					<button
-						class="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 hover:bg-white/10 relative"
-						class:bg-accent-cyan-10={currentIcon === slug}
-						class:ring-1={currentIcon === slug}
-						class:ring-accent-cyan={currentIcon === slug}
+						type="button"
+						class="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 transition-all duration-200 hover:scale-105 dark:border-white/15 dark:bg-white/[0.08] {currentIcon ===
+						slug
+							? 'border-cyan-400 ring-2 ring-cyan-400'
+							: ''}"
 						on:click={() => selectIcon(slug)}
 						title={slug}
+						aria-pressed={currentIcon === slug}
 					>
-						<img {src} alt={slug} class="w-7 h-7 object-contain" />
+						<ColoredVehicleIcon {src} colorHex={iconColor} sizeClass="h-7 w-7" alt={slug} />
 					</button>
 				{/each}
 			</div>

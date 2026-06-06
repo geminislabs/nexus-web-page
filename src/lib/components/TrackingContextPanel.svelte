@@ -1,46 +1,49 @@
 <script>
 	import Icon from '@iconify/svelte';
-
+	import ShieldBoltIcon from '$lib/components/icons/ShieldBoltIcon.svelte';
+	import UnitsStatusFilterPanels from './UnitsStatusFilterPanels.svelte';
+	import {
+		getUnitTrackingStatus,
+		formatUnitStatusDate,
+		unitMatchesTrackingFilter
+	} from '$lib/utils/unitTrackingStatus.js';
 	export let unit = null;
 	export let units = [];
 	export let panelView = 'unit-info';
 	export let onPanelViewChange = () => {};
 	export let onSelectUnit = () => {};
 	export let onCenterUnit = () => {};
-
+	export let onOpenSecurity = () => {};
 	let showUnitPicker = false;
 	let searchQuery = '';
-
+	/** @type {'all' | 'moving' | 'stopped'} */
+	let statusFilter = 'all';
 	const panelActions = [
 		{ id: 'trips', label: 'Trayectos', icon: 'mdi:source-branch' },
 		{ id: 'events', label: 'Eventos', icon: 'mdi:bell-outline' },
 		{ id: 'details', label: 'Detalles', icon: 'mdi:information-outline' },
 		{ id: 'share', label: 'Compartir', icon: 'mdi:export-variant' }
 	];
-
 	$: filteredUnits = units.filter((u) => {
-		if (!searchQuery.trim()) return true;
-		const q = searchQuery.toLowerCase();
-		return (
+		const q = searchQuery.trim().toLowerCase();
+		const matchesSearch =
+			!q ||
 			u.name?.toLowerCase().includes(q) ||
 			u.brand?.toLowerCase().includes(q) ||
-			u.model?.toLowerCase().includes(q)
-		);
+			u.model?.toLowerCase().includes(q);
+		return matchesSearch && unitMatchesTrackingFilter(u, statusFilter);
 	});
-
-	// Lógica de estado igual que Android/iOS (basada en engineStatus + speed + lastUpdate)
+	// Lógica de estado igual que Android/iOS
 	$: engineOn = unit?.engineStatus?.toUpperCase() === 'ON' || unit?.isOnline === true;
 	$: hasSignal = unit?.lastUpdate != null || unit?.gpsDatetime != null;
 	$: speed = Number(unit?.speed);
 	$: isMoving = !Number.isNaN(speed) && speed > 3;
-
 	$: statusLabel = (() => {
 		if (isMoving) return `${Math.round(speed)} km/h`;
 		if (engineOn) return 'Online';
 		if (!hasSignal) return 'Sin señal';
 		return 'Apagado';
 	})();
-
 	$: dateLabel = (() => {
 		const dateStr = unit?.gpsDatetime || unit?.lastUpdate;
 		if (!dateStr) return '';
@@ -49,52 +52,46 @@
 		const pad = (n) => String(n).padStart(2, '0');
 		return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 	})();
-
-	// Voltajes igual que Android/iOS (mainBatteryVoltage, backupBatteryVoltage)
+	// Voltajes igual que Android/iOS
 	$: mainBattery = (() => {
 		const v = Number(unit?.mainBatteryVoltage ?? unit?.main_battery_voltage);
 		return !Number.isNaN(v) && v > 0 ? `${v.toFixed(1)}V` : '--';
 	})();
-
 	$: backupBattery = (() => {
 		const v = Number(unit?.backupBatteryVoltage ?? unit?.backup_battery_voltage);
 		return !Number.isNaN(v) && v > 0 ? `${v.toFixed(1)}V` : '--';
 	})();
-
-	// Satélites igual que Android/iOS
+	// Satélites
 	$: satelliteCount = (() => {
 		const s = Number(unit?.satellites);
 		return !Number.isNaN(s) && s >= 0 ? `x${s}` : 'x0';
 	})();
-
+	// Señal (rxLvl) — 0-100 aprox, igual que iOS SignalStrengthView
+	$: signalLevel = (() => {
+		const rx = Number(unit?.rxLvl ?? unit?.rx_lvl);
+		if (Number.isNaN(rx) || (unit?.rxLvl == null && unit?.rx_lvl == null)) return null;
+		if (rx <= 10) return 0;
+		if (rx <= 25) return 1;
+		if (rx <= 45) return 2;
+		if (rx <= 60) return 3;
+		return 4;
+	})();
+	$: signalColor =
+		signalLevel == null
+			? ''
+			: signalLevel === 0
+				? 'text-red-400'
+				: signalLevel === 1
+					? 'text-orange-400'
+					: signalLevel === 2
+						? 'text-yellow-400'
+						: 'text-emerald-400';
 	$: isOnline = engineOn || isMoving;
-
-	// Obtener estado de unidad (igual que Android/iOS)
-	function getUnitStatus(u) {
-		const spd = Number(u?.speed);
-		const moving = !Number.isNaN(spd) && spd > 3;
-		const engineOn = u?.engineStatus?.toUpperCase() === 'ON' || u?.isOnline === true;
-		const hasSignalUnit = u?.lastUpdate != null || u?.gpsDatetime != null;
-
-		if (moving)
-			return { label: `${Math.round(spd)} km/h`, color: 'text-emerald-400', dot: 'bg-emerald-400' };
-		if (engineOn) return { label: 'Online', color: 'text-emerald-400', dot: 'bg-emerald-400' };
-		if (!hasSignalUnit) return { label: 'Sin señal', color: 'text-red-500', dot: 'bg-red-500' };
-		return { label: 'Detenido', color: 'text-amber-500', dot: 'bg-amber-500' };
-	}
-
-	function formatUnitDate(u) {
-		if (!u?.lastUpdate) return '';
-		const d = new Date(u.lastUpdate);
-		if (Number.isNaN(d.getTime())) return '';
-		const pad = (n) => String(n).padStart(2, '0');
-		return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-	}
-
 	function handleSelectUnit(u) {
 		onSelectUnit(u);
 		showUnitPicker = false;
 		searchQuery = '';
+		statusFilter = 'all';
 	}
 </script>
 
@@ -106,7 +103,6 @@
 		<div class="flex justify-center py-2">
 			<div class="h-1 w-9 rounded-full bg-white/30"></div>
 		</div>
-
 		<!-- Unit info -->
 		<div class="px-4 pb-3">
 			<div class="flex items-start gap-3">
@@ -139,19 +135,34 @@
 						<span class="mx-0.5">·</span>
 						<Icon icon="mdi:signal-cellular-3" class="h-3.5 w-3.5" />
 						<span>{satelliteCount}</span>
+						{#if signalLevel != null}
+							<span class="mx-0.5">·</span>
+							<Icon icon="mdi:signal" class="h-3.5 w-3.5 {signalColor}" />
+							<span class={signalColor}>{unit.rxLvl ?? unit.rx_lvl} rx</span>
+						{/if}
 					</div>
 				</div>
-				<button
-					type="button"
-					class="flex h-11 w-11 items-center justify-center rounded-full bg-sky-500 shadow-lg"
-					on:click={onCenterUnit}
-					aria-label="Centrar en mapa"
-				>
-					<Icon icon="mdi:navigation-variant" class="h-5 w-5 text-white" />
-				</button>
+				<div class="flex shrink-0 flex-col items-center gap-2">
+					<button
+						type="button"
+						class="flex h-11 w-11 items-center justify-center rounded-full bg-sky-500 shadow-lg transition-transform hover:scale-105"
+						on:click={onCenterUnit}
+						aria-label="Centrar en mapa"
+					>
+						<Icon icon="mdi:navigation-variant" class="h-5 w-5 text-white" />
+					</button>
+					<button
+						type="button"
+						class="flex h-11 w-11 items-center justify-center rounded-full border border-red-500/30 bg-red-600/90 shadow-lg shadow-red-900/30 transition-transform hover:scale-105"
+						on:click={onOpenSecurity}
+						aria-label="Consola de seguridad"
+						title="Consola de seguridad"
+					>
+						<ShieldBoltIcon size={22} variant="white" />
+					</button>
+				</div>
 			</div>
 		</div>
-
 		<!-- Unit picker toggle -->
 		{#if units.length > 1}
 			<button
@@ -180,77 +191,69 @@
 				/>
 			</button>
 		{/if}
-
-		<!-- Unit picker dropdown -->
+		<!-- Unit picker list -->
 		{#if showUnitPicker}
-			<div class="border-t border-white/10 bg-[#0a1525]">
-				<!-- Search -->
-				<div class="p-3">
-					<div class="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2">
-						<Icon icon="mdi:magnify" class="h-5 w-5 text-white/40" />
-						<input
-							type="text"
-							placeholder="Buscar unidad..."
-							class="w-full bg-transparent text-sm text-white placeholder-white/40 outline-none"
-							bind:value={searchQuery}
-						/>
-					</div>
+			<div class="border-t border-white/10 px-3 pb-3 pt-2">
+				<input
+					type="search"
+					bind:value={searchQuery}
+					placeholder="Buscar unidad…"
+					class="mb-2.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[13px] text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
+				/>
+				<div class="mb-2.5">
+					<UnitsStatusFilterPanels
+						{units}
+						bind:value={statusFilter}
+						variant="embedded"
+					/>
 				</div>
-				<!-- List -->
-				<ul class="max-h-48 overflow-y-auto px-3 pb-3">
+				<ul class="m-0 max-h-[220px] list-none overflow-y-auto overscroll-contain p-0 space-y-0.5">
 					{#each filteredUnits as u (u.id)}
-						{@const status = getUnitStatus(u)}
+						{@const st = getUnitTrackingStatus(u)}
+						{@const dt = formatUnitStatusDate(u)}
 						<li>
 							<button
 								type="button"
-								class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-white/5 {u.id ===
+								class="flex w-full items-center gap-2.5 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-white/[0.07] {u.id ===
 								unit.id
-									? 'bg-white/10'
+									? 'bg-white/[0.08]'
 									: ''}"
 								on:click={() => handleSelectUnit(u)}
 							>
-								<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-700/50">
-									<Icon icon="mdi:car-side" class="h-6 w-6 text-white/60" />
-								</div>
+								<span class="h-2 w-2 shrink-0 rounded-full {st.dotClass}"></span>
 								<div class="min-w-0 flex-1">
-									<p class="m-0 truncate text-sm font-semibold text-white">{u.name}</p>
-									<p class="m-0 text-xs text-white/50">
-										{[u.brand, u.model].filter(Boolean).join(' ') || 'Sin modelo'}
-									</p>
-									<p class="m-0 mt-0.5 flex items-center gap-1 text-xs">
-										<span class="h-1.5 w-1.5 rounded-full {status.dot}"></span>
-										<span class={status.color}>{status.label}</span>
-										{#if formatUnitDate(u)}
-											<span class="text-white/30">· {formatUnitDate(u)}</span>
-										{/if}
-									</p>
+									<p class="m-0 truncate text-[13px] font-semibold text-white">{u.name}</p>
+									{#if dt}
+										<p class="m-0 text-[10px] text-white/35">{dt}</p>
+									{/if}
 								</div>
-								{#if u.id === unit.id}
-									<Icon icon="mdi:check-circle" class="h-5 w-5 text-sky-400" />
-								{:else}
-									<Icon icon="mdi:chevron-right" class="h-5 w-5 text-white/30" />
-								{/if}
+								<span class="shrink-0 text-[11px] font-semibold {st.colorClass}"
+									>{st.shortLabel}</span
+								>
 							</button>
 						</li>
 					{/each}
 				</ul>
 			</div>
 		{/if}
-
-		<!-- Actions -->
-		<div class="grid grid-cols-4 border-t border-white/10">
-			{#each panelActions as action, i}
-				<button
-					type="button"
-					class="flex flex-col items-center justify-center gap-1 py-3 {i > 0
-						? 'border-l border-white/10'
-						: ''} {panelView === action.id ? 'text-white' : 'text-white/50'}"
-					on:click={() => onPanelViewChange(action.id)}
-				>
-					<Icon icon={action.icon} class="h-5 w-5" />
-					<span class="text-[10px]">{action.label}</span>
-				</button>
-			{/each}
+		<!-- Action buttons -->
+		<div class="border-t border-white/10 px-3 py-2">
+			<div class="grid grid-cols-4 gap-1">
+				{#each panelActions as action}
+					<button
+						type="button"
+						class="flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-center transition-colors hover:bg-white/[0.07] {panelView ===
+						action.id
+							? 'bg-white/[0.1] text-white'
+							: 'text-white/50'}"
+						on:click={() => onPanelViewChange(action.id)}
+						aria-pressed={panelView === action.id}
+					>
+						<Icon icon={action.icon} class="h-[18px] w-[18px] shrink-0" />
+						<span class="text-[10px] font-medium leading-none">{action.label}</span>
+					</button>
+				{/each}
+			</div>
 		</div>
 	</div>
 {/if}

@@ -45,6 +45,10 @@
 	$: zv = useDesktopOverlayStore ? $desktopZonePanelSubView : subView;
 
 	let zoneMenuOpenId = /** @type {string | null} */ (null);
+	/** @type {Record<string, unknown> | null} */
+	let zoneMenuZone = null;
+	/** @type {{ top: number, left: number } | null} */
+	let zoneMenuLayout = null;
 	let editingZoneId = /** @type {string | null} */ (null);
 	let editZoneName = '';
 	let editZoneDesc = '';
@@ -63,8 +67,36 @@
 		return `${n} hexágono${n !== 1 ? 's' : ''}`;
 	}
 
-	function handleBackFromZonaList() {
+	function closeZoneMenu() {
 		zoneMenuOpenId = null;
+		zoneMenuZone = null;
+		zoneMenuLayout = null;
+	}
+
+	/** @param {Record<string, unknown>} z @param {MouseEvent} e */
+	function toggleZoneMenu(z, e) {
+		if (zoneMenuOpenId === z.id) {
+			closeZoneMenu();
+			return;
+		}
+		const btn = /** @type {HTMLElement} */ (e.currentTarget);
+		const rect = btn.getBoundingClientRect();
+		const menuWidth = 168;
+		const menuHeight = 92;
+		let top = rect.bottom + 4;
+		if (top + menuHeight > window.innerHeight - 8) {
+			top = Math.max(8, rect.top - menuHeight - 4);
+		}
+		zoneMenuOpenId = z.id;
+		zoneMenuZone = z;
+		zoneMenuLayout = {
+			top,
+			left: Math.max(8, rect.right - menuWidth)
+		};
+	}
+
+	function handleBackFromZonaList() {
+		closeZoneMenu();
 		if (variant === 'desktop') {
 			dispatch('navigate', { section: 'apariencia' });
 		} else {
@@ -135,7 +167,7 @@
 	}
 
 	function openEditZone(z) {
-		zoneMenuOpenId = null;
+		closeZoneMenu();
 		editingZoneId = z.id;
 		editZoneName = z.name || '';
 		editZoneDesc = (z.metadata?.description && String(z.metadata.description)) || '';
@@ -169,8 +201,13 @@
 	}
 
 	function requestDeactivateZone(z) {
-		zoneMenuOpenId = null;
-		zoneDeactivateConfirm = { id: z.id, name: (z.name && String(z.name).trim()) || 'Zona' };
+		closeZoneMenu();
+		const isActive = z?.metadata?.status !== 'inactive';
+		zoneDeactivateConfirm = {
+			id: z.id,
+			name: (z.name && String(z.name).trim()) || 'Zona',
+			isActive
+		};
 	}
 
 	function cancelDeactivateZone() {
@@ -179,14 +216,16 @@
 
 	async function confirmDeactivateZone() {
 		if (!zoneDeactivateConfirm) return;
+		const z = get(zones).find((x) => x.id === zoneDeactivateConfirm.id);
+		const currentlyActive = z?.metadata?.status !== 'inactive';
 		try {
-			await alertActions.deleteZone(zoneDeactivateConfirm.id);
+			await alertActions.toggleZoneActive(zoneDeactivateConfirm.id, !currentlyActive);
 			zoneDeactivateConfirm = null;
-			saveToast = 'Zona eliminada';
+			saveToast = currentlyActive ? 'Zona desactivada' : 'Zona activada';
 			setTimeout(() => (saveToast = ''), 2600);
 		} catch (err) {
-			console.error('No se pudo eliminar la geocerca:', err);
-			saveToast = 'No se pudo eliminar la zona';
+			console.error('No se pudo actualizar la geocerca:', err);
+			saveToast = 'No se pudo actualizar la zona';
 			setTimeout(() => (saveToast = ''), 2600);
 		}
 	}
@@ -242,7 +281,9 @@
 
 <svelte:window
 	on:keydown={(e) => {
-		if (e.key === 'Escape' && zoneDeactivateConfirm) cancelDeactivateZone();
+		if (e.key !== 'Escape') return;
+		if (zoneDeactivateConfirm) cancelDeactivateZone();
+		else if (zoneMenuOpenId) closeZoneMenu();
 	}}
 />
 
@@ -374,60 +415,54 @@
 						</button>
 					</div>
 				{:else}
-					<header
-						class="pointer-events-auto flex min-h-[3rem] shrink-0 items-center justify-center border-b px-4 pb-3 pt-[max(0.65rem,env(safe-area-inset-top))] shadow-sm backdrop-blur-xl {$theme ===
-						'light'
-							? 'border-slate-200/80 bg-white/95 text-slate-900'
-							: 'border-white/[0.08] bg-[#060b18]/95 text-white'}"
+					<!-- Escritorio: sin barra superior; controles fijos abajo (como móvil) -->
+					<div
+						class="pointer-events-none fixed inset-x-0 z-[125] flex flex-col items-center gap-2 px-4"
+						style="bottom: calc({crearZonaDockBottom} + 5.5rem);"
 					>
-						<h1
-							class="m-0 max-w-[min(100%,18rem)] truncate text-center text-[17px] font-bold tracking-tight {$theme ===
-							'light'
-								? 'text-slate-900'
-								: 'text-white'}"
-						>
-							Crear zona
-						</h1>
-					</header>
-
-					<div class="pointer-events-none flex min-h-0 flex-1 flex-col justify-end px-3 pb-2 pt-2">
-						<div class="flex flex-col items-center gap-2">
-							{#if $zoneCreateBanner === 'contiguous'}
-								<p
-									class="max-w-sm rounded-2xl border px-3 py-2 text-center text-[12px] font-semibold shadow-md backdrop-blur-md {$theme ===
-									'light'
-										? 'border-amber-400/90 bg-white/92 text-amber-950'
-										: 'border-amber-400/50 bg-amber-950/90 text-amber-50'}"
-									role="status"
-								>
-									Los hexágonos deben ser contiguos
-								</p>
-							{/if}
+						{#if $zoneCreateBanner === 'contiguous'}
 							<p
-								class="rounded-full border px-4 py-2 text-[12px] font-semibold tabular-nums shadow-md backdrop-blur-md {$theme ===
+								class="max-w-sm rounded-2xl border px-3 py-2 text-center text-[12px] font-semibold shadow-md backdrop-blur-md {$theme ===
 								'light'
-									? 'border-sky-500/50 bg-white/92 text-sky-950'
-									: 'border-sky-500/40 bg-slate-900/92 text-sky-100'}"
-								aria-live="polite"
+									? 'border-amber-400/90 bg-white/92 text-amber-950'
+									: 'border-amber-400/50 bg-amber-950/90 text-amber-50'}"
+								role="status"
 							>
-								{$selectedH3Cells.length} hexágono{$selectedH3Cells.length !== 1 ? 's' : ''} seleccionado{$selectedH3Cells.length !==
-								1
-									? 's'
-									: ''}
+								Los hexágonos deben ser contiguos
 							</p>
-						</div>
+						{/if}
+						<p
+							class="rounded-full border px-4 py-2 text-[12px] font-semibold tabular-nums shadow-md backdrop-blur-md {$theme ===
+							'light'
+								? 'border-sky-500/50 bg-white/92 text-sky-950'
+								: 'border-sky-500/40 bg-slate-900/92 text-sky-100'}"
+							aria-live="polite"
+						>
+							{$selectedH3Cells.length} hexágono{$selectedH3Cells.length !== 1 ? 's' : ''} seleccionado{$selectedH3Cells.length !==
+							1
+								? 's'
+								: ''}
+						</p>
 					</div>
 
 					<div
-						class="pointer-events-auto shrink-0 px-3 pt-1"
-						style="padding-bottom: {crearZonaDockBottom};"
+						class="pointer-events-auto fixed inset-x-0 z-[130] px-4"
+						style="bottom: {crearZonaDockBottom};"
 					>
 						<div
-							class="mx-auto flex max-w-md items-center gap-2 rounded-2xl border p-2 shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl {$theme ===
+							class="mx-auto flex max-w-lg items-center gap-2 rounded-2xl border p-2 shadow-[0_8px_32px_rgba(0,0,0,0.2)] backdrop-blur-xl {$theme ===
 							'light'
 								? 'border-slate-200/90 bg-white/95'
 								: 'border-white/[0.1] bg-[#0c1220]/95'}"
 						>
+							<p
+								class="m-0 hidden min-w-0 flex-1 truncate px-1 text-center text-[14px] font-bold sm:block {$theme ===
+								'light'
+									? 'text-slate-900'
+									: 'text-white'}"
+							>
+								Crear zona
+							</p>
 							<button
 								type="button"
 								class="shrink-0 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition active:scale-[0.98] {$theme ===
@@ -591,12 +626,11 @@
 			</header>
 		{/if}
 
-		<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+		<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
 			<div
-				class="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 {variant ===
-				'mobile'
+				class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 {variant === 'mobile'
 					? 'pb-28 pt-4'
-					: 'pb-3 pt-5'}"
+					: 'pb-4 pt-5'}"
 			>
 				{#if $zones.length === 0}
 					<div
@@ -642,49 +676,40 @@
 											<Icon icon="mdi:map-marker" class="h-6 w-6" />
 										</div>
 										<div class="min-w-0 flex-1">
-											<p class="m-0 truncate text-[15px] font-bold text-slate-900 dark:text-white">
-												{z.name}
-											</p>
+											<div class="flex items-center gap-2">
+												<p
+													class="m-0 truncate text-[15px] font-bold text-slate-900 dark:text-white"
+												>
+													{z.name}
+												</p>
+												<span
+													class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold {z
+														.metadata?.status === 'inactive'
+														? 'bg-slate-200 text-slate-500 dark:bg-white/10 dark:text-white/35'
+														: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'}"
+												>
+													{z.metadata?.status === 'inactive' ? 'Inactiva' : 'Activa'}
+												</span>
+											</div>
 											<p class="m-0 mt-0.5 truncate text-[13px] text-slate-600 dark:text-white/45">
 												{zoneSubtitle(z)}
 											</p>
 										</div>
 										<button
 											type="button"
-											class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-white/55 dark:hover:bg-white/[0.08] dark:hover:text-white"
+											class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-white/55 dark:hover:bg-white/[0.08] dark:hover:text-white {zoneMenuOpenId ===
+											z.id
+												? 'bg-slate-100 dark:bg-white/[0.08]'
+												: ''}"
 											aria-expanded={zoneMenuOpenId === z.id}
+											aria-haspopup="menu"
 											aria-label="Opciones de {z.name}"
-											on:click={() => (zoneMenuOpenId = zoneMenuOpenId === z.id ? null : z.id)}
+											on:click={(e) => toggleZoneMenu(z, e)}
 										>
 											<Icon icon="mdi:dots-horizontal" class="h-6 w-6" aria-hidden="true" />
 										</button>
 									</div>
 								</div>
-								{#if zoneMenuOpenId === z.id}
-									<div
-										class="absolute right-2 top-[calc(100%-4px)] z-[60] min-w-[10.5rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-900 shadow-xl backdrop-blur-md dark:border-white/[0.12] dark:bg-[#151c2e] dark:text-white"
-										role="menu"
-									>
-										<button
-											type="button"
-											class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-white/[0.08]"
-											role="menuitem"
-											on:click={() => openEditZone(z)}
-										>
-											<Icon icon="mdi:pencil-outline" class="h-4 w-4" aria-hidden="true" />
-											Editar
-										</button>
-										<button
-											type="button"
-											class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15"
-											role="menuitem"
-											on:click={() => requestDeactivateZone(z)}
-										>
-											<Icon icon="mdi:delete-outline" class="h-4 w-4" aria-hidden="true" />
-											Desactivar
-										</button>
-									</div>
-								{/if}
 							</li>
 						{/each}
 					</ul>
@@ -693,7 +718,7 @@
 
 			{#if variant === 'desktop'}
 				<div
-					class="shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-[#050810]"
+					class="mt-auto shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-[#050810]"
 				>
 					<button
 						type="button"
@@ -719,6 +744,45 @@
 				>
 					<Icon icon="mdi:plus" class="h-5 w-5" aria-hidden="true" />
 					Crear Zona
+				</button>
+			</div>
+		{/if}
+
+		{#if zoneMenuOpenId && zoneMenuZone && zoneMenuLayout}
+			<button
+				type="button"
+				class="fixed inset-0 z-[198] cursor-default border-0 bg-transparent p-0"
+				aria-label="Cerrar menú de zona"
+				on:click={closeZoneMenu}
+			></button>
+			<div
+				class="fixed z-[200] min-w-[10.5rem] overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-slate-900 shadow-xl backdrop-blur-md dark:border-white/[0.12] dark:bg-[#151c2e] dark:text-white"
+				style="top: {zoneMenuLayout.top}px; left: {zoneMenuLayout.left}px;"
+				role="menu"
+			>
+				<button
+					type="button"
+					class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-slate-900 hover:bg-slate-100 dark:text-white dark:hover:bg-white/[0.08]"
+					role="menuitem"
+					on:click={() => openEditZone(zoneMenuZone)}
+				>
+					<Icon icon="mdi:pencil-outline" class="h-4 w-4" aria-hidden="true" />
+					Editar
+				</button>
+				<button
+					type="button"
+					class="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15"
+					role="menuitem"
+					on:click={() => requestDeactivateZone(zoneMenuZone)}
+				>
+					<Icon
+						icon={zoneMenuZone.metadata?.status === 'inactive'
+							? 'mdi:check-circle-outline'
+							: 'mdi:pause-circle-outline'}
+						class="h-4 w-4"
+						aria-hidden="true"
+					/>
+					{zoneMenuZone.metadata?.status === 'inactive' ? 'Activar' : 'Desactivar'}
 				</button>
 			</div>
 		{/if}
@@ -800,7 +864,7 @@
 			tabindex="-1"
 		>
 			<h2 id="zone-deactivate-title" class="m-0 text-center text-lg font-bold leading-snug">
-				Desactivar Zona
+				{zoneDeactivateConfirm.isActive ? 'Desactivar zona' : 'Activar zona'}
 			</h2>
 			<p
 				id="zone-deactivate-desc"
@@ -808,8 +872,12 @@
 					? 'text-slate-800'
 					: 'text-white/85'}"
 			>
-				¿Estás seguro que deseas desactivar la zona «{zoneDeactivateConfirm.name}»? La geocerca se
-				eliminará del mapa.
+				{#if zoneDeactivateConfirm.isActive}
+					¿Desactivar la zona «{zoneDeactivateConfirm.name}»? Dejará de evaluar geocercas pero
+					podrás reactivarla.
+				{:else}
+					¿Activar la zona «{zoneDeactivateConfirm.name}»? Volverá a evaluar entradas y salidas.
+				{/if}
 			</p>
 			<div class="flex gap-3">
 				<button
@@ -830,7 +898,7 @@
 						: 'bg-white/20 text-orange-400'}"
 					on:click={confirmDeactivateZone}
 				>
-					Desactivar
+					{zoneDeactivateConfirm.isActive ? 'Desactivar' : 'Activar'}
 				</button>
 			</div>
 		</div>

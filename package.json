@@ -34,6 +34,7 @@
 		"@googlemaps/markerclusterer": "^2.6.2",
 		"@iconify/svelte": "^5.2.1",
 		"@turf/turf": "^7.3.4",
+		"chart.js": "^4.5.1",
 		"h3-js": "^4.4.0"
 	}
 }

@@ -2,7 +2,7 @@ import { writable, derived, get } from 'svelte/store';
 import { apiService } from '$lib/services/api.js';
 import { positionService } from '$lib/services/positionService.js';
 import { mapService } from '$lib/services/mapService.js';
-import { formatLastUpdate } from '$lib/utils/vehicleUtils.js';
+import { colorSlugToHex, formatLastUpdate } from '$lib/utils/vehicleUtils.js';
 
 // Estado principal de vehículos
 export const vehicles = writable([]);
@@ -58,7 +58,16 @@ function mapUnitToVehicle(unit) {
 		status: unit?.deleted_at ? 'inactive' : 'active',
 		location: unit?.description || '',
 		lastUpdate: createdAt,
-		lastUpdateFormatted: createdAt ? formatLastUpdate(createdAt) : ''
+		lastUpdateFormatted: createdAt ? formatLastUpdate(createdAt) : '',
+		color: unit?.color ?? null,
+		profile_color_hex: colorSlugToHex(unit?.color) ?? null,
+		icon_type: unit?.icon_type || unit?.iconType || null,
+		iconType: unit?.icon_type || unit?.iconType || null,
+		brand: unit?.brand ?? null,
+		model: unit?.model ?? null,
+		year: unit?.year ?? null,
+		plate: unit?.plate ?? null,
+		vin: unit?.vin ?? null
 	};
 }
 
@@ -81,10 +90,64 @@ function mergeVehicleDetail(existing, mapped) {
 	};
 }
 
-function sanitizeVehicleUpdatePayload(payload = {}) {
+function sanitizeUnitPayload(payload = {}) {
 	const out = {};
 	if (typeof payload.name === 'string') out.name = payload.name.trim();
-	if (typeof payload.description === 'string') out.description = payload.description.trim();
+	if (payload.description === null) out.description = null;
+	else if (typeof payload.description === 'string') out.description = payload.description.trim();
+	return out;
+}
+
+function sanitizeProfilePayload(payload = {}) {
+	const out = {};
+	if (payload.description === null) out.description = null;
+	else if (typeof payload.description === 'string') out.description = payload.description.trim();
+	if (payload.brand === null) out.brand = null;
+	else if (typeof payload.brand === 'string') out.brand = payload.brand.trim() || null;
+	if (payload.model === null) out.model = null;
+	else if (typeof payload.model === 'string') out.model = payload.model.trim() || null;
+	if (payload.plate === null) out.plate = null;
+	else if (typeof payload.plate === 'string') out.plate = payload.plate.trim() || null;
+	if (payload.vin === null) out.vin = null;
+	else if (typeof payload.vin === 'string') out.vin = payload.vin.trim() || null;
+	if (payload.color === null) out.color = null;
+	else if (typeof payload.color === 'string') out.color = payload.color || null;
+	if (payload.icon_type === null) out.icon_type = null;
+	else if (typeof payload.icon_type === 'string') out.icon_type = payload.icon_type || null;
+	if (payload.year === null) out.year = null;
+	else if (typeof payload.year === 'number' && !Number.isNaN(payload.year)) out.year = payload.year;
+	return out;
+}
+
+function mapProfileToVehicleFields(profile) {
+	if (!profile) return {};
+	return {
+		color: profile.color ?? null,
+		profile_color_hex: colorSlugToHex(profile.color) ?? null,
+		icon_type: profile.icon_type ?? null,
+		iconType: profile.icon_type ?? null,
+		description: profile.description ?? undefined,
+		brand: profile.brand ?? null,
+		model: profile.model ?? null,
+		year: profile.year ?? null,
+		plate: profile.vehicle?.plate ?? null,
+		vin: profile.vehicle?.vin ?? null
+	};
+}
+
+function sanitizeCreatePayload(payload = {}) {
+	const out = { ...sanitizeUnitPayload(payload) };
+	const deviceId = payload.deviceId ?? payload.device_id;
+	if (typeof deviceId === 'string' && deviceId.trim()) out.deviceId = deviceId.trim();
+
+	const profile = sanitizeProfilePayload(payload);
+	if (profile.icon_type) out.iconType = profile.icon_type;
+	if (profile.brand) out.brand = profile.brand;
+	if (profile.model) out.model = profile.model;
+	if (profile.color) out.color = profile.color;
+	if (profile.year != null) out.year = profile.year;
+	if (profile.plate) out.plate = profile.plate;
+	if (profile.vin) out.vin = profile.vin;
 	return out;
 }
 
@@ -141,7 +204,12 @@ export const vehicleActions = {
 								status: position.isOnline ? 'active' : 'inactive',
 								lastUpdate: position.lastUpdate,
 								lastUpdateFormatted: position.lastUpdateFormatted,
-								coordinates: position.coordinates
+								coordinates: position.coordinates,
+								fixStatus: position.fixStatus,
+								engineStatus: position.engineStatus,
+								satellites: position.satellites,
+								rxLvl: position.rxLvl,
+								mainBatteryVoltage: position.mainBatteryVoltage
 							};
 						}
 					}
@@ -219,7 +287,12 @@ export const vehicleActions = {
 							status: position.isOnline ? 'active' : 'inactive',
 							lastUpdate: position.lastUpdate,
 							lastUpdateFormatted: position.lastUpdateFormatted,
-							coordinates: position.coordinates
+							coordinates: position.coordinates,
+							fixStatus: position.fixStatus,
+							engineStatus: position.engineStatus,
+							satellites: position.satellites,
+							rxLvl: position.rxLvl,
+							mainBatteryVoltage: position.mainBatteryVoltage
 						};
 					}
 					return vehicle;
@@ -294,21 +367,48 @@ export const vehicleActions = {
 	},
 
 	async createVehicle(payload) {
-		const created = await apiService.createVehicle(sanitizeVehicleUpdatePayload(payload));
+		const created = await apiService.createVehicle(sanitizeCreatePayload(payload));
 		const mapped = mapUnitToVehicle(created);
+		if (payload.deviceId || payload.device_id) {
+			mapped.deviceId = payload.deviceId || payload.device_id;
+		}
 		vehicles.update((list) => [mapped, ...list.filter((v) => v.id !== mapped.id)]);
 		return mapped;
 	},
 
+	async updateUnitDevice(unitId, deviceId) {
+		if (!unitId) return null;
+		if (deviceId) {
+			await apiService.assignUnitDevice(unitId, deviceId);
+		} else {
+			await apiService.unassignUnitDevice(unitId);
+		}
+		return this.fetchVehicle(unitId);
+	},
+
 	async updateVehicle(vehicleId, payload) {
 		if (!vehicleId) return null;
-		const updatedUnit = await apiService.updateVehicle(
-			vehicleId,
-			sanitizeVehicleUpdatePayload(payload)
+
+		const existing = this.getVehicleById(vehicleId);
+		const unitPayload = sanitizeUnitPayload(payload);
+		const profilePayload = sanitizeProfilePayload(payload);
+
+		let merged = existing ? { ...existing } : { id: String(vehicleId) };
+
+		if (Object.keys(unitPayload).length > 0) {
+			const updatedUnit = await apiService.updateVehicle(vehicleId, unitPayload);
+			merged = mergeVehicleDetail(merged, mapUnitToVehicle(updatedUnit));
+		}
+
+		if (Object.keys(profilePayload).length > 0) {
+			const profile = await apiService.updateUnitProfile(vehicleId, profilePayload);
+			merged = { ...merged, ...mapProfileToVehicleFields(profile) };
+		}
+
+		vehicles.update((list) =>
+			list.map((v) => (String(v.id) === String(vehicleId) ? mergeVehicleDetail(v, merged) : v))
 		);
-		const mapped = mapUnitToVehicle(updatedUnit);
-		vehicles.update((list) => list.map((v) => (v.id === vehicleId ? mapped : v)));
-		return mapped;
+		return merged;
 	},
 
 	async deleteVehicle(vehicleId) {
