@@ -166,10 +166,18 @@
 			</div>
 			<div class="grid gap-2 {compact ? 'sm:grid-cols-2' : ''}">
 				<div>
-					<label for="{uid}-name" class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
+					<label
+						for="{uid}-name"
+						class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
 						>Nombre *</label
 					>
-					<input id="{uid}-name" type="text" class={inputClass} maxlength="100" bind:value={editName} />
+					<input
+						id="{uid}-name"
+						type="text"
+						class={inputClass}
+						maxlength="100"
+						bind:value={editName}
+					/>
 				</div>
 				<div>
 					<label
@@ -192,20 +200,25 @@
 			<p class={sectionClass}>Vehículo</p>
 			<div class="grid gap-2 sm:grid-cols-2">
 				<div>
-					<label for="{uid}-brand" class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
+					<label
+						for="{uid}-brand"
+						class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
 						>Marca</label
 					>
 					<input id="{uid}-brand" type="text" class={inputClass} bind:value={editBrand} />
 				</div>
 				<div>
-					<label for="{uid}-model" class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
+					<label
+						for="{uid}-model"
+						class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
 						>Modelo</label
 					>
 					<input id="{uid}-model" type="text" class={inputClass} bind:value={editModel} />
 				</div>
 				<div class="sm:col-span-2">
-					<label for="{uid}-year" class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
-						>Año</label
+					<label
+						for="{uid}-year"
+						class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55">Año</label
 					>
 					<input
 						id="{uid}-year"
@@ -223,14 +236,17 @@
 			<p class={sectionClass}>Identificación</p>
 			<div class="grid gap-2 sm:grid-cols-2">
 				<div>
-					<label for="{uid}-plate" class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
+					<label
+						for="{uid}-plate"
+						class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
 						>Placa</label
 					>
 					<input id="{uid}-plate" type="text" class={inputClass} bind:value={editPlate} />
 				</div>
 				<div>
-					<label for="{uid}-vin" class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55"
-						>VIN</label
+					<label
+						for="{uid}-vin"
+						class="mb-1 block text-[11px] font-medium text-slate-600 dark:text-white/55">VIN</label
 					>
 					<input
 						id="{uid}-vin"
@@ -275,8 +291,7 @@
 								type="button"
 								class="flex-1 rounded-lg bg-red-600 py-1.5 text-[11px] font-bold text-white disabled:opacity-50"
 								on:click={confirmUnassignDevice}
-								disabled={unassigning}
-								>{unassigning ? '…' : 'Desasignar'}</button
+								disabled={unassigning}>{unassigning ? '…' : 'Desasignar'}</button
 							>
 						</div>
 					{/if}
@@ -292,7 +307,9 @@
 			{/if}
 		</div>
 
-		<div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 dark:border-white/[0.06]">
+		<div
+			class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3 dark:border-white/[0.06]"
+		>
 			{#if !showDeleteConfirm}
 				<button
 					type="button"

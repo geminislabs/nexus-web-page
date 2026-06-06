@@ -77,7 +77,11 @@
 			? 'text-slate-500 dark:text-white/45'
 			: ''}"
 	>
-		<Icon icon="mdi:alert-circle-outline" width={28} class={isDrawer ? 'opacity-40' : 'text-white/25'} />
+		<Icon
+			icon="mdi:alert-circle-outline"
+			width={28}
+			class={isDrawer ? 'opacity-40' : 'text-white/25'}
+		/>
 		<p class="m-0 text-xs {isDrawer ? '' : 'text-white/45'}">{error}</p>
 	</div>
 {:else}
@@ -118,11 +122,11 @@
 		<div class="space-y-1.5">
 			<div class="flex items-start gap-2">
 				<span class={fieldLabelClass}>Nombre</span>
-				<span class="{fieldValueClass}">{val(displayName) ?? '—'}</span>
+				<span class={fieldValueClass}>{val(displayName) ?? '—'}</span>
 			</div>
 			<div class="flex items-start gap-2">
 				<span class={fieldLabelClass}>Descripción</span>
-				<span class="{val(description) ? fieldValueClass : fieldEmptyClass}"
+				<span class={val(description) ? fieldValueClass : fieldEmptyClass}
 					>{val(description) ?? '—'}</span
 				>
 			</div>

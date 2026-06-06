@@ -323,8 +323,8 @@
 	<div
 		class="flex min-h-0 min-w-0 flex-1 flex-col overscroll-contain bg-white dark:bg-transparent
 			{displaySection === 'zonas' || displaySection === 'unidades'
-				? 'overflow-hidden'
-				: 'overflow-y-auto'}"
+			? 'overflow-hidden'
+			: 'overflow-y-auto'}"
 	>
 		<!-- ═══ APARIENCIA ═══ -->
 		{#if displaySection === 'apariencia'}
@@ -488,254 +488,152 @@
 						{/if}
 					</div>
 				{:else}
-				<div
-					class="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3 space-y-2.5 dark:border-white/[0.06] dark:bg-[#080d1a]"
-				>
-					<div class="flex items-center gap-2">
-						<Icon
-							icon="mdi:car-side"
-							width={14}
-							class="shrink-0 text-slate-500 dark:text-white/35"
-							aria-hidden="true"
-						/>
-						<span class="text-[14px] font-bold text-slate-900 dark:text-white">Unidades</span>
-						<div class="flex items-center gap-1 ml-auto">
-							<div
-								class="flex overflow-hidden rounded-lg border border-slate-200 dark:border-white/[0.08]"
-							>
+					<div
+						class="shrink-0 border-b border-slate-200 bg-slate-50 px-4 py-3 space-y-2.5 dark:border-white/[0.06] dark:bg-[#080d1a]"
+					>
+						<div class="flex items-center gap-2">
+							<Icon
+								icon="mdi:car-side"
+								width={14}
+								class="shrink-0 text-slate-500 dark:text-white/35"
+								aria-hidden="true"
+							/>
+							<span class="text-[14px] font-bold text-slate-900 dark:text-white">Unidades</span>
+							<div class="flex items-center gap-1 ml-auto">
+								<div
+									class="flex overflow-hidden rounded-lg border border-slate-200 dark:border-white/[0.08]"
+								>
+									<button
+										type="button"
+										class="flex h-7 w-7 items-center justify-center transition-colors {vehicleView ===
+										'grid'
+											? 'bg-blue-100 text-blue-700 dark:bg-blue-600/20 dark:text-blue-300'
+											: 'text-slate-500 hover:text-slate-800 dark:text-white/35 dark:hover:text-white/60'}"
+										on:click={() => (vehicleView = 'grid')}
+										title="Vista tarjeta"
+										aria-pressed={vehicleView === 'grid'}
+									>
+										<Icon icon="mdi:view-grid-outline" width={15} aria-hidden="true" />
+									</button>
+									<button
+										type="button"
+										class="flex h-7 w-7 items-center justify-center transition-colors {vehicleView ===
+										'list'
+											? 'bg-blue-100 text-blue-700 dark:bg-blue-600/20 dark:text-blue-300'
+											: 'text-slate-500 hover:text-slate-800 dark:text-white/35 dark:hover:text-white/60'}"
+										on:click={() => (vehicleView = 'list')}
+										title="Vista lista"
+										aria-pressed={vehicleView === 'list'}
+									>
+										<Icon icon="mdi:view-list-outline" width={15} aria-hidden="true" />
+									</button>
+								</div>
 								<button
 									type="button"
-									class="flex h-7 w-7 items-center justify-center transition-colors {vehicleView ===
-									'grid'
-										? 'bg-blue-100 text-blue-700 dark:bg-blue-600/20 dark:text-blue-300'
-										: 'text-slate-500 hover:text-slate-800 dark:text-white/35 dark:hover:text-white/60'}"
-									on:click={() => (vehicleView = 'grid')}
-									title="Vista tarjeta"
-									aria-pressed={vehicleView === 'grid'}
+									class="flex h-7 items-center gap-1 rounded-lg border border-blue-500/25 bg-blue-50 px-2 text-[11px] font-semibold text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-40 dark:bg-blue-600/12 dark:text-blue-300 dark:hover:bg-blue-600/20"
+									on:click={refreshPositions}
+									disabled={$loadingPositions}
 								>
-									<Icon icon="mdi:view-grid-outline" width={15} aria-hidden="true" />
-								</button>
-								<button
-									type="button"
-									class="flex h-7 w-7 items-center justify-center transition-colors {vehicleView ===
-									'list'
-										? 'bg-blue-100 text-blue-700 dark:bg-blue-600/20 dark:text-blue-300'
-										: 'text-slate-500 hover:text-slate-800 dark:text-white/35 dark:hover:text-white/60'}"
-									on:click={() => (vehicleView = 'list')}
-									title="Vista lista"
-									aria-pressed={vehicleView === 'list'}
-								>
-									<Icon icon="mdi:view-list-outline" width={15} aria-hidden="true" />
+									<Icon
+										icon="mdi:refresh"
+										width={13}
+										class={$loadingPositions ? 'animate-spin' : ''}
+										aria-hidden="true"
+									/>
+									{$loadingPositions ? 'Actualizando…' : 'Actualizar'}
 								</button>
 							</div>
-							<button
-								type="button"
-								class="flex h-7 items-center gap-1 rounded-lg border border-blue-500/25 bg-blue-50 px-2 text-[11px] font-semibold text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-40 dark:bg-blue-600/12 dark:text-blue-300 dark:hover:bg-blue-600/20"
-								on:click={refreshPositions}
-								disabled={$loadingPositions}
-							>
+						</div>
+						<div class="flex gap-2">
+							<div class="relative flex-1">
 								<Icon
-									icon="mdi:refresh"
+									icon="mdi:magnify"
 									width={13}
-									class={$loadingPositions ? 'animate-spin' : ''}
+									class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/28"
 									aria-hidden="true"
 								/>
-								{$loadingPositions ? 'Actualizando…' : 'Actualizar'}
-							</button>
+								<input
+									type="search"
+									placeholder="Buscar unidad, conductor…"
+									class="h-7 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3 text-[11px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500/50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white dark:placeholder:text-white/22"
+									bind:value={filterSearch}
+								/>
+							</div>
+							<select
+								bind:value={filterStatus}
+								class="h-7 cursor-pointer rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 outline-none focus:border-blue-500/50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white"
+							>
+								<option value="all">Todos</option>
+								<option value="active">Activos</option>
+								<option value="maintenance">Mantenimiento</option>
+								<option value="inactive">Inactivos</option>
+							</select>
 						</div>
-					</div>
-					<div class="flex gap-2">
-						<div class="relative flex-1">
-							<Icon
-								icon="mdi:magnify"
-								width={13}
-								class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/28"
-								aria-hidden="true"
-							/>
-							<input
-								type="search"
-								placeholder="Buscar unidad, conductor…"
-								class="h-7 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-3 text-[11px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500/50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white dark:placeholder:text-white/22"
-								bind:value={filterSearch}
-							/>
-						</div>
-						<select
-							bind:value={filterStatus}
-							class="h-7 cursor-pointer rounded-lg border border-slate-200 bg-white px-2 text-[11px] text-slate-900 outline-none focus:border-blue-500/50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white"
-						>
-							<option value="all">Todos</option>
-							<option value="active">Activos</option>
-							<option value="maintenance">Mantenimiento</option>
-							<option value="inactive">Inactivos</option>
-						</select>
-					</div>
-					<div class="flex items-center gap-2 flex-wrap">
-						<span
-							class="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300"
-						>
-							<span class="h-1 w-1 rounded-full bg-emerald-500"></span>{$activeVehicles.length} activos
-						</span>
-						<span
-							class="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
-						>
-							<span class="h-1 w-1 rounded-full bg-amber-500"></span>{$vehicles.filter(
-								(v) => v.status === 'maintenance'
-							).length} mantenimiento
-						</span>
-						<span
-							class="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800 dark:bg-red-500/10 dark:text-red-300"
-						>
-							<span class="h-1 w-1 rounded-full bg-red-500"></span>{$vehicles.filter(
-								(v) => v.status === 'inactive'
-							).length} inactivos
-						</span>
-						<span class="ml-auto text-[10px] text-slate-500 dark:text-white/22"
-							>{filteredVehicles.length} resultados</span
-						>
-					</div>
-				</div>
-				<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
-					{#if $loadingVehicles}
-						<div
-							class="flex items-center justify-center gap-3 py-12 text-slate-500 dark:text-white/38"
-						>
+						<div class="flex items-center gap-2 flex-wrap">
 							<span
-								class="h-5 w-5 animate-spin rounded-full border-2 border-blue-600/20 border-t-blue-500"
-							></span>
-							<span class="text-[12px]">Cargando unidades…</span>
+								class="flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300"
+							>
+								<span class="h-1 w-1 rounded-full bg-emerald-500"></span>{$activeVehicles.length} activos
+							</span>
+							<span
+								class="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+							>
+								<span class="h-1 w-1 rounded-full bg-amber-500"></span>{$vehicles.filter(
+									(v) => v.status === 'maintenance'
+								).length} mantenimiento
+							</span>
+							<span
+								class="flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800 dark:bg-red-500/10 dark:text-red-300"
+							>
+								<span class="h-1 w-1 rounded-full bg-red-500"></span>{$vehicles.filter(
+									(v) => v.status === 'inactive'
+								).length} inactivos
+							</span>
+							<span class="ml-auto text-[10px] text-slate-500 dark:text-white/22"
+								>{filteredVehicles.length} resultados</span
+							>
 						</div>
-					{:else if pagedVehicles.length === 0}
-						<div class="flex flex-col items-center gap-2 py-12 text-slate-500 dark:text-white/28">
-							<Icon
-								icon="mdi:car-search-outline"
-								width={32}
-								class="opacity-20"
-								aria-hidden="true"
-							/>
-							<span class="text-[12px]">Sin resultados</span>
-						</div>
-					{:else if vehicleView === 'grid'}
-						<ul
-							class="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2.5 list-none p-0 m-0"
-						>
-							{#each pagedVehicles as v}
-								<li
-									class="flex flex-col gap-2 rounded-xl border p-3 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.05]
+					</div>
+					<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+						{#if $loadingVehicles}
+							<div
+								class="flex items-center justify-center gap-3 py-12 text-slate-500 dark:text-white/38"
+							>
+								<span
+									class="h-5 w-5 animate-spin rounded-full border-2 border-blue-600/20 border-t-blue-500"
+								></span>
+								<span class="text-[12px]">Cargando unidades…</span>
+							</div>
+						{:else if pagedVehicles.length === 0}
+							<div class="flex flex-col items-center gap-2 py-12 text-slate-500 dark:text-white/28">
+								<Icon
+									icon="mdi:car-search-outline"
+									width={32}
+									class="opacity-20"
+									aria-hidden="true"
+								/>
+								<span class="text-[12px]">Sin resultados</span>
+							</div>
+						{:else if vehicleView === 'grid'}
+							<ul
+								class="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2.5 list-none p-0 m-0"
+							>
+								{#each pagedVehicles as v}
+									<li
+										class="flex flex-col gap-2 rounded-xl border p-3 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.05]
 									{v.status === 'active'
-										? 'border-emerald-300 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/[0.03]'
-										: v.status === 'maintenance'
-											? 'border-amber-300 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/[0.03]'
-											: 'border-slate-200 bg-white dark:border-white/[0.07] dark:bg-white/[0.02]'}"
-								>
-									<div class="flex items-center gap-1.5">
-										<span
-											class="h-2 w-2 shrink-0 rounded-full {statusColor(v.status)}"
-											aria-hidden="true"
-										></span>
-										<span
-											class="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-900 dark:text-white"
-											>{v.name}</span
-										>
-										<span
-											class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold {statusPill(
-												v.status
-											)}">{getStatusText(v.status)}</span
-										>
-									</div>
-									<div class="flex flex-col gap-0.5 text-[11px] text-slate-600 dark:text-white/40">
-										<span class="flex items-center gap-1"
-											><Icon icon="mdi:account" width={11} aria-hidden="true" />{v.driver ||
-												'Sin conductor'}</span
-										>
-										<span class="flex items-center gap-1 truncate"
-											><Icon icon="mdi:map-marker" width={11} aria-hidden="true" />{v.location ||
-												'—'}</span
-										>
-									</div>
-									{#if v.speed !== undefined}
-										<div
-											class="flex gap-3 border-t border-slate-100 pt-1.5 dark:border-white/[0.05]"
-										>
-											<div class="flex items-baseline gap-0.5">
-												<span class="text-[14px] font-bold {speedColor(v.speed)}">{v.speed}</span>
-												<span class="text-[9px] text-slate-500 dark:text-white/25">km/h</span>
-											</div>
-											<div class="flex items-baseline gap-0.5">
-												<span class="text-[14px] font-bold {battColor(v.battery || 0)}"
-													>{v.battery || 0}</span
-												>
-												<span class="text-[9px] text-slate-500 dark:text-white/25">%bat</span>
-											</div>
-										</div>
-									{/if}
-									{#if v.lastUpdateFormatted}<div
-											class="text-[9px] text-slate-500 dark:text-white/22"
-										>
-											{v.lastUpdateFormatted}
-										</div>{/if}
-									<div
-										class="mt-1 flex flex-wrap gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/[0.05]"
+											? 'border-emerald-300 bg-emerald-50 dark:border-emerald-500/20 dark:bg-emerald-500/[0.03]'
+											: v.status === 'maintenance'
+												? 'border-amber-300 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/[0.03]'
+												: 'border-slate-200 bg-white dark:border-white/[0.07] dark:bg-white/[0.02]'}"
 									>
-										<button
-											type="button"
-											class="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
-											on:click={() => fetchVehicleDetail(v.id)}
-											disabled={actionLoading}
-										>
-											<Icon
-												icon="mdi:database-search-outline"
-												width={11}
-												aria-hidden="true"
-											/>Obtener
-										</button>
-										<button
-											type="button"
-											class="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
-											on:click={() => openEditVehicle(v)}
-											disabled={actionLoading}
-										>
-											<Icon icon="mdi:pencil-outline" width={11} aria-hidden="true" />Editar
-										</button>
-										<button
-											type="button"
-											class="flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
-											on:click={() => requestDeleteVehicle(v)}
-											disabled={actionLoading}
-										>
-											<Icon icon="mdi:trash-can-outline" width={11} aria-hidden="true" />Eliminar
-										</button>
-									</div>
-									{#if v.latitude && v.longitude}
-										<button
-											type="button"
-											class="flex w-full items-center justify-center gap-1 rounded-lg border border-blue-200 bg-blue-50 py-1 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-600/10 dark:text-blue-300 dark:hover:bg-blue-600/18"
-											on:click={() => centerOnVehicle(v)}
-										>
-											<Icon icon="mdi:crosshairs-gps" width={11} aria-hidden="true" />Localizar
-										</button>
-									{/if}
-								</li>
-							{/each}
-						</ul>
-					{:else}
-						<ul class="flex flex-col gap-1 list-none p-0 m-0">
-							{#each pagedVehicles as v}
-								<li
-									class="flex items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.05]
-									{v.status === 'active'
-										? 'border-emerald-300 dark:border-emerald-500/18'
-										: v.status === 'maintenance'
-											? 'border-amber-300 dark:border-amber-500/18'
-											: 'border-slate-200 dark:border-white/[0.06]'}"
-								>
-									<span
-										class="h-2 w-2 shrink-0 rounded-full {statusColor(v.status)}"
-										aria-hidden="true"
-									></span>
-									<div class="min-w-0 flex-1">
-										<div class="flex items-center gap-2">
+										<div class="flex items-center gap-1.5">
 											<span
-												class="min-w-0 flex-1 truncate text-[12px] font-semibold text-slate-900 dark:text-white"
+												class="h-2 w-2 shrink-0 rounded-full {statusColor(v.status)}"
+												aria-hidden="true"
+											></span>
+											<span
+												class="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-900 dark:text-white"
 												>{v.name}</span
 											>
 											<span
@@ -744,111 +642,215 @@
 												)}">{getStatusText(v.status)}</span
 											>
 										</div>
-										<div class="mt-0.5 flex gap-2 text-[10px] text-slate-600 dark:text-white/38">
-											<span class="flex items-center gap-0.5"
-												><Icon icon="mdi:account" width={10} aria-hidden="true" />{v.driver ||
+										<div
+											class="flex flex-col gap-0.5 text-[11px] text-slate-600 dark:text-white/40"
+										>
+											<span class="flex items-center gap-1"
+												><Icon icon="mdi:account" width={11} aria-hidden="true" />{v.driver ||
+													'Sin conductor'}</span
+											>
+											<span class="flex items-center gap-1 truncate"
+												><Icon icon="mdi:map-marker" width={11} aria-hidden="true" />{v.location ||
 													'—'}</span
 											>
-											{#if v.speed !== undefined}
-												<span class={speedColor(v.speed)}>{v.speed} km/h</span>
-												<span class={battColor(v.battery || 0)}>{v.battery || 0}%</span>
-											{/if}
 										</div>
-									</div>
-									{#if v.latitude && v.longitude}
-										<button
-											type="button"
-											class="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-600/10 dark:text-blue-300 dark:hover:bg-blue-600/20"
-											on:click={() => centerOnVehicle(v)}
+										{#if v.speed !== undefined}
+											<div
+												class="flex gap-3 border-t border-slate-100 pt-1.5 dark:border-white/[0.05]"
+											>
+												<div class="flex items-baseline gap-0.5">
+													<span class="text-[14px] font-bold {speedColor(v.speed)}">{v.speed}</span>
+													<span class="text-[9px] text-slate-500 dark:text-white/25">km/h</span>
+												</div>
+												<div class="flex items-baseline gap-0.5">
+													<span class="text-[14px] font-bold {battColor(v.battery || 0)}"
+														>{v.battery || 0}</span
+													>
+													<span class="text-[9px] text-slate-500 dark:text-white/25">%bat</span>
+												</div>
+											</div>
+										{/if}
+										{#if v.lastUpdateFormatted}<div
+												class="text-[9px] text-slate-500 dark:text-white/22"
+											>
+												{v.lastUpdateFormatted}
+											</div>{/if}
+										<div
+											class="mt-1 flex flex-wrap gap-1.5 border-t border-slate-100 pt-1.5 dark:border-white/[0.05]"
 										>
-											<Icon icon="mdi:crosshairs-gps" width={13} aria-hidden="true" />
-										</button>
-									{/if}
-									<div class="ml-1 flex shrink-0 items-center gap-1">
-										<button
-											type="button"
-											class="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
-											on:click={() => fetchVehicleDetail(v.id)}
-											title="Obtener detalle"
-											disabled={actionLoading}
-										>
-											<Icon icon="mdi:database-search-outline" width={13} aria-hidden="true" />
-										</button>
-										<button
-											type="button"
-											class="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
-											on:click={() => openEditVehicle(v)}
-											title="Editar"
-											disabled={actionLoading}
-										>
-											<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />
-										</button>
-										<button
-											type="button"
-											class="flex h-7 w-7 items-center justify-center rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
-											on:click={() => requestDeleteVehicle(v)}
-											title="Eliminar"
-											disabled={actionLoading}
-										>
-											<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
-										</button>
-									</div>
-								</li>
-							{/each}
-						</ul>
-					{/if}
-				</div>
-
-				{#if totalPages > 1}
-					<div
-						class="flex shrink-0 items-center justify-between border-t border-slate-200 px-4 py-2.5 dark:border-white/[0.06]"
-					>
-						<button
-							type="button"
-							class="flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-30 dark:border-white/[0.09] dark:bg-white/[0.04] dark:text-white/55 dark:hover:bg-white/[0.08]"
-							on:click={() => (vehiclePage = Math.max(1, vehiclePage - 1))}
-							disabled={vehiclePage === 1}
-						>
-							<Icon icon="mdi:chevron-left" width={13} aria-hidden="true" />Anterior
-						</button>
-						<span class="text-[11px] text-slate-500 dark:text-white/35"
-							>Pág. <strong class="text-slate-800 dark:text-white/65">{vehiclePage}</strong> /
-							<strong class="text-slate-800 dark:text-white/65">{totalPages}</strong></span
-						>
-						<button
-							type="button"
-							class="flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-30 dark:border-white/[0.09] dark:bg-white/[0.04] dark:text-white/55 dark:hover:bg-white/[0.08]"
-							on:click={() => (vehiclePage = Math.min(totalPages, vehiclePage + 1))}
-							disabled={vehiclePage === totalPages}
-						>
-							Siguiente<Icon icon="mdi:chevron-right" width={13} aria-hidden="true" />
-						</button>
+											<button
+												type="button"
+												class="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
+												on:click={() => fetchVehicleDetail(v.id)}
+												disabled={actionLoading}
+											>
+												<Icon
+													icon="mdi:database-search-outline"
+													width={11}
+													aria-hidden="true"
+												/>Obtener
+											</button>
+											<button
+												type="button"
+												class="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+												on:click={() => openEditVehicle(v)}
+												disabled={actionLoading}
+											>
+												<Icon icon="mdi:pencil-outline" width={11} aria-hidden="true" />Editar
+											</button>
+											<button
+												type="button"
+												class="flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
+												on:click={() => requestDeleteVehicle(v)}
+												disabled={actionLoading}
+											>
+												<Icon icon="mdi:trash-can-outline" width={11} aria-hidden="true" />Eliminar
+											</button>
+										</div>
+										{#if v.latitude && v.longitude}
+											<button
+												type="button"
+												class="flex w-full items-center justify-center gap-1 rounded-lg border border-blue-200 bg-blue-50 py-1 text-[10px] font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-600/10 dark:text-blue-300 dark:hover:bg-blue-600/18"
+												on:click={() => centerOnVehicle(v)}
+											>
+												<Icon icon="mdi:crosshairs-gps" width={11} aria-hidden="true" />Localizar
+											</button>
+										{/if}
+									</li>
+								{/each}
+							</ul>
+						{:else}
+							<ul class="flex flex-col gap-1 list-none p-0 m-0">
+								{#each pagedVehicles as v}
+									<li
+										class="flex items-center gap-2.5 rounded-xl border px-3 py-2 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.05]
+									{v.status === 'active'
+											? 'border-emerald-300 dark:border-emerald-500/18'
+											: v.status === 'maintenance'
+												? 'border-amber-300 dark:border-amber-500/18'
+												: 'border-slate-200 dark:border-white/[0.06]'}"
+									>
+										<span
+											class="h-2 w-2 shrink-0 rounded-full {statusColor(v.status)}"
+											aria-hidden="true"
+										></span>
+										<div class="min-w-0 flex-1">
+											<div class="flex items-center gap-2">
+												<span
+													class="min-w-0 flex-1 truncate text-[12px] font-semibold text-slate-900 dark:text-white"
+													>{v.name}</span
+												>
+												<span
+													class="shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold {statusPill(
+														v.status
+													)}">{getStatusText(v.status)}</span
+												>
+											</div>
+											<div class="mt-0.5 flex gap-2 text-[10px] text-slate-600 dark:text-white/38">
+												<span class="flex items-center gap-0.5"
+													><Icon icon="mdi:account" width={10} aria-hidden="true" />{v.driver ||
+														'—'}</span
+												>
+												{#if v.speed !== undefined}
+													<span class={speedColor(v.speed)}>{v.speed} km/h</span>
+													<span class={battColor(v.battery || 0)}>{v.battery || 0}%</span>
+												{/if}
+											</div>
+										</div>
+										{#if v.latitude && v.longitude}
+											<button
+												type="button"
+												class="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-600/10 dark:text-blue-300 dark:hover:bg-blue-600/20"
+												on:click={() => centerOnVehicle(v)}
+											>
+												<Icon icon="mdi:crosshairs-gps" width={13} aria-hidden="true" />
+											</button>
+										{/if}
+										<div class="ml-1 flex shrink-0 items-center gap-1">
+											<button
+												type="button"
+												class="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
+												on:click={() => fetchVehicleDetail(v.id)}
+												title="Obtener detalle"
+												disabled={actionLoading}
+											>
+												<Icon icon="mdi:database-search-outline" width={13} aria-hidden="true" />
+											</button>
+											<button
+												type="button"
+												class="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+												on:click={() => openEditVehicle(v)}
+												title="Editar"
+												disabled={actionLoading}
+											>
+												<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />
+											</button>
+											<button
+												type="button"
+												class="flex h-7 w-7 items-center justify-center rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
+												on:click={() => requestDeleteVehicle(v)}
+												title="Eliminar"
+												disabled={actionLoading}
+											>
+												<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
+											</button>
+										</div>
+									</li>
+								{/each}
+							</ul>
+						{/if}
 					</div>
-				{/if}
 
-				{#if vehicleToDelete}
-					<div
-						class="shrink-0 border-t border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/25 dark:bg-red-600/10"
-					>
-						<p class="m-0 text-[11px] text-red-800 dark:text-red-300">
-							¿Eliminar unidad <strong>{vehicleToDelete.name}</strong>? (soft delete en API)
-						</p>
-						<div class="mt-2 flex justify-end gap-2">
+					{#if totalPages > 1}
+						<div
+							class="flex shrink-0 items-center justify-between border-t border-slate-200 px-4 py-2.5 dark:border-white/[0.06]"
+						>
 							<button
 								type="button"
-								class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
-								on:click={cancelDeleteVehicle}
-								disabled={actionLoading}>Cancelar</button
+								class="flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-30 dark:border-white/[0.09] dark:bg-white/[0.04] dark:text-white/55 dark:hover:bg-white/[0.08]"
+								on:click={() => (vehiclePage = Math.max(1, vehiclePage - 1))}
+								disabled={vehiclePage === 1}
+							>
+								<Icon icon="mdi:chevron-left" width={13} aria-hidden="true" />Anterior
+							</button>
+							<span class="text-[11px] text-slate-500 dark:text-white/35"
+								>Pág. <strong class="text-slate-800 dark:text-white/65">{vehiclePage}</strong> /
+								<strong class="text-slate-800 dark:text-white/65">{totalPages}</strong></span
 							>
 							<button
 								type="button"
-								class="h-8 rounded-lg border border-red-500/25 bg-red-600 px-3 text-[11px] font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-								on:click={confirmDeleteVehicle}
-								disabled={actionLoading}>Eliminar</button
+								class="flex h-7 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-30 dark:border-white/[0.09] dark:bg-white/[0.04] dark:text-white/55 dark:hover:bg-white/[0.08]"
+								on:click={() => (vehiclePage = Math.min(totalPages, vehiclePage + 1))}
+								disabled={vehiclePage === totalPages}
 							>
+								Siguiente<Icon icon="mdi:chevron-right" width={13} aria-hidden="true" />
+							</button>
 						</div>
-					</div>
-				{/if}
+					{/if}
+
+					{#if vehicleToDelete}
+						<div
+							class="shrink-0 border-t border-red-200 bg-red-50 px-4 py-3 dark:border-red-500/25 dark:bg-red-600/10"
+						>
+							<p class="m-0 text-[11px] text-red-800 dark:text-red-300">
+								¿Eliminar unidad <strong>{vehicleToDelete.name}</strong>? (soft delete en API)
+							</p>
+							<div class="mt-2 flex justify-end gap-2">
+								<button
+									type="button"
+									class="h-8 rounded-lg border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
+									on:click={cancelDeleteVehicle}
+									disabled={actionLoading}>Cancelar</button
+								>
+								<button
+									type="button"
+									class="h-8 rounded-lg border border-red-500/25 bg-red-600 px-3 text-[11px] font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+									on:click={confirmDeleteVehicle}
+									disabled={actionLoading}>Eliminar</button
+								>
+							</div>
+						</div>
+					{/if}
 				{/if}
 			</div>
 
