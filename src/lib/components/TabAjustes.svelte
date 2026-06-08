@@ -747,9 +747,7 @@
 							class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.03]"
 						>
 							<p class="m-0 text-[12px] text-slate-500 dark:text-white/40">Device ID</p>
-							<p
-								class="m-0 mt-0.5 font-mono text-[14px] font-semibold text-slate-800 dark:text-white"
-							>
+							<p class="m-0 mt-0.5 font-mono text-[14px] font-semibold text-slate-800 dark:text-white">
 								{editExistingDeviceId}
 							</p>
 							{#if !showUnassignConfirm}

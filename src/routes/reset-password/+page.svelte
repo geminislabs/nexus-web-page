@@ -168,9 +168,7 @@
 				>Reenviar código</a
 			>
 			·
-			<a
-				href="/login"
-				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+			<a href="/login" class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
 				>Iniciar sesión</a
 			>
 		</p>

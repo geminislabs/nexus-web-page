@@ -9,9 +9,7 @@
 	$: deviceBrand = unit?.deviceBrand || unit?.device_brand || 'Suntech';
 </script>
 
-<div
-	class="pointer-events-auto w-full rounded-t-2xl bg-[#0c1829] shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
->
+<div class="pointer-events-auto w-full rounded-t-2xl bg-[#0c1829] shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
 	<div class="flex justify-center py-2">
 		<div class="h-1 w-9 rounded-full bg-white/30"></div>
 	</div>
@@ -64,7 +62,9 @@
 					disabled
 					title="Próximamente"
 				>
-					<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
+					<span
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20"
+					>
 						<Icon icon="mdi:power" width={18} class="text-white" aria-hidden="true" />
 					</span>
 					<span class="text-[13px] font-bold leading-tight text-white">Apagar<br />Motor</span>
@@ -75,7 +75,9 @@
 					disabled
 					title="Próximamente"
 				>
-					<span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
+					<span
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20"
+					>
 						<Icon icon="mdi:key-variant" width={18} class="text-white" aria-hidden="true" />
 					</span>
 					<span class="text-[13px] font-bold leading-tight text-white">Liberar<br />Motor</span>

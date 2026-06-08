@@ -88,9 +88,7 @@
 		</form>
 
 		<p class="mt-5 text-center text-[0.8125rem] text-slate-600 dark:text-white/40">
-			<a
-				href="/login"
-				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+			<a href="/login" class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
 				>Volver al inicio de sesión</a
 			>
 		</p>
