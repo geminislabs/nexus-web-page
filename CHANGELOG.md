@@ -9,7 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Engineering foundation: `AGENTS.md`, `CONTRIBUTING.md`, `SECURITY.md`, `.editorconfig`, `.nvmrc`
+- Dev container (`.devcontainer/`) with post-create setup from `.env.example`
+- Vitest unit tests for `passwordValidation`, `eventUtils`, and `unitTrackingStatus` utils
+- Playwright smoke e2e (`e2e/smoke.spec.js`) — onboarding redirect and sign-in UI
+- ADRs (`docs/adr/0001`–`0003`) and `docs/security/threat-model.md`
+- GitHub issue templates (bug, feature, security contact link)
+- CI job `e2e` (informational, `continue-on-error: true`)
+- Engineering foundation (PR-1): `AGENTS.md`, `CONTRIBUTING.md`, `SECURITY.md`, `.editorconfig`, `.nvmrc`
+
 - Release discipline: `CHANGELOG.md`, `docs/RELEASE.md`, `scripts/setup.sh`, Husky hooks (commitlint, lint-staged, pre-push)
 - CI guardrails: `ci.yml` (lint, type-check, tests, build, audit) + Gitleaks and Semgrep in `security` job
 - Separate `deploy.yml` for tag-based EC2 deployments (`v*.*.*` only)
