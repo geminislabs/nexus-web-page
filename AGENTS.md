@@ -42,9 +42,11 @@ tests/                # Vitest (api, auth, servicios)
 npm run validate
 ```
 
-Equivalente: `npm run lint`, `npm run check`, `npm run test`, `npm run build`.
+Equivalente: `npm run lint`, `npm run check`, `npm run test:coverage`, `npm run build`.
 
 Opcional: `npm run test:e2e` (requiere `npx playwright install chromium`).
+
+Escaneos de seguridad locales: `npm run scan:secrets`, `npm run scan:osv`.
 
 ## Módulos sensibles
 

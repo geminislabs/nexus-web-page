@@ -1,0 +1,111 @@
+# Dependabot — automated dependency updates
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# PRs target `develop`. CI (quality, security, e2e) must pass before merge.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/Mexico_City
+    target-branch: develop
+    versioning-strategy: increase
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - npm
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+    groups:
+      svelte-ecosystem:
+        patterns:
+          - '@sveltejs/*'
+          - 'svelte'
+          - 'svelte-check'
+        update-types:
+          - minor
+          - patch
+      vite-vitest:
+        patterns:
+          - 'vite'
+          - 'vitest'
+          - '@vitest/*'
+        update-types:
+          - minor
+          - patch
+      playwright:
+        patterns:
+          - 'playwright'
+          - '@playwright/*'
+        update-types:
+          - minor
+          - patch
+      tailwind:
+        patterns:
+          - 'tailwindcss'
+          - '@tailwindcss/*'
+        update-types:
+          - minor
+          - patch
+      lint-format:
+        patterns:
+          - 'eslint*'
+          - '@eslint/*'
+          - 'prettier*'
+          - 'lint-staged'
+          - '@commitlint/*'
+        update-types:
+          - minor
+          - patch
+      production-deps:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      dev-tooling:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/Mexico_City
+    target-branch: develop
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/Mexico_City
+    target-branch: develop
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: chore
+      include: scope

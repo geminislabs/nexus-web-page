@@ -59,7 +59,7 @@ Equivalente manual:
 ```bash
 npm run lint
 npm run check
-npm run test
+npm run test:coverage
 npm run build
 ```
 
@@ -68,7 +68,7 @@ Opcional:
 ```bash
 npm run audit
 npm run scan:secrets
-npm run test:e2e    # smoke Playwright (requiere: npx playwright install chromium)
+npm run test:coverage:e2e    # smoke Playwright (requiere: npx playwright install chromium)
 ```
 
 ### 4. Pull requests

@@ -12,6 +12,10 @@ npm run prepare
 
 echo "✓ Setup complete"
 echo ""
+echo "Optional security scans:"
+echo "  npm run scan:secrets"
+echo "  npm run scan:osv"
+echo ""
 echo "Next steps:"
 echo "  npm run dev"
 echo "  npm run validate"

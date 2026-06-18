@@ -56,8 +56,16 @@ jobs:
       - name: Run type check
         run: npm run check
 
-      - name: Run unit tests
-        run: npm run test
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
 
       - name: Build application
         env:
@@ -65,12 +73,10 @@ jobs:
         run: npm run build
 
       - name: Audit dependencies
-        continue-on-error: true
         run: npm run audit
 
   e2e:
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -130,3 +136,6 @@ jobs:
             p/javascript
             p/typescript
             p/secrets
+
+      - name: OSV dependency scan
+        run: bash scripts/osv-scan.sh

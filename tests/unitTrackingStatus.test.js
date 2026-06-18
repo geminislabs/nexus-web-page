@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
 	isUnitMoving,
 	getUnitTrackingStatus,
-	unitMatchesTrackingFilter
+	unitMatchesTrackingFilter,
+	formatUnitStatusDate
 } from '../src/lib/utils/unitTrackingStatus.js';
 
 describe('unitTrackingStatus', () => {
@@ -28,5 +29,22 @@ describe('unitTrackingStatus', () => {
 		expect(unitMatchesTrackingFilter(unit, 'all')).toBe(true);
 		expect(unitMatchesTrackingFilter(unit, 'moving')).toBe(true);
 		expect(unitMatchesTrackingFilter(unit, 'stopped')).toBe(false);
+	});
+
+	it('formatUnitStatusDate and engine online / detenido branches', () => {
+		expect(formatUnitStatusDate({})).toBe('');
+		const withDate = getUnitTrackingStatus({
+			speed: 0,
+			engineStatus: 'ON',
+			gpsDatetime: '2026-06-18T10:30:00Z'
+		});
+		expect(withDate.shortLabel).toBe('Online');
+
+		const stopped = getUnitTrackingStatus({
+			speed: 0,
+			engineStatus: 'OFF',
+			lastUpdate: '2026-06-18T08:00:00Z'
+		});
+		expect(stopped.shortLabel).toBe('Detenido');
 	});
 });
