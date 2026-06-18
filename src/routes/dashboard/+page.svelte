@@ -33,7 +33,6 @@
 	import TabAjustes from '$lib/components/TabAjustes.svelte';
 	import ZonasPanel from '$lib/components/ZonasPanel.svelte';
 	import TrackingSubPanel from '$lib/components/TrackingSubPanel.svelte';
-	import VehicleListPanel from '$lib/components/VehicleListPanel.svelte';
 	import UnitsPickerSheet from '$lib/components/UnitsPickerSheet.svelte';
 	import { eventActions } from '$lib/stores/eventStore.js';
 	import { requestedPanelView } from '$lib/stores/navigationStore.js';
@@ -170,7 +169,9 @@
 			active
 				? (d.exitFullscreen || d.webkitExitFullscreen)?.call(d)
 				: (r.requestFullscreen || r.webkitRequestFullscreen)?.call(r);
-		} catch {}
+		} catch {
+			// Fullscreen API unavailable or denied
+		}
 	}
 	function syncFullscreen() {
 		if (!browser) return;
@@ -183,11 +184,6 @@
 
 	function onMobileMapTap() {
 		showMobileUnitsSheet = false;
-	}
-
-	async function openMobileUnitsSheet() {
-		if ($vehicles.length === 0) await vehicleActions.loadVehicles();
-		showMobileUnitsSheet = true;
 	}
 
 	function closeMobileUnitsSheet() {
@@ -430,7 +426,7 @@
 					/>
 				</button>
 
-				{#each configSidebarItems as item}
+				{#each configSidebarItems as item (item.id)}
 					<button
 						type="button"
 						class={`${sidebarBtnBase} mx-auto ${isConfigDrawerActive(item.id) ? sidebarBtnDrawerActive : sidebarBtnIdle}`}

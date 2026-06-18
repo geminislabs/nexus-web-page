@@ -48,15 +48,12 @@
 			? 'border-white/10 bg-white/[0.04]'
 			: 'border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.04]';
 	$: inactiveLabelClass =
-		variant === 'embedded'
-			? 'text-white/55'
-			: 'text-slate-600 dark:text-white/55';
-	$: inactiveCountClass =
-		variant === 'embedded' ? 'text-white' : 'text-slate-900 dark:text-white';
+		variant === 'embedded' ? 'text-white/55' : 'text-slate-600 dark:text-white/55';
+	$: inactiveCountClass = variant === 'embedded' ? 'text-white' : 'text-slate-900 dark:text-white';
 </script>
 
 <div class="grid grid-cols-3 gap-2">
-	{#each statusPanels as panel}
+	{#each statusPanels as panel (panel.id)}
 		{@const isActive = value === panel.id}
 		<button
 			type="button"
@@ -74,9 +71,7 @@
 					<Icon icon={panel.icon} width={14} aria-hidden="true" />
 				</span>
 				<span
-					class="text-[22px] font-bold leading-none {isActive
-						? 'text-white'
-						: inactiveCountClass}"
+					class="text-[22px] font-bold leading-none {isActive ? 'text-white' : inactiveCountClass}"
 				>
 					{panelCounts[panel.id]}
 				</span>

@@ -260,6 +260,7 @@
 			requestAnimationFrame(() => mapService.resizeMap());
 		}
 		if (variant === 'desktop' && portalHost && portalHost.parentNode === document.body) {
+			// eslint-disable-next-line svelte/no-dom-manipulating -- intentional portal teardown
 			portalHost.remove();
 		}
 	});

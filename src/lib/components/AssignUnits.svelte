@@ -63,13 +63,12 @@
 	}
 
 	function mergeData() {
-		const assignmentMap = new Map();
-		assignments.forEach((a) => {
-			assignmentMap.set(a.unit_id, a);
-		});
+		const assignmentByUnit = Object.fromEntries(
+			assignments.map((assignment) => [assignment.unit_id, assignment])
+		);
 
 		mergedUnits = units.map((u) => {
-			const assignment = assignmentMap.get(u.id);
+			const assignment = assignmentByUnit[u.id];
 			return {
 				...u,
 				assigned: !!assignment,
@@ -140,7 +139,7 @@
 				class={inputClass}
 			>
 				<option value="">— Seleccionar —</option>
-				{#each users as user}
+				{#each users as user (user.id)}
 					<option value={user.id}>{user.full_name || user.email}</option>
 				{/each}
 			</select>

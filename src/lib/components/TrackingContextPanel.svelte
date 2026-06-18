@@ -201,11 +201,7 @@
 					class="mb-2.5 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[13px] text-white placeholder:text-white/30 outline-none focus:border-sky-500/50"
 				/>
 				<div class="mb-2.5">
-					<UnitsStatusFilterPanels
-						{units}
-						bind:value={statusFilter}
-						variant="embedded"
-					/>
+					<UnitsStatusFilterPanels {units} bind:value={statusFilter} variant="embedded" />
 				</div>
 				<ul class="m-0 max-h-[220px] list-none overflow-y-auto overscroll-contain p-0 space-y-0.5">
 					{#each filteredUnits as u (u.id)}
@@ -239,7 +235,7 @@
 		<!-- Action buttons -->
 		<div class="border-t border-white/10 px-3 py-2">
 			<div class="grid grid-cols-4 gap-1">
-				{#each panelActions as action}
+				{#each panelActions as action (action.id)}
 					<button
 						type="button"
 						class="flex flex-col items-center gap-1 rounded-xl px-1 py-2 text-center transition-colors hover:bg-white/[0.07] {panelView ===

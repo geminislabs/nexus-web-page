@@ -44,6 +44,8 @@
 	});
 
 	onDestroy(() => {
+		// Portal host is appended to document.body for stacking context.
+		// eslint-disable-next-line svelte/no-dom-manipulating -- intentional portal teardown
 		portalHost?.remove();
 	});
 </script>

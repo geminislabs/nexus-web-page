@@ -82,10 +82,6 @@
 		return vehicleHasCoords(v) && (v?.lastUpdate != null || v?.gpsDatetime != null);
 	}
 
-	function profileDetail(v) {
-		return [v.brand, v.model, v.color, v.plate].filter(Boolean).join(' / ') || null;
-	}
-
 	$: activeCount = $activeVehicles?.length ?? 0;
 </script>
 

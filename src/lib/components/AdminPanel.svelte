@@ -69,16 +69,6 @@
 		}
 	};
 
-	const inputClass =
-		'w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white dark:placeholder:text-white/30';
-	const selectClass = `${inputClass} appearance-none pr-9`;
-	const cardClass =
-		'rounded-xl border border-slate-200 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.03]';
-	const btnPrimary =
-		'inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50';
-	const btnDanger =
-		'inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[12px] font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20';
-
 	let activeSection = 'dispositivos';
 
 	let devices = [];
@@ -99,7 +89,6 @@
 
 	let unitProfile = null;
 	let loadingProfile = false;
-	let updatingProfileField = null;
 	let showColorPicker = false;
 
 	let unassignTarget = null;
@@ -178,7 +167,6 @@
 
 	async function handleProfileUpdate(field, value, event = null) {
 		if (event && event.key !== 'Enter') return;
-		updatingProfileField = field;
 		try {
 			const updatedProfile = await apiService.updateUnitProfile(selectedUnitId, { [field]: value });
 			unitProfile = updatedProfile;
@@ -200,8 +188,6 @@
 			if (event?.target) event.target.blur();
 		} catch (err) {
 			console.error(`Error al actualizar ${field}:`, err);
-		} finally {
-			updatingProfileField = null;
 		}
 	}
 
@@ -288,7 +274,7 @@
 
 		<div class="tabs-wrapper">
 			<div class="tabs-bar" role="tablist" aria-label="Secciones de administración">
-				{#each adminTabs as tab}
+				{#each adminTabs as tab (tab.id)}
 					<button
 						type="button"
 						role="tab"
@@ -326,7 +312,7 @@
 					</div>
 				{:else}
 					<ul class="item-list">
-						{#each devices as device}
+						{#each devices as device (device.device_id)}
 							<li>
 								<button
 									type="button"
@@ -372,7 +358,7 @@
 						<p class="count-label">{units.length} unidad{units.length === 1 ? '' : 'es'}</p>
 					{/if}
 					<ul class="item-list">
-						{#each units as unit}
+						{#each units as unit (unit.id)}
 							<li>
 								<button
 									type="button"
@@ -517,7 +503,7 @@
 										</button>
 										{#if showColorPicker && $user?.is_master}
 											<div class="color-picker">
-												{#each vehicleColors as color}
+												{#each vehicleColors as color (color.slug)}
 													<button
 														type="button"
 														class="color-chip"
@@ -563,7 +549,7 @@
 										<div class="relative">
 											<select bind:value={selectedDeviceId} class="field-select">
 												<option value="">Seleccionar dispositivo…</option>
-												{#each unassignedDevices as device}
+												{#each unassignedDevices as device (device.device_id)}
 													<option value={device.device_id}
 														>{device.device_id} · {device.brand} {device.model}</option
 													>

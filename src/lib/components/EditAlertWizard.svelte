@@ -2,6 +2,7 @@
 <script>
 	import Icon from '@iconify/svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { vehicles } from '$lib/stores/vehicleStore.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
 
@@ -11,14 +12,14 @@
 
 	let step = 1; // 1 = nombre, 2 = unidades
 	let editName = alert.name ?? '';
-	let selectedUnitIds = new Set(alert.units ?? []);
+	let selectedUnitIds = new SvelteSet(alert.units ?? []);
 	let saving = false;
 	let deleting = false;
 	let showDeleteConfirm = false;
 	let error = null;
 
 	$: hasChanges =
-		editName.trim() !== alert.name || !setsEqual(selectedUnitIds, new Set(alert.units ?? []));
+		editName.trim() !== alert.name || !setsEqual(selectedUnitIds, new SvelteSet(alert.units ?? []));
 	$: canSave =
 		editName.trim().length > 0 && selectedUnitIds.size > 0 && hasChanges && !saving && !deleting;
 	$: allSelected = $vehicles.length > 0 && selectedUnitIds.size === $vehicles.length;
@@ -30,14 +31,12 @@
 	}
 
 	function toggleUnit(id) {
-		const next = new Set(selectedUnitIds);
-		if (next.has(id)) next.delete(id);
-		else next.add(id);
-		selectedUnitIds = next;
+		if (selectedUnitIds.has(id)) selectedUnitIds.delete(id);
+		else selectedUnitIds.add(id);
 	}
 
 	function toggleAll() {
-		selectedUnitIds = allSelected ? new Set() : new Set($vehicles.map((v) => v.id));
+		selectedUnitIds = allSelected ? new SvelteSet() : new SvelteSet($vehicles.map((v) => v.id));
 	}
 
 	function close() {
@@ -93,7 +92,7 @@
 		class="shrink-0 border-b border-slate-200 bg-slate-100/95 backdrop-blur-sm dark:border-white/[0.07] dark:bg-[#060b18]/95"
 	>
 		<div class="flex gap-[3px] px-4 pt-3">
-			{#each [1, 2] as s}
+			{#each [1, 2] as s (s)}
 				<div
 					class="h-[3px] flex-1 rounded-full transition-all duration-300 {step > s
 						? 'bg-blue-600/50'
@@ -168,7 +167,7 @@
 					Estado actual
 				</p>
 				<dl class="m-0 space-y-2">
-					{#each [['Condición', { on: 'Encendido', off: 'Apagado', enter: 'Entrada a zona', exit: 'Salida de zona' }[alert.condition] ?? alert.condition], ['Unidades', `${alert.units.length} asignada${alert.units.length !== 1 ? 's' : ''}`], ['Estado', alert.enabled ? 'Activa' : 'Inactiva']] as [dt, dd]}
+					{#each [['Condición', { on: 'Encendido', off: 'Apagado', enter: 'Entrada a zona', exit: 'Salida de zona' }[alert.condition] ?? alert.condition], ['Unidades', `${alert.units.length} asignada${alert.units.length !== 1 ? 's' : ''}`], ['Estado', alert.enabled ? 'Activa' : 'Inactiva']] as [dt, dd] (dt)}
 						<div class="flex items-center justify-between gap-3">
 							<dt class="m-0 text-[12px] text-slate-600 dark:text-white/45">{dt}</dt>
 							<dd class="m-0 text-[12px] font-semibold text-slate-900 dark:text-white">{dd}</dd>

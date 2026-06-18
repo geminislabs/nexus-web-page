@@ -46,45 +46,6 @@ class PositionService {
 			throw new Error(`Sin posición para dispositivo ${deviceId}`);
 		}
 		return match;
-		try {
-			const cacheKey = `position_${deviceId}`;
-			const cached = this.cache.get(cacheKey);
-
-			// Verificar cache
-			if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
-				return cached.data;
-			}
-
-			const response = await fetch(
-				`${COMM_API_URL}/api/v1/devices/${deviceId}/communications/latest`,
-				{
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json'
-					}
-				}
-			);
-
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-
-			const data = await response.json();
-
-			// Normalizar los datos
-			const normalizedData = this.normalizePositionData(data);
-
-			// Guardar en cache
-			this.cache.set(cacheKey, {
-				data: normalizedData,
-				timestamp: Date.now()
-			});
-
-			return normalizedData;
-		} catch (error) {
-			console.error(`Error obteniendo posición para dispositivo ${deviceId}:`, error);
-			throw error;
-		}
 	}
 
 	/**
@@ -164,10 +125,7 @@ class PositionService {
 		const deviceId = this._str(rawData, 'deviceId', 'device_id', 'DEVICE_ID') || '';
 		const latitude = this._num(rawData, 'latitude', 'LATITUD') ?? 0;
 		const longitude = this._num(rawData, 'longitude', 'LONGITUD') ?? 0;
-		const speed = this._num(rawData, 'speed', 'SPEED');
-		const course = this._num(rawData, 'course', 'COURSE');
 		const gpsDatetime = this._str(rawData, 'gpsDatetime', 'gps_datetime', 'GPS_DATETIME');
-		const gpsEpoch = this._int(rawData, 'gpsEpoch', 'gps_epoch', 'GPS_EPOCH');
 
 		// mainBatteryVoltage: buscar en root y luego en attributes (igual que Android/iOS)
 		let mainBatteryVoltage = this._num(
@@ -214,24 +172,15 @@ class PositionService {
 			);
 		}
 
-		const odometer = this._int(rawData, 'odometer', 'ODOMETER');
 		const engineStatus = this._str(rawData, 'engineStatus', 'engine_status', 'ENGINE_STATUS');
 		const fixStatus = this._str(rawData, 'fixStatus', 'fix_status', 'FIX_STATUS');
 		// "stellites" es un typo conocido del firmware
 		const satellites = this._int(rawData, 'satellites', 'stellites', 'SATELLITES');
 		const rxLvl = this._int(rawData, 'rxLvl', 'rx_lvl', 'RX_LVL');
-		const networkStatus = this._str(rawData, 'networkStatus', 'network_status', 'NETWORK_STATUS');
-		const msgClass = this._str(rawData, 'msgClass', 'msg_class', 'MSG_CLASS');
-		const deliveryType = this._str(rawData, 'deliveryType', 'delivery_type', 'DELIVERY_TYPE');
-		const receivedEpoch = this._int(rawData, 'receivedEpoch', 'received_epoch');
 		const receivedAt = this._str(rawData, 'receivedAt', 'received_at');
-		const alertType = this._str(rawData, 'alertType', 'alert_type', 'ALERT_TYPE');
 
 		// lastUpdate: preferir gps_datetime, luego received_at, luego timelastposition
 		const lastUpdate = gpsDatetime || receivedAt || rawData?.timelastposition || null;
-
-		// isOnline: basado en engineStatus (ON = online) como en las apps nativas
-		const isOnline = engineStatus?.toUpperCase() === 'ON';
 
 		return {
 			deviceId: String(deviceId),
@@ -277,7 +226,7 @@ class PositionService {
 				const days = Math.floor(diffInMinutes / 1440);
 				return `Hace ${days} día${days !== 1 ? 's' : ''}`;
 			}
-		} catch (error) {
+		} catch {
 			return 'Fecha inválida';
 		}
 	}
@@ -380,7 +329,7 @@ class PositionService {
 				url.protocol = 'ws:';
 			}
 			return url.toString();
-		} catch (e) {
+		} catch {
 			// Fallback simple string replacement si URL falla
 			return urlStr.replace(/^http/, 'ws');
 		}
@@ -571,7 +520,7 @@ class PositionService {
 				try {
 					const errorData = await response.json();
 					errorDetail = errorData.detail;
-				} catch (e) {
+				} catch {
 					// Ignore json parse error
 				}
 
@@ -655,14 +604,6 @@ class PositionService {
 				}
 			}
 		};
-	}
-
-	_initEventSource(url, onUpdate, onError) {
-		// Deprecated method, kept for reference or removal?
-		// Removing content to avoid confusion as we fully switched to WebSocket
-		console.warn(
-			'_initEventSource is deprecated. Use connectToShareStream/connectToRealtimeStream with WebSocket.'
-		);
 	}
 }
 export const positionService = new PositionService();

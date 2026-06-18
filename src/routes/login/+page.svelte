@@ -64,12 +64,6 @@
 			loading = false;
 		}
 	}
-
-	function handleKeyPress(event) {
-		if (event.key === 'Enter') {
-			handleLogin();
-		}
-	}
 </script>
 
 <svelte:head>

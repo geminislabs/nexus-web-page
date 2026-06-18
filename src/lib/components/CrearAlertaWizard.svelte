@@ -107,12 +107,12 @@
 		>
 			<!-- Progress bar -->
 			<div class="flex gap-[3px] px-4 pt-3">
-				{#each Array(effectiveSteps) as _, i}
+				{#each Array.from({ length: effectiveSteps }, (_, stepIndex) => stepIndex) as stepIndex (stepIndex)}
 					<div
 						class="h-[3px] flex-1 rounded-full transition-all duration-300
-					{displayStep > i + 1
+					{displayStep > stepIndex + 1
 							? 'bg-blue-600/50'
-							: displayStep === i + 1
+							: displayStep === stepIndex + 1
 								? 'bg-blue-500'
 								: 'bg-slate-300 dark:bg-white/[0.08]'}"
 						aria-hidden="true"
@@ -238,7 +238,7 @@
 				</p>
 				<div class="grid grid-cols-2 gap-3">
 					{#if wizard.type === 'ignition'}
-						{#each [{ value: 'on', label: 'Encendido', icon: 'mdi:lightning-bolt', color: 'blue' }, { value: 'off', label: 'Apagado', icon: 'mdi:engine-off-outline', color: 'slate' }] as opt}
+						{#each [{ value: 'on', label: 'Encendido', icon: 'mdi:lightning-bolt', color: 'blue' }, { value: 'off', label: 'Apagado', icon: 'mdi:engine-off-outline', color: 'slate' }] as opt (opt.value)}
 							<button
 								type="button"
 								class="flex flex-col items-center gap-3 rounded-2xl border-2 py-5 text-center transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
@@ -252,7 +252,7 @@
 							</button>
 						{/each}
 					{:else}
-						{#each [{ value: 'enter', label: 'Entrada', icon: 'mdi:location-enter', color: 'emerald' }, { value: 'exit', label: 'Salida', icon: 'mdi:location-exit', color: 'orange' }] as opt}
+						{#each [{ value: 'enter', label: 'Entrada', icon: 'mdi:location-enter', color: 'emerald' }, { value: 'exit', label: 'Salida', icon: 'mdi:location-exit', color: 'orange' }] as opt (opt.value)}
 							<button
 								type="button"
 								class="flex flex-col items-center gap-3 rounded-2xl border-2 py-5 text-center transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
@@ -294,7 +294,7 @@
 					</p>
 				{:else}
 					<div class="flex flex-col gap-2">
-						{#each $vehicles as vehicle}
+						{#each $vehicles as vehicle (vehicle.id)}
 							{@const selected = wizard.units?.includes(vehicle.id)}
 							<button
 								type="button"
@@ -381,7 +381,7 @@
 								No hay zonas H3 que coincidan con ese cell ID.
 							</p>
 						{:else}
-							{#each filteredH3Zones as zone}
+							{#each filteredH3Zones as zone (zone.id)}
 								<button
 									type="button"
 									class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
@@ -456,7 +456,7 @@
 						Resumen
 					</p>
 					<dl class="m-0 space-y-2">
-						{#each [['Tipo', wizard.type === 'ignition' ? 'Ignición' : 'Zona'], ['Condición', conditionLabel(wizard.condition)], ['Unidades', `${wizard.units?.length ?? 0} seleccionada${(wizard.units?.length ?? 0) !== 1 ? 's' : ''}`], ...(wizard.type === 'zone' && wizard.zone ? [['Zona', selectedZoneLabel]] : [])] as [dt, dd]}
+						{#each [['Tipo', wizard.type === 'ignition' ? 'Ignición' : 'Zona'], ['Condición', conditionLabel(wizard.condition)], ['Unidades', `${wizard.units?.length ?? 0} seleccionada${(wizard.units?.length ?? 0) !== 1 ? 's' : ''}`], ...(wizard.type === 'zone' && wizard.zone ? [['Zona', selectedZoneLabel]] : [])] as [dt, dd] (dt)}
 							<div class="flex items-center justify-between gap-3">
 								<dt class="m-0 text-[12px] text-slate-600 dark:text-white/45">{dt}</dt>
 								<dd class="m-0 text-[12px] font-semibold text-slate-900 dark:text-white">{dd}</dd>

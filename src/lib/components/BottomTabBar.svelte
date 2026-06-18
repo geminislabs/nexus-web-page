@@ -35,7 +35,7 @@
 		aria-describedby="bottom-tab-db-hint"
 		class="flex w-full flex-row"
 	>
-		{#each tabs as tab}
+		{#each tabs as tab (tab.id)}
 			<button
 				type="button"
 				id={`bottom-tab-${tab.id}`}

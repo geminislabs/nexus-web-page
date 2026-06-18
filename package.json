@@ -3,16 +3,39 @@
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
+	"engines": {
+		"node": ">=22"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''",
+		"prepare": "svelte-kit sync || echo '' && husky",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check .",
-		"test": "vitest run"
+		"lint": "prettier --check . && eslint .",
+		"lint:fix": "prettier --write . && eslint . --fix",
+		"test": "vitest run",
+		"test:unit": "vitest",
+		"validate": "npm run lint && npm run check && npm run test && npm run build",
+		"commitlint": "commitlint",
+		"audit": "npm audit --audit-level=high",
+		"scan:secrets": "bash scripts/gitleaks-scan.sh"
+	},
+	"lint-staged": {
+		"*.{js,svelte}": [
+			"eslint --fix",
+			"prettier --write"
+		],
+		"*.{json,css,md,html}": [
+			"prettier --write"
+		]
 	},
 	"devDependencies": {
+		"@commitlint/cli": "^19.8.1",
+		"@commitlint/config-conventional": "^19.8.1",
+		"@eslint/js": "^9.39.1",
 		"@sveltejs/adapter-auto": "^6.0.0",
 		"@sveltejs/adapter-node": "^5.5.4",
 		"@sveltejs/kit": "^2.22.0",
@@ -21,11 +44,19 @@
 		"@tailwindcss/typography": "^0.5.16",
 		"@types/node": "^25.9.1",
 		"autoprefixer": "^10.4.21",
+		"eslint": "^9.39.1",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.13.1",
+		"globals": "^16.5.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^15.5.2",
 		"postcss": "^8.5.6",
 		"prettier": "^3.4.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"svelte": "^5.0.0",
+		"svelte-check": "^4.3.5",
 		"tailwindcss": "^4.1.13",
+		"typescript": "^5.9.3",
 		"vite": "^7.0.4",
 		"vitest": "^3.2.4"
 	},
@@ -36,5 +67,9 @@
 		"@turf/turf": "^7.3.4",
 		"chart.js": "^4.5.1",
 		"h3-js": "^4.4.0"
+	},
+	"overrides": {
+		"cookie": "^0.7.0",
+		"esbuild": ">=0.28.1"
 	}
 }

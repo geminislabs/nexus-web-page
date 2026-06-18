@@ -210,7 +210,12 @@ export async function buildVehicleMarkerDataUrl(vehicle, options = true) {
 	const rotationBucket = Math.round(opts.ringRotation * 40);
 	const labelKey = opts.showNameLabel ? opts.labelText : '';
 	const cacheKey = `${iconType}|${profileColor}|${statusColor}|${opts.badgeVisible}|${opts.showRings}|${opts.isHighlighted}|${pulseBucket}|${rotationBucket}|${labelKey}`;
-	if (!opts.isHighlighted && opts.ringRotation === 0 && !opts.showNameLabel && dataUrlCache.has(cacheKey)) {
+	if (
+		!opts.isHighlighted &&
+		opts.ringRotation === 0 &&
+		!opts.showNameLabel &&
+		dataUrlCache.has(cacheKey)
+	) {
 		return dataUrlCache.get(cacheKey);
 	}
 

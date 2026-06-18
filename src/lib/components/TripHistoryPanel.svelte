@@ -14,8 +14,6 @@
 	export let onBack = () => {};
 
 	let selectedDate = new Date().toISOString().split('T')[0];
-	let hasMore = false;
-	let cursor = null;
 	let showDetail = false;
 	let loadingDetail = false;
 
@@ -42,17 +40,13 @@
 	async function loadTrips() {
 		if (!unit?.id) return;
 
-		const dateStart = new Date(selectedDate);
-		dateStart.setHours(0, 0, 0, 0);
-		const dateEnd = new Date(selectedDate);
-		dateEnd.setHours(23, 59, 59, 999);
+		const [year, month, day] = selectedDate.split('-').map(Number);
+		const dateStart = new Date(year, month - 1, day, 0, 0, 0, 0);
+		const dateEnd = new Date(year, month - 1, day, 23, 59, 59, 999);
 
-		const result = await tripActions.loadTripsForUnit(unit.id, {
+		await tripActions.loadTripsForUnit(unit.id, {
 			dateRange: { start: dateStart, end: dateEnd }
 		});
-
-		hasMore = result.hasMore;
-		cursor = result.cursor;
 	}
 
 	async function selectTrip(trip) {
