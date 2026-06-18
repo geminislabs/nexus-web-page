@@ -1,5 +1,5 @@
 # Usar imagen base de Node.js
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Establecer directorio de trabajo
 WORKDIR /app
@@ -32,6 +32,9 @@ ENV VITE_ADMIN_API_URL=$VITE_ADMIN_API_URL
 ARG VITE_POSITION_STREAM_WS_BASE
 ENV VITE_POSITION_STREAM_WS_BASE=$VITE_POSITION_STREAM_WS_BASE
 
+ARG VITE_GOOGLE_MAPS_API_KEY
+ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
+
 # Sincronizar SvelteKit (genera .svelte-kit/tsconfig.json y tipos)
 RUN npx svelte-kit sync
 
@@ -42,7 +45,7 @@ RUN npm run build
 RUN npm ci --only=production --ignore-scripts
 
 # Etapa de producción
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 # Instalar dumb-init para manejo de señales
 RUN apk add --no-cache dumb-init

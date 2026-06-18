@@ -1,0 +1,104 @@
+name: Deploy Nexus Web Page to EC2
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_SSH_KEY }}
+          name: id_rsa
+          known_hosts: unnecessary
+          if_key_exists: replace
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image for deployment
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: nexus-web-page:latest
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_AUTH_TOKEN=${{ github.token }}
+            VITE_COMPANY_URL=${{ secrets.VITE_COMPANY_URL }}
+            VITE_COMM_API_URL=${{ secrets.VITE_COMM_API_URL }}
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
+            VITE_ADMIN_API_URL=${{ secrets.VITE_ADMIN_API_URL }}
+            VITE_POSITION_STREAM_WS_BASE=${{ secrets.VITE_POSITION_STREAM_WS_BASE }}
+            VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+
+      - name: Save Docker image
+        run: docker save nexus-web-page:latest | gzip > nexus-web-page.tar.gz
+
+      - name: Copy Docker image to EC2
+        run: |
+          echo "Copying Docker image to server..."
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa nexus-web-page.tar.gz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_TEST }}:/tmp/
+          echo "Copy completed."
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_TEST }} << 'EOF'
+          set -e
+
+          APP_NAME="nexus-web-page-test"
+          PORT="${{ vars.PORT }}"
+          [ -z "$PORT" ] && PORT=3340
+
+          echo "=== Deploying $APP_NAME on port $PORT ==="
+
+          echo "=== Stopping previous container ==="
+          docker stop $APP_NAME || true
+          docker rm $APP_NAME || true
+
+          echo "=== Cleaning up ==="
+          docker image prune -f || true
+
+          echo "=== Loading new image ==="
+          cd /tmp
+          if [ -f nexus-web-page.tar.gz ]; then
+              docker load < nexus-web-page.tar.gz
+              rm -f nexus-web-page.tar.gz
+          else
+              echo "Error: Image file not found"
+              exit 1
+          fi
+
+          echo "=== Starting new container ==="
+          docker run -d \
+              --name $APP_NAME \
+              --restart unless-stopped \
+              -p $PORT:$PORT \
+              -e PORT=$PORT \
+              -e NODE_ENV=production \
+              -e ORIGIN=${{ secrets.ORIGIN }} \
+              nexus-web-page:latest
+
+          echo "=== Deployment successful ==="
+          docker ps | grep $APP_NAME || true
+          EOF

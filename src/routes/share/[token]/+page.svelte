@@ -2,7 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { positionService } from '$lib/services/positionService.js';
-	import { vehicles, vehicleActions } from '$lib/stores/vehicleStore.js';
+	import { vehicles } from '$lib/stores/vehicleStore.js';
 	import MapContainer from '$lib/components/MapContainer.svelte';
 
 	let token = $page.params.token;

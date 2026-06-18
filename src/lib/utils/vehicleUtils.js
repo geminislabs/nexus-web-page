@@ -93,7 +93,7 @@ export function formatLastUpdate(dateString) {
 			const days = Math.floor(diffInMinutes / 1440);
 			return `Hace ${days} día${days !== 1 ? 's' : ''}`;
 		}
-	} catch (error) {
+	} catch {
 		return 'Fecha inválida';
 	}
 }

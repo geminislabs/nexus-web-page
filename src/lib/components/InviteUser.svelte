@@ -12,7 +12,6 @@
 	let successMessage = '';
 	let errorMessage = '';
 
-	let invitationPending = false;
 	let bannerVisible = false;
 	let buttonMode = 'invite';
 
@@ -20,7 +19,6 @@
 		if (bannerVisible) {
 			bannerVisible = false;
 			buttonMode = 'invite';
-			invitationPending = false;
 			errorMessage = '';
 		}
 	}
@@ -45,7 +43,6 @@
 				fullName = '';
 				email = '';
 				bannerVisible = false;
-				invitationPending = false;
 			} else {
 				await apiService.resendInvitation({ email });
 				successMessage = 'Invitación reenviada';
@@ -60,7 +57,6 @@
 				(errorText.toLowerCase().includes('invitación pendiente') ||
 					errorText.toLowerCase().includes('pending invitation'))
 			) {
-				invitationPending = true;
 				bannerVisible = true;
 				buttonMode = 'resend';
 			} else {

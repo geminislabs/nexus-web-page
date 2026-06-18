@@ -1,0 +1,25 @@
+title = "nexus-web-page"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Build artifacts, vendor paths, and docs with intentional placeholder tokens"
+paths = [
+	'''(?:^|/)node_modules/''',
+	'''(?:^|/)\.svelte-kit/''',
+	'''(?:^|/)build/''',
+	'''(?:^|/)coverage/''',
+	'''(?:^|/)dist/''',
+	'''(?:^|/)docs/architecture/''',
+	'''(?:^|/)README\.md$''',
+	'''(?:^|/)\.env(?:\..*)?$''',
+]
+regexes = [
+	'''example\.com''',
+	'''localhost''',
+	'''127\.0\.0\.1''',
+	'''<access_token>''',
+	'''<id_token>''',
+	'''<refresh_token>''',
+]

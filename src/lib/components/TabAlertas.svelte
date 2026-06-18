@@ -8,7 +8,6 @@
 		unreadAlarmCount,
 		alertWizard
 	} from '$lib/stores/alertStore.js';
-	import { theme } from '$lib/stores/themeStore.js';
 	import CrearAlertaWizard from './CrearAlertaWizard.svelte';
 	import EditAlertWizard from './EditAlertWizard.svelte';
 	import ConfirmModal from './ConfirmModal.svelte';

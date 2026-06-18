@@ -101,7 +101,9 @@
 		<UnitsStatusFilterPanels units={$vehicles} bind:value={statusFilter} variant="sheet" />
 	</div>
 
-	<div class="max-h-[46vh] overflow-y-auto overscroll-contain border-t border-slate-200 dark:border-white/[0.06]">
+	<div
+		class="max-h-[46vh] overflow-y-auto overscroll-contain border-t border-slate-200 dark:border-white/[0.06]"
+	>
 		{#if $loadingVehicles}
 			<div class="flex h-40 items-center justify-center" role="status" aria-live="polite">
 				<div
@@ -109,7 +111,9 @@
 				></div>
 			</div>
 		{:else if filteredUnits.length === 0}
-			<div class="flex h-40 flex-col items-center justify-center gap-2 text-slate-500 dark:text-white/35">
+			<div
+				class="flex h-40 flex-col items-center justify-center gap-2 text-slate-500 dark:text-white/35"
+			>
 				<Icon icon="mdi:magnify" width={32} class="opacity-30" />
 				<p class="m-0 text-sm">Sin resultados</p>
 			</div>

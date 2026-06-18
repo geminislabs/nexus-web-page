@@ -4,7 +4,6 @@
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { themeActions } from '$lib/stores/themeStore.js';
 	import { onMount } from 'svelte';
-	import { theme } from '$lib/stores/theme.js';
 
 	import { apiService } from '$lib/services/api.js';
 

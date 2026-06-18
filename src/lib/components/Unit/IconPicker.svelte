@@ -4,7 +4,7 @@
 	import ColoredVehicleIcon from './ColoredVehicleIcon.svelte';
 
 	export let currentIcon = 'vehicle-car-sedan';
-	export let onSelect = (slug) => {};
+	export let onSelect = () => {};
 	export let editable = false;
 	/** Color del vehículo (hex). Solo pinta la silueta, no el fondo del botón. */
 	export let colorHex = null;
@@ -82,7 +82,7 @@
 			transition:fade={{ duration: 100 }}
 		>
 			<div class="grid grid-cols-3 gap-2">
-				{#each Object.entries(unitIcons) as [slug, src]}
+				{#each Object.entries(unitIcons) as [slug, src] (slug)}
 					<button
 						type="button"
 						class="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 transition-all duration-200 hover:scale-105 dark:border-white/15 dark:bg-white/[0.08] {currentIcon ===

@@ -1,5 +1,5 @@
 <script>
-	import { fade, fly } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import { goto } from '$app/navigation';
 	import { logoutSession } from '$lib/services/sessionService.js';
 	import UserPanel from './UserPanel.svelte';
@@ -201,10 +201,6 @@
 		max-height: 26px;
 		object-fit: contain;
 		transition: all 0.3s ease;
-	}
-
-	.sidebar:not(.expanded) .logo-img {
-		/* Optional: Adjust logo when collapsed if needed, e.g. smaller or different icon */
 	}
 
 	.menu-icons {

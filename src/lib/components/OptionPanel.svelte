@@ -1,6 +1,4 @@
 <script>
-	import { goto } from '$app/navigation';
-	import { user, authToken } from '$lib/stores/auth.js';
 	import { theme } from '$lib/stores/theme.js';
 
 	export let showOptionPanel = false;

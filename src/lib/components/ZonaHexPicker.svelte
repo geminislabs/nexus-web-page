@@ -1,6 +1,7 @@
 <script>
 	import Icon from '@iconify/svelte';
 	import { onMount, createEventDispatcher, tick } from 'svelte';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { browser } from '$app/environment';
 	import { mapService } from '$lib/services/mapService.js';
 	import { theme } from '$lib/stores/themeStore.js';
@@ -11,8 +12,8 @@
 	let mapEl;
 	let localMap = null;
 	let localGoogle = null;
-	let selectedCells = new Set();
-	let polygons = new Map();
+	let selectedCells = new SvelteSet();
+	let polygons = new SvelteMap();
 	let idleListener = null;
 	let resolution = 8;
 	let zoneName = '';
@@ -158,7 +159,6 @@
 		} else {
 			selectedCells.add(h3Idx);
 		}
-		selectedCells = selectedCells;
 		applySelectionStyles();
 	}
 
@@ -178,7 +178,6 @@
 		if (selectedCells.size === 0) return;
 		const cells = Array.from(selectedCells);
 		selectedCells.delete(cells[cells.length - 1]);
-		selectedCells = selectedCells;
 		applySelectionStyles();
 	}
 
@@ -242,10 +241,11 @@
 	</header>
 
 	<main class="relative min-h-0 flex-1">
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<div
 			bind:this={mapEl}
 			class="absolute inset-0 outline-none [&_img]:!max-w-none"
-			role="region"
+			role="application"
 			aria-label="Mapa para seleccionar celdas H3 en el área visible"
 			tabindex="0"
 		></div>

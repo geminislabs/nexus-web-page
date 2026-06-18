@@ -5,7 +5,7 @@
 	export let open = false;
 	export let units = [];
 	export let selectedIds = new Set();
-	export let onToggle = (_id) => {};
+	export let onToggle = () => {};
 	export let onClose = () => {};
 
 	let searchQuery = '';

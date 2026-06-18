@@ -121,9 +121,9 @@ La aplicación está configurada para trabajar con SISCOM-ADMIN-API (FastAPI). L
 
 ```json
 {
-	"access_token": "eyJhbGciOiJSUzI1...",
-	"id_token": "eyJhbGciOiJSUzI1...",
-	"refresh_token": "eyJjdHkiOiJKV1Q...",
+	"access_token": "<access_token>",
+	"id_token": "<id_token>",
+	"refresh_token": "<refresh_token>",
 	"expires_in": 3600,
 	"token_type": "Bearer",
 	"user_id": "123e4567-e89b-12d3-a456-426614174000",

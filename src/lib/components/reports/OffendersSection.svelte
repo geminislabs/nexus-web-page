@@ -39,9 +39,7 @@
 						</p>
 					</div>
 
-					<span
-						class="shrink-0 text-[13px] font-bold tabular-nums text-red-600 dark:text-red-400"
-					>
+					<span class="shrink-0 text-[13px] font-bold tabular-nums text-red-600 dark:text-red-400">
 						{o.value}
 					</span>
 				</li>

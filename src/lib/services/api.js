@@ -115,12 +115,10 @@ class ApiService {
 			headers.Authorization = `Bearer ${token}`;
 		}
 
-		const {
-			skipAuth: _skipAuth,
-			skipRefreshRetry: _skipRefresh,
-			_isRetry: _retry,
-			...fetchOptions
-		} = options;
+		const fetchOptions = { ...options };
+		delete fetchOptions.skipAuth;
+		delete fetchOptions.skipRefreshRetry;
+		delete fetchOptions._isRetry;
 
 		let response;
 		try {

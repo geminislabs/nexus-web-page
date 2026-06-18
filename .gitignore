@@ -1,27 +1,49 @@
-node_modules
-.npmrc
-.idea
+# ============================================================
+#  NEXUS-WEB-PAGE — .gitignore
+# ============================================================
 
-# Output
+# ── Dependencies ─────────────────────────────────────────────
+node_modules/
+
+# ── Build & Output ───────────────────────────────────────────
+.svelte-kit/
+/build
 .output
 .vercel
 .netlify
 .wrangler
-/.svelte-kit
-/build
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Env
+# ── Environments ─────────────────────────────────────────────
 .env
 .env.*
 !.env.example
 !.env.test
 
-# Vite
+# ── Tests & Coverage ─────────────────────────────────────────
+test-results/
+playwright-report/
+coverage/
+
+# ── Tools ────────────────────────────────────────────────────
+.cache/
+.husky/_
+.last-run.json
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# ── OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDEs ─────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+.qodo
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ── Project-specific ─────────────────────────────────────────
+.npmrc
 graphify*

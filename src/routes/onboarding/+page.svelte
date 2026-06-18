@@ -85,7 +85,7 @@
 		</div>
 
 		<div class="mb-8 flex items-center gap-2" aria-label="Progreso del onboarding">
-			{#each slides as _, i}
+			{#each slides as slide, i (slide.id ?? i)}
 				<span
 					class="h-2 rounded-full transition-all duration-300 {i === currentPage
 						? 'w-6 bg-cyan-400'

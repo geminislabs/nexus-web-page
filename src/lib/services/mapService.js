@@ -37,8 +37,7 @@ class MapService {
 		/** @type {ReturnType<typeof setInterval> | null} */
 		this._ringRotationTimer = null;
 		this._ringRotation = 0;
-		this.apiKey =
-			import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyC_NFPQKCUYcCq4WLTTOmSLnfQmRmPYE-8';
+		this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
 	}
 
 	/** Alineado con themeStore (`html.dark` en tema oscuro). */
@@ -186,6 +185,12 @@ class MapService {
 
 	async initialize(mapElement) {
 		try {
+			if (!this.apiKey) {
+				throw new Error(
+					'VITE_GOOGLE_MAPS_API_KEY no está configurada. Define la variable en .env o en el build de Docker.'
+				);
+			}
+
 			const loader = new GoogleMapsLoader.Loader({
 				apiKey: this.apiKey,
 				version: 'weekly',
@@ -808,6 +813,9 @@ class MapService {
 	 */
 	enableMobileZoneEditorZoomLock() {
 		if (!this.map || this._mobileZoneZoomLocked) return;
+		const isMobileLayout =
+			typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+		if (!isMobileLayout) return;
 		const z = this._mobileZoneEditorZoom;
 		this._mobileZoneZoomLocked = true;
 		this.map.setOptions({

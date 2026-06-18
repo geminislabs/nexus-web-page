@@ -3,7 +3,7 @@
 	import { vehicleColors } from '$lib/data/vehicleColors';
 
 	export let selectedColor = '';
-	export let onSelect = (slug) => {};
+	export let onSelect = () => {};
 
 	const FALLBACK_BG = '#334155';
 

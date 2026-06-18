@@ -35,7 +35,7 @@
 			? 'mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7'
 			: 'mb-5 grid grid-cols-2 gap-3'}
 	>
-		{#each summaryCards as card}
+		{#each summaryCards as card (card.title)}
 			<article
 				class="rounded-2xl border bg-white p-4 dark:bg-white/[0.04] {cardBorder(card.color)}"
 			>

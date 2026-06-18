@@ -61,16 +61,10 @@
 				password
 			});
 			goto('/login?registered=1');
-		} catch (err) {
+		} catch {
 			error = 'Error al crear la cuenta. Por favor, intenta de nuevo.';
 		} finally {
 			loading = false;
-		}
-	}
-
-	function handleKeyPress(event) {
-		if (event.key === 'Enter') {
-			handleRegister();
 		}
 	}
 </script>
