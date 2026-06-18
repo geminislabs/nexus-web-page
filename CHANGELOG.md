@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Vitest coverage gates (`test:coverage`) with thresholds on `src/lib/**` (90/90/70/90)
+- `vitest-setup.js` (happy-dom, `matchMedia`/`localStorage`/`fetch` mocks)
+- Unit tests: auth stores, theme, sessionService, eventService, zoneDbMapper, alarmFormat, api passthrough
+- OSV-Scanner (`scripts/osv-scan.sh`, `npm run scan:osv`) in CI `security` job
+- Dependabot (npm, github-actions, docker) and `.github/CODEOWNERS`
+- `docs/GOVERNANCE.md` — branch protection, coverage policy, Dependabot merge rules
+- CI uploads coverage artifact; `audit` and `e2e` jobs are blocking (no `continue-on-error`)
+
+### Changed
+
+- `npm run validate` runs `test:coverage` instead of plain `test`
+- npm override for `js-yaml` audit advisory
+
 - Dev container (`.devcontainer/`) with post-create setup from `.env.example`
 - Vitest unit tests for `passwordValidation`, `eventUtils`, and `unitTrackingStatus` utils
 - Playwright smoke e2e (`e2e/smoke.spec.js`) — onboarding redirect and sign-in UI

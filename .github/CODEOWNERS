@@ -1,0 +1,20 @@
+# Default reviewers — replace @geminislabs/engineering with your GitHub team slug
+* @geminislabs/engineering
+
+# Authentication and HTTP layer
+/src/lib/services/api.js @geminislabs/engineering
+/src/lib/stores/auth.js @geminislabs/engineering
+/src/lib/services/sessionService.js @geminislabs/engineering
+/src/routes/login/ @geminislabs/engineering
+
+# Map, zones, and live tracking
+/src/lib/services/mapService.js @geminislabs/engineering
+/src/lib/services/positionService.js @geminislabs/engineering
+/src/lib/services/vehiclePositionStream.js @geminislabs/engineering
+/src/lib/components/ZonasPanel.svelte @geminislabs/engineering
+
+# CI/CD and release
+/.github/workflows/ @geminislabs/engineering
+/.github/dependabot.yml @geminislabs/engineering
+/scripts/ @geminislabs/engineering
+/Dockerfile @geminislabs/engineering
