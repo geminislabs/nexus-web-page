@@ -44,6 +44,8 @@ npm run validate
 
 Equivalente: `npm run lint`, `npm run check`, `npm run test`, `npm run build`.
 
+Opcional: `npm run test:e2e` (requiere `npx playwright install chromium`).
+
 ## Módulos sensibles
 
 - `src/lib/services/mapService.js` — Google Maps, marcadores, editor de zonas

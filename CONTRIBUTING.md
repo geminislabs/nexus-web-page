@@ -68,6 +68,7 @@ Opcional:
 ```bash
 npm run audit
 npm run scan:secrets
+npm run test:e2e    # smoke Playwright (requiere: npx playwright install chromium)
 ```
 
 ### 4. Pull requests
