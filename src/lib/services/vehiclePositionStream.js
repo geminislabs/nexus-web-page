@@ -1,14 +1,34 @@
 /**
  * Cliente WebSocket para posiciones en vivo (siscom-api /api/v1/stream).
- * Requiere VITE_POSITION_STREAM_WS_BASE (ej. ws://localhost:8000).
+ * La base WS se deriva de VITE_COMM_API_URL (http→ws, https→wss), igual que positionService.
  */
 
 const STREAM_PATH = '/api/v1/stream';
 
+const COMM_API_URL = import.meta.env?.VITE_COMM_API_URL || '';
+
+/**
+ * @param {string} urlStr
+ * @returns {string}
+ */
+export function httpUrlToWebSocketUrl(urlStr) {
+	if (urlStr.startsWith('ws://') || urlStr.startsWith('wss://')) {
+		return urlStr;
+	}
+
+	try {
+		const url = new URL(urlStr);
+		url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+		return url.toString();
+	} catch {
+		return urlStr.replace(/^http/, 'ws');
+	}
+}
+
 function streamBaseUrl() {
-	const raw = import.meta.env.VITE_POSITION_STREAM_WS_BASE;
-	if (raw == null || String(raw).trim() === '') return '';
-	return String(raw).trim().replace(/\/$/, '');
+	const raw = String(COMM_API_URL ?? '').trim();
+	if (!raw) return '';
+	return httpUrlToWebSocketUrl(raw).replace(/\/$/, '');
 }
 
 export function extraStreamDeviceIds() {

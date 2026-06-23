@@ -41,13 +41,11 @@ jobs:
           echo "VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://127.0.0.1:8100/api/v1}" >> "$GITHUB_ENV"
           echo "VITE_ADMIN_API_URL=${VITE_ADMIN_API_URL:-http://127.0.0.1:8100/api/v1}" >> "$GITHUB_ENV"
           echo "VITE_COMM_API_URL=${VITE_COMM_API_URL:-http://127.0.0.1:8000}" >> "$GITHUB_ENV"
-          echo "VITE_POSITION_STREAM_WS_BASE=${VITE_POSITION_STREAM_WS_BASE:-ws://127.0.0.1:8000}" >> "$GITHUB_ENV"
           echo "VITE_COMPANY_URL=${VITE_COMPANY_URL:-http://127.0.0.1:5173}" >> "$GITHUB_ENV"
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_ADMIN_API_URL: ${{ vars.VITE_ADMIN_API_URL }}
           VITE_COMM_API_URL: ${{ vars.VITE_COMM_API_URL }}
-          VITE_POSITION_STREAM_WS_BASE: ${{ vars.VITE_POSITION_STREAM_WS_BASE }}
           VITE_COMPANY_URL: ${{ vars.VITE_COMPANY_URL }}
 
       - name: Run linter
@@ -100,13 +98,11 @@ jobs:
           echo "VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://127.0.0.1:8100/api/v1}" >> "$GITHUB_ENV"
           echo "VITE_ADMIN_API_URL=${VITE_ADMIN_API_URL:-http://127.0.0.1:8100/api/v1}" >> "$GITHUB_ENV"
           echo "VITE_COMM_API_URL=${VITE_COMM_API_URL:-http://127.0.0.1:8000}" >> "$GITHUB_ENV"
-          echo "VITE_POSITION_STREAM_WS_BASE=${VITE_POSITION_STREAM_WS_BASE:-ws://127.0.0.1:8000}" >> "$GITHUB_ENV"
           echo "VITE_COMPANY_URL=${VITE_COMPANY_URL:-http://127.0.0.1:5173}" >> "$GITHUB_ENV"
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_ADMIN_API_URL: ${{ vars.VITE_ADMIN_API_URL }}
           VITE_COMM_API_URL: ${{ vars.VITE_COMM_API_URL }}
-          VITE_POSITION_STREAM_WS_BASE: ${{ vars.VITE_POSITION_STREAM_WS_BASE }}
           VITE_COMPANY_URL: ${{ vars.VITE_COMPANY_URL }}
 
       - name: Install Playwright browsers
