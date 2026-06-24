@@ -51,7 +51,7 @@ Escaneos de seguridad locales: `npm run scan:secrets`, `npm run scan:osv`.
 ## Módulos sensibles
 
 - `src/lib/services/mapService.js` — Google Maps, marcadores, editor de zonas
-- `src/lib/services/vehiclePositionStream.js` — WebSocket de posiciones
+- `src/lib/services/vehiclePositionStream.js` — WebSocket de posiciones (base WS derivada de `VITE_COMM_API_URL`)
 - `src/lib/components/ZonasPanel.svelte` — flujo de creación/edición de zonas H3
 
 ## Deploy
