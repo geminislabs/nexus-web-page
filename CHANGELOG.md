@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Map follow mode: botón "Seguir" en el panel de unidad con autoenfoque (zoom 15) y rastro en vivo con degradado
+
 - Vitest coverage gates (`test:coverage`) with thresholds on `src/lib/**` (90/90/70/90)
 - `vitest-setup.js` (happy-dom, `matchMedia`/`localStorage`/`fetch` mocks)
 - Unit tests: auth stores, theme, sessionService, eventService, zoneDbMapper, alarmFormat, api passthrough
@@ -44,6 +46,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deploy passes `ORIGIN` at container runtime (required by SvelteKit adapter-node)
 
 ### Fixed
+
+- El mapa ya no pierde zoom/pan en cada actualización WebSocket de posición
+- Marcadores de unidad dejan de parpadear/desaparecer en updates en vivo (clusterer usa `render()` en lugar de remove/add)
+- El modo seguir se limpia al cambiar a la vista de Trayectos
 
 - Live map positions: WebSocket stream base is derived from `VITE_COMM_API_URL` again (removed redundant `VITE_POSITION_STREAM_WS_BASE` build config)
 - Zone editor: mouse wheel zoom works on desktop when creating zones (zoom lock limited to mobile viewport)
