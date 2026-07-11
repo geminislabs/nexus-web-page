@@ -122,6 +122,9 @@
 		'Configuración';
 
 	function onTrackingPanelViewChange(nextView) {
+		if (nextView === 'trips') {
+			mapService.clearFollowVehicle();
+		}
 		if (trackingPanelView === 'trips' && nextView !== 'trips') {
 			mapService.clearTripRoute();
 			mapService.hideTripAlerts();

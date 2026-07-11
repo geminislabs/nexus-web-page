@@ -159,13 +159,35 @@
 
 			syncPositionStream();
 
+			let lastVehicleIdKey = '';
+			let hasInitiallyCentered = false;
+
+			/** @param {any[]} list */
+			function vehicleListKey(list) {
+				return list
+					.map((v) => String(v.id))
+					.sort()
+					.join('\0');
+			}
+
 			const unsubVehicles = vehicles.subscribe((list) => {
+				const key = vehicleListKey(list);
 				if (list.length > 0) {
-					mapService.addVehicleMarkers(list);
-					const withCoords = list.filter((v) => (v.latitude || v.lat) && (v.longitude || v.lng));
-					if (withCoords.length > 0) mapService.centerOnVehicles(withCoords);
+					if (key !== lastVehicleIdKey) {
+						mapService.addVehicleMarkers(list);
+						lastVehicleIdKey = key;
+						if (!hasInitiallyCentered) {
+							const withCoords = list.filter(
+								(v) => (v.latitude || v.lat) && (v.longitude || v.lng)
+							);
+							if (withCoords.length > 0) mapService.centerOnVehicles(withCoords);
+							hasInitiallyCentered = true;
+						}
+					}
 				} else {
 					mapService.clearVehicleMarkers();
+					lastVehicleIdKey = '';
+					hasInitiallyCentered = false;
 				}
 				syncPositionStream();
 			});
