@@ -1,3 +1,4 @@
+import { writable } from 'svelte/store';
 import * as GoogleMapsLoader from '@googlemaps/js-api-loader';
 import {
 	MarkerClusterer,
@@ -11,6 +12,17 @@ import {
 	getVehicleMarkerMetrics,
 	VEHICLE_MARKER_SIZE
 } from '$lib/utils/vehicleMarkerIcon.js';
+
+/** Color del rastro en vivo y del indicador de seguimiento. */
+const LIVE_TRAIL_COLOR = '#00a6c0';
+/** Últimos N puntos por unidad (~5 min a 1 update/5s). */
+const MAX_TRAIL_POINTS = 60;
+const TRAIL_FADE_MS = 220;
+const TRAIL_MIN_OPACITY = 0.12;
+const TRAIL_MAX_OPACITY = 0.75;
+
+/** Unidad actualmente en modo "seguir" (o null). Para reactividad en UI (botón Seguir). */
+export const followedVehicleId = writable(/** @type {string | null} */ (null));
 
 class MapService {
 	constructor() {
@@ -37,6 +49,25 @@ class MapService {
 		/** @type {ReturnType<typeof setInterval> | null} */
 		this._ringRotationTimer = null;
 		this._ringRotation = 0;
+		/** @type {string | null} Unidad cuya cámara sigue en vivo */
+		this._followVehicleId = null;
+		/** @type {Map<string, Array<{ lat: number, lng: number }>>} Rastro por unidad */
+		this._liveTrails = new Map();
+		/** @type {Map<string, google.maps.Polyline[]>} Segmentos de polyline por unidad (degradado) */
+		this._liveTrailPolylines = new Map();
+		/** @type {Set<string>} Unidades con rastro visible actualmente */
+		this._liveTrailVisible = new Set();
+		/** @type {Map<string, number>} rAF handles de fade in/out por unidad */
+		this._trailFadeTimers = new Map();
+		/** @type {google.maps.Marker | null} Indicador pulsante de la unidad seguida */
+		this._followBadgeMarker = null;
+		/** @type {ReturnType<typeof setInterval> | null} */
+		this._followBadgeTimer = null;
+		this._followBadgePhase = 0;
+		/** @type {google.maps.MapsEventListener | null} */
+		this._followDragListener = null;
+		this._suppressFollowClear = false;
+		this._followZoom = 15;
 		this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
 	}
 
@@ -143,12 +174,16 @@ class MapService {
 		this._stopHighlightPulse();
 		this._stopRingRotation();
 
-		if (prevId) this._applyVehicleMarkerIcon(prevId);
+		if (prevId) {
+			this._applyVehicleMarkerIcon(prevId);
+			if (prevId !== this._followVehicleId) this.hideLiveTrail(prevId);
+		}
 		if (nextId) {
 			this._highlightPulsePhase = 0;
 			this._ringRotation = 0;
 			this._applyVehicleMarkerIcon(nextId);
 			this._startRingRotation();
+			this.showLiveTrail(nextId);
 		}
 	}
 
@@ -227,6 +262,7 @@ class MapService {
 			this._mapClickCloseListener = this.map.addListener('click', () => {
 				this.closeAllVehicleInfoWindows();
 			});
+			this._attachFollowInteractionListeners();
 
 			await this.setUserLocation();
 
@@ -594,6 +630,7 @@ class MapService {
 	clearVehicleMarkers() {
 		this._stopHighlightPulse();
 		this._stopRingRotation();
+		this.clearLiveTrail();
 		if (this.vehicleClusterer) {
 			this.vehicleClusterer.setMap(null);
 			this.vehicleClusterer = null;
@@ -657,6 +694,7 @@ class MapService {
 
 			if (lat != null && lng != null) {
 				const newPosition = { lat: parseFloat(lat), lng: parseFloat(lng) };
+				console.log('[trail] update', vehicle.id, newPosition.lat, newPosition.lng);
 				existingMarkerData.marker.setPosition(newPosition);
 
 				existingMarkerData.infoWindow.setContent(
@@ -666,9 +704,14 @@ class MapService {
 				this._startMarkerBlink(vehicle.id, vehicle);
 
 				if (this.vehicleClusterer) {
-					const m = existingMarkerData.marker;
-					this.vehicleClusterer.removeMarker(m, true);
-					this.vehicleClusterer.addMarker(m);
+					this.vehicleClusterer.render();
+				}
+
+				this._appendLiveTrailPoint(vehicle.id, newPosition.lat, newPosition.lng);
+				this.showLiveTrail(vehicle.id);
+
+				if (vehicle.id === this._followVehicleId) {
+					this._followLivePosition(vehicle, newPosition);
 				}
 			}
 		} else {
@@ -677,6 +720,270 @@ class MapService {
 				this.vehicleClusterer.addMarker(m);
 			}
 		}
+	}
+
+	_attachFollowInteractionListeners() {
+		if (!this.map || this._followDragListener) return;
+		this._followDragListener = this.map.addListener('dragstart', () => {
+			this._onUserMapInteraction();
+		});
+	}
+
+	_onUserMapInteraction() {
+		if (this._suppressFollowClear) {
+			this._suppressFollowClear = false;
+			return;
+		}
+		this.clearFollowVehicle();
+	}
+
+	/**
+	 * Activa seguimiento en vivo de una unidad (cámara + rastro + indicador).
+	 * @param {string} vehicleId
+	 * @param {{ resetTrail?: boolean, seedPosition?: { lat: number, lng: number } }} [opts]
+	 */
+	setFollowVehicle(vehicleId, opts = {}) {
+		this._followVehicleId = vehicleId || null;
+		followedVehicleId.set(this._followVehicleId);
+		if (!vehicleId) {
+			this._removeFollowBadge();
+			return;
+		}
+
+		if (opts.resetTrail !== false) {
+			this.clearLiveTrail(vehicleId);
+		}
+		this.showLiveTrail(vehicleId);
+		if (opts.seedPosition) {
+			this._appendLiveTrailPoint(vehicleId, opts.seedPosition.lat, opts.seedPosition.lng, {
+				force: true
+			});
+		}
+
+		const seed = opts.seedPosition ?? this._getMarkerPosition(vehicleId);
+		if (seed) this._ensureFollowBadge(seed);
+	}
+
+	/** Detiene el seguimiento; conserva el rastro si la unidad sigue activa/seleccionada. */
+	clearFollowVehicle() {
+		const id = this._followVehicleId;
+		this._followVehicleId = null;
+		followedVehicleId.set(null);
+		this._removeFollowBadge();
+		if (id && id !== this._highlightedVehicleId) {
+			this.hideLiveTrail(id);
+		}
+	}
+
+	/** @param {string | null | undefined} vehicleId */
+	isFollowingVehicle(vehicleId) {
+		return Boolean(vehicleId && this._followVehicleId === vehicleId);
+	}
+
+	/** @param {string} vehicleId */
+	_getMarkerPosition(vehicleId) {
+		const pos = this.markers.get(vehicleId)?.marker?.getPosition?.();
+		return pos ? { lat: pos.lat(), lng: pos.lng() } : null;
+	}
+
+	// ── Rastro en vivo (por unidad) ───────────────────────────────────────────
+
+	/**
+	 * @param {string} vehicleId
+	 * @param {number} lat
+	 * @param {number} lng
+	 * @param {{ force?: boolean }} [opts]
+	 */
+	_appendLiveTrailPoint(vehicleId, lat, lng) {
+		if (!vehicleId || !this.google || Number.isNaN(lat) || Number.isNaN(lng)) return;
+
+		const path = this._liveTrails.get(vehicleId) || [];
+		path.push({ lat, lng });
+		if (path.length > MAX_TRAIL_POINTS) path.shift();
+		this._liveTrails.set(vehicleId, path);
+	}
+
+	/** @param {string} vehicleId @param {number} multiplier 0..1 factor de opacidad (fade) */
+	_buildTrailSegments(vehicleId, multiplier) {
+		const path = this._liveTrails.get(vehicleId) || [];
+		const segments = [];
+		for (let i = 1; i < path.length; i++) {
+			const t = path.length > 2 ? (i - 1) / (path.length - 2) : 1;
+			const opacity =
+				(TRAIL_MIN_OPACITY + t * (TRAIL_MAX_OPACITY - TRAIL_MIN_OPACITY)) * multiplier;
+			segments.push({ path: [path[i - 1], path[i]], opacity });
+		}
+		return segments;
+	}
+
+	/** @param {string} vehicleId @param {number} [multiplier] */
+	_redrawLiveTrail(vehicleId, multiplier = 1) {
+		if (!this.map || !this.google) return;
+		const existing = this._liveTrailPolylines.get(vehicleId) || [];
+		const segments = this._buildTrailSegments(vehicleId, multiplier);
+		const points = this._liveTrails.get(vehicleId) || [];
+		console.log('[trail] drawing', vehicleId, points.length, 'points');
+
+		segments.forEach((seg, i) => {
+			let line = existing[i];
+			if (!line) {
+				line = new this.google.maps.Polyline({
+					geodesic: true,
+					strokeColor: LIVE_TRAIL_COLOR,
+					strokeWeight: 3,
+					strokeOpacity: seg.opacity,
+					map: this.map,
+					zIndex: 45
+				});
+				existing[i] = line;
+			}
+			line.setPath(seg.path);
+			line.setOptions({ strokeOpacity: seg.opacity });
+		});
+
+		for (let i = segments.length; i < existing.length; i++) {
+			existing[i]?.setMap(null);
+		}
+		existing.length = segments.length;
+		this._liveTrailPolylines.set(vehicleId, existing);
+	}
+
+	/**
+	 * @param {string} vehicleId
+	 * @param {number} from
+	 * @param {number} to
+	 * @param {() => void} [onDone]
+	 */
+	_animateTrailFade(vehicleId, from, to, onDone) {
+		const existingTimer = this._trailFadeTimers.get(vehicleId);
+		if (existingTimer) cancelAnimationFrame(existingTimer);
+
+		const start = performance.now();
+		const step = (now) => {
+			const t = Math.min(1, (now - start) / TRAIL_FADE_MS);
+			this._redrawLiveTrail(vehicleId, from + (to - from) * t);
+			if (t < 1) {
+				this._trailFadeTimers.set(vehicleId, requestAnimationFrame(step));
+			} else {
+				this._trailFadeTimers.delete(vehicleId);
+				onDone?.();
+			}
+		};
+		this._trailFadeTimers.set(vehicleId, requestAnimationFrame(step));
+	}
+
+	/** Activa (con fade-in) el rastro de una unidad. @param {string} vehicleId */
+	showLiveTrail(vehicleId) {
+		if (!vehicleId || !this.map || !this.google) return;
+		if (this._liveTrailVisible.has(vehicleId)) {
+			this._redrawLiveTrail(vehicleId, 1);
+			return;
+		}
+		this._liveTrailVisible.add(vehicleId);
+		this._animateTrailFade(vehicleId, 0, 1);
+	}
+
+	/** Oculta (con fade-out) el rastro sin borrar los puntos. @param {string} vehicleId */
+	hideLiveTrail(vehicleId) {
+		if (!vehicleId || !this._liveTrailVisible.has(vehicleId)) return;
+		this._liveTrailVisible.delete(vehicleId);
+		this._animateTrailFade(vehicleId, 1, 0, () => {
+			const lines = this._liveTrailPolylines.get(vehicleId) || [];
+			lines.forEach((l) => l.setMap(null));
+			this._liveTrailPolylines.delete(vehicleId);
+		});
+	}
+
+	_hideAllLiveTrails() {
+		for (const vehicleId of [...this._liveTrailVisible]) {
+			this.hideLiveTrail(vehicleId);
+		}
+	}
+
+	/** Borra el rastro (puntos + polylines). Sin argumento, borra el de todas las unidades. */
+	clearLiveTrail(vehicleId) {
+		if (!vehicleId) {
+			for (const id of [...this._liveTrails.keys()]) this.clearLiveTrail(id);
+			return;
+		}
+		this._liveTrailVisible.delete(vehicleId);
+		const timer = this._trailFadeTimers.get(vehicleId);
+		if (timer) {
+			cancelAnimationFrame(timer);
+			this._trailFadeTimers.delete(vehicleId);
+		}
+		const lines = this._liveTrailPolylines.get(vehicleId) || [];
+		lines.forEach((l) => l.setMap(null));
+		this._liveTrailPolylines.delete(vehicleId);
+		this._liveTrails.delete(vehicleId);
+	}
+
+	// ── Indicador de seguimiento (badge pulsante) ─────────────────────────────
+
+	/** @param {{ lat: number, lng: number }} position */
+	_ensureFollowBadge(position) {
+		if (!this.google || !this.map) return;
+		if (!this._followBadgeMarker) {
+			this._followBadgeMarker = new this.google.maps.Marker({
+				position,
+				map: this.map,
+				icon: this._followBadgeIcon(0),
+				zIndex: 1300,
+				clickable: false
+			});
+			this._startFollowBadgePulse();
+		} else {
+			this._followBadgeMarker.setPosition(position);
+		}
+	}
+
+	/** @param {number} phase */
+	_followBadgeIcon(phase) {
+		const scale = 1 + 0.35 * Math.sin(phase);
+		const ringOpacity = 0.55 + 0.35 * Math.cos(phase);
+		const r = 7 * scale;
+		const svg = `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="14" r="${r.toFixed(2)}" fill="${LIVE_TRAIL_COLOR}" fill-opacity="${ringOpacity.toFixed(2)}"/><circle cx="14" cy="14" r="4" fill="${LIVE_TRAIL_COLOR}"/></svg>`;
+		return {
+			url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+			scaledSize: new this.google.maps.Size(28, 28),
+			anchor: new this.google.maps.Point(14, 14)
+		};
+	}
+
+	_startFollowBadgePulse() {
+		if (this._followBadgeTimer) return;
+		this._followBadgeTimer = setInterval(() => {
+			this._followBadgePhase += 0.25;
+			this._followBadgeMarker?.setIcon(this._followBadgeIcon(this._followBadgePhase));
+		}, 90);
+	}
+
+	_removeFollowBadge() {
+		if (this._followBadgeTimer) {
+			clearInterval(this._followBadgeTimer);
+			this._followBadgeTimer = null;
+		}
+		if (this._followBadgeMarker) {
+			this._followBadgeMarker.setMap(null);
+			this._followBadgeMarker = null;
+		}
+		this._followBadgePhase = 0;
+	}
+
+	/**
+	 * @param {any} vehicle
+	 * @param {{ lat: number, lng: number }} [position] posición ya calculada (evita re-parsear)
+	 */
+	_followLivePosition(vehicle, position) {
+		const pos = position ?? {
+			lat: parseFloat(vehicle.latitude || vehicle.lat),
+			lng: parseFloat(vehicle.longitude || vehicle.lng)
+		};
+		if (!this.map || Number.isNaN(pos.lat) || Number.isNaN(pos.lng)) return;
+
+		this._suppressFollowClear = true;
+		this.map.panTo(pos);
+		this._ensureFollowBadge(pos);
 	}
 
 	closeAllVehicleInfoWindows() {
@@ -746,13 +1053,21 @@ class MapService {
 
 	centerOnVehicle(vehicle, opts = {}) {
 		const showPopup = opts.showPopup !== false;
+		const follow = opts.follow !== false;
+		const zoom = opts.zoom ?? this._followZoom;
 		const lat = vehicle.latitude || vehicle.lat;
 		const lng = vehicle.longitude || vehicle.lng;
 
 		if (lat == null || lng == null || !this.map || !this.google) return;
 
-		this.map.setCenter({ lat: parseFloat(lat), lng: parseFloat(lng) });
-		this.map.setZoom(8);
+		const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
+		this._suppressFollowClear = true;
+		this.map.setCenter(position);
+		this.map.setZoom(zoom);
+
+		if (follow && vehicle.id) {
+			this.setFollowVehicle(vehicle.id, { seedPosition: position });
+		}
 
 		if (!showPopup) return;
 
@@ -851,6 +1166,7 @@ class MapService {
 	drawTripRoute(points) {
 		if (!this.map || !this.google || !points?.length) return;
 
+		this.clearFollowVehicle();
 		this.clearTripRoute();
 
 		const path = points.map((p) => ({
@@ -902,6 +1218,7 @@ class MapService {
 
 	/** Limpia la ruta del trayecto del mapa */
 	clearTripRoute() {
+		this._hideAllLiveTrails();
 		if (this._tripPolyline) {
 			this._tripPolyline.setMap(null);
 			this._tripPolyline = null;
@@ -923,6 +1240,7 @@ class MapService {
 	fitBoundsToPoints(points) {
 		if (!this.map || !this.google || !points?.length) return;
 
+		this.clearFollowVehicle();
 		const bounds = new this.google.maps.LatLngBounds();
 		for (const p of points) {
 			bounds.extend({

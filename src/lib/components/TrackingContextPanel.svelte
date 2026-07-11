@@ -2,6 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import ShieldBoltIcon from '$lib/components/icons/ShieldBoltIcon.svelte';
 	import UnitsStatusFilterPanels from './UnitsStatusFilterPanels.svelte';
+	import { mapService, followedVehicleId } from '$lib/services/mapService.js';
 	import {
 		getUnitTrackingStatus,
 		formatUnitStatusDate,
@@ -87,11 +88,20 @@
 						? 'text-yellow-400'
 						: 'text-emerald-400';
 	$: isOnline = engineOn || isMoving;
+	$: isFollowing = Boolean(unit && $followedVehicleId === unit.id);
 	function handleSelectUnit(u) {
 		onSelectUnit(u);
 		showUnitPicker = false;
 		searchQuery = '';
 		statusFilter = 'all';
+	}
+	function toggleFollow() {
+		if (!unit) return;
+		if (isFollowing) {
+			mapService.clearFollowVehicle();
+		} else {
+			mapService.centerOnVehicle(unit, { showPopup: false });
+		}
 	}
 </script>
 
@@ -127,6 +137,23 @@
 							<span class="text-white/40">- {dateLabel}</span>
 						{/if}
 					</p>
+					<button
+						type="button"
+						class="follow-toggle-btn mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-all duration-300"
+						class:following={isFollowing}
+						on:click={toggleFollow}
+						aria-pressed={isFollowing}
+						aria-label={isFollowing
+							? 'Dejar de seguir la unidad en el mapa'
+							: 'Seguir la unidad en el mapa'}
+						title={isFollowing ? 'Siguiendo unidad en el mapa' : 'Seguir unidad en el mapa'}
+					>
+						<Icon
+							icon={isFollowing ? 'mdi:crosshairs-gps' : 'mdi:crosshairs'}
+							class="h-3.5 w-3.5"
+						/>
+						{isFollowing ? 'Siguiendo' : 'Seguir'}
+					</button>
 					<div class="mt-1 flex items-center gap-1 text-xs text-white/50">
 						<Icon icon="mdi:car-battery" class="h-3.5 w-3.5" />
 						<span>{mainBattery}</span>
@@ -253,3 +280,26 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	.follow-toggle-btn {
+		border-color: rgba(148, 163, 184, 0.25);
+		background: rgba(148, 163, 184, 0.08);
+		color: rgba(226, 232, 240, 0.65);
+	}
+	.follow-toggle-btn.following {
+		border-color: rgba(0, 166, 192, 0.55);
+		background: rgba(0, 166, 192, 0.14);
+		color: #00a6c0;
+		animation: follow-toggle-glow 1.8s ease-in-out infinite;
+	}
+	@keyframes follow-toggle-glow {
+		0%,
+		100% {
+			box-shadow: 0 0 0 0 rgba(0, 166, 192, 0.35);
+		}
+		50% {
+			box-shadow: 0 0 10px 2px rgba(0, 166, 192, 0.35);
+		}
+	}
+</style>
