@@ -9,7 +9,12 @@
 		isPositionStreamEnabled,
 		startVehiclePositionStream
 	} from '$lib/services/vehiclePositionStream.js';
-	import { vehicles, vehicleActions, activeUnitId } from '$lib/stores/vehicleStore.js';
+	import {
+		vehicles,
+		vehicleActions,
+		activeUnitId,
+		mapVisibleUnitIds
+	} from '$lib/stores/vehicleStore.js';
 	import {
 		showH3Grid,
 		h3Resolution,
@@ -21,7 +26,7 @@
 	import { h3GridOverlayService } from '$lib/services/h3GridOverlayService.js';
 	import { alerts, alarmEvents, unreadAlarmCount, alertActions } from '$lib/stores/alertStore.js';
 	import { theme } from '$lib/stores/themeStore.js';
-	import { get } from 'svelte/store';
+	import { get, derived } from 'svelte/store';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
 	import ConfirmModal from './ConfirmModal.svelte';
 
@@ -132,6 +137,9 @@
 			const unsubTheme = theme.subscribe(applyTheme);
 
 			if (get(vehicles).length === 0) await vehicleActions.loadVehicles();
+			else if (get(mapVisibleUnitIds).length === 0 && get(vehicles).length > 0) {
+				vehicleActions.showAllOnMap();
+			}
 
 			/** @type {() => void} */
 			let stopPositionStream = () => {};
@@ -170,7 +178,12 @@
 					.join('\0');
 			}
 
-			const unsubVehicles = vehicles.subscribe((list) => {
+			const mapVehicles = derived([vehicles, mapVisibleUnitIds], ([$vehicles, $visibleIds]) => {
+				const visible = new Set(($visibleIds || []).map(String));
+				return ($vehicles || []).filter((v) => visible.has(String(v.id)));
+			});
+
+			const unsubVehicles = mapVehicles.subscribe((list) => {
 				const key = vehicleListKey(list);
 				if (list.length > 0) {
 					if (key !== lastVehicleIdKey) {
@@ -187,7 +200,7 @@
 				} else {
 					mapService.clearVehicleMarkers();
 					lastVehicleIdKey = '';
-					hasInitiallyCentered = false;
+					// No reset hasInitiallyCentered: evita re-fitBounds al ocultar todos y volver a mostrar
 				}
 				syncPositionStream();
 			});

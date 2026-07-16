@@ -1,12 +1,13 @@
 <script>
 	import Icon from '@iconify/svelte';
-	import { createEventDispatcher, onDestroy } from 'svelte';
+	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import { browser } from '$app/environment';
 
 	export let open = false;
 	export let title = '';
+	export let subtitle = '';
 	export let icon = '';
 	export let accentColor = '#2563eb';
 	export let sidebarWidth = 72;
@@ -15,8 +16,36 @@
 	export let headerPaddingClass = 'px-6';
 	export let bodyScrollable = true;
 	export let passiveBackdrop = false;
+	/**
+	 * 'bottom' = sheet inferior.
+	 * 'side' = panel izquierdo solo en escritorio (lg+); en tablet usa sheet inferior.
+	 */
+	export let placement = 'bottom';
+
+	const DESKTOP_MQ = '(min-width: 1024px)';
 
 	const dispatch = createEventDispatcher();
+
+	/** @type {boolean} */
+	let isDesktopUp =
+		browser && typeof window !== 'undefined' && window.matchMedia(DESKTOP_MQ).matches;
+
+	/** @type {MediaQueryList | null} */
+	let desktopMq = null;
+
+	function syncDesktopMq() {
+		isDesktopUp = !!desktopMq?.matches;
+	}
+
+	onMount(() => {
+		if (!browser) return;
+		desktopMq = window.matchMedia(DESKTOP_MQ);
+		syncDesktopMq();
+		desktopMq.addEventListener('change', syncDesktopMq);
+		return () => desktopMq?.removeEventListener('change', syncDesktopMq);
+	});
+
+	$: resolvedPlacement = placement === 'side' && isDesktopUp ? 'side' : 'bottom';
 
 	function slugify(s) {
 		return (
@@ -70,14 +99,19 @@
 		transition:fade={{ duration: 200 }}
 	>
 		<div
-			class="pointer-events-auto absolute left-0 right-0 top-0 flex h-[clamp(520px,74vh,860px)] max-h-[860px] flex-col overflow-hidden border-b border-slate-200 bg-white/95 text-slate-900 shadow-xl backdrop-blur-[40px] [-webkit-backdrop-filter:blur(40px)] dark:border-white/[0.07] dark:bg-[rgb(8_11_22_/0.97)] dark:text-white dark:shadow-[0_24px_80px_rgba(0,0,0,0.75),0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]"
+			class="pointer-events-auto absolute flex flex-col overflow-hidden bg-white/95 text-slate-900 shadow-xl backdrop-blur-[40px] [-webkit-backdrop-filter:blur(40px)] dark:bg-[rgb(8_11_22_/0.97)] dark:text-white dark:shadow-[0_24px_80px_rgba(0,0,0,0.75),0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] {resolvedPlacement ===
+			'side'
+				? 'left-0 top-0 bottom-0 w-[min(420px,40%)] max-w-[480px] border-r border-slate-200 dark:border-white/[0.07]'
+				: 'left-0 right-0 bottom-0 h-[50vh] max-h-[50vh] overflow-y-auto rounded-t-2xl border-t border-slate-200 dark:border-white/[0.07]'}"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby={headingIdResolved}
 			tabindex="-1"
 			on:click|stopPropagation
 			on:keydown|stopPropagation={(e) => e.stopPropagation()}
-			transition:fly={{ y: -20, duration: 380, easing: cubicOut, opacity: 0.95 }}
+			transition:fly={resolvedPlacement === 'side'
+				? { x: -24, duration: 320, easing: cubicOut, opacity: 0.96 }
+				: { y: 20, duration: 380, easing: cubicOut, opacity: 0.95 }}
 		>
 			<div
 				class="h-0.5 shrink-0 opacity-80"
@@ -110,6 +144,9 @@
 						>
 							{title}
 						</h2>
+						{#if subtitle}
+							<p class="m-0 mt-0.5 text-[12px] text-slate-500 dark:text-white/45">{subtitle}</p>
+						{/if}
 					</div>
 				</div>
 				<button

@@ -7,6 +7,8 @@ import { colorSlugToHex, formatLastUpdate } from '$lib/utils/vehicleUtils.js';
 // Estado principal de vehículos
 export const vehicles = writable([]);
 export const selectedVehicles = writable([]);
+/** IDs de unidades visibles en el mapa (marcadores). */
+export const mapVisibleUnitIds = writable([]);
 export const activeUnitId = writable(null);
 export const loadingVehicles = writable(false);
 export const vehiclePositions = writable(new Map());
@@ -23,6 +25,21 @@ export const activeUnit = derived([vehicles, activeUnitId], ([$vehicles, $active
 
 // Store derivado para contar vehículos seleccionados
 export const selectedVehicleCount = derived(selectedVehicles, ($selected) => $selected.length);
+
+export const mapVisibleUnitCount = derived(mapVisibleUnitIds, ($ids) => $ids.length);
+
+/** Sincroniza visibilidad: nuevas unidades visibles; elimina IDs que ya no existen. */
+function syncMapVisibleIds(vehicleList) {
+	const ids = vehicleList.map((v) => String(v?.id || '')).filter(Boolean);
+	const idSet = new Set(ids);
+	mapVisibleUnitIds.update((prev) => {
+		if (!Array.isArray(prev) || prev.length === 0) return ids;
+		const kept = prev.filter((id) => idSet.has(String(id)));
+		const keptSet = new Set(kept);
+		const added = ids.filter((id) => !keptSet.has(id));
+		return [...kept, ...added];
+	});
+}
 
 function hasVehicleCoords(v) {
 	const lat = v.latitude ?? v.lat;
@@ -159,11 +176,14 @@ export const vehicleActions = {
 		try {
 			const unitList = await apiService.getVehicles();
 			const apiVehicles = Array.isArray(unitList) ? unitList.map(mapUnitToVehicle) : [];
-			vehicles.set(mergeVehicleLists(apiVehicles));
+			const merged = mergeVehicleLists(apiVehicles);
+			vehicles.set(merged);
+			syncMapVisibleIds(merged);
 			await this.loadVehiclePositions();
 		} catch (error) {
 			console.error('Error cargando unidades desde API:', error);
 			vehicles.set([]);
+			mapVisibleUnitIds.set([]);
 		} finally {
 			loadingVehicles.set(false);
 		}
@@ -209,7 +229,8 @@ export const vehicleActions = {
 								engineStatus: position.engineStatus,
 								satellites: position.satellites,
 								rxLvl: position.rxLvl,
-								mainBatteryVoltage: position.mainBatteryVoltage
+								mainBatteryVoltage: position.mainBatteryVoltage,
+								backupBatteryVoltage: position.backupBatteryVoltage
 							};
 						}
 					}
@@ -259,7 +280,10 @@ export const vehicleActions = {
 		);
 
 		if (updatedVehicle && mapService.map) {
-			mapService.updateVehicleMarker(updatedVehicle);
+			const visible = get(mapVisibleUnitIds);
+			if (visible.includes(String(updatedVehicle.id))) {
+				mapService.updateVehicleMarker(updatedVehicle);
+			}
 		}
 	},
 
@@ -292,7 +316,8 @@ export const vehicleActions = {
 							engineStatus: position.engineStatus,
 							satellites: position.satellites,
 							rxLvl: position.rxLvl,
-							mainBatteryVoltage: position.mainBatteryVoltage
+							mainBatteryVoltage: position.mainBatteryVoltage,
+							backupBatteryVoltage: position.backupBatteryVoltage
 						};
 					}
 					return vehicle;
@@ -327,6 +352,53 @@ export const vehicleActions = {
 	// Limpiar selección
 	clearSelection() {
 		selectedVehicles.set([]);
+	},
+
+	/** ¿La unidad se muestra en el mapa? */
+	isVisibleOnMap(vehicleId) {
+		return get(mapVisibleUnitIds).includes(String(vehicleId));
+	},
+
+	toggleMapVisibility(vehicleId) {
+		const id = String(vehicleId ?? '');
+		if (!id) return;
+		mapVisibleUnitIds.update((ids) => {
+			if (ids.includes(id)) return ids.filter((x) => x !== id);
+			return [...ids, id];
+		});
+	},
+
+	setMapVisibility(vehicleId, visible) {
+		const id = String(vehicleId ?? '');
+		if (!id) return;
+		mapVisibleUnitIds.update((ids) => {
+			const has = ids.includes(id);
+			if (visible && !has) return [...ids, id];
+			if (!visible && has) return ids.filter((x) => x !== id);
+			return ids;
+		});
+	},
+
+	/** Muestra u oculta un conjunto de IDs (p. ej. resultados filtrados). */
+	setMapVisibilityForIds(vehicleIds, visible) {
+		const target = new Set((vehicleIds || []).map((id) => String(id)).filter(Boolean));
+		if (target.size === 0) return;
+		mapVisibleUnitIds.update((ids) => {
+			if (visible) {
+				const next = new Set(ids);
+				target.forEach((id) => next.add(id));
+				return [...next];
+			}
+			return ids.filter((id) => !target.has(id));
+		});
+	},
+
+	showAllOnMap() {
+		mapVisibleUnitIds.set(get(vehicles).map((v) => String(v.id)));
+	},
+
+	hideAllOnMap() {
+		mapVisibleUnitIds.set([]);
 	},
 
 	// Obtener vehículo por ID
@@ -373,6 +445,9 @@ export const vehicleActions = {
 			mapped.deviceId = payload.deviceId || payload.device_id;
 		}
 		vehicles.update((list) => [mapped, ...list.filter((v) => v.id !== mapped.id)]);
+		mapVisibleUnitIds.update((ids) =>
+			ids.includes(mapped.id) ? ids : [...ids, String(mapped.id)]
+		);
 		return mapped;
 	},
 
@@ -414,8 +489,10 @@ export const vehicleActions = {
 	async deleteVehicle(vehicleId) {
 		if (!vehicleId) return;
 		await apiService.deleteVehicle(vehicleId);
+		const id = String(vehicleId);
 		vehicles.update((list) => list.filter((v) => v.id !== vehicleId));
-		selectedVehicles.update((list) => list.filter((id) => id !== vehicleId));
+		selectedVehicles.update((list) => list.filter((x) => x !== vehicleId && x !== id));
+		mapVisibleUnitIds.update((list) => list.filter((x) => x !== id));
 	},
 
 	setActiveUnit(unitId) {
