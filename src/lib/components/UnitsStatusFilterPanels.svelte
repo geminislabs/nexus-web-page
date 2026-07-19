@@ -14,7 +14,7 @@
 			id: 'all',
 			label: 'Todas',
 			icon: 'mdi:car-side',
-			iconWrap: 'bg-white/15 text-white',
+			iconWrap: 'bg-slate-200 text-slate-600 dark:bg-white/15 dark:text-white',
 			activeClass:
 				'border-blue-500/50 bg-blue-600 text-white dark:border-blue-500/50 dark:bg-blue-600'
 		},
@@ -22,17 +22,17 @@
 			id: 'moving',
 			label: 'En movimiento',
 			icon: 'mdi:play',
-			iconWrap: 'bg-emerald-500/20 text-emerald-400',
+			iconWrap: 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400',
 			activeClass:
-				'border-emerald-500/40 bg-emerald-500/15 text-white dark:border-emerald-500/40 dark:bg-emerald-500/15'
+				'border-emerald-500/40 bg-emerald-500/15 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-white'
 		},
 		{
 			id: 'stopped',
 			label: 'Paradas',
 			icon: 'mdi:pause',
-			iconWrap: 'bg-orange-500/20 text-orange-400',
+			iconWrap: 'bg-orange-500/15 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400',
 			activeClass:
-				'border-orange-500/40 bg-orange-500/15 text-white dark:border-orange-500/40 dark:bg-orange-500/15'
+				'border-orange-500/40 bg-orange-500/15 text-orange-800 dark:border-orange-500/40 dark:bg-orange-500/15 dark:text-white'
 		}
 	];
 
@@ -43,16 +43,12 @@
 		stopped: units.length - movingCount
 	};
 
-	$: inactiveClass =
-		variant === 'embedded'
-			? 'border-white/10 bg-white/[0.04]'
-			: 'border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.04]';
-	$: inactiveLabelClass =
-		variant === 'embedded' ? 'text-white/55' : 'text-slate-600 dark:text-white/55';
-	$: inactiveCountClass = variant === 'embedded' ? 'text-white' : 'text-slate-900 dark:text-white';
+	const inactiveClass = 'border-slate-200 bg-slate-50 dark:border-white/10 dark:bg-white/[0.04]';
+	const inactiveLabelClass = 'text-slate-600 dark:text-white/55';
+	const inactiveCountClass = 'text-slate-900 dark:text-white';
 </script>
 
-<div class="grid grid-cols-3 gap-2">
+<div class="grid grid-cols-3 gap-2" data-variant={variant}>
 	{#each statusPanels as panel (panel.id)}
 		{@const isActive = value === panel.id}
 		<button

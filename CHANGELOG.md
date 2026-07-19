@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Seguimiento units UI: telemetry cards, status filters, and map visibility toggles (`MapVisibleUnitsCard`); dual light/dark panels across tracking and reports unit picker
+
 - Map follow mode: botón "Seguir" en el panel de unidad con autoenfoque (zoom 15) y rastro en vivo con degradado
 
 - Vitest coverage gates (`test:coverage`) with thresholds on `src/lib/**` (90/90/70/90)
@@ -20,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI uploads coverage artifact; `audit` and `e2e` jobs are blocking (no `continue-on-error`)
 
 ### Changed
+
+- Responsive tracking layout: tablet bottom sheet for seguimiento; floating “Unidades visibles” on desktop (lg+) only; hide vehicle InfoWindow on mobile; map initializes from saved theme (early `app.html` theme script)
 
 - `npm run validate` runs `test:coverage` instead of plain `test`
 - npm override for `js-yaml` audit advisory
