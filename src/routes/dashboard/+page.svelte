@@ -25,6 +25,7 @@
 	import MapContainer from '$lib/components/MapContainer.svelte';
 	import TopDrawer from '$lib/components/TopDrawer.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
+	import MapVisibleUnitsCard from '$lib/components/MapVisibleUnitsCard.svelte';
 	import AdminPanel from '$lib/components/AdminPanel.svelte';
 
 	import BottomTabBar from '$lib/components/BottomTabBar.svelte';
@@ -51,14 +52,9 @@
 
 	const sidebarBtnBase =
 		'relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-[14px] border transition-[background-color,border-color,color,box-shadow] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#080b16]';
-	const sidebarBtnIdle =
-		'border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85';
-	const sidebarBtnDrawerActive =
-		'border-blue-500/40 bg-blue-50 text-blue-700 shadow-sm dark:border-blue-500/45 dark:bg-blue-600/[0.22] dark:text-blue-400 dark:shadow-[0_0_16px_rgba(37,99,235,0.25),inset_0_1px_0_rgba(255,255,255,0.08)]';
-	const sidebarBtnUserOpen =
-		'border-blue-400/40 bg-blue-50 text-blue-700 hover:border-blue-500/50 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:border-blue-500/40 dark:hover:bg-blue-600/20';
+	/** Idle / active en el markup (clases literales) para que Tailwind las detecte y Svelte reaccione a openDrawer. */
 	const baseConfigSidebarItems = [
-		{ id: 'unidades', label: 'Unidades', icon: 'mdi:car-side' },
+		{ id: 'unidades', label: 'Unidades', title: 'Seguimiento', icon: 'mdi:car-side' },
 		{ id: 'zonas', label: 'Zonas', icon: 'mdi:hexagon-multiple-outline' },
 		{ id: 'gestionar_alertas', label: 'Gestionar', icon: 'mdi:format-list-bulleted' },
 		{
@@ -106,8 +102,13 @@
 		openDrawer = openDrawer === drawerId ? '' : drawerId;
 	}
 
-	function isConfigDrawerActive(section) {
-		return openDrawer === getConfigDrawerId(section);
+	/** Clases de botón lateral: el caller debe pasar un booleano derivado de openDrawer en el template. */
+	function sidebarNavBtnClass(active) {
+		const idle =
+			'border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85';
+		const activeCls =
+			'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/35 dark:border-blue-400/50 dark:bg-blue-500/25 dark:text-blue-300 dark:shadow-[0_0_18px_rgba(59,130,246,0.35)]';
+		return `${sidebarBtnBase} ${active ? activeCls : idle}`;
 	}
 
 	$: isConfigDrawerOpen = openDrawer.startsWith('configuracion:');
@@ -317,13 +318,17 @@
 			</a>
 		</header>
 
-		<div class="my-2 h-px w-9 shrink-0 bg-white/[0.08]" role="presentation"></div>
+		<div class="my-2 h-px w-9 shrink-0 bg-slate-200 dark:bg-white/[0.08]" role="presentation"></div>
 
 		<nav class="flex w-full flex-1 flex-col items-center gap-1 px-0" aria-label="Accesos rápidos">
 			<div class="relative w-full shrink-0 px-3" data-dashboard-user-menu>
 				<button
 					type="button"
-					class={`${sidebarBtnBase} mx-auto w-12 ${showUserMenu ? sidebarBtnUserOpen : sidebarBtnIdle}`}
+					class={`${sidebarBtnBase} mx-auto w-12 ${
+						showUserMenu
+							? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/35 dark:border-blue-400/50 dark:bg-blue-500/25 dark:text-blue-300'
+							: 'border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85'
+					}`}
 					aria-expanded={showUserMenu}
 					aria-haspopup="true"
 					aria-controls="dashboard-user-menu"
@@ -376,7 +381,7 @@
 											type="button"
 											class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/55 dark:text-white/70
 												{isConfigDrawerOpen && activeConfigSection === 'apariencia'
-												? 'border-blue-500/45 bg-blue-600/22 text-blue-300 shadow-[0_0_12px_rgba(37,99,235,0.25)]'
+												? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/25 dark:border-blue-500/45 dark:bg-blue-600/22 dark:text-blue-300 dark:shadow-[0_0_12px_rgba(37,99,235,0.25)]'
 												: 'border-slate-200 bg-slate-100 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-900 dark:border-white/[0.12] dark:bg-white/[0.06] dark:hover:border-white/20 dark:hover:bg-white/[0.1] dark:hover:text-white'}"
 											aria-label="Configuración"
 											title="Configuración"
@@ -416,29 +421,48 @@
 			<div class="flex flex-col items-center gap-1">
 				<button
 					type="button"
-					class={`${sidebarBtnBase} mx-auto ${openDrawer === 'informes' ? sidebarBtnDrawerActive : sidebarBtnIdle}`}
+					class="{sidebarNavBtnClass(openDrawer === 'informes')} mx-auto"
 					aria-label="Abrir informes"
 					aria-pressed={openDrawer === 'informes'}
 					title="Informes"
 					on:click={() => toggleDrawer('informes')}
 				>
+					{#if openDrawer === 'informes'}
+						<span
+							class="absolute -left-1 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-blue-600 dark:bg-blue-400"
+							aria-hidden="true"
+						></span>
+					{/if}
 					<Icon
 						icon="mdi:file-chart-outline"
-						class="h-[22px] w-[22px] shrink-0"
+						class="h-[22px] w-[22px] shrink-0 {openDrawer === 'informes'
+							? 'text-white dark:text-blue-300'
+							: ''}"
 						aria-hidden="true"
 					/>
 				</button>
 
 				{#each configSidebarItems as item (item.id)}
+					{@const itemActive = openDrawer === `configuracion:${item.id}`}
 					<button
 						type="button"
-						class={`${sidebarBtnBase} mx-auto ${isConfigDrawerActive(item.id) ? sidebarBtnDrawerActive : sidebarBtnIdle}`}
+						class="{sidebarNavBtnClass(itemActive)} mx-auto"
 						aria-label={item.title ?? `Abrir ${item.label}`}
-						aria-pressed={isConfigDrawerActive(item.id)}
+						aria-pressed={itemActive}
 						title={item.title ?? item.label}
 						on:click={() => openConfigDrawer(item.id)}
 					>
-						<Icon icon={item.icon} class="h-[22px] w-[22px] shrink-0" aria-hidden="true" />
+						{#if itemActive}
+							<span
+								class="absolute -left-1 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-blue-600 dark:bg-blue-400"
+								aria-hidden="true"
+							></span>
+						{/if}
+						<Icon
+							icon={item.icon}
+							class="h-[22px] w-[22px] shrink-0 {itemActive ? 'text-white dark:text-blue-300' : ''}"
+							aria-hidden="true"
+						/>
 					</button>
 				{/each}
 			</div>
@@ -448,7 +472,7 @@
 			{#if browser}
 				<button
 					type="button"
-					class={`${sidebarBtnBase} mx-auto h-[42px] w-[42px] rounded-[10px] ${sidebarBtnIdle}`}
+					class={`${sidebarBtnBase} mx-auto h-[42px] w-[42px] rounded-[10px] border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85`}
 					on:click={toggleFullscreen}
 					aria-label={isAppFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
 					title={isAppFullscreen ? 'Salir' : 'Pantalla completa'}
@@ -490,14 +514,22 @@
 		<TopDrawer
 			open={isConfigDrawerOpen}
 			title={configDrawerTitle}
+			subtitle={activeConfigSection === 'unidades'
+				? 'Visualiza y administra tus unidades en tiempo real'
+				: ''}
 			icon={activeConfigSection === 'administracion'
 				? 'mdi:shield-account-outline'
-				: 'mdi:cog-outline'}
+				: activeConfigSection === 'unidades'
+					? 'mdi:car-side'
+					: 'mdi:cog-outline'}
 			accentColor={activeConfigSection === 'administracion' ? '#2563eb' : '#10b981'}
 			sidebarWidth={SW}
 			bodyPaddingClass={activeConfigSection === 'administracion' ? 'py-4 px-0' : 'p-0'}
 			bodyScrollable={activeConfigSection !== 'zonas' && activeConfigSection !== 'unidades'}
-			passiveBackdrop={$mobileCrearZonaMapPassesPointer || $desktopZonePanelSubView !== 'zonas'}
+			placement={activeConfigSection === 'unidades' ? 'side' : 'bottom'}
+			passiveBackdrop={$mobileCrearZonaMapPassesPointer ||
+				$desktopZonePanelSubView !== 'zonas' ||
+				activeConfigSection === 'unidades'}
 			on:close={closeDrawer}
 		>
 			{#if activeConfigSection === 'administracion'}
@@ -514,6 +546,15 @@
 			{/if}
 		</TopDrawer>
 
+		{#if isConfigDrawerOpen && activeConfigSection === 'unidades'}
+			<div
+				class="pointer-events-none fixed right-4 top-4 z-[115] hidden lg:block"
+				aria-hidden="false"
+			>
+				<MapVisibleUnitsCard />
+			</div>
+		{/if}
+
 		{#if $desktopZonePanelSubView !== 'zonas'}
 			<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
 		{/if}
@@ -521,8 +562,10 @@
 		<!-- PR-04: TrackingContextPanel flotante para desktop/tablet -->
 		{#if $activeUnit && !isConfigDrawerOpen && openDrawer !== 'informes'}
 			<div class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block">
-				<div class="pointer-events-auto overflow-hidden rounded-2xl shadow-2xl">
-					<div class="max-h-[70vh] bg-[#0c1829]">
+				<div
+					class="pointer-events-auto overflow-hidden rounded-2xl border border-slate-200/80 shadow-xl dark:border-transparent dark:shadow-2xl"
+				>
+					<div class="max-h-[70vh] bg-white dark:bg-[#0c1829]">
 						<TrackingSubPanel
 							unit={$activeUnit}
 							units={$vehicles}
@@ -628,7 +671,7 @@
 			transition:fly={{ y: 20, duration: 200, easing: cubicOut }}
 		>
 			<div
-				class="max-h-[60vh] overflow-hidden rounded-2xl bg-[#0c1829] shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
+				class="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
 			>
 				<TrackingSubPanel
 					unit={$activeUnit}

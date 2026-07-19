@@ -200,7 +200,8 @@ class PositionService {
 			engineStatus,
 			satellites,
 			rxLvl,
-			mainBatteryVoltage
+			mainBatteryVoltage,
+			backupBatteryVoltage
 		};
 	}
 

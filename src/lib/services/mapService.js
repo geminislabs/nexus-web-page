@@ -1,10 +1,11 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import * as GoogleMapsLoader from '@googlemaps/js-api-loader';
 import {
 	MarkerClusterer,
 	SuperClusterAlgorithm
 } from '@googlemaps/markerclusterer/dist/index.esm.mjs';
 import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyles';
+import { theme } from '$lib/stores/themeStore.js';
 import {
 	buildVehicleMarkerDataUrl,
 	getStatusHexColor,
@@ -15,6 +16,8 @@ import {
 
 /** Color del rastro en vivo y del indicador de seguimiento. */
 const LIVE_TRAIL_COLOR = '#00a6c0';
+/** Breakpoint móvil (alineado con MapContainer / Tailwind `sm`). */
+const MOBILE_MQ = '(max-width: 639px)';
 /** Últimos N puntos por unidad (~5 min a 1 update/5s). */
 const MAX_TRAIL_POINTS = 60;
 const TRAIL_FADE_MS = 220;
@@ -234,9 +237,9 @@ class MapService {
 
 			this.google = await loader.load();
 
-			const isMobileLayout =
-				typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+			const isMobileLayout = this._isMobileLayout();
 
+			const initialTheme = this._resolveInitialMapTheme();
 			const mapOptions = {
 				center: { lat: 19.4326, lng: -99.1332 },
 				zoom: 10,
@@ -251,8 +254,8 @@ class MapService {
 				streetViewControl: false,
 				rotateControl: false,
 				scaleControl: false,
-				styles: darkBlueCarStyle,
-				backgroundColor: DBLUE.bg
+				styles: initialTheme === 'light' ? grayBlueMapStyle : darkBlueCarStyle,
+				backgroundColor: initialTheme === 'light' ? COLORS.grayLight : DBLUE.bg
 			};
 
 			this.map = new this.google.maps.Map(mapElement, mapOptions);
@@ -715,10 +718,7 @@ class MapService {
 				}
 			}
 		} else {
-			const m = this.addVehicleMarker(vehicle);
-			if (m && this.vehicleClusterer) {
-				this.vehicleClusterer.addMarker(m);
-			}
+			// No recrear marcador aquí: la visibilidad la controla mapVisibleUnitIds vía MapContainer.
 		}
 	}
 
@@ -993,8 +993,14 @@ class MapService {
 		}
 	}
 
+	/** @returns {boolean} */
+	_isMobileLayout() {
+		return typeof window !== 'undefined' && window.matchMedia(MOBILE_MQ).matches;
+	}
+
 	/**
 	 * Abre el InfoWindow de la unidad (mismo contenido que al pulsar el marcador).
+	 * En móvil no se muestra: el panel inferior ya cubre la ficha de la unidad.
 	 * Si el marcador está en un cluster, se ancla por la posición del `Marker`.
 	 * @param {{ id: string }} vehicle
 	 * @param {{ refreshContent?: boolean }} [opts]
@@ -1002,6 +1008,12 @@ class MapService {
 	openVehicleInfoWindow(vehicle, opts = {}) {
 		const refreshContent = opts.refreshContent !== false;
 		if (!this.map || !this.google || !vehicle?.id) return;
+
+		// Móvil: sheet de tracking; evita duplicar la ficha sobre el mapa.
+		if (this._isMobileLayout()) {
+			this.closeAllVehicleInfoWindows();
+			return;
+		}
 
 		const entry = this.markers.get(vehicle.id);
 		if (!entry?.infoWindow || !entry.marker) return;
@@ -1089,6 +1101,25 @@ class MapService {
 	}
 
 	/**
+	 * Tema del mapa al inicializar: respeta store / DOM (sin flash a dark).
+	 * @returns {'light' | 'dark'}
+	 */
+	_resolveInitialMapTheme() {
+		try {
+			const t = get(theme);
+			if (t === 'light' || t === 'dark') return t;
+		} catch {
+			/* store aún no disponible */
+		}
+		if (typeof document !== 'undefined') {
+			if (document.documentElement.classList.contains('dark')) return 'dark';
+			if (document.documentElement.dataset.theme === 'light') return 'light';
+			if (document.documentElement.dataset.theme === 'dark') return 'dark';
+		}
+		return 'dark';
+	}
+
+	/**
 	 * @param {'light' | 'dark'} mode
 	 */
 	setMapTheme(mode) {
@@ -1128,9 +1159,7 @@ class MapService {
 	 */
 	enableMobileZoneEditorZoomLock() {
 		if (!this.map || this._mobileZoneZoomLocked) return;
-		const isMobileLayout =
-			typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
-		if (!isMobileLayout) return;
+		if (!this._isMobileLayout()) return;
 		const z = this._mobileZoneEditorZoom;
 		this._mobileZoneZoomLocked = true;
 		this.map.setOptions({

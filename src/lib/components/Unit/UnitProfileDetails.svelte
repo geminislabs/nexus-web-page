@@ -53,16 +53,16 @@
 	$: isDrawer = variant === 'drawer';
 	$: sectionLabelClass = isDrawer
 		? 'mb-2 text-[11px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400/80'
-		: 'mb-2 text-[12px] font-bold uppercase tracking-wider text-cyan-400/80';
+		: 'mb-2 text-[12px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400/80';
 	$: fieldLabelClass = isDrawer
 		? 'w-[100px] shrink-0 text-[12px] text-slate-500 dark:text-white/40'
-		: 'w-[100px] shrink-0 text-[14px] text-white/40';
+		: 'w-[100px] shrink-0 text-[14px] text-slate-500 dark:text-white/40';
 	$: fieldValueClass = isDrawer
 		? 'text-[12px] font-medium text-slate-800 dark:text-white/90'
-		: 'text-[14px] font-medium text-white/90';
+		: 'text-[14px] font-medium text-slate-800 dark:text-white/90';
 	$: fieldEmptyClass = isDrawer
 		? 'text-[12px] font-medium text-slate-400 dark:text-white/30'
-		: 'text-[14px] font-medium text-white/30';
+		: 'text-[14px] font-medium text-slate-400 dark:text-white/30';
 </script>
 
 {#if loading}
@@ -73,44 +73,30 @@
 	</div>
 {:else if error}
 	<div
-		class="flex h-28 flex-col items-center justify-center gap-2 px-4 text-center {isDrawer
-			? 'text-slate-500 dark:text-white/45'
-			: ''}"
+		class="flex h-28 flex-col items-center justify-center gap-2 px-4 text-center text-slate-500 dark:text-white/45"
 	>
 		<Icon
 			icon="mdi:alert-circle-outline"
 			width={28}
-			class={isDrawer ? 'opacity-40' : 'text-white/25'}
+			class="text-slate-300 opacity-40 dark:text-white/25"
 		/>
-		<p class="m-0 text-xs {isDrawer ? '' : 'text-white/45'}">{error}</p>
+		<p class="m-0 text-xs">{error}</p>
 	</div>
 {:else}
 	<div
-		class="mx-4 mb-4 flex items-center gap-4 rounded-2xl border p-4 {isDrawer
-			? 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.04]'
-			: 'border-white/10 bg-white/[0.05]'}"
+		class="mx-4 mb-4 flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.05]"
 	>
 		<div
-			class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl {isDrawer
-				? 'bg-slate-100 dark:bg-white/[0.06]'
-				: 'bg-white/[0.06]'}"
+			class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/[0.06]"
 		>
 			<ColoredVehicleIcon src={iconSrc} colorHex={iconColorHex} sizeClass="h-12 w-12" />
 		</div>
 		<div class="min-w-0 flex-1">
-			<p
-				class="m-0 text-[17px] font-bold leading-tight {isDrawer
-					? 'text-slate-900 dark:text-white'
-					: 'text-white'}"
-			>
+			<p class="m-0 text-[17px] font-bold leading-tight text-slate-900 dark:text-white">
 				{displayName}
 			</p>
 			{#if description}
-				<p
-					class="m-0 mt-1 text-[13px] {isDrawer
-						? 'text-slate-600 dark:text-white/50'
-						: 'text-white/50'}"
-				>
+				<p class="m-0 mt-1 text-[13px] text-slate-600 dark:text-white/50">
 					{description}
 				</p>
 			{/if}

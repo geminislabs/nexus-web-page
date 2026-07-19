@@ -104,27 +104,27 @@
 	<TripDetailView trip={$selectedTrip} onBack={handleBackFromDetail} onClose={handleClose} />
 {:else}
 	<div class="flex h-full flex-col">
-		<div class="flex items-center gap-2 border-b border-white/10 px-3 py-2">
+		<div class="flex items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-white/10">
 			<button
 				type="button"
-				class="flex h-8 w-8 items-center justify-center rounded-lg text-white/60 hover:bg-white/10"
+				class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-white/60 dark:hover:bg-white/10"
 				on:click={handleBack}
 				aria-label="Volver"
 			>
 				<Icon icon="mdi:arrow-left" width={20} />
 			</button>
 			<div class="flex-1">
-				<p class="m-0 text-sm font-semibold text-white">Trayectos</p>
-				<p class="m-0 text-[11px] text-white/50">{unit?.name || 'Unidad'}</p>
+				<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">Trayectos</p>
+				<p class="m-0 text-[11px] text-slate-500 dark:text-white/50">{unit?.name || 'Unidad'}</p>
 			</div>
 		</div>
 
-		<div class="border-b border-white/10 px-3 py-2">
+		<div class="border-b border-slate-200 px-3 py-2 dark:border-white/10">
 			<input
 				type="date"
 				bind:value={selectedDate}
 				on:change={handleDateChange}
-				class="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white"
+				class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/15 dark:bg-white/5 dark:text-white"
 			/>
 		</div>
 
@@ -138,12 +138,12 @@
 			{:else if $tripError}
 				<div class="flex h-32 flex-col items-center justify-center gap-2 px-4 text-center">
 					<Icon icon="mdi:alert-circle-outline" width={28} class="text-red-400" />
-					<p class="m-0 text-xs text-white/50">{$tripError}</p>
+					<p class="m-0 text-xs text-slate-500 dark:text-white/50">{$tripError}</p>
 				</div>
 			{:else if $trips.length === 0}
 				<div class="flex h-32 flex-col items-center justify-center gap-2 px-4 text-center">
-					<Icon icon="mdi:map-marker-path" width={28} class="text-white/25" />
-					<p class="m-0 text-xs text-white/50">Sin trayectos para esta fecha</p>
+					<Icon icon="mdi:map-marker-path" width={28} class="text-slate-300 dark:text-white/25" />
+					<p class="m-0 text-xs text-slate-500 dark:text-white/50">Sin trayectos para esta fecha</p>
 				</div>
 			{:else}
 				<ul class="m-0 list-none space-y-2 p-3">
@@ -151,19 +151,25 @@
 						<li>
 							<button
 								type="button"
-								class="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition-colors hover:border-cyan-400/30 hover:bg-white/10"
+								class="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition-colors hover:border-cyan-400/30 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
 								on:click={() => selectTrip(trip)}
 							>
 								<div
 									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-400/15"
 								>
-									<Icon icon="mdi:clock-outline" width={20} class="text-cyan-400" />
+									<Icon
+										icon="mdi:clock-outline"
+										width={20}
+										class="text-cyan-600 dark:text-cyan-400"
+									/>
 								</div>
 								<div class="min-w-0 flex-1">
-									<p class="m-0 text-[15px] font-semibold text-white">
+									<p class="m-0 text-[15px] font-semibold text-slate-900 dark:text-white">
 										{formatTime(trip.start_timestamp)} - {formatTime(trip.end_timestamp)}
 									</p>
-									<div class="mt-1 flex items-center gap-4 text-xs text-white/50">
+									<div
+										class="mt-1 flex items-center gap-4 text-xs text-slate-500 dark:text-white/50"
+									>
 										<span class="flex items-center gap-1">
 											<Icon icon="mdi:swap-horizontal" width={14} />
 											{formatDistance(trip.distance_km)}
@@ -174,7 +180,11 @@
 										</span>
 									</div>
 								</div>
-								<Icon icon="mdi:chevron-right" width={20} class="text-white/30" />
+								<Icon
+									icon="mdi:chevron-right"
+									width={20}
+									class="text-slate-400 dark:text-white/30"
+								/>
 							</button>
 						</li>
 					{/each}

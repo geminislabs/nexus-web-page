@@ -84,58 +84,62 @@
 	}
 </script>
 
-<div class="flex max-h-[70vh] flex-col bg-[#0c1829]">
-	<div class="flex items-center gap-2 border-b border-white/10 px-3 py-2">
+<div class="flex max-h-[70vh] flex-col bg-white dark:bg-[#0c1829]">
+	<div class="flex items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-white/10">
 		<button
 			type="button"
-			class="flex h-8 w-8 items-center justify-center rounded-lg text-white/60 hover:bg-white/10"
+			class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-white/60 dark:hover:bg-white/10"
 			on:click={onBack}
 			aria-label="Volver"
 		>
 			<Icon icon="mdi:arrow-left" width={20} />
 		</button>
 		<div class="flex-1">
-			<p class="m-0 text-sm font-semibold text-white">Compartir</p>
-			<p class="m-0 text-[11px] text-white/50">{unit?.name || 'Unidad'}</p>
+			<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">Compartir</p>
+			<p class="m-0 text-[11px] text-slate-500 dark:text-white/50">{unit?.name || 'Unidad'}</p>
 		</div>
 	</div>
 
 	<div class="space-y-0 p-2">
 		<button
 			type="button"
-			class="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors hover:bg-white/5"
+			class="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/5"
 			on:click={shareCurrentLocation}
 		>
 			<div class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/15">
-				<Icon icon="mdi:map-marker" width={22} class="text-cyan-400" />
+				<Icon icon="mdi:map-marker" width={22} class="text-cyan-600 dark:text-cyan-400" />
 			</div>
 			<div class="min-w-0 flex-1">
-				<p class="m-0 text-[13px] font-semibold text-white">Compartir ubicación actual</p>
-				<p class="m-0 text-[11px] text-white/45">Envía la posición en tiempo real</p>
+				<p class="m-0 text-[13px] font-semibold text-slate-900 dark:text-white">
+					Compartir ubicación actual
+				</p>
+				<p class="m-0 text-[11px] text-slate-500 dark:text-white/45">
+					Envía la posición en tiempo real
+				</p>
 			</div>
-			<Icon icon="mdi:chevron-right" width={20} class="text-white/25" />
+			<Icon icon="mdi:chevron-right" width={20} class="text-slate-300 dark:text-white/25" />
 		</button>
-		<div class="mx-3 h-px bg-white/[0.07]"></div>
+		<div class="mx-3 h-px bg-slate-100 dark:bg-white/[0.07]"></div>
 
 		<button
 			type="button"
-			class="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors hover:bg-white/5"
+			class="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/5"
 			on:click={shareEta}
 		>
 			<div class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/15">
 				<Icon icon="mdi:timer-outline" width={22} class="text-amber-400" />
 			</div>
 			<div class="min-w-0 flex-1">
-				<p class="m-0 text-[13px] font-semibold text-white">Compartir ETA</p>
-				<p class="m-0 text-[11px] text-white/45">Tiempo estimado de llegada</p>
+				<p class="m-0 text-[13px] font-semibold text-slate-900 dark:text-white">Compartir ETA</p>
+				<p class="m-0 text-[11px] text-slate-500 dark:text-white/45">Tiempo estimado de llegada</p>
 			</div>
-			<Icon icon="mdi:chevron-right" width={20} class="text-white/25" />
+			<Icon icon="mdi:chevron-right" width={20} class="text-slate-300 dark:text-white/25" />
 		</button>
-		<div class="mx-3 h-px bg-white/[0.07]"></div>
+		<div class="mx-3 h-px bg-slate-100 dark:bg-white/[0.07]"></div>
 
 		<button
 			type="button"
-			class="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors hover:bg-white/5 disabled:opacity-50"
+			class="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors hover:bg-slate-50 disabled:opacity-50 dark:hover:bg-white/5"
 			on:click={shareTemporaryLink}
 			disabled={loadingLink || !unit?.deviceId}
 		>
@@ -149,8 +153,10 @@
 				{/if}
 			</div>
 			<div class="min-w-0 flex-1">
-				<p class="m-0 text-[13px] font-semibold text-white">Enlace de seguimiento</p>
-				<p class="m-0 text-[11px] text-white/45">
+				<p class="m-0 text-[13px] font-semibold text-slate-900 dark:text-white">
+					Enlace de seguimiento
+				</p>
+				<p class="m-0 text-[11px] text-slate-500 dark:text-white/45">
 					{#if !unit?.deviceId}
 						Requiere dispositivo asignado
 					{:else}
@@ -158,7 +164,7 @@
 					{/if}
 				</p>
 			</div>
-			<Icon icon="mdi:chevron-right" width={20} class="text-white/25" />
+			<Icon icon="mdi:chevron-right" width={20} class="text-slate-300 dark:text-white/25" />
 		</button>
 
 		{#if linkError}
@@ -168,7 +174,7 @@
 			<p class="mx-3 mt-2 text-center text-xs text-emerald-400">Enlace copiado al portapapeles</p>
 		{/if}
 		{#if shareResult?.expires_at}
-			<p class="mx-3 mt-1 text-center text-[10px] text-white/35">
+			<p class="mx-3 mt-1 text-center text-[10px] text-slate-400 dark:text-white/35">
 				Expira: {new Date(shareResult.expires_at).toLocaleString('es-MX')}
 			</p>
 		{/if}
