@@ -21,6 +21,8 @@
 	 * 'side' = panel izquierdo solo en escritorio (lg+); en tablet usa sheet inferior.
 	 */
 	export let placement = 'bottom';
+	/** Clases de ancho del panel lateral (solo placement side). */
+	export let sideWidthClass = 'w-[min(420px,40%)] max-w-[480px]';
 
 	const DESKTOP_MQ = '(min-width: 1024px)';
 
@@ -101,7 +103,7 @@
 		<div
 			class="pointer-events-auto absolute flex flex-col overflow-hidden bg-white/95 text-slate-900 shadow-xl backdrop-blur-[40px] [-webkit-backdrop-filter:blur(40px)] dark:bg-[rgb(8_11_22_/0.97)] dark:text-white dark:shadow-[0_24px_80px_rgba(0,0,0,0.75),0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] {resolvedPlacement ===
 			'side'
-				? 'left-0 top-0 bottom-0 w-[min(420px,40%)] max-w-[480px] border-r border-slate-200 dark:border-white/[0.07]'
+				? `left-0 top-0 bottom-0 ${sideWidthClass} border-r border-slate-200 dark:border-white/[0.07]`
 				: 'left-0 right-0 bottom-0 h-[50vh] max-h-[50vh] overflow-y-auto rounded-t-2xl border-t border-slate-200 dark:border-white/[0.07]'}"
 			role="dialog"
 			aria-modal="true"

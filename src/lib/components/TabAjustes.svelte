@@ -69,13 +69,20 @@
 		saveError = null;
 	}
 
+	$: if (!$user?.is_master && (subView === 'editUnit' || subView === 'createUnit')) {
+		editingUnit = null;
+		subView = 'unidades';
+	}
+
 	function openCreate() {
+		if (!$user?.is_master) return;
 		editingUnit = null;
 		resetUnitForm();
 		subView = 'createUnit';
 	}
 
 	function openEdit(v) {
+		if (!$user?.is_master) return;
 		editingUnit = v;
 		editName = v.name || '';
 		editDescription = v.description || '';
@@ -494,39 +501,67 @@
 						{/if}
 						{#each $vehicles as v (v.id)}
 							<li>
-								<button
-									type="button"
-									class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition-colors hover:bg-slate-50 dark:border-transparent dark:bg-zinc-900 dark:hover:bg-zinc-800"
-									on:click={() => openEdit(v)}
-									aria-label="Editar {v.name}"
-								>
-									<div
-										class="h-2.5 w-2.5 shrink-0 rounded-full {v.status === 'active'
-											? 'bg-emerald-500'
-											: v.status === 'maintenance'
-												? 'bg-amber-500'
-												: 'bg-slate-300 dark:bg-white/20'}"
-										aria-hidden="true"
-									></div>
-									<div class="min-w-0 flex-1">
-										<p class="m-0 text-[0.9375rem] font-semibold text-slate-900 dark:text-white">
-											{v.name}
-										</p>
-										<p class="m-0 mt-0.5 text-xs text-slate-600 dark:text-white/45">
-											{[v.brand, v.model].filter(Boolean).join(' ') || v.driver || 'Sin perfil'}
-										</p>
-									</div>
-									<span
-										class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold {getStatusPillClass(
-											v.status
-										)}">{getStatusText(v.status)}</span
+								{#if $user?.is_master}
+									<button
+										type="button"
+										class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition-colors hover:bg-slate-50 dark:border-transparent dark:bg-zinc-900 dark:hover:bg-zinc-800"
+										on:click={() => openEdit(v)}
+										aria-label="Editar {v.name}"
 									>
-									<Icon
-										icon="mdi:chevron-right"
-										class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/25"
-										aria-hidden="true"
-									/>
-								</button>
+										<div
+											class="h-2.5 w-2.5 shrink-0 rounded-full {v.status === 'active'
+												? 'bg-emerald-500'
+												: v.status === 'maintenance'
+													? 'bg-amber-500'
+													: 'bg-slate-300 dark:bg-white/20'}"
+											aria-hidden="true"
+										></div>
+										<div class="min-w-0 flex-1">
+											<p class="m-0 text-[0.9375rem] font-semibold text-slate-900 dark:text-white">
+												{v.name}
+											</p>
+											<p class="m-0 mt-0.5 text-xs text-slate-600 dark:text-white/45">
+												{[v.brand, v.model].filter(Boolean).join(' ') || v.driver || 'Sin perfil'}
+											</p>
+										</div>
+										<span
+											class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold {getStatusPillClass(
+												v.status
+											)}">{getStatusText(v.status)}</span
+										>
+										<Icon
+											icon="mdi:chevron-right"
+											class="h-4 w-4 shrink-0 text-slate-400 dark:text-white/25"
+											aria-hidden="true"
+										/>
+									</button>
+								{:else}
+									<div
+										class="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 dark:border-transparent dark:bg-zinc-900"
+									>
+										<div
+											class="h-2.5 w-2.5 shrink-0 rounded-full {v.status === 'active'
+												? 'bg-emerald-500'
+												: v.status === 'maintenance'
+													? 'bg-amber-500'
+													: 'bg-slate-300 dark:bg-white/20'}"
+											aria-hidden="true"
+										></div>
+										<div class="min-w-0 flex-1">
+											<p class="m-0 text-[0.9375rem] font-semibold text-slate-900 dark:text-white">
+												{v.name}
+											</p>
+											<p class="m-0 mt-0.5 text-xs text-slate-600 dark:text-white/45">
+												{[v.brand, v.model].filter(Boolean).join(' ') || v.driver || 'Sin perfil'}
+											</p>
+										</div>
+										<span
+											class="inline-flex shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold {getStatusPillClass(
+												v.status
+											)}">{getStatusText(v.status)}</span
+										>
+									</div>
+								{/if}
 							</li>
 						{/each}
 					</ul>

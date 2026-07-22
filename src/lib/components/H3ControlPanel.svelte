@@ -5,6 +5,7 @@
 	import {
 		showH3Grid,
 		h3Resolution,
+		h3FollowZoom,
 		selectedH3Cells,
 		selectedH3Count,
 		renderedH3Cells,
@@ -98,17 +99,31 @@
 				<input
 					id="h3-resolution-sheet"
 					type="range"
-					min="5"
-					max="11"
+					min="4"
+					max="10"
 					step="1"
 					value={$h3Resolution}
-					aria-valuemin="5"
-					aria-valuemax="11"
+					aria-valuemin="4"
+					aria-valuemax="10"
 					aria-valuenow={$h3Resolution}
 					aria-valuetext={`Resolución H3 nivel ${$h3Resolution}`}
 					class="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-cyan-600 dark:bg-slate-700 dark:accent-cyan-500"
-					on:input={(event) => h3Actions.setResolution(Number(event.currentTarget.value))}
+					on:input={(event) =>
+						h3Actions.setResolution(Number(event.currentTarget.value), { source: 'user' })}
 				/>
+				{#if $h3FollowZoom}
+					<p class="mt-1.5 text-[10px] text-emerald-700 dark:text-emerald-300/80">
+						Modo auto: la resolución sigue el zoom del mapa.
+					</p>
+				{:else}
+					<button
+						type="button"
+						class="mt-1.5 text-[10px] font-semibold text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300"
+						on:click={() => h3Actions.enableFollowZoomAndSync()}
+					>
+						Reactivar ajuste automático con zoom
+					</button>
+				{/if}
 				<p
 					id="h3-rendered-count"
 					class="mt-2 text-xs text-slate-600 dark:text-slate-300"

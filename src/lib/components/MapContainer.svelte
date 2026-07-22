@@ -26,12 +26,16 @@
 	import { h3GridOverlayService } from '$lib/services/h3GridOverlayService.js';
 	import { alerts, alarmEvents, unreadAlarmCount, alertActions } from '$lib/stores/alertStore.js';
 	import { theme } from '$lib/stores/themeStore.js';
+	import { user } from '$lib/stores/auth.js';
 	import { get, derived } from 'svelte/store';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
 	import ConfirmModal from './ConfirmModal.svelte';
+	import H3ResolutionSlider from './H3ResolutionSlider.svelte';
 
 	export let isLoading = true;
 	export let onMapTap = () => {};
+
+	$: isMaster = !!$user?.is_master;
 
 	let mapElement;
 	let map;
@@ -62,6 +66,7 @@
 	let deleteAlertLoading = false;
 
 	function requestDeleteAlert(alert) {
+		if (!isMaster) return;
 		alertToDelete = { id: alert.id, name: alert?.name || 'Alerta' };
 	}
 
@@ -112,6 +117,9 @@
 				onMapTap?.();
 			});
 			h3GridOverlayService.attachMap(mapService.map, mapService.google);
+			h3GridOverlayService.setOnMapIdle((zoom) => {
+				h3Actions.syncFromMapZoom(zoom);
+			});
 			h3GridOverlayService.setOnCellSelect((h3Index) => {
 				if (get(mobileZoneMapActive)) {
 					if (get(h3EraserMode)) {
@@ -210,7 +218,13 @@
 				mapService.setHighlightedVehicle(id);
 			});
 
-			const unsubGrid = showH3Grid.subscribe((v) => h3GridOverlayService.setVisible(v));
+			const unsubGrid = showH3Grid.subscribe((v) => {
+				h3GridOverlayService.setVisible(v);
+				if (v && mapService.map) {
+					// Solo sync de zoom si aún no se fijó al entrar a crear zona.
+					h3Actions.syncFromMapZoom(mapService.map.getZoom());
+				}
+			});
 			const unsubRes = h3Resolution.subscribe((r) => h3GridOverlayService.setResolution(r));
 			const unsubCells = selectedH3Cells.subscribe((c) => h3GridOverlayService.setSelectedCells(c));
 
@@ -434,14 +448,16 @@
 																unidad{(al.units?.length ?? 0) !== 1 ? 'es' : ''}
 															</p>
 														</div>
-														<button
-															type="button"
-															class="rounded-md border border-red-200 bg-red-50 px-1.5 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
-															on:click={() => requestDeleteAlert(al)}
-															aria-label="Eliminar alerta {al.name || al.id}"
-														>
-															<Icon icon="mdi:delete-outline" width={11} aria-hidden="true" />
-														</button>
+														{#if isMaster}
+															<button
+																type="button"
+																class="rounded-md border border-red-200 bg-red-50 px-1.5 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+																on:click={() => requestDeleteAlert(al)}
+																aria-label="Eliminar alerta {al.name || al.id}"
+															>
+																<Icon icon="mdi:delete-outline" width={11} aria-hidden="true" />
+															</button>
+														{/if}
 													</div>
 												</li>
 											{/each}
@@ -456,47 +472,50 @@
 		</div>
 	{/if}
 
-	<!-- ── Control H3 selección  ── -->
-	{#if $showH3Grid && !$mobileZoneMapActive}
+	<!-- ── Control H3: slider tamaño + deshacer selección ── -->
+	{#if $showH3Grid}
 		<div
-			class="pointer-events-none absolute right-[max(0.625rem,env(safe-area-inset-right,0px))] top-1/2 z-[30] flex -translate-y-1/2 flex-col items-end gap-1"
+			class="pointer-events-none absolute right-[max(0.625rem,env(safe-area-inset-right,0px))] top-1/2 z-[120] flex -translate-y-1/2 flex-col items-end gap-3"
 		>
-			<div class="pointer-events-auto relative">
-				<button
-					type="button"
-					class="flex h-14 w-14 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background-color,opacity,box-shadow] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-45 [&_svg]:h-[26px] [&_svg]:w-[26px]
+			<H3ResolutionSlider />
+			{#if !$mobileZoneMapActive}
+				<div class="pointer-events-auto relative">
+					<button
+						type="button"
+						class="flex h-14 w-14 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background-color,opacity,box-shadow] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-45 [&_svg]:h-[26px] [&_svg]:w-[26px]
 						{$selectedH3Cells.length > 0
-						? 'bg-orange-600 shadow-[0_4px_16px_rgba(234,88,12,0.45)]'
-						: 'bg-blue-600 shadow-[0_4px_16px_rgba(37,99,235,0.45)]'}"
-					disabled={$selectedH3Cells.length === 0}
-					on:click={popLastH3Selection}
-					aria-label={$selectedH3Cells.length > 0
-						? 'Quitar la última celda H3 seleccionada'
-						: 'Selecciona celdas en el mapa'}
-					title={$selectedH3Cells.length > 0
-						? 'Quitar última selección (LIFO)'
-						: 'Selecciona hexágonos en el mapa'}
-				>
-					{#if $selectedH3Cells.length > 0}
-						<Icon icon="mdi:undo-variant" aria-hidden="true" />
-					{:else}
-						<Icon icon="mdi:gesture-tap" aria-hidden="true" />
-					{/if}
-				</button>
-				<div
-					class="pointer-events-none absolute -top-9 right-0"
-					aria-live="polite"
-					aria-atomic="true"
-				>
-					{#if $selectedH3Cells.length > 0}
-						<p
-							class="m-0 whitespace-nowrap rounded-full bg-black/75 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm"
-						>
-							{$selectedH3Cells.length} celda{$selectedH3Cells.length !== 1 ? 's' : ''}
-						</p>
-					{/if}
+							? 'bg-orange-600 shadow-[0_4px_16px_rgba(234,88,12,0.45)]'
+							: 'bg-blue-600 shadow-[0_4px_16px_rgba(37,99,235,0.45)]'}"
+						disabled={$selectedH3Cells.length === 0}
+						on:click={popLastH3Selection}
+						aria-label={$selectedH3Cells.length > 0
+							? 'Quitar la última celda H3 seleccionada'
+							: 'Selecciona celdas en el mapa'}
+						title={$selectedH3Cells.length > 0
+							? 'Quitar última selección (LIFO)'
+							: 'Selecciona hexágonos en el mapa'}
+					>
+						{#if $selectedH3Cells.length > 0}
+							<Icon icon="mdi:undo-variant" aria-hidden="true" />
+						{:else}
+							<Icon icon="mdi:gesture-tap" aria-hidden="true" />
+						{/if}
+					</button>
+					<div
+						class="pointer-events-none absolute -top-9 right-0"
+						aria-live="polite"
+						aria-atomic="true"
+					>
+						{#if $selectedH3Cells.length > 0}
+							<p
+								class="m-0 whitespace-nowrap rounded-full bg-black/75 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm"
+							>
+								{$selectedH3Cells.length} celda{$selectedH3Cells.length !== 1 ? 's' : ''}
+							</p>
+						{/if}
+					</div>
 				</div>
-			</div>
+			{/if}
 		</div>
 	{/if}
 </section>

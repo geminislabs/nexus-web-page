@@ -15,6 +15,7 @@
 	export let onSelectUnit = () => {};
 	export let onCenterUnit = () => {};
 	export let onOpenSecurity = () => {};
+	export let onClose = () => {};
 	let showUnitPicker = false;
 	let searchQuery = '';
 	/** @type {'all' | 'moving' | 'stopped'} */
@@ -107,8 +108,17 @@
 
 {#if unit}
 	<div
-		class="pointer-events-auto w-full rounded-t-2xl border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
+		class="pointer-events-auto relative w-full rounded-t-2xl border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
 	>
+		<button
+			type="button"
+			class="absolute right-2.5 top-2.5 z-[2] flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-500 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 dark:border-white/12 dark:bg-white/10 dark:text-white/70 dark:hover:bg-white/15 dark:hover:text-white"
+			on:click={onClose}
+			aria-label="Cerrar panel de unidad"
+			title="Cerrar"
+		>
+			<Icon icon="mdi:close" class="h-4 w-4" />
+		</button>
 		<!-- Grabber -->
 		<div class="flex justify-center py-2">
 			<div class="h-1 w-9 rounded-full bg-slate-300 dark:bg-white/30"></div>
@@ -116,7 +126,7 @@
 		<!-- Unit info -->
 		<div class="px-4 pb-3">
 			<div class="flex items-start gap-3">
-				<div class="min-w-0 flex-1">
+				<div class="min-w-0 flex-1 pr-8">
 					<h2 class="m-0 truncate text-xl font-bold text-slate-900 dark:text-white">{unit.name}</h2>
 					<p class="m-0 text-sm text-slate-500 dark:text-white/60">
 						{[unit.brand, unit.model].filter(Boolean).join(' ') || 'Sin modelo'}
@@ -172,7 +182,7 @@
 						{/if}
 					</div>
 				</div>
-				<div class="flex shrink-0 flex-col items-center gap-2">
+				<div class="mt-6 flex shrink-0 flex-col items-center gap-2">
 					<button
 						type="button"
 						class="flex h-11 w-11 items-center justify-center rounded-full bg-sky-500 shadow-lg transition-transform hover:scale-105"

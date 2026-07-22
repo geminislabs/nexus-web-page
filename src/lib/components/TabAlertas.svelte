@@ -13,13 +13,17 @@
 	import ConfirmModal from './ConfirmModal.svelte';
 	import ZonasPanel from './ZonasPanel.svelte';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
+	import { user } from '$lib/stores/auth.js';
 	import { onMount } from 'svelte';
 
 	let subView = 'alarmas';
 
 	let notifPermission = null; // null | 'granted' | 'denied' | 'default'
 
+	$: isMaster = !!$user?.is_master;
+
 	function openWizard() {
+		if (!isMaster) return;
 		alertActions.openWizard();
 	}
 
@@ -43,6 +47,7 @@
 	let deleteAlertLoading = false;
 
 	function requestDeleteAlert(alert) {
+		if (!isMaster) return;
 		alertToDelete = { id: alert.id, name: alert.name || 'Alerta' };
 	}
 	function cancelDeleteAlert() {
@@ -62,7 +67,7 @@
 	// ── toggle enabled ────────────────────────────────────────────────────────
 	let togglingId = null;
 	async function handleToggle(alert) {
-		if (togglingId) return;
+		if (!isMaster || togglingId) return;
 		togglingId = alert.id;
 		try {
 			await alertActions.toggleAlertEnabled(alert.id);
@@ -77,6 +82,7 @@
 	let editAlert = null;
 
 	function openEdit(alert) {
+		if (!isMaster) return;
 		editAlert = alert;
 	}
 	function closeEdit() {
@@ -112,7 +118,7 @@
 	aria-label="Alertas y configuración de alarmas"
 	style="min-height:0;align-items:stretch;justify-content:flex-start;padding:0"
 >
-	{#if $alertWizard}
+	{#if isMaster && $alertWizard}
 		<CrearAlertaWizard on:close={() => alertActions.closeWizard()} />
 	{/if}
 
@@ -264,7 +270,9 @@
 										>Reglas de alerta</span
 									>
 									<span class="mt-0.5 block text-[11px] text-slate-600 dark:text-white/40">
-										Crear, editar, activar y eliminar reglas
+										{isMaster
+											? 'Crear, editar, activar y eliminar reglas'
+											: 'Consultar reglas configuradas'}
 									</span>
 								</span>
 							</span>
@@ -367,7 +375,9 @@
 									No hay alertas configuradas
 								</h3>
 								<p class="m-0 max-w-xs text-sm text-slate-600 dark:text-white/40">
-									Cree una alerta con el botón inferior para empezar.
+									{isMaster
+										? 'Cree una alerta con el botón inferior para empezar.'
+										: 'Cuando un administrador configure alertas, aparecerán aquí.'}
 								</p>
 							</div>
 						{:else}
@@ -407,69 +417,81 @@
 													</p>
 												</div>
 											</div>
-											<div class="flex shrink-0 items-center gap-1.5">
-												<!-- Toggle activo/inactivo -->
-												<button
-													type="button"
-													role="switch"
-													aria-checked={alert.enabled}
-													aria-label="{alert.enabled
-														? 'Desactivar'
-														: 'Activar'} la alerta «{alert.name}»"
-													class="relative h-6 w-11 shrink-0 cursor-pointer rounded-full border-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed {alert.enabled
-														? 'bg-blue-600'
-														: 'bg-slate-300 dark:bg-white/20'}"
-													disabled={togglingId === alert.id}
-													on:click={() => handleToggle(alert)}
+											{#if isMaster}
+												<div class="flex shrink-0 items-center gap-1.5">
+													<!-- Toggle activo/inactivo -->
+													<button
+														type="button"
+														role="switch"
+														aria-checked={alert.enabled}
+														aria-label="{alert.enabled
+															? 'Desactivar'
+															: 'Activar'} la alerta «{alert.name}»"
+														class="relative h-6 w-11 shrink-0 cursor-pointer rounded-full border-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed {alert.enabled
+															? 'bg-blue-600'
+															: 'bg-slate-300 dark:bg-white/20'}"
+														disabled={togglingId === alert.id}
+														on:click={() => handleToggle(alert)}
+													>
+														<span
+															class="pointer-events-none absolute left-[3px] top-[3px] block h-[18px] w-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.25)] transition-transform {alert.enabled
+																? 'translate-x-5'
+																: 'translate-x-0'}"
+														></span>
+													</button>
+													<!-- Editar -->
+													<button
+														type="button"
+														class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-slate-100/80 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 dark:bg-white/[0.07] dark:text-white/45 dark:hover:bg-white/[0.12] dark:hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+														on:click={() => openEdit(alert)}
+														aria-label="Editar la alerta «{alert.name}»"
+													>
+														<Icon icon="mdi:pencil-outline" class="h-4 w-4" aria-hidden="true" />
+													</button>
+													<!-- Eliminar -->
+													<button
+														type="button"
+														class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-red-500/15 text-red-400 transition-colors hover:bg-red-500/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
+														on:click={() => requestDeleteAlert(alert)}
+														aria-label="Eliminar la alerta «{alert.name}»"
+													>
+														<Icon icon="mdi:delete-outline" class="h-4 w-4" aria-hidden="true" />
+													</button>
+												</div>
+											{:else}
+												<span
+													class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold {alert.enabled
+														? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+														: 'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-white/45'}"
 												>
-													<span
-														class="pointer-events-none absolute left-[3px] top-[3px] block h-[18px] w-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.25)] transition-transform {alert.enabled
-															? 'translate-x-5'
-															: 'translate-x-0'}"
-													></span>
-												</button>
-												<!-- Editar -->
-												<button
-													type="button"
-													class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-slate-100/80 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-700 dark:bg-white/[0.07] dark:text-white/45 dark:hover:bg-white/[0.12] dark:hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
-													on:click={() => openEdit(alert)}
-													aria-label="Editar la alerta «{alert.name}»"
-												>
-													<Icon icon="mdi:pencil-outline" class="h-4 w-4" aria-hidden="true" />
-												</button>
-												<!-- Eliminar -->
-												<button
-													type="button"
-													class="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-red-500/15 text-red-400 transition-colors hover:bg-red-500/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400"
-													on:click={() => requestDeleteAlert(alert)}
-													aria-label="Eliminar la alerta «{alert.name}»"
-												>
-													<Icon icon="mdi:delete-outline" class="h-4 w-4" aria-hidden="true" />
-												</button>
-											</div>
+													{alert.enabled ? 'Activa' : 'Inactiva'}
+												</span>
+											{/if}
 										</article>
 									</li>
 								{/each}
 							</ul>
 						{/if}
 					</div>
-					<div class="shrink-0 border-t border-slate-200 p-4 dark:border-white/[0.06]">
-						<button
-							type="button"
-							class="flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb,#1d9cc4)] px-4 py-3.5 text-base font-semibold text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 [&_svg]:h-5 [&_svg]:w-5"
-							on:click={openWizard}
-						>
-							<Icon icon="mdi:plus" class="shrink-0" aria-hidden="true" />
-							Crear alerta
-						</button>
-					</div>
+					{#if isMaster}
+						<div class="shrink-0 border-t border-slate-200 p-4 dark:border-white/[0.06]">
+							<button
+								type="button"
+								class="flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb,#1d9cc4)] px-4 py-3.5 text-base font-semibold text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 [&_svg]:h-5 [&_svg]:w-5"
+								on:click={openWizard}
+							>
+								<Icon icon="mdi:plus" class="shrink-0" aria-hidden="true" />
+								Crear alerta
+							</button>
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>
 	{/if}
 </section>
 
-{#if editAlert}
+{#if isMaster && editAlert}
 	<EditAlertWizard alert={editAlert} on:close={closeEdit} />
 {/if}
 
