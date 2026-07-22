@@ -64,7 +64,7 @@
 		"tailwindcss": "^4.1.13",
 		"typescript": "^5.9.3",
 		"vite": "^7.0.4",
-		"vitest": "^3.2.4"
+		"vitest": "^4.1.9"
 	},
 	"dependencies": {
 		"@googlemaps/js-api-loader": "^1.16.10",
