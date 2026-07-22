@@ -410,13 +410,13 @@
 											<span class="font-semibold text-slate-700 dark:text-slate-200"
 												>{formatVoltage(vehicle.mainBatteryVoltage)}</span
 											>
-											Vext
+											Volts
 										</span>
 										<span>
 											<span class="font-semibold text-slate-700 dark:text-slate-200"
 												>{formatVoltage(vehicle.backupBatteryVoltage)}</span
 											>
-											Vint
+											Volts
 										</span>
 										<span class="inline-flex items-center gap-1">
 											<Icon icon="mdi:signal" class="h-3.5 w-3.5" aria-hidden="true" />

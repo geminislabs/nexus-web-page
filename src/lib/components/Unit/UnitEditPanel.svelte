@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { vehicleActions } from '$lib/stores/vehicleStore.js';
 	import { vehicleColors } from '$lib/data/vehicleColors';
+	import { user } from '$lib/stores/auth.js';
 	import IconPicker from '$lib/components/Unit/IconPicker.svelte';
 	import VehicleColorPicker from '$lib/components/Unit/VehicleColorPicker.svelte';
 
@@ -11,6 +12,8 @@
 	export let unit = null;
 	/** Formulario compacto para drawer de escritorio */
 	export let compact = false;
+
+	$: isMaster = !!$user?.is_master;
 
 	let isSaving = false;
 	let lastPopulatedId = '';
@@ -86,7 +89,7 @@
 	}
 
 	async function handleSave() {
-		if (!unit?.id || isSaving) return;
+		if (!isMaster || !unit?.id || isSaving) return;
 		const name = editName.trim();
 		if (!name) {
 			saveError = 'El nombre es obligatorio.';
@@ -109,7 +112,7 @@
 	}
 
 	async function confirmUnassignDevice() {
-		if (!unit?.id || unassigning) return;
+		if (!isMaster || !unit?.id || unassigning) return;
 		unassigning = true;
 		saveError = null;
 		try {
@@ -126,7 +129,7 @@
 	}
 
 	async function confirmDelete() {
-		if (!unit?.id || deleting) return;
+		if (!isMaster || !unit?.id || deleting) return;
 		deleting = true;
 		saveError = null;
 		try {

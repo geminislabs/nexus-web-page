@@ -1,7 +1,7 @@
 import { cellToBoundary, polygonToCells } from 'h3-js';
 
-const DEFAULT_DEBOUNCE_MS = 250;
-const DEFAULT_MAX_CELLS = 2500;
+const DEFAULT_DEBOUNCE_MS = 180;
+const DEFAULT_MAX_CELLS = 6000;
 
 class H3GridOverlayService {
 	constructor() {
@@ -16,8 +16,11 @@ class H3GridOverlayService {
 		this.polygons = new Map();
 		this.maxCells = DEFAULT_MAX_CELLS;
 		this.idleListener = null;
+		this.zoomListener = null;
 		this.onCellSelect = () => {};
 		this.onCellsRendered = () => {};
+		/** @type {((zoom: number) => void) | null} */
+		this.onMapIdle = null;
 		/** @type {'light' | 'dark'} */
 		this.mapTheme = 'dark';
 		/** @type {'default' | 'zoneCreate'} */
@@ -33,10 +36,26 @@ class H3GridOverlayService {
 		if (!this.map) return;
 
 		this.idleListener = this.map.addListener('idle', () => {
-			if (this.visible) {
-				this.redrawDebounced();
+			if (!this.visible) return;
+			if (typeof this.onMapIdle === 'function') {
+				this.onMapIdle(this.map.getZoom());
+			}
+			this.redrawDebounced();
+		});
+		// Respuesta inmediata al zoom (sin esperar idle).
+		this.zoomListener = this.map.addListener('zoom_changed', () => {
+			if (!this.visible) return;
+			if (typeof this.onMapIdle === 'function') {
+				this.onMapIdle(this.map.getZoom());
 			}
 		});
+	}
+
+	/**
+	 * @param {(zoom: number) => void} handler
+	 */
+	setOnMapIdle(handler) {
+		this.onMapIdle = typeof handler === 'function' ? handler : null;
 	}
 
 	/**
@@ -97,10 +116,15 @@ class H3GridOverlayService {
 			this.onCellsRendered(0);
 			return;
 		}
+		// Un redibujado inmediato + uno tras layout (p. ej. al cerrar el drawer).
 		this.redraw();
 		requestAnimationFrame(() => this.redraw());
-		setTimeout(() => this.redraw(), 120);
-		setTimeout(() => this.redraw(), 400);
+	}
+
+	/** Fuerza redibujado tras resize del mapa (crear zona). */
+	refresh() {
+		if (!this.visible) return;
+		this.redraw();
 	}
 
 	setResolution(resolution) {
@@ -191,20 +215,20 @@ class H3GridOverlayService {
 		let targetResolution = this.resolution;
 		let cellIds = [];
 
-		while (targetResolution >= 0) {
-			try {
-				cellIds = polygonToCells([viewportLoopGeoJson], targetResolution, true);
-				if (!cellIds.length) {
-					cellIds = polygonToCells([viewportLoopLatLng], targetResolution, false);
-				}
-			} catch (e) {
-				console.warn('H3 polygonToCells:', e);
-				cellIds = [];
+		try {
+			cellIds = polygonToCells([viewportLoopGeoJson], targetResolution, true);
+			if (!cellIds.length) {
+				cellIds = polygonToCells([viewportLoopLatLng], targetResolution, false);
 			}
-			if (cellIds.length <= this.maxCells || targetResolution === 0) {
-				break;
-			}
-			targetResolution -= 1;
+		} catch (e) {
+			console.warn('H3 polygonToCells:', e);
+			cellIds = [];
+		}
+
+		// No bajar la resolución (eso agranda hexágonos al zoom-in).
+		// Si hay demasiadas celdas, limita el dibujo manteniendo el tamaño pedido.
+		if (cellIds.length > this.maxCells) {
+			cellIds = cellIds.slice(0, this.maxCells);
 		}
 
 		return cellIds;
@@ -254,6 +278,10 @@ class H3GridOverlayService {
 		if (this.idleListener) {
 			this.idleListener.remove();
 			this.idleListener = null;
+		}
+		if (this.zoomListener) {
+			this.zoomListener.remove();
+			this.zoomListener = null;
 		}
 	}
 

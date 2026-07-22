@@ -25,12 +25,12 @@
 	import UnitProfileDetails from './Unit/UnitProfileDetails.svelte';
 	import UnitEditPanel from './Unit/UnitEditPanel.svelte';
 	import ColoredVehicleIcon from './Unit/ColoredVehicleIcon.svelte';
-	import { user } from '$lib/stores/auth.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { getStatusText, colorSlugToHex } from '$lib/utils/vehicleUtils.js';
 	import { isUnitMoving } from '$lib/utils/unitTrackingStatus.js';
 	import { unitIcons } from '$lib/data/unitIcons';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
+	import { user } from '$lib/stores/auth.js';
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { get } from 'svelte/store';
 
@@ -38,6 +38,8 @@
 
 	export let initialSection = 'apariencia';
 	export let showSectionSidebar = true;
+
+	$: isMaster = !!$user?.is_master;
 
 	let activeSection = initialSection;
 	$: displaySection = showSectionSidebar ? activeSection : initialSection;
@@ -77,7 +79,7 @@
 	let alertTogglingId = null;
 
 	async function handleAlertToggle(alert) {
-		if (alertTogglingId) return;
+		if (!isMaster || alertTogglingId) return;
 		alertTogglingId = alert.id;
 		try {
 			await alertActions.toggleAlertEnabled(alert.id);
@@ -92,6 +94,7 @@
 	let alertEditTarget = null;
 
 	function openAlertEdit(alert) {
+		if (!isMaster) return;
 		alertEditTarget = alert;
 	}
 	function closeAlertEdit() {
@@ -208,29 +211,10 @@
 	}
 
 	// ── Sidebar sections ──────────────────────────────────────
-	const baseSections = [
+	const sections = [
 		{ id: 'apariencia', label: 'Apariencia', icon: 'mdi:theme-light-dark' },
-		{ id: 'unidades', label: 'Unidades', icon: 'mdi:car-side' },
-		{ id: 'zonas', label: 'Zonas', icon: 'mdi:hexagon-multiple-outline' },
-		{ id: 'gestionar_alertas', label: 'Gestionar', icon: 'mdi:format-list-bulleted' },
-		{
-			id: 'alertas',
-			label: 'Historial',
-			title: 'Historial de alarmas',
-			icon: 'mdi:bell-badge-outline'
-		}
+		{ id: 'unidades', label: 'Unidades', icon: 'mdi:car-side' }
 	];
-	$: sections = $user?.is_master
-		? [
-				...baseSections,
-				{
-					id: 'administracion',
-					label: 'Admin',
-					title: 'Administración',
-					icon: 'mdi:shield-account-outline'
-				}
-			]
-		: baseSections;
 
 	onMount(async () => {
 		if ($vehicles.length === 0) await vehicleActions.loadVehicles();
@@ -272,6 +256,7 @@
 		}
 	}
 	function openEditVehicle(v) {
+		if (!isMaster) return;
 		vehicleDetailOpen = false;
 		vehicleDetail = null;
 		editingVehicle = get(vehicles).find((x) => x.id === v.id) || v;
@@ -296,6 +281,7 @@
 		backToVehicleList();
 	}
 	function requestDeleteVehicle(v) {
+		if (!isMaster) return;
 		vehicleToDelete = v;
 	}
 	function cancelDeleteVehicle() {
@@ -320,6 +306,7 @@
 		}
 	}
 	function requestDeleteAlert(alert) {
+		if (!isMaster) return;
 		alertToDelete = { id: alert.id, name: alert.name || 'Alerta' };
 	}
 	function cancelDeleteAlert() {
@@ -405,11 +392,11 @@
 	}
 </script>
 
-{#if $alertWizard}
+{#if isMaster && $alertWizard}
 	<CrearAlertaWizard on:close={() => alertActions.closeWizard()} />
 {/if}
 
-{#if alertEditTarget}
+{#if isMaster && alertEditTarget}
 	<EditAlertWizard alert={alertEditTarget} on:close={closeAlertEdit} />
 {/if}
 
@@ -589,7 +576,7 @@
 								{vehicleSubView === 'detail' ? vehicleDetail?.name : editingVehicle?.name}
 							</p>
 						</div>
-						{#if vehicleSubView === 'detail' && vehicleDetail}
+						{#if isMaster && vehicleSubView === 'detail' && vehicleDetail}
 							<button
 								type="button"
 								class="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
@@ -967,7 +954,7 @@
 														<span class="font-semibold text-slate-700 dark:text-white/80"
 															>{formatVoltage(v.mainBatteryVoltage)}</span
 														>
-														Vext
+														Volts
 													</span>
 													<span>
 														<span class="font-semibold text-slate-700 dark:text-white/80"
@@ -994,28 +981,30 @@
 															icon="mdi:database-search-outline"
 															width={11}
 															aria-hidden="true"
-														/>Obtener
+														/>Ver detalles
 													</button>
-													<button
-														type="button"
-														class="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
-														on:click={() => openEditVehicle(v)}
-														disabled={actionLoading}
-													>
-														<Icon icon="mdi:pencil-outline" width={11} aria-hidden="true" />Editar
-													</button>
-													<button
-														type="button"
-														class="flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
-														on:click={() => requestDeleteVehicle(v)}
-														disabled={actionLoading}
-													>
-														<Icon
-															icon="mdi:trash-can-outline"
-															width={11}
-															aria-hidden="true"
-														/>Eliminar
-													</button>
+													{#if isMaster}
+														<button
+															type="button"
+															class="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+															on:click={() => openEditVehicle(v)}
+															disabled={actionLoading}
+														>
+															<Icon icon="mdi:pencil-outline" width={11} aria-hidden="true" />Editar
+														</button>
+														<button
+															type="button"
+															class="flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
+															on:click={() => requestDeleteVehicle(v)}
+															disabled={actionLoading}
+														>
+															<Icon
+																icon="mdi:trash-can-outline"
+																width={11}
+																aria-hidden="true"
+															/>Eliminar
+														</button>
+													{/if}
 												</div>
 											</div>
 											<button
@@ -1075,7 +1064,7 @@
 													{ignitionOn(v) ? 'Encendida' : 'Apagada'}
 												</span>
 												<span class={speedColor(Number(v.speed) || 0)}>{formatSpeed(v)}</span>
-												<span>{formatVoltage(v.mainBatteryVoltage)} Vext</span>
+												<span>{formatVoltage(v.mainBatteryVoltage)} Volts</span>
 												{#if v.lastUpdateFormatted}
 													<span class="truncate">{v.lastUpdateFormatted}</span>
 												{/if}
@@ -1094,29 +1083,31 @@
 											type="button"
 											class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
 											on:click={() => fetchVehicleDetail(v.id)}
-											title="Obtener detalle"
+											title="Ver detalles"
 											disabled={actionLoading}
 										>
 											<Icon icon="mdi:database-search-outline" width={13} aria-hidden="true" />
 										</button>
-										<button
-											type="button"
-											class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
-											on:click={() => openEditVehicle(v)}
-											title="Editar"
-											disabled={actionLoading}
-										>
-											<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />
-										</button>
-										<button
-											type="button"
-											class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
-											on:click={() => requestDeleteVehicle(v)}
-											title="Eliminar"
-											disabled={actionLoading}
-										>
-											<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
-										</button>
+										{#if isMaster}
+											<button
+												type="button"
+												class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+												on:click={() => openEditVehicle(v)}
+												title="Editar"
+												disabled={actionLoading}
+											>
+												<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />
+											</button>
+											<button
+												type="button"
+												class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
+												on:click={() => requestDeleteVehicle(v)}
+												title="Eliminar"
+												disabled={actionLoading}
+											>
+												<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
+											</button>
+										{/if}
 									</li>
 								{/each}
 							</ul>
@@ -1277,13 +1268,15 @@
 					<h3 class="m-0 text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">
 						Gestionar alertas
 					</h3>
-					<button
-						type="button"
-						class="ml-auto flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/28 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"
-						on:click={() => alertActions.openWizard()}
-					>
-						<Icon icon="mdi:plus-circle-outline" width={13} aria-hidden="true" />Nueva alerta
-					</button>
+					{#if isMaster}
+						<button
+							type="button"
+							class="ml-auto flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/28 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"
+							on:click={() => alertActions.openWizard()}
+						>
+							<Icon icon="mdi:plus-circle-outline" width={13} aria-hidden="true" />Nueva alerta
+						</button>
+					{/if}
 				</div>
 				{#if $alerts.length === 0}
 					<div class="flex flex-col items-center gap-3 py-10">
@@ -1304,16 +1297,20 @@
 							<p
 								class="m-0 mt-1 max-w-[220px] text-[11px] leading-relaxed text-slate-600 dark:text-white/35"
 							>
-								Crea alertas de ignición o zona para recibir notificaciones en tiempo real.
+								{isMaster
+									? 'Crea alertas de ignición o zona para recibir notificaciones en tiempo real.'
+									: 'Cuando un administrador configure alertas, aparecerán aquí.'}
 							</p>
 						</div>
-						<button
-							type="button"
-							class="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-[12px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"
-							on:click={() => alertActions.openWizard()}
-						>
-							<Icon icon="mdi:plus" width={14} aria-hidden="true" />Crear primera alerta
-						</button>
+						{#if isMaster}
+							<button
+								type="button"
+								class="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-[12px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"
+								on:click={() => alertActions.openWizard()}
+							>
+								<Icon icon="mdi:plus" width={14} aria-hidden="true" />Crear primera alerta
+							</button>
+						{/if}
 					</div>
 				{:else}
 					<ul class="flex flex-col gap-2 list-none p-0 m-0">
@@ -1351,46 +1348,56 @@
 												: ''}
 										</p>
 									</div>
-									<div class="flex shrink-0 items-center gap-1.5">
-										<!-- Toggle enable/disable -->
-										<button
-											type="button"
-											role="switch"
-											aria-checked={alert.enabled}
-											aria-label="{alert.enabled ? 'Desactivar' : 'Activar'} «{alert.name}»"
-											class="relative h-5 w-9 shrink-0 cursor-pointer rounded-full border-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed {alert.enabled
-												? 'bg-blue-600'
-												: 'bg-slate-300 dark:bg-white/20'}"
-											disabled={alertTogglingId === alert.id}
-											on:click={() => handleAlertToggle(alert)}
+									{#if isMaster}
+										<div class="flex shrink-0 items-center gap-1.5">
+											<!-- Toggle enable/disable -->
+											<button
+												type="button"
+												role="switch"
+												aria-checked={alert.enabled}
+												aria-label="{alert.enabled ? 'Desactivar' : 'Activar'} «{alert.name}»"
+												class="relative h-5 w-9 shrink-0 cursor-pointer rounded-full border-0 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed {alert.enabled
+													? 'bg-blue-600'
+													: 'bg-slate-300 dark:bg-white/20'}"
+												disabled={alertTogglingId === alert.id}
+												on:click={() => handleAlertToggle(alert)}
+											>
+												<span
+													class="pointer-events-none absolute left-[2px] top-[2px] block h-[17px] w-[17px] rounded-full bg-white shadow transition-transform {alert.enabled
+														? 'translate-x-4'
+														: 'translate-x-0'}"
+												></span>
+											</button>
+											<!-- Editar -->
+											<button
+												type="button"
+												class="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/55 dark:hover:bg-white/[0.1]"
+												on:click={() => openAlertEdit(alert)}
+												aria-label="Editar «{alert.name}»"
+												title="Editar"
+											>
+												<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />
+											</button>
+											<!-- Eliminar -->
+											<button
+												type="button"
+												class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+												on:click={() => requestDeleteAlert(alert)}
+												aria-label="Eliminar «{alert.name}»"
+												title="Eliminar"
+											>
+												<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
+											</button>
+										</div>
+									{:else}
+										<span
+											class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold {alert.enabled
+												? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+												: 'bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-white/45'}"
 										>
-											<span
-												class="pointer-events-none absolute left-[2px] top-[2px] block h-[17px] w-[17px] rounded-full bg-white shadow transition-transform {alert.enabled
-													? 'translate-x-4'
-													: 'translate-x-0'}"
-											></span>
-										</button>
-										<!-- Editar -->
-										<button
-											type="button"
-											class="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/55 dark:hover:bg-white/[0.1]"
-											on:click={() => openAlertEdit(alert)}
-											aria-label="Editar «{alert.name}»"
-											title="Editar"
-										>
-											<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />
-										</button>
-										<!-- Eliminar -->
-										<button
-											type="button"
-											class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
-											on:click={() => requestDeleteAlert(alert)}
-											aria-label="Eliminar «{alert.name}»"
-											title="Eliminar"
-										>
-											<Icon icon="mdi:trash-can-outline" width={13} aria-hidden="true" />
-										</button>
-									</div>
+											{alert.enabled ? 'Activa' : 'Inactiva'}
+										</span>
+									{/if}
 								</div>
 							</li>
 						{/each}

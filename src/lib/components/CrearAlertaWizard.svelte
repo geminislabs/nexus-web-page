@@ -3,7 +3,9 @@
 	import { alertWizard, alertActions, zones } from '$lib/stores/alertStore.js';
 	import { selectedH3Cells } from '$lib/stores/h3Store.js';
 	import { vehicles } from '$lib/stores/vehicleStore.js';
+	import { user } from '$lib/stores/auth.js';
 	import { createEventDispatcher } from 'svelte';
+	import { get } from 'svelte/store';
 
 	const dispatch = createEventDispatcher();
 	const STEPS = 5;
@@ -79,6 +81,7 @@
 		else alertActions.prevStep();
 	}
 	async function handleSave() {
+		if (!get(user)?.is_master) return;
 		try {
 			await alertActions.saveAlert();
 			dispatch('close');

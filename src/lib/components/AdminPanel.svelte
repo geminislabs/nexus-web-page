@@ -14,6 +14,8 @@
 	export let showAdminPanel = false;
 	export let toggleAdminPanel = null;
 	export let embedded = false;
+	/** Si se define, muestra solo esa sección y oculta las tabs (vista admin full-page). */
+	export let lockedSection = /** @type {null | 'dispositivos' | 'unidades' | 'usuarios'} */ (null);
 
 	const adminTabs = [
 		{
@@ -69,7 +71,11 @@
 		}
 	};
 
-	let activeSection = 'dispositivos';
+	let activeSection = lockedSection || 'dispositivos';
+
+	$: if (lockedSection && activeSection !== lockedSection) {
+		activeSection = lockedSection;
+	}
 
 	let devices = [];
 	let loadingDevices = false;
@@ -252,7 +258,7 @@
 	$: activeTabHint = adminTabs.find((t) => t.id === activeSection)?.hint ?? '';
 
 	onMount(() => {
-		if (embedded || showAdminPanel) setActiveSection(activeSection);
+		if (embedded || showAdminPanel) setActiveSection(lockedSection || activeSection);
 	});
 </script>
 
@@ -272,26 +278,30 @@
 			<p class="admin-title">Administración</p>
 		{/if}
 
-		<div class="tabs-wrapper">
-			<div class="tabs-bar" role="tablist" aria-label="Secciones de administración">
-				{#each adminTabs as tab (tab.id)}
-					<button
-						type="button"
-						role="tab"
-						aria-selected={activeSection === tab.id}
-						class="tab-btn"
-						class:tab-btn--active={activeSection === tab.id}
-						on:click={() => setActiveSection(tab.id)}
-					>
-						<Icon icon={tab.icon} class="h-4 w-4 shrink-0" aria-hidden="true" />
-						<span class="truncate">{tab.label}</span>
-					</button>
-				{/each}
+		{#if !lockedSection}
+			<div class="tabs-wrapper">
+				<div class="tabs-bar" role="tablist" aria-label="Secciones de administración">
+					{#each adminTabs as tab (tab.id)}
+						<button
+							type="button"
+							role="tab"
+							aria-selected={activeSection === tab.id}
+							class="tab-btn"
+							class:tab-btn--active={activeSection === tab.id}
+							on:click={() => setActiveSection(tab.id)}
+						>
+							<Icon icon={tab.icon} class="h-4 w-4 shrink-0" aria-hidden="true" />
+							<span class="truncate">{tab.label}</span>
+						</button>
+					{/each}
+				</div>
+				{#if activeTabHint}
+					<p class="tab-hint">{activeTabHint}</p>
+				{/if}
 			</div>
-			{#if activeTabHint}
-				<p class="tab-hint">{activeTabHint}</p>
-			{/if}
-		</div>
+		{:else if activeTabHint}
+			<p class="tab-hint px-1">{activeTabHint}</p>
+		{/if}
 
 		{#if activeSection === 'dispositivos'}
 			<div class="tab-content">

@@ -18,9 +18,13 @@
 	} from '$lib/stores/h3Store.js';
 	import { activeTab } from '$lib/stores/navigationStore.js';
 	import { mapService } from '$lib/services/mapService.js';
+	import { h3GridOverlayService } from '$lib/services/h3GridOverlayService.js';
+	import { user } from '$lib/stores/auth.js';
 
 	/** @type {'mobile' | 'desktop'} */
 	export let variant = 'mobile';
+
+	$: isMaster = !!$user?.is_master;
 	/** @type {'zonas' | 'crear_zona_map' | 'guardar_zona' | 'zona_edit'} */
 	export let subView = 'zonas';
 	/** Escritorio: estado en `desktopZonePanelSubView` (drawer cerrado, solo controles del mapa). */
@@ -105,21 +109,25 @@
 	}
 
 	function openCrearZonaMap() {
+		if (!isMaster) return;
 		h3Actions.enterMobileZoneMap();
 		if (variant === 'desktop' && !useDesktopOverlayStore) {
 			desktopZonePanelSubView.set('crear_zona_map');
 			dispatch('requestCloseDrawer');
-			requestAnimationFrame(() => {
-				mapService.resizeMap();
-				mapService.enableMobileZoneEditorZoomLock();
-			});
-			return;
+		} else {
+			setZoneSubView('crear_zona_map');
 		}
-		setZoneSubView('crear_zona_map');
-		requestAnimationFrame(() => {
+		const paintGrid = () => {
 			mapService.resizeMap();
 			mapService.enableMobileZoneEditorZoomLock();
+			h3GridOverlayService.refresh();
+		};
+		// Inmediato + tras layout + tras cierre del drawer (animación ~280ms).
+		requestAnimationFrame(() => {
+			paintGrid();
+			requestAnimationFrame(paintGrid);
 		});
+		setTimeout(paintGrid, 280);
 	}
 
 	function backFromCrearZonaMap() {
@@ -167,6 +175,7 @@
 	}
 
 	function openEditZone(z) {
+		if (!isMaster) return;
 		closeZoneMenu();
 		editingZoneId = z.id;
 		editZoneName = z.name || '';
@@ -201,6 +210,7 @@
 	}
 
 	function requestDeactivateZone(z) {
+		if (!isMaster) return;
 		closeZoneMenu();
 		const isActive = z?.metadata?.status !== 'inactive';
 		zoneDeactivateConfirm = {
@@ -696,19 +706,21 @@
 												{zoneSubtitle(z)}
 											</p>
 										</div>
-										<button
-											type="button"
-											class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-white/55 dark:hover:bg-white/[0.08] dark:hover:text-white {zoneMenuOpenId ===
-											z.id
-												? 'bg-slate-100 dark:bg-white/[0.08]'
-												: ''}"
-											aria-expanded={zoneMenuOpenId === z.id}
-											aria-haspopup="menu"
-											aria-label="Opciones de {z.name}"
-											on:click={(e) => toggleZoneMenu(z, e)}
-										>
-											<Icon icon="mdi:dots-horizontal" class="h-6 w-6" aria-hidden="true" />
-										</button>
+										{#if isMaster}
+											<button
+												type="button"
+												class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-white/55 dark:hover:bg-white/[0.08] dark:hover:text-white {zoneMenuOpenId ===
+												z.id
+													? 'bg-slate-100 dark:bg-white/[0.08]'
+													: ''}"
+												aria-expanded={zoneMenuOpenId === z.id}
+												aria-haspopup="menu"
+												aria-label="Opciones de {z.name}"
+												on:click={(e) => toggleZoneMenu(z, e)}
+											>
+												<Icon icon="mdi:dots-horizontal" class="h-6 w-6" aria-hidden="true" />
+											</button>
+										{/if}
 									</div>
 								</div>
 							</li>
@@ -717,7 +729,7 @@
 				{/if}
 			</div>
 
-			{#if variant === 'desktop'}
+			{#if isMaster && variant === 'desktop'}
 				<div
 					class="mt-auto shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/[0.08] dark:bg-[#050810]"
 				>
@@ -733,7 +745,7 @@
 			{/if}
 		</div>
 
-		{#if variant === 'mobile'}
+		{#if isMaster && variant === 'mobile'}
 			<div
 				class="pointer-events-auto fixed inset-x-0 z-[54] px-4"
 				style="bottom: {crearZonaFabBottom};"
@@ -749,7 +761,7 @@
 			</div>
 		{/if}
 
-		{#if zoneMenuOpenId && zoneMenuZone && zoneMenuLayout}
+		{#if isMaster && zoneMenuOpenId && zoneMenuZone && zoneMenuLayout}
 			<button
 				type="button"
 				class="fixed inset-0 z-[198] cursor-default border-0 bg-transparent p-0"

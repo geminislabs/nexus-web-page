@@ -5,6 +5,8 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { vehicles } from '$lib/stores/vehicleStore.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
+	import { user } from '$lib/stores/auth.js';
+	import { get } from 'svelte/store';
 
 	export let alert; // objeto alert del store
 
@@ -48,7 +50,7 @@
 	}
 
 	async function save() {
-		if (!canSave) return;
+		if (!get(user)?.is_master || !canSave) return;
 		saving = true;
 		error = null;
 		try {
@@ -65,6 +67,7 @@
 	}
 
 	async function deleteAlert() {
+		if (!get(user)?.is_master) return;
 		deleting = true;
 		error = null;
 		try {

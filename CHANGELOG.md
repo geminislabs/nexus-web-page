@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Admin workspace for masters: Administración ↔ Seguimiento switcher, dashboard sin mapa, and unified Alertas/Zonas side panel
+- H3 resolution slider on the map (theme-aware, max 10, default 8) when creating zones or showing the grid
+- Close control on the tracking unit panel; panel is hidden while the H3 grid is active
+
 - Seguimiento units UI: telemetry cards, status filters, and map visibility toggles (`MapVisibleUnitsCard`); dual light/dark panels across tracking and reports unit picker
 
 - Map follow mode: botón "Seguir" en el panel de unidad con autoenfoque (zoom 15) y rastro en vivo con degradado
@@ -22,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI uploads coverage artifact; `audit` and `e2e` jobs are blocking (no `continue-on-error`)
 
 ### Changed
+
+- Non-master users: hide create/edit/delete/deactivate for vehicles, zones, and alerts (view-only management UI)
+- Map type control moved to left-center so it does not overlap the workspace switcher; “Ver detalles” label on unit list
+- npm overrides for `js-yaml`, `fast-uri`, `tar`, and `brace-expansion` to clear high/critical audit and OSV findings
 
 - Responsive tracking layout: tablet bottom sheet for seguimiento; floating “Unidades visibles” on desktop (lg+) only; hide vehicle InfoWindow on mobile; map initializes from saved theme (early `app.html` theme script)
 

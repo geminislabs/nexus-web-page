@@ -13,7 +13,8 @@
 		h3Actions,
 		mobileCrearZonaMapPassesPointer,
 		desktopZonePanelSubView,
-		zoneUiToast
+		zoneUiToast,
+		showH3Grid
 	} from '$lib/stores/h3Store.js';
 	import { theme } from '$lib/stores/themeStore.js';
 	import { vehicles, activeUnit, vehicleActions } from '$lib/stores/vehicleStore.js';
@@ -26,10 +27,11 @@
 	import TopDrawer from '$lib/components/TopDrawer.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
 	import MapVisibleUnitsCard from '$lib/components/MapVisibleUnitsCard.svelte';
-	import AdminPanel from '$lib/components/AdminPanel.svelte';
+	import AdminWorkspace from '$lib/components/admin/AdminWorkspace.svelte';
+	import WorkspaceSwitcher from '$lib/components/admin/WorkspaceSwitcher.svelte';
+	import AlertasZonasSidePanel from '$lib/components/AlertasZonasSidePanel.svelte';
 
 	import BottomTabBar from '$lib/components/BottomTabBar.svelte';
-	import TabInformes from '$lib/components/TabInformes.svelte';
 	import TabAlertas from '$lib/components/TabAlertas.svelte';
 	import TabAjustes from '$lib/components/TabAjustes.svelte';
 	import ZonasPanel from '$lib/components/ZonasPanel.svelte';
@@ -37,6 +39,7 @@
 	import UnitsPickerSheet from '$lib/components/UnitsPickerSheet.svelte';
 	import { eventActions } from '$lib/stores/eventStore.js';
 	import { requestedPanelView } from '$lib/stores/navigationStore.js';
+	import { workspace, workspaceActions } from '$lib/stores/workspaceStore.js';
 
 	let isLoading = true;
 	let userData = null;
@@ -46,35 +49,27 @@
 	let prevMobileTab = 'seguimiento';
 	let trackingPanelView = 'unit-info';
 
-	let openDrawer = ''; // '' | 'informes' | 'configuracion'
+	let openDrawer = ''; // '' | 'configuracion:…'
 
 	const SW = 72;
 
 	const sidebarBtnBase =
 		'relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-[14px] border transition-[background-color,border-color,color,box-shadow] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#080b16]';
-	/** Idle / active en el markup (clases literales) para que Tailwind las detecte y Svelte reaccione a openDrawer. */
-	const baseConfigSidebarItems = [
+	/** Seguimiento: unidades + alertas/zonas unificadas. */
+	const configSidebarItems = [
 		{ id: 'unidades', label: 'Unidades', title: 'Seguimiento', icon: 'mdi:car-side' },
-		{ id: 'zonas', label: 'Zonas', icon: 'mdi:hexagon-multiple-outline' },
-		{ id: 'gestionar_alertas', label: 'Gestionar', icon: 'mdi:format-list-bulleted' },
 		{
-			id: 'alertas',
-			label: 'Historial',
-			icon: 'mdi:bell-badge-outline',
-			title: 'Historial de alarmas'
+			id: 'alertas_zonas',
+			label: 'Alertas',
+			title: 'Alertas y zonas',
+			icon: 'mdi:bell-ring-outline'
 		}
 	];
-	$: configSidebarItems = userData?.is_master
-		? [
-				...baseConfigSidebarItems,
-				{
-					id: 'administracion',
-					label: 'Admin',
-					icon: 'mdi:shield-account-outline',
-					title: 'Administración'
-				}
-			]
-		: baseConfigSidebarItems;
+
+	$: isAdminWorkspace = !!userData?.is_master && $workspace === 'admin';
+	$: if (userData && !userData.is_master) {
+		if ($workspace === 'admin') workspaceActions.ensureTrackingForUser();
+	}
 
 	$: canonicalUrl =
 		$page?.url?.origin && $page?.url?.pathname ? `${$page.url.origin}${$page.url.pathname}` : '';
@@ -84,10 +79,6 @@
 		requestedPanelView.set(null);
 	}
 
-	function toggleDrawer(name) {
-		showUserMenu = false;
-		openDrawer = openDrawer === name ? '' : name;
-	}
 	function closeDrawer() {
 		openDrawer = '';
 	}
@@ -97,7 +88,9 @@
 	}
 
 	function openConfigDrawer(section) {
-		const drawerId = getConfigDrawerId(section);
+		const normalized =
+			section === 'zonas' || section === 'gestionar_alertas' ? 'alertas_zonas' : section;
+		const drawerId = getConfigDrawerId(normalized);
 		showUserMenu = false;
 		openDrawer = openDrawer === drawerId ? '' : drawerId;
 	}
@@ -122,6 +115,24 @@
 		configSidebarItems.find((item) => item.id === activeConfigSection)?.label ??
 		'Configuración';
 
+	$: isSideConfigPanel =
+		activeConfigSection === 'unidades' || activeConfigSection === 'alertas_zonas';
+	$: configDrawerSubtitle =
+		activeConfigSection === 'unidades'
+			? 'Visualiza y administra tus unidades en tiempo real'
+			: activeConfigSection === 'alertas_zonas'
+				? 'Reglas de alerta y geocercas sobre el mapa'
+				: '';
+	$: configDrawerIcon =
+		activeConfigSection === 'unidades'
+			? 'mdi:car-side'
+			: activeConfigSection === 'alertas_zonas'
+				? 'mdi:bell-ring-outline'
+				: 'mdi:cog-outline';
+
+	/** Master: switcher en seguimiento. */
+	$: showTrackingWorkspaceSwitcher = !!userData?.is_master && !isAdminWorkspace;
+
 	function onTrackingPanelViewChange(nextView) {
 		if (nextView === 'trips') {
 			mapService.clearFollowVehicle();
@@ -144,6 +155,14 @@
 	function centerOnActiveUnit() {
 		if (!$activeUnit) return;
 		mapService.centerOnVehicle($activeUnit);
+	}
+
+	function closeActiveUnitPanel() {
+		mapService.clearFollowVehicle();
+		mapService.setHighlightedVehicle(null);
+		vehicleActions.setActiveUnit(null);
+		trackingPanelView = 'unit-info';
+		showMobileUnitsSheet = false;
 	}
 
 	function handleBodyClick(e) {
@@ -298,399 +317,376 @@
 
 	<h1 class="sr-only">Dashboard NEXUS — seguimiento de flota</h1>
 
-	<aside
-		class="fixed bottom-0 left-0 top-0 z-50 hidden w-[72px] flex-col items-center gap-1 border-r border-slate-200 bg-white py-4 backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#080b16]/[0.97] sm:flex"
-		aria-label="Barra lateral de aplicación"
-	>
-		<header class="mb-1 flex w-10 shrink-0 flex-col items-center justify-center">
-			<a
-				href="/dashboard"
-				class="flex h-[34px] w-10 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080b16]"
-			>
-				<img
-					src={logoUrl}
-					alt="NEXUS — inicio"
-					class="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]"
-					width="40"
-					height="34"
-					decoding="async"
-				/>
-			</a>
-		</header>
-
-		<div class="my-2 h-px w-9 shrink-0 bg-slate-200 dark:bg-white/[0.08]" role="presentation"></div>
-
-		<nav class="flex w-full flex-1 flex-col items-center gap-1 px-0" aria-label="Accesos rápidos">
-			<div class="relative w-full shrink-0 px-3" data-dashboard-user-menu>
-				<button
-					type="button"
-					class={`${sidebarBtnBase} mx-auto w-12 ${
-						showUserMenu
-							? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/35 dark:border-blue-400/50 dark:bg-blue-500/25 dark:text-blue-300'
-							: 'border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85'
-					}`}
-					aria-expanded={showUserMenu}
-					aria-haspopup="true"
-					aria-controls="dashboard-user-menu"
-					id="dashboard-user-menu-button"
-					aria-label="Cuenta y menú de usuario"
-					title="Cuenta"
-					on:click|stopPropagation={() => {
-						showUserMenu = !showUserMenu;
-						openDrawer = '';
-					}}
+	{#if isAdminWorkspace}
+		<AdminWorkspace />
+	{:else}
+		<aside
+			class="fixed bottom-0 left-0 top-0 z-50 hidden w-[72px] flex-col items-center gap-1 border-r border-slate-200 bg-white py-4 backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#080b16]/[0.97] sm:flex"
+			aria-label="Barra lateral de aplicación"
+		>
+			<header class="mb-1 flex w-10 shrink-0 flex-col items-center justify-center">
+				<a
+					href="/dashboard"
+					class="flex h-[34px] w-10 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080b16]"
 				>
-					{#if userData}
-						<span
-							class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-[0.9375rem] font-bold text-white"
-							aria-hidden="true"
-						>
-							{getInitial(userData.name)}
-						</span>
-					{:else}
-						<Icon icon="mdi:account-circle" class="h-[22px] w-[22px] shrink-0" aria-hidden="true" />
-					{/if}
-				</button>
-
-				{#if showUserMenu}
-					<div
-						id="dashboard-user-menu"
-						role="region"
-						aria-labelledby="dashboard-user-menu-button"
-						class="absolute left-[calc(100%+10px)] top-0 z-[60] w-[17.5rem] max-w-[calc(100vw-5rem)] origin-left rounded-[14px] border border-slate-200 bg-white p-3.5 shadow-[0_20px_40px_rgb(15_23_42_/0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#080b16]/[0.98] dark:shadow-[0_20px_40px_rgb(0_0_0_/0.6)]"
-						tabindex="-1"
-						transition:scale={{ duration: 150, start: 0.95, opacity: 0.9, easing: cubicOut }}
-					>
-						{#if userData}
-							<div class="flex items-start gap-3">
-								<div
-									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-[1.1rem] font-bold text-white"
-									aria-hidden="true"
-								>
-									{getInitial(userData.name)}
-								</div>
-								<div class="min-w-0 flex-1">
-									<div class="flex items-center gap-1.5">
-										<p
-											id="dashboard-user-menu-name"
-											class="m-0 min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-slate-900 dark:text-white"
-										>
-											{userData.name}
-										</p>
-										<button
-											type="button"
-											class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/55 dark:text-white/70
-												{isConfigDrawerOpen && activeConfigSection === 'apariencia'
-												? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/25 dark:border-blue-500/45 dark:bg-blue-600/22 dark:text-blue-300 dark:shadow-[0_0_12px_rgba(37,99,235,0.25)]'
-												: 'border-slate-200 bg-slate-100 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-900 dark:border-white/[0.12] dark:bg-white/[0.06] dark:hover:border-white/20 dark:hover:bg-white/[0.1] dark:hover:text-white'}"
-											aria-label="Configuración"
-											title="Configuración"
-											on:click|stopPropagation={() => openConfigDrawer('apariencia')}
-										>
-											<Icon
-												icon="mdi:cog-outline"
-												class="h-[18px] w-[18px] shrink-0"
-												aria-hidden="true"
-											/>
-										</button>
-									</div>
-									<p class="mt-0.5 truncate text-xs text-slate-500 dark:text-white/45">
-										{userData.email}
-									</p>
-								</div>
-							</div>
-							<div class="my-3 h-px bg-slate-200 dark:bg-white/[0.08]" role="presentation"></div>
-						{/if}
-						<button
-							type="button"
-							class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 justify-center"
-							on:click={async () => {
-								await logoutSession();
-								goto('/login');
-							}}
-						>
-							<Icon icon="mdi:logout" class="h-4 w-4 shrink-0" aria-hidden="true" />
-							Cerrar sesión
-						</button>
-					</div>
-				{/if}
-			</div>
-
-			<div class="min-h-0 flex-1" aria-hidden="true"></div>
-
-			<div class="flex flex-col items-center gap-1">
-				<button
-					type="button"
-					class="{sidebarNavBtnClass(openDrawer === 'informes')} mx-auto"
-					aria-label="Abrir informes"
-					aria-pressed={openDrawer === 'informes'}
-					title="Informes"
-					on:click={() => toggleDrawer('informes')}
-				>
-					{#if openDrawer === 'informes'}
-						<span
-							class="absolute -left-1 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-blue-600 dark:bg-blue-400"
-							aria-hidden="true"
-						></span>
-					{/if}
-					<Icon
-						icon="mdi:file-chart-outline"
-						class="h-[22px] w-[22px] shrink-0 {openDrawer === 'informes'
-							? 'text-white dark:text-blue-300'
-							: ''}"
-						aria-hidden="true"
+					<img
+						src={logoUrl}
+						alt="NEXUS — inicio"
+						class="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]"
+						width="40"
+						height="34"
+						decoding="async"
 					/>
-				</button>
+				</a>
+			</header>
 
-				{#each configSidebarItems as item (item.id)}
-					{@const itemActive = openDrawer === `configuracion:${item.id}`}
+			<div
+				class="my-2 h-px w-9 shrink-0 bg-slate-200 dark:bg-white/[0.08]"
+				role="presentation"
+			></div>
+
+			<nav class="flex w-full flex-1 flex-col items-center gap-1 px-0" aria-label="Accesos rápidos">
+				<div class="relative w-full shrink-0 px-3" data-dashboard-user-menu>
 					<button
 						type="button"
-						class="{sidebarNavBtnClass(itemActive)} mx-auto"
-						aria-label={item.title ?? `Abrir ${item.label}`}
-						aria-pressed={itemActive}
-						title={item.title ?? item.label}
-						on:click={() => openConfigDrawer(item.id)}
+						class={`${sidebarBtnBase} mx-auto w-12 ${
+							showUserMenu
+								? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/35 dark:border-blue-400/50 dark:bg-blue-500/25 dark:text-blue-300'
+								: 'border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85'
+						}`}
+						aria-expanded={showUserMenu}
+						aria-haspopup="true"
+						aria-controls="dashboard-user-menu"
+						id="dashboard-user-menu-button"
+						aria-label="Cuenta y menú de usuario"
+						title="Cuenta"
+						on:click|stopPropagation={() => {
+							showUserMenu = !showUserMenu;
+							openDrawer = '';
+						}}
 					>
-						{#if itemActive}
+						{#if userData}
 							<span
-								class="absolute -left-1 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-blue-600 dark:bg-blue-400"
+								class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-[0.9375rem] font-bold text-white"
 								aria-hidden="true"
-							></span>
+							>
+								{getInitial(userData.name)}
+							</span>
+						{:else}
+							<Icon
+								icon="mdi:account-circle"
+								class="h-[22px] w-[22px] shrink-0"
+								aria-hidden="true"
+							/>
 						{/if}
-						<Icon
-							icon={item.icon}
-							class="h-[22px] w-[22px] shrink-0 {itemActive ? 'text-white dark:text-blue-300' : ''}"
-							aria-hidden="true"
-						/>
 					</button>
-				{/each}
-			</div>
 
-			<div class="min-h-0 flex-1" aria-hidden="true"></div>
-
-			{#if browser}
-				<button
-					type="button"
-					class={`${sidebarBtnBase} mx-auto h-[42px] w-[42px] rounded-[10px] border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85`}
-					on:click={toggleFullscreen}
-					aria-label={isAppFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
-					title={isAppFullscreen ? 'Salir' : 'Pantalla completa'}
-				>
-					{#if isAppFullscreen}
-						<Icon
-							icon="mdi:fullscreen-exit"
-							class="h-[22px] w-[22px] shrink-0"
-							aria-hidden="true"
-						/>
-					{:else}
-						<Icon icon="mdi:fullscreen" class="h-[22px] w-[22px] shrink-0" aria-hidden="true" />
+					{#if showUserMenu}
+						<div
+							id="dashboard-user-menu"
+							role="region"
+							aria-labelledby="dashboard-user-menu-button"
+							class="absolute left-[calc(100%+10px)] top-0 z-[60] w-[17.5rem] max-w-[calc(100vw-5rem)] origin-left rounded-[14px] border border-slate-200 bg-white p-3.5 shadow-[0_20px_40px_rgb(15_23_42_/0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#080b16]/[0.98] dark:shadow-[0_20px_40px_rgb(0_0_0_/0.6)]"
+							tabindex="-1"
+							transition:scale={{ duration: 150, start: 0.95, opacity: 0.9, easing: cubicOut }}
+						>
+							{#if userData}
+								<div class="flex items-start gap-3">
+									<div
+										class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-[1.1rem] font-bold text-white"
+										aria-hidden="true"
+									>
+										{getInitial(userData.name)}
+									</div>
+									<div class="min-w-0 flex-1">
+										<div class="flex items-center gap-1.5">
+											<p
+												id="dashboard-user-menu-name"
+												class="m-0 min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-slate-900 dark:text-white"
+											>
+												{userData.name}
+											</p>
+											<button
+												type="button"
+												class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/55 dark:text-white/70
+												{isConfigDrawerOpen && activeConfigSection === 'apariencia'
+													? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/25 dark:border-blue-500/45 dark:bg-blue-600/22 dark:text-blue-300 dark:shadow-[0_0_12px_rgba(37,99,235,0.25)]'
+													: 'border-slate-200 bg-slate-100 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-900 dark:border-white/[0.12] dark:bg-white/[0.06] dark:hover:border-white/20 dark:hover:bg-white/[0.1] dark:hover:text-white'}"
+												aria-label="Configuración"
+												title="Configuración"
+												on:click|stopPropagation={() => openConfigDrawer('apariencia')}
+											>
+												<Icon
+													icon="mdi:cog-outline"
+													class="h-[18px] w-[18px] shrink-0"
+													aria-hidden="true"
+												/>
+											</button>
+										</div>
+										<p class="mt-0.5 truncate text-xs text-slate-500 dark:text-white/45">
+											{userData.email}
+										</p>
+									</div>
+								</div>
+								<div class="my-3 h-px bg-slate-200 dark:bg-white/[0.08]" role="presentation"></div>
+							{/if}
+							<button
+								type="button"
+								class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-red-500/10 px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50 justify-center"
+								on:click={async () => {
+									await logoutSession();
+									goto('/login');
+								}}
+							>
+								<Icon icon="mdi:logout" class="h-4 w-4 shrink-0" aria-hidden="true" />
+								Cerrar sesión
+							</button>
+						</div>
 					{/if}
-				</button>
+				</div>
+
+				<div class="min-h-0 flex-1" aria-hidden="true"></div>
+
+				<div class="flex flex-col items-center gap-1">
+					{#each configSidebarItems as item (item.id)}
+						{@const itemActive = openDrawer === `configuracion:${item.id}`}
+						<button
+							type="button"
+							class="{sidebarNavBtnClass(itemActive)} mx-auto"
+							aria-label={item.title ?? `Abrir ${item.label}`}
+							aria-pressed={itemActive}
+							title={item.title ?? item.label}
+							on:click={() => openConfigDrawer(item.id)}
+						>
+							{#if itemActive}
+								<span
+									class="absolute -left-1 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-blue-600 dark:bg-blue-400"
+									aria-hidden="true"
+								></span>
+							{/if}
+							<Icon
+								icon={item.icon}
+								class="h-[22px] w-[22px] shrink-0 {itemActive
+									? 'text-white dark:text-blue-300'
+									: ''}"
+								aria-hidden="true"
+							/>
+						</button>
+					{/each}
+				</div>
+
+				<div class="min-h-0 flex-1" aria-hidden="true"></div>
+
+				{#if browser}
+					<button
+						type="button"
+						class={`${sidebarBtnBase} mx-auto h-[42px] w-[42px] rounded-[10px] border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85`}
+						on:click={toggleFullscreen}
+						aria-label={isAppFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+						title={isAppFullscreen ? 'Salir' : 'Pantalla completa'}
+					>
+						{#if isAppFullscreen}
+							<Icon
+								icon="mdi:fullscreen-exit"
+								class="h-[22px] w-[22px] shrink-0"
+								aria-hidden="true"
+							/>
+						{:else}
+							<Icon icon="mdi:fullscreen" class="h-[22px] w-[22px] shrink-0" aria-hidden="true" />
+						{/if}
+					</button>
+				{/if}
+			</nav>
+		</aside>
+
+		<main
+			id="main-dashboard"
+			class="fixed bottom-0 left-0 right-0 top-0 sm:left-[72px]"
+			aria-label="Mapa y paneles"
+		>
+			<MapContainer bind:isLoading onMapTap={onMobileMapTap} />
+
+			{#if showTrackingWorkspaceSwitcher}
+				<div class="pointer-events-none absolute left-3 top-3 z-[40]">
+					<div class="pointer-events-auto">
+						<WorkspaceSwitcher compact />
+					</div>
+				</div>
 			{/if}
-		</nav>
-	</aside>
 
-	<main
-		id="main-dashboard"
-		class="fixed bottom-0 left-0 right-0 top-0 sm:left-[72px]"
-		aria-label="Mapa y paneles"
-	>
-		<MapContainer bind:isLoading onMapTap={onMobileMapTap} />
-
-		<TopDrawer
-			open={openDrawer === 'informes'}
-			title="Informes"
-			icon="mdi:file-chart-outline"
-			accentColor="#8b5cf6"
-			sidebarWidth={SW}
-			headerPaddingClass="px-3 sm:px-4"
-			bodyPaddingClass="py-4 px-0"
-			on:close={closeDrawer}
-		>
-			<TabInformes />
-		</TopDrawer>
-
-		<TopDrawer
-			open={isConfigDrawerOpen}
-			title={configDrawerTitle}
-			subtitle={activeConfigSection === 'unidades'
-				? 'Visualiza y administra tus unidades en tiempo real'
-				: ''}
-			icon={activeConfigSection === 'administracion'
-				? 'mdi:shield-account-outline'
-				: activeConfigSection === 'unidades'
-					? 'mdi:car-side'
-					: 'mdi:cog-outline'}
-			accentColor={activeConfigSection === 'administracion' ? '#2563eb' : '#10b981'}
-			sidebarWidth={SW}
-			bodyPaddingClass={activeConfigSection === 'administracion' ? 'py-4 px-0' : 'p-0'}
-			bodyScrollable={activeConfigSection !== 'zonas' && activeConfigSection !== 'unidades'}
-			placement={activeConfigSection === 'unidades' ? 'side' : 'bottom'}
-			passiveBackdrop={$mobileCrearZonaMapPassesPointer ||
-				$desktopZonePanelSubView !== 'zonas' ||
-				activeConfigSection === 'unidades'}
-			on:close={closeDrawer}
-		>
-			{#if activeConfigSection === 'administracion'}
-				<AdminPanel embedded={true} />
-			{:else}
-				{#key activeConfigSection}
-					<DrawerConfiguracion
-						initialSection={activeConfigSection}
-						showSectionSidebar={false}
+			<TopDrawer
+				open={isConfigDrawerOpen}
+				title={configDrawerTitle}
+				subtitle={configDrawerSubtitle}
+				icon={configDrawerIcon}
+				accentColor="#10b981"
+				sidebarWidth={SW}
+				bodyPaddingClass="p-0"
+				bodyScrollable={!isSideConfigPanel}
+				placement={isSideConfigPanel ? 'side' : 'bottom'}
+				sideWidthClass={activeConfigSection === 'alertas_zonas'
+					? 'w-[min(480px,46%)] max-w-[520px]'
+					: 'w-[min(420px,40%)] max-w-[480px]'}
+				passiveBackdrop={$mobileCrearZonaMapPassesPointer ||
+					$desktopZonePanelSubView !== 'zonas' ||
+					activeConfigSection === 'unidades'}
+				on:close={closeDrawer}
+			>
+				{#if activeConfigSection === 'alertas_zonas'}
+					<AlertasZonasSidePanel
 						on:close={closeDrawer}
 						on:navigate={(e) => openConfigDrawer(e.detail.section)}
 					/>
-				{/key}
-			{/if}
-		</TopDrawer>
+				{:else}
+					{#key activeConfigSection}
+						<DrawerConfiguracion
+							initialSection={activeConfigSection}
+							showSectionSidebar={false}
+							on:close={closeDrawer}
+							on:navigate={(e) => openConfigDrawer(e.detail.section)}
+						/>
+					{/key}
+				{/if}
+			</TopDrawer>
 
-		{#if isConfigDrawerOpen && activeConfigSection === 'unidades'}
-			<div
-				class="pointer-events-none fixed right-4 top-4 z-[115] hidden lg:block"
-				aria-hidden="false"
-			>
-				<MapVisibleUnitsCard />
-			</div>
-		{/if}
-
-		{#if $desktopZonePanelSubView !== 'zonas'}
-			<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
-		{/if}
-
-		<!-- PR-04: TrackingContextPanel flotante para desktop/tablet -->
-		{#if $activeUnit && !isConfigDrawerOpen && openDrawer !== 'informes'}
-			<div class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block">
+			{#if isConfigDrawerOpen && activeConfigSection === 'unidades'}
 				<div
-					class="pointer-events-auto overflow-hidden rounded-2xl border border-slate-200/80 shadow-xl dark:border-transparent dark:shadow-2xl"
+					class="pointer-events-none fixed right-4 top-4 z-[115] hidden lg:block"
+					aria-hidden="false"
 				>
-					<div class="max-h-[70vh] bg-white dark:bg-[#0c1829]">
-						<TrackingSubPanel
-							unit={$activeUnit}
-							units={$vehicles}
-							panelView={trackingPanelView}
-							onPanelViewChange={onTrackingPanelViewChange}
-							onBackToUnitInfo={backToUnitInfoPanel}
-							onSelectUnit={(u) => {
-								vehicleActions.setActiveUnit(u.id);
-								mapService.centerOnVehicle(u);
-							}}
-							onCenterUnit={centerOnActiveUnit}
+					<MapVisibleUnitsCard />
+				</div>
+			{/if}
+
+			{#if $desktopZonePanelSubView !== 'zonas'}
+				<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
+			{/if}
+
+			<!-- PR-04: TrackingContextPanel flotante para desktop/tablet -->
+			{#if $activeUnit && !isConfigDrawerOpen && !$showH3Grid}
+				<div class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block">
+					<div
+						class="pointer-events-auto overflow-hidden rounded-2xl border border-slate-200/80 shadow-xl dark:border-transparent dark:shadow-2xl"
+					>
+						<div class="max-h-[70vh] bg-white dark:bg-[#0c1829]">
+							<TrackingSubPanel
+								unit={$activeUnit}
+								units={$vehicles}
+								panelView={trackingPanelView}
+								onPanelViewChange={onTrackingPanelViewChange}
+								onBackToUnitInfo={backToUnitInfoPanel}
+								onClose={closeActiveUnitPanel}
+								onSelectUnit={(u) => {
+									vehicleActions.setActiveUnit(u.id);
+									mapService.centerOnVehicle(u);
+								}}
+								onCenterUnit={centerOnActiveUnit}
+							/>
+						</div>
+					</div>
+				</div>
+			{/if}
+
+			{#if $zoneUiToast}
+				<div
+					class="pointer-events-none fixed left-1/2 top-[max(5.5rem,calc(env(safe-area-inset-top,0px)+4.5rem))] z-[200] flex w-full max-w-[min(92vw,22rem)] -translate-x-1/2 justify-center px-4 sm:left-[calc(50%+36px)]"
+					role="status"
+				>
+					<p
+						class="w-full rounded-2xl border border-emerald-500/35 bg-slate-900/92 px-4 py-2.5 text-center text-[13px] font-semibold text-white shadow-lg backdrop-blur-md dark:border-emerald-400/30 dark:bg-black/88"
+					>
+						{$zoneUiToast}
+					</p>
+				</div>
+			{/if}
+
+			{#if $activeTab === 'seguimiento' && (!$activeUnit || showMobileUnitsSheet)}
+				<div
+					class="pointer-events-none fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom,0px)+2px)] z-[220] flex sm:hidden"
+					aria-label="Panel de unidades"
+				>
+					<div class="pointer-events-auto relative w-full">
+						{#if !showMobileUnitsSheet}
+							<button
+								type="button"
+								class="mx-auto mb-1 flex w-20 items-center justify-center rounded-full border border-cyan-500/35 bg-white/95 px-2 py-1 shadow-lg backdrop-blur-sm dark:border-cyan-300/30 dark:bg-slate-900/92 dark:shadow-[0_10px_28px_rgba(0,0,0,0.55)]"
+								on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
+								aria-label="Mostrar panel de unidades"
+							>
+								<div
+									class="h-1 w-10 rounded-full bg-cyan-500/70 dark:bg-cyan-200/80"
+									aria-hidden="true"
+								></div>
+							</button>
+							<button
+								type="button"
+								class="mx-auto mb-1 block rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-md backdrop-blur-sm dark:border-white/12 dark:bg-slate-900/90 dark:text-white/75 dark:shadow-[0_8px_22px_rgba(0,0,0,0.45)]"
+								on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
+								aria-label="Mostrar panel de unidades"
+							>
+								Selecciona una unidad para ver más posiciones
+							</button>
+						{/if}
+						<UnitsPickerSheet
+							open={showMobileUnitsSheet}
+							onSelect={onMobileVehicleRowClick}
+							onClose={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
 						/>
 					</div>
 				</div>
-			</div>
-		{/if}
+			{/if}
 
-		{#if $zoneUiToast}
-			<div
-				class="pointer-events-none fixed left-1/2 top-[max(5.5rem,calc(env(safe-area-inset-top,0px)+4.5rem))] z-[200] flex w-full max-w-[min(92vw,22rem)] -translate-x-1/2 justify-center px-4 sm:left-[calc(50%+36px)]"
-				role="status"
-			>
-				<p
-					class="w-full rounded-2xl border border-emerald-500/35 bg-slate-900/92 px-4 py-2.5 text-center text-[13px] font-semibold text-white shadow-lg backdrop-blur-md dark:border-emerald-400/30 dark:bg-black/88"
+			{#if $activeTab === 'alertas'}
+				<div
+					class="fixed inset-0 z-[52] flex max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] flex-col overflow-hidden bg-transparent sm:hidden"
+					class:pointer-events-none={$mobileCrearZonaMapPassesPointer}
+					role="region"
+					aria-label="Alertas"
+					transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
 				>
-					{$zoneUiToast}
-				</p>
-			</div>
-		{/if}
+					<TabAlertas />
+				</div>
+			{/if}
+			{#if $activeTab === 'ajustes'}
+				<div
+					class="fixed inset-0 z-[52] flex max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] flex-col overflow-hidden bg-slate-50 dark:bg-black sm:hidden"
+					role="region"
+					aria-label="Ajustes"
+					transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
+				>
+					<TabAjustes />
+				</div>
+			{/if}
+		</main>
 
-		{#if $activeTab === 'seguimiento' && (!$activeUnit || showMobileUnitsSheet)}
+		{#if $activeTab === 'seguimiento' && $activeUnit && !showMobileUnitsSheet && !$showH3Grid}
 			<div
-				class="pointer-events-none fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom,0px)+2px)] z-[220] flex sm:hidden"
-				aria-label="Panel de unidades"
+				class="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px)+8px)] left-2 right-2 z-[55] sm:hidden"
+				transition:fly={{ y: 20, duration: 200, easing: cubicOut }}
 			>
-				<div class="pointer-events-auto relative w-full">
-					{#if !showMobileUnitsSheet}
-						<button
-							type="button"
-							class="mx-auto mb-1 flex w-20 items-center justify-center rounded-full border border-cyan-500/35 bg-white/95 px-2 py-1 shadow-lg backdrop-blur-sm dark:border-cyan-300/30 dark:bg-slate-900/92 dark:shadow-[0_10px_28px_rgba(0,0,0,0.55)]"
-							on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
-							aria-label="Mostrar panel de unidades"
-						>
-							<div
-								class="h-1 w-10 rounded-full bg-cyan-500/70 dark:bg-cyan-200/80"
-								aria-hidden="true"
-							></div>
-						</button>
-						<button
-							type="button"
-							class="mx-auto mb-1 block rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-[11px] font-semibold text-slate-600 shadow-md backdrop-blur-sm dark:border-white/12 dark:bg-slate-900/90 dark:text-white/75 dark:shadow-[0_8px_22px_rgba(0,0,0,0.45)]"
-							on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
-							aria-label="Mostrar panel de unidades"
-						>
-							Selecciona una unidad para ver más posiciones
-						</button>
-					{/if}
-					<UnitsPickerSheet
-						open={showMobileUnitsSheet}
-						onSelect={onMobileVehicleRowClick}
-						onClose={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
+				<div
+					class="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
+				>
+					<TrackingSubPanel
+						unit={$activeUnit}
+						units={$vehicles}
+						panelView={trackingPanelView}
+						onPanelViewChange={onTrackingPanelViewChange}
+						onBackToUnitInfo={backToUnitInfoPanel}
+						onClose={closeActiveUnitPanel}
+						onCenterUnit={centerOnActiveUnit}
+						onSelectUnit={(id) => {
+							vehicleActions.setActiveUnit(id);
+							const v = $vehicles.find((u) => u.id === id);
+							if (v) mapService.centerOnVehicle(v);
+						}}
 					/>
 				</div>
 			</div>
 		{/if}
 
-		{#if $activeTab === 'informes'}
-			<div
-				class="fixed inset-0 z-[52] max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 touch-pan-y dark:bg-[#080d1a] sm:hidden"
-				role="region"
-				aria-label="Informes"
-				transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
-			>
-				<TabInformes />
-			</div>
-		{/if}
-		{#if $activeTab === 'alertas'}
-			<div
-				class="fixed inset-0 z-[52] flex max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] flex-col overflow-hidden bg-transparent sm:hidden"
-				class:pointer-events-none={$mobileCrearZonaMapPassesPointer}
-				role="region"
-				aria-label="Alertas"
-				transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
-			>
-				<TabAlertas />
-			</div>
-		{/if}
-		{#if $activeTab === 'ajustes'}
-			<div
-				class="fixed inset-0 z-[52] flex max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] flex-col overflow-hidden bg-slate-50 dark:bg-black sm:hidden"
-				role="region"
-				aria-label="Ajustes"
-				transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
-			>
-				<TabAjustes />
-			</div>
-		{/if}
-	</main>
-
-	{#if $activeTab === 'seguimiento' && $activeUnit && !showMobileUnitsSheet}
-		<div
-			class="fixed bottom-[calc(56px+env(safe-area-inset-bottom,0px)+8px)] left-2 right-2 z-[55] sm:hidden"
-			transition:fly={{ y: 20, duration: 200, easing: cubicOut }}
-		>
-			<div
-				class="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
-			>
-				<TrackingSubPanel
-					unit={$activeUnit}
-					units={$vehicles}
-					panelView={trackingPanelView}
-					onPanelViewChange={onTrackingPanelViewChange}
-					onBackToUnitInfo={backToUnitInfoPanel}
-					onCenterUnit={centerOnActiveUnit}
-					onSelectUnit={(id) => {
-						vehicleActions.setActiveUnit(id);
-						const v = $vehicles.find((u) => u.id === id);
-						if (v) mapService.centerOnVehicle(v);
-					}}
-				/>
-			</div>
+		<div class="sm:hidden" aria-hidden="true">
+			<BottomTabBar />
 		</div>
 	{/if}
-
-	<div class="sm:hidden" aria-hidden="true">
-		<BottomTabBar />
-	</div>
 </div>
