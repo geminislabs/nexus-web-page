@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Non-master users: hide create/edit/delete/deactivate for vehicles, zones, and alerts (view-only management UI)
 - Map type control moved to left-center so it does not overlap the workspace switcher; “Ver detalles” label on unit list
+- npm overrides for `js-yaml`, `fast-uri`, `tar`, and `brace-expansion` to clear high/critical audit and OSV findings
 
 - Responsive tracking layout: tablet bottom sheet for seguimiento; floating “Unidades visibles” on desktop (lg+) only; hide vehicle InfoWindow on mobile; map initializes from saved theme (early `app.html` theme script)
 
