@@ -13,6 +13,7 @@
 	export let onSelectUnit = () => {};
 	export let onCenterUnit = () => {};
 	export let onBackToUnitInfo = () => {};
+	export let onClose = () => {};
 </script>
 
 {#if panelView === 'trips'}
@@ -33,6 +34,7 @@
 		{onPanelViewChange}
 		{onSelectUnit}
 		{onCenterUnit}
+		{onClose}
 		onOpenSecurity={() => onPanelViewChange('security')}
 	/>
 {/if}

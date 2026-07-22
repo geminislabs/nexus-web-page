@@ -250,8 +250,23 @@ class MapService {
 					position: this.google.maps.ControlPosition.LEFT_BOTTOM
 				},
 				fullscreenControl: false,
-				mapTypeControl: false,
-				streetViewControl: false,
+				// LEFT_CENTER: mitad izquierda; no compite con el combobox de workspace (arriba).
+				mapTypeControl: true,
+				mapTypeControlOptions: {
+					style: this.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+					position: this.google.maps.ControlPosition.LEFT_CENTER,
+					mapTypeIds: [
+						this.google.maps.MapTypeId.ROADMAP,
+						this.google.maps.MapTypeId.SATELLITE,
+						this.google.maps.MapTypeId.HYBRID,
+						this.google.maps.MapTypeId.TERRAIN
+					]
+				},
+				// Pegman arrastrable (Street View); mismo lado que el zoom.
+				streetViewControl: true,
+				streetViewControlOptions: {
+					position: this.google.maps.ControlPosition.LEFT_BOTTOM
+				},
 				rotateControl: false,
 				scaleControl: false,
 				styles: initialTheme === 'light' ? grayBlueMapStyle : darkBlueCarStyle,
@@ -537,7 +552,7 @@ class MapService {
 					</div>
 					<div style="border-radius:12px;padding:10px 10px 8px;${metricBg}">
 						<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Batería</div>
-						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${battery}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:1px;">%</span></div>
+						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${battery}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:1px;">Volts</span></div>
 					</div>
 				</div>
 				<div style="border-radius:12px;padding:10px 12px;${locBox}margin-bottom:10px;">
@@ -1154,28 +1169,37 @@ class MapService {
 	}
 
 	/**
-	 * Fija zoom y límites min/max para el editor de zona (móvil).
-	 * Mantiene el centro actual; solo ajusta el nivel de zoom al de referencia.
+	 * Durante edición de zona: oculta Street View / capas, pero deja zoom libre
+	 * para que la rejilla H3 pueda crecer/achicarse.
 	 */
 	enableMobileZoneEditorZoomLock() {
-		if (!this.map || this._mobileZoneZoomLocked) return;
-		if (!this._isMobileLayout()) return;
-		const z = this._mobileZoneEditorZoom;
+		if (!this.map) return;
 		this._mobileZoneZoomLocked = true;
 		this.map.setOptions({
-			zoom: z,
-			minZoom: z,
-			maxZoom: z
+			streetViewControl: false,
+			mapTypeControl: false
 		});
 	}
 
-	/** Restaura zoom libre tras salir del editor de zona. */
+	/** Restaura controles tras salir del editor de zona. */
 	disableMobileZoneEditorZoomLock() {
 		if (!this.map || !this._mobileZoneZoomLocked) return;
 		this._mobileZoneZoomLocked = false;
 		this.map.setOptions({
 			minZoom: 0,
-			maxZoom: 22
+			maxZoom: 22,
+			streetViewControl: true,
+			mapTypeControl: true,
+			mapTypeControlOptions: {
+				style: this.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+				position: this.google.maps.ControlPosition.LEFT_CENTER,
+				mapTypeIds: [
+					this.google.maps.MapTypeId.ROADMAP,
+					this.google.maps.MapTypeId.SATELLITE,
+					this.google.maps.MapTypeId.HYBRID,
+					this.google.maps.MapTypeId.TERRAIN
+				]
+			}
 		});
 	}
 

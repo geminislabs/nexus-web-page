@@ -2,8 +2,11 @@ import { derived, writable, get } from 'svelte/store';
 import { areNeighborCells } from 'h3-js';
 
 const DEFAULT_RESOLUTION = 8;
-/** Resolución fija en el flujo móvil «Crear zona». */
+/** Resolución fija legacy (ya no se fuerza al crear zona). */
 export const MOBILE_ZONE_RESOLUTION = 7;
+
+export const H3_RES_MIN = 4;
+export const H3_RES_MAX = 10;
 
 let _resolutionBeforeMobileZone = DEFAULT_RESOLUTION;
 
@@ -12,6 +15,29 @@ export const showH3Grid = writable(false);
 export const selectedH3Cells = writable([]);
 export const h3Resolution = writable(DEFAULT_RESOLUTION);
 export const renderedH3Cells = writable(0);
+/** Si true, la resolución H3 sigue el zoom del mapa (más zoom → hexágonos más chicos). */
+export const h3FollowZoom = writable(true);
+
+/**
+ * Zoom de Google Maps → resolución H3.
+ * Más zoom (acercar) → resolución más alta → hexágonos más pequeños.
+ * @param {number} zoom
+ * @returns {number}
+ */
+export function zoomToH3Resolution(zoom) {
+	const z = Number(zoom);
+	if (!Number.isFinite(z)) return DEFAULT_RESOLUTION;
+	// Aprox. res ≈ zoom - 2 → reacciona en cada nivel de zoom.
+	const res = Math.round(z - 2);
+	return Math.min(H3_RES_MAX, Math.max(H3_RES_MIN, res));
+}
+
+/** @param {number} resolution */
+function clampResolution(resolution) {
+	const n = Math.round(Number(resolution));
+	if (!Number.isFinite(n)) return DEFAULT_RESOLUTION;
+	return Math.min(H3_RES_MAX, Math.max(H3_RES_MIN, n));
+}
 
 /** Flujo mapa a pantalla completa: selección solo contigua y controles FAB. */
 export const mobileZoneMapActive = writable(false);
@@ -79,15 +105,43 @@ function flashContiguousWarning() {
 export const h3Actions = {
 	toggleGrid() {
 		if (get(mobileZoneMapActive)) return;
-		showH3Grid.update((visible) => !visible);
+		showH3Grid.update((visible) => {
+			const next = !visible;
+			if (next) h3FollowZoom.set(true);
+			return next;
+		});
 	},
 	setGridVisibility(visible) {
 		if (!visible && get(mobileZoneMapActive)) return;
+		if (visible) h3FollowZoom.set(true);
 		showH3Grid.set(visible);
 	},
-	setResolution(resolution) {
-		if (get(mobileZoneMapActive)) return;
-		h3Resolution.set(resolution);
+	setResolution(resolution, opts = {}) {
+		const next = clampResolution(resolution);
+		/** @type {'user' | 'zoom' | undefined} */
+		const source = opts.source;
+		if (source === 'user') h3FollowZoom.set(false);
+		const prev = get(h3Resolution);
+		if (prev === next) return;
+		// Índices H3 son por resolución: al cambiar, limpia la selección.
+		if (get(selectedH3Cells).length > 0) selectedH3Cells.set([]);
+		h3Resolution.set(next);
+	},
+
+	/** Ajusta resolución según zoom del mapa (si follow está activo). */
+	syncFromMapZoom(zoom) {
+		if (!get(showH3Grid) || !get(h3FollowZoom)) return;
+		this.setResolution(zoomToH3Resolution(zoom), { source: 'zoom' });
+	},
+
+	enableFollowZoom() {
+		h3FollowZoom.set(true);
+	},
+
+	/** Tras reactivar auto, alinea con el zoom actual del mapa. */
+	enableFollowZoomAndSync(zoom) {
+		this.enableFollowZoom();
+		if (zoom != null) this.syncFromMapZoom(zoom);
 	},
 
 	toggleCell(h3Index) {
@@ -140,11 +194,13 @@ export const h3Actions = {
 	enterMobileZoneMap() {
 		_resolutionBeforeMobileZone = get(h3Resolution);
 		h3EraserMode.set(false);
-		h3Resolution.set(MOBILE_ZONE_RESOLUTION);
 		selectedH3Cells.set([]);
-		showH3Grid.set(true);
+		// Slider arranca en 8; el usuario puede moverlo o pulsar Auto para seguir el zoom.
+		h3FollowZoom.set(false);
 		zoneCreateBanner.set(null);
+		h3Resolution.set(DEFAULT_RESOLUTION);
 		mobileZoneMapActive.set(true);
+		showH3Grid.set(true);
 	},
 	exitMobileZoneMap() {
 		mobileZoneMapActive.set(false);

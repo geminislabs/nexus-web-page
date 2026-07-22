@@ -6,9 +6,12 @@
 	const tabs = [
 		{ id: 'seguimiento', label: 'Seguimiento', icon: 'mdi:map-marker-radius' },
 		{ id: 'alertas', label: 'Alertas', icon: 'mdi:bell-outline' },
-		{ id: 'informes', label: 'Informes', icon: 'mdi:file-chart-outline' },
 		{ id: 'ajustes', label: 'Ajustes', icon: 'mdi:cog-outline' }
 	];
+
+	$: if ($activeTab === 'informes') {
+		navActions.setTab('seguimiento');
+	}
 
 	function tabAriaLabel(tab) {
 		if (tab.id === 'alertas' && $unreadAlarmCount > 0) {
