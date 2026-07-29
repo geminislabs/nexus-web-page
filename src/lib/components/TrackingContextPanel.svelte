@@ -3,6 +3,7 @@
 	import ShieldBoltIcon from '$lib/components/icons/ShieldBoltIcon.svelte';
 	import UnitsStatusFilterPanels from './UnitsStatusFilterPanels.svelte';
 	import { mapService, followedVehicleId } from '$lib/services/mapService.js';
+	import { mapVisibleUnitIds, vehicleActions } from '$lib/stores/vehicleStore.js';
 	import {
 		getUnitTrackingStatus,
 		formatUnitStatusDate,
@@ -26,15 +27,36 @@
 		{ id: 'details', label: 'Detalles', icon: 'mdi:information-outline' },
 		{ id: 'share', label: 'Compartir', icon: 'mdi:export-variant' }
 	];
-	$: filteredUnits = units.filter((u) => {
-		const q = searchQuery.trim().toLowerCase();
-		const matchesSearch =
-			!q ||
-			u.name?.toLowerCase().includes(q) ||
-			u.brand?.toLowerCase().includes(q) ||
-			u.model?.toLowerCase().includes(q);
-		return matchesSearch && unitMatchesTrackingFilter(u, statusFilter);
-	});
+	$: visibleCount = units.filter((u) => $mapVisibleUnitIds.includes(String(u.id))).length;
+	$: visibleIdSet = new Set(($mapVisibleUnitIds || []).map(String));
+	$: filteredUnits = units
+		.filter((u) => {
+			const q = searchQuery.trim().toLowerCase();
+			const matchesSearch =
+				!q ||
+				u.name?.toLowerCase().includes(q) ||
+				u.brand?.toLowerCase().includes(q) ||
+				u.model?.toLowerCase().includes(q);
+			return matchesSearch && unitMatchesTrackingFilter(u, statusFilter);
+		})
+		.map((u) => ({
+			...u,
+			onMap: visibleIdSet.has(String(u.id))
+		}));
+
+	function toggleUnitOnMap(u, e) {
+		e?.stopPropagation?.();
+		e?.preventDefault?.();
+		const id = u?.id;
+		if (!id) return;
+		const currentlyVisible = visibleIdSet.has(String(id));
+		vehicleActions.toggleMapVisibility(id);
+		// Si se oculta la unidad activa, dejar de seguirla en el mapa
+		if (currentlyVisible && String(id) === String(unit?.id)) {
+			mapService.clearFollowVehicle();
+			mapService.setHighlightedVehicle(null);
+		}
+	}
 	// Lógica de estado igual que Android/iOS
 	$: engineOn = unit?.engineStatus?.toUpperCase() === 'ON' || unit?.isOnline === true;
 	$: hasSignal = unit?.lastUpdate != null || unit?.gpsDatetime != null;
@@ -63,11 +85,6 @@
 		const v = Number(unit?.backupBatteryVoltage ?? unit?.backup_battery_voltage);
 		return !Number.isNaN(v) && v > 0 ? `${v.toFixed(1)}V` : '--';
 	})();
-	// Satélites
-	$: satelliteCount = (() => {
-		const s = Number(unit?.satellites);
-		return !Number.isNaN(s) && s >= 0 ? `x${s}` : 'x0';
-	})();
 	// Señal (rxLvl) — 0-100 aprox, igual que iOS SignalStrengthView
 	$: signalLevel = (() => {
 		const rx = Number(unit?.rxLvl ?? unit?.rx_lvl);
@@ -78,16 +95,6 @@
 		if (rx <= 60) return 3;
 		return 4;
 	})();
-	$: signalColor =
-		signalLevel == null
-			? ''
-			: signalLevel === 0
-				? 'text-red-500 dark:text-red-400'
-				: signalLevel === 1
-					? 'text-orange-500 dark:text-orange-400'
-					: signalLevel === 2
-						? 'text-amber-500 dark:text-yellow-400'
-						: 'text-emerald-600 dark:text-emerald-400';
 	$: isOnline = engineOn || isMoving;
 	$: isFollowing = Boolean(unit && $followedVehicleId === unit.id);
 	function handleSelectUnit(u) {
@@ -167,18 +174,40 @@
 						/>
 						{isFollowing ? 'Siguiendo' : 'Seguir'}
 					</button>
-					<div class="mt-1 flex items-center gap-1 text-xs text-slate-500 dark:text-white/50">
-						<Icon icon="mdi:car-battery" class="h-3.5 w-3.5" />
-						<span>{mainBattery}</span>
-						<Icon icon="mdi:battery-outline" class="ml-1 h-3.5 w-3.5" />
-						<span>{backupBattery}</span>
-						<span class="mx-0.5">·</span>
-						<Icon icon="mdi:signal-cellular-3" class="h-3.5 w-3.5" />
-						<span>{satelliteCount}</span>
+					<!-- Chips de telemetría estilo móvil -->
+					<div class="mt-2 flex flex-wrap items-center gap-1.5">
+						<span
+							class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+							title="Voltaje principal"
+						>
+							Voltaje {mainBattery}
+						</span>
+						<span
+							class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+							title="Batería de respaldo"
+						>
+							Respaldo {backupBattery}
+						</span>
+						<span
+							class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+							title="Satélites GPS"
+						>
+							{unit?.satellites ?? 0} sat
+						</span>
 						{#if signalLevel != null}
-							<span class="mx-0.5">·</span>
-							<Icon icon="mdi:signal" class="h-3.5 w-3.5 {signalColor}" />
-							<span class={signalColor}>{unit.rxLvl ?? unit.rx_lvl} rx</span>
+							<span
+								class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold {signalLevel ===
+								0
+									? 'border-red-400/50 bg-red-100/80 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-400'
+									: signalLevel === 1
+										? 'border-orange-400/50 bg-orange-100/80 text-orange-600 dark:border-orange-500/30 dark:bg-orange-500/15 dark:text-orange-400'
+										: signalLevel === 2
+											? 'border-amber-400/50 bg-amber-100/80 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-400'
+											: 'border-emerald-400/50 bg-emerald-100/80 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400'}"
+								title="Nivel de señal"
+							>
+								Señal {unit.rxLvl ?? unit.rx_lvl}
+							</span>
 						{/if}
 					</div>
 				</div>
@@ -222,7 +251,8 @@
 					<span class="text-sm font-medium text-slate-900 dark:text-white">{unit.name}</span>
 					<span
 						class="rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-white/10 dark:text-white/70"
-						>{units.length}</span
+						title="{visibleCount} visibles en mapa de {units.length}"
+						>{visibleCount}/{units.length}</span
 					>
 				</div>
 				<Icon
@@ -248,27 +278,50 @@
 						{@const st = getUnitTrackingStatus(u)}
 						{@const dt = formatUnitStatusDate(u)}
 						<li>
-							<button
-								type="button"
-								class="flex w-full items-center gap-2.5 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-slate-100 dark:hover:bg-white/[0.07] {u.id ===
+							<div
+								class="flex w-full items-center gap-1 rounded-lg px-1 py-1 transition-colors {u.id ===
 								unit.id
 									? 'bg-slate-100 dark:bg-white/[0.08]'
-									: ''}"
-								on:click={() => handleSelectUnit(u)}
+									: ''} {!u.onMap ? 'opacity-55' : ''}"
 							>
-								<span class="h-2 w-2 shrink-0 rounded-full {st.dotClass}"></span>
-								<div class="min-w-0 flex-1">
-									<p class="m-0 truncate text-[13px] font-semibold text-slate-900 dark:text-white">
-										{u.name}
-									</p>
-									{#if dt}
-										<p class="m-0 text-[10px] text-slate-400 dark:text-white/35">{dt}</p>
-									{/if}
-								</div>
-								<span class="shrink-0 text-[11px] font-semibold {st.colorClass}"
-									>{st.shortLabel}</span
+								<button
+									type="button"
+									class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1.5 py-2 text-left transition-colors hover:bg-slate-100/80 dark:hover:bg-white/[0.07]"
+									on:click={() => handleSelectUnit(u)}
 								>
-							</button>
+									<span class="h-2 w-2 shrink-0 rounded-full {st.dotClass}"></span>
+									<div class="min-w-0 flex-1">
+										<p
+											class="m-0 truncate text-[13px] font-semibold text-slate-900 dark:text-white"
+										>
+											{u.name}
+										</p>
+										{#if dt}
+											<p class="m-0 text-[10px] text-slate-400 dark:text-white/35">{dt}</p>
+										{/if}
+									</div>
+									<span class="shrink-0 text-[11px] font-semibold {st.colorClass}"
+										>{st.shortLabel}</span
+									>
+								</button>
+								<button
+									type="button"
+									class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors {u.onMap
+										? 'text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400'
+										: 'text-slate-400 hover:bg-slate-100 dark:text-white/35 dark:hover:bg-white/[0.07]'}"
+									on:click={(e) => toggleUnitOnMap(u, e)}
+									aria-pressed={u.onMap}
+									aria-label={u.onMap
+										? `Ocultar ${u.name} en el mapa`
+										: `Mostrar ${u.name} en el mapa`}
+									title={u.onMap ? 'Visible en mapa' : 'Oculta en mapa'}
+								>
+									<Icon
+										icon={u.onMap ? 'mdi:eye-outline' : 'mdi:eye-off-outline'}
+										class="h-[18px] w-[18px]"
+									/>
+								</button>
+							</div>
 						</li>
 					{/each}
 				</ul>

@@ -26,7 +26,6 @@
 	import MapContainer from '$lib/components/MapContainer.svelte';
 	import TopDrawer from '$lib/components/TopDrawer.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
-	import MapVisibleUnitsCard from '$lib/components/MapVisibleUnitsCard.svelte';
 	import AdminWorkspace from '$lib/components/admin/AdminWorkspace.svelte';
 	import WorkspaceSwitcher from '$lib/components/admin/WorkspaceSwitcher.svelte';
 	import AlertasZonasSidePanel from '$lib/components/AlertasZonasSidePanel.svelte';
@@ -154,7 +153,24 @@
 
 	function centerOnActiveUnit() {
 		if (!$activeUnit) return;
+		vehicleActions.setMapVisibility($activeUnit.id, true);
 		mapService.centerOnVehicle($activeUnit);
+	}
+
+	/** Activa una unidad en seguimiento y la hace visible en el mapa (misma fuente de verdad). */
+	function selectUnitForTracking(unitOrId) {
+		const unit =
+			unitOrId && typeof unitOrId === 'object'
+				? unitOrId
+				: $vehicles.find((u) => String(u.id) === String(unitOrId));
+		if (!unit?.id) return;
+		vehicleActions.setMapVisibility(unit.id, true);
+		vehicleActions.setActiveUnit(unit.id);
+		trackingPanelView = 'unit-info';
+		if (mobileVehicleHasCoords(unit)) {
+			mapService.centerOnVehicle(unit);
+		}
+		showMobileUnitsSheet = false;
 	}
 
 	function closeActiveUnitPanel() {
@@ -209,10 +225,6 @@
 		showMobileUnitsSheet = false;
 	}
 
-	function closeMobileUnitsSheet() {
-		showMobileUnitsSheet = false;
-	}
-
 	function mobileVehicleHasCoords(v) {
 		const lat = v?.latitude ?? v?.lat;
 		const lng = v?.longitude ?? v?.lng;
@@ -220,12 +232,7 @@
 	}
 
 	function onMobileVehicleRowClick(v) {
-		vehicleActions.setActiveUnit(v.id);
-		trackingPanelView = 'unit-info';
-		if (mobileVehicleHasCoords(v)) {
-			mapService.centerOnVehicle(v);
-		}
-		closeMobileUnitsSheet();
+		selectUnitForTracking(v);
 	}
 
 	$: if ($activeTab !== prevMobileTab) {
@@ -549,22 +556,17 @@
 				{/if}
 			</TopDrawer>
 
-			{#if isConfigDrawerOpen && activeConfigSection === 'unidades'}
-				<div
-					class="pointer-events-none fixed right-4 top-4 z-[115] hidden lg:block"
-					aria-hidden="false"
-				>
-					<MapVisibleUnitsCard />
-				</div>
-			{/if}
+			<!-- MapVisibleUnitsCard removido: la funcionalidad está en la vista de seguimiento -->
 
 			{#if $desktopZonePanelSubView !== 'zonas'}
 				<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
 			{/if}
 
-			<!-- PR-04: TrackingContextPanel flotante para desktop/tablet -->
+			<!-- PR-04: TrackingContextPanel flotante — izquierda para no tapar zoom/Street View -->
 			{#if $activeUnit && !isConfigDrawerOpen && !$showH3Grid}
-				<div class="pointer-events-none fixed bottom-24 right-4 z-[100] hidden w-[340px] md:block">
+				<div
+					class="pointer-events-none fixed bottom-24 left-3 z-[100] hidden w-[340px] md:left-[calc(72px+0.75rem)] md:block"
+				>
 					<div
 						class="pointer-events-auto overflow-hidden rounded-2xl border border-slate-200/80 shadow-xl dark:border-transparent dark:shadow-2xl"
 					>
@@ -576,10 +578,7 @@
 								onPanelViewChange={onTrackingPanelViewChange}
 								onBackToUnitInfo={backToUnitInfoPanel}
 								onClose={closeActiveUnitPanel}
-								onSelectUnit={(u) => {
-									vehicleActions.setActiveUnit(u.id);
-									mapService.centerOnVehicle(u);
-								}}
+								onSelectUnit={selectUnitForTracking}
 								onCenterUnit={centerOnActiveUnit}
 							/>
 						</div>
@@ -675,11 +674,7 @@
 						onBackToUnitInfo={backToUnitInfoPanel}
 						onClose={closeActiveUnitPanel}
 						onCenterUnit={centerOnActiveUnit}
-						onSelectUnit={(id) => {
-							vehicleActions.setActiveUnit(id);
-							const v = $vehicles.find((u) => u.id === id);
-							if (v) mapService.centerOnVehicle(v);
-						}}
+						onSelectUnit={selectUnitForTracking}
 					/>
 				</div>
 			</div>

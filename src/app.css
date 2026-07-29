@@ -259,3 +259,43 @@ html[data-theme='light'] .gm-style .gm-style-iw-c {
 html[data-theme='light'] .gm-style .gm-style-iw-tc::after {
 	background: linear-gradient(165deg, #ffffff 0%, #f8fafc 55%, #f1f5f9 100%) !important;
 }
+
+/* Google Maps: Street View pegman — respeta tema claro/oscuro */
+.gm-style .gm-svpc {
+	border-radius: 14px !important;
+	overflow: hidden !important;
+}
+/* Tema oscuro (default de la app) */
+html.dark .gm-style .gm-svpc,
+html[data-theme='dark'] .gm-style .gm-svpc {
+	background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.98)) !important;
+	border: 2px solid rgba(34, 211, 238, 0.45) !important;
+	box-shadow:
+		0 4px 18px rgba(34, 211, 238, 0.28),
+		0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+html.dark .gm-style .gm-svpc:hover,
+html[data-theme='dark'] .gm-style .gm-svpc:hover {
+	border-color: rgba(34, 211, 238, 0.75) !important;
+	box-shadow:
+		0 4px 22px rgba(34, 211, 238, 0.42),
+		0 2px 8px rgba(0, 0, 0, 0.35) !important;
+}
+/* Tema claro */
+html:not(.dark) .gm-style .gm-svpc,
+html[data-theme='light'] .gm-style .gm-svpc {
+	background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
+	border: 2px solid rgba(14, 165, 233, 0.45) !important;
+	box-shadow:
+		0 4px 18px rgba(14, 165, 233, 0.2),
+		0 2px 8px rgba(15, 23, 42, 0.1) !important;
+}
+html:not(.dark) .gm-style .gm-svpc:hover,
+html[data-theme='light'] .gm-style .gm-svpc:hover {
+	border-color: rgba(14, 165, 233, 0.75) !important;
+	box-shadow:
+		0 4px 22px rgba(14, 165, 233, 0.32),
+		0 2px 8px rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Street View: el close nativo está desactivado; la dirección va BOTTOM_LEFT vía API. */

@@ -141,13 +141,24 @@
 	function formatVoltage(val) {
 		const n = Number(val);
 		if (val == null || Number.isNaN(n)) return '—';
-		return `${n.toFixed(1)}`;
+		return `${n.toFixed(1)}V`;
 	}
 
 	function formatSignal(v) {
 		const n = Number(v?.rxLvl);
 		if (v?.rxLvl == null || Number.isNaN(n)) return '—';
-		return `${n} dBm`;
+		return String(n);
+	}
+
+	/** Calcula el nivel de señal (0-4) basado en rxLvl — igual que iOS/Android */
+	function getSignalLevel(v) {
+		const rx = Number(v?.rxLvl);
+		if (v?.rxLvl == null || Number.isNaN(rx)) return null;
+		if (rx <= 10) return 0;
+		if (rx <= 25) return 1;
+		if (rx <= 45) return 2;
+		if (rx <= 60) return 3;
+		return 4;
 	}
 </script>
 
@@ -403,28 +414,38 @@
 										</div>
 									</div>
 
-									<div
-										class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400"
-									>
-										<span>
-											<span class="font-semibold text-slate-700 dark:text-slate-200"
-												>{formatVoltage(vehicle.mainBatteryVoltage)}</span
-											>
-											Volts
+									<!-- Chips de telemetría estilo móvil -->
+									<div class="mt-2 flex flex-wrap items-center gap-1.5">
+										<span
+											class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+										>
+											Voltaje {formatVoltage(vehicle.mainBatteryVoltage)}
 										</span>
-										<span>
-											<span class="font-semibold text-slate-700 dark:text-slate-200"
-												>{formatVoltage(vehicle.backupBatteryVoltage)}</span
-											>
-											Volts
+										<span
+											class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+										>
+											Respaldo {formatVoltage(vehicle.backupBatteryVoltage)}
 										</span>
-										<span class="inline-flex items-center gap-1">
-											<Icon icon="mdi:signal" class="h-3.5 w-3.5" aria-hidden="true" />
-											<span class="font-semibold text-slate-700 dark:text-slate-200"
-												>{formatSignal(vehicle)}</span
-											>
-											Señal
+										<span
+											class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+										>
+											{vehicle.satellites ?? 0} sat
 										</span>
+										{#if getSignalLevel(vehicle) != null}
+											{@const level = getSignalLevel(vehicle)}
+											<span
+												class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold {level ===
+												0
+													? 'border-red-400/50 bg-red-100 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-400'
+													: level === 1
+														? 'border-orange-400/50 bg-orange-100 text-orange-600 dark:border-orange-500/30 dark:bg-orange-500/15 dark:text-orange-400'
+														: level === 2
+															? 'border-amber-400/50 bg-amber-100 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-400'
+															: 'border-emerald-400/50 bg-emerald-100 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400'}"
+											>
+												Señal {formatSignal(vehicle)}
+											</span>
+										{/if}
 									</div>
 								</div>
 
