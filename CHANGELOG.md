@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- npm overrides: `brace-expansion@5.0.8`, `minimatch@9→10.2.6`, `js-yaml>=5.2.2`, and `postcss^8.5.18` to clear high audit/OSV findings
+
 - Mobile bottom tab bar respects light/dark theme
 - Floating tracking panel moved to the left so map zoom/Street View stay usable on the right
 - Telemetry labels standardized (Voltaje, Respaldo, Satélites, Señal) with signal color chips
