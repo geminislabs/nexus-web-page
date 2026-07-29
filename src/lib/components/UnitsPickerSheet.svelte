@@ -1,6 +1,12 @@
 <script>
 	import Icon from '@iconify/svelte';
-	import { vehicles, loadingVehicles, activeUnitId } from '$lib/stores/vehicleStore.js';
+	import {
+		vehicles,
+		loadingVehicles,
+		activeUnitId,
+		mapVisibleUnitIds,
+		vehicleActions
+	} from '$lib/stores/vehicleStore.js';
 	import ColoredVehicleIcon from '$lib/components/Unit/ColoredVehicleIcon.svelte';
 	import { unitIcons } from '$lib/data/unitIcons';
 	import { colorSlugToHex } from '$lib/utils/vehicleUtils.js';
@@ -18,16 +24,23 @@
 	/** @type {'all' | 'moving' | 'stopped'} */
 	let statusFilter = 'all';
 
-	$: filteredUnits = $vehicles.filter((v) => {
-		const q = searchQuery.trim().toLowerCase();
-		const matchesSearch =
-			!q ||
-			v.name?.toLowerCase().includes(q) ||
-			v.model?.toLowerCase().includes(q) ||
-			v.brand?.toLowerCase().includes(q) ||
-			v.plate?.toLowerCase().includes(q);
-		return matchesSearch && unitMatchesTrackingFilter(v, statusFilter);
-	});
+	$: visibleCount = $vehicles.filter((v) => $mapVisibleUnitIds.includes(String(v.id))).length;
+	$: visibleIdSet = new Set(($mapVisibleUnitIds || []).map(String));
+	$: filteredUnits = $vehicles
+		.filter((v) => {
+			const q = searchQuery.trim().toLowerCase();
+			const matchesSearch =
+				!q ||
+				v.name?.toLowerCase().includes(q) ||
+				v.model?.toLowerCase().includes(q) ||
+				v.brand?.toLowerCase().includes(q) ||
+				v.plate?.toLowerCase().includes(q);
+			return matchesSearch && unitMatchesTrackingFilter(v, statusFilter);
+		})
+		.map((v) => ({
+			...v,
+			onMap: visibleIdSet.has(String(v.id))
+		}));
 
 	function unitIconSrc(v) {
 		const iconType = v.icon_type || v.iconType || 'vehicle-car-sedan';
@@ -36,6 +49,13 @@
 
 	function unitColorHex(v) {
 		return colorSlugToHex(v.color) || v.profile_color_hex || '#94a3b8';
+	}
+
+	function toggleUnitOnMap(v, e) {
+		e?.stopPropagation?.();
+		e?.preventDefault?.();
+		if (!v?.id) return;
+		vehicleActions.toggleMapVisibility(v.id);
 	}
 
 	function handleSelect(v) {
@@ -60,7 +80,7 @@
 		<div>
 			<h2 class="m-0 text-[20px] font-bold text-slate-900 dark:text-white">Unidades</h2>
 			<p class="m-0 mt-0.5 text-[13px] text-slate-500 dark:text-white/50">
-				{$vehicles.length} unidad{$vehicles.length === 1 ? '' : 'es'}
+				{visibleCount} en mapa · {$vehicles.length} unidad{$vehicles.length === 1 ? '' : 'es'}
 			</p>
 		</div>
 		<button
@@ -123,51 +143,71 @@
 					{@const status = getUnitTrackingStatus(v)}
 					{@const isSelected = $activeUnitId === v.id}
 					<li>
-						<button
-							type="button"
-							class="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-							on:click={() => handleSelect(v)}
+						<div
+							class="flex w-full items-center gap-1 px-2 py-1 transition-colors {!v.onMap
+								? 'opacity-55'
+								: ''}"
 						>
-							<div class="flex h-12 w-12 shrink-0 items-center justify-center">
-								<ColoredVehicleIcon
-									src={unitIconSrc(v)}
-									colorHex={unitColorHex(v)}
-									sizeClass="h-11 w-11"
-								/>
-							</div>
-							<div class="min-w-0 flex-1">
-								<p
-									class="m-0 truncate text-[16px] font-bold text-slate-900 dark:text-white {isSelected
-										? ''
-										: 'font-semibold'}"
-								>
-									{v.name}
-								</p>
-								{#if v.model || v.brand}
-									<p class="m-0 truncate text-[13px] text-slate-500 dark:text-white/50">
-										{v.model || v.brand}
+							<button
+								type="button"
+								class="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+								on:click={() => handleSelect(v)}
+							>
+								<div class="flex h-12 w-12 shrink-0 items-center justify-center">
+									<ColoredVehicleIcon
+										src={unitIconSrc(v)}
+										colorHex={unitColorHex(v)}
+										sizeClass="h-11 w-11"
+									/>
+								</div>
+								<div class="min-w-0 flex-1">
+									<p
+										class="m-0 truncate text-[16px] font-bold text-slate-900 dark:text-white {isSelected
+											? ''
+											: 'font-semibold'}"
+									>
+										{v.name}
 									</p>
+									{#if v.model || v.brand}
+										<p class="m-0 truncate text-[13px] text-slate-500 dark:text-white/50">
+											{v.model || v.brand}
+										</p>
+									{/if}
+									<p class="m-0 mt-1 flex items-center gap-1.5 text-[12px] {status.colorClass}">
+										<span class="h-2 w-2 shrink-0 rounded-full {status.dotClass}"></span>
+										<span class="truncate">{status.label}</span>
+									</p>
+								</div>
+								{#if isSelected}
+									<span
+										class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white"
+									>
+										<Icon icon="mdi:check" width={18} aria-hidden="true" />
+									</span>
+								{:else}
+									<Icon
+										icon="mdi:chevron-right"
+										width={20}
+										class="shrink-0 text-slate-400 dark:text-white/30"
+										aria-hidden="true"
+									/>
 								{/if}
-								<p class="m-0 mt-1 flex items-center gap-1.5 text-[12px] {status.colorClass}">
-									<span class="h-2 w-2 shrink-0 rounded-full {status.dotClass}"></span>
-									<span class="truncate">{status.label}</span>
-								</p>
-							</div>
-							{#if isSelected}
-								<span
-									class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white"
-								>
-									<Icon icon="mdi:check" width={18} aria-hidden="true" />
-								</span>
-							{:else}
-								<Icon
-									icon="mdi:chevron-right"
-									width={20}
-									class="shrink-0 text-slate-400 dark:text-white/30"
-									aria-hidden="true"
-								/>
-							{/if}
-						</button>
+							</button>
+							<button
+								type="button"
+								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors {v.onMap
+									? 'text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400'
+									: 'text-slate-400 hover:bg-slate-100 dark:text-white/35 dark:hover:bg-white/[0.07]'}"
+								on:click={(e) => toggleUnitOnMap(v, e)}
+								aria-pressed={v.onMap}
+								aria-label={v.onMap
+									? `Ocultar ${v.name} en el mapa`
+									: `Mostrar ${v.name} en el mapa`}
+								title={v.onMap ? 'Visible en mapa' : 'Oculta en mapa'}
+							>
+								<Icon icon={v.onMap ? 'mdi:eye-outline' : 'mdi:eye-off-outline'} width={20} />
+							</button>
+						</div>
 						{#if i < filteredUnits.length - 1}
 							<div class="ml-[76px] border-b border-slate-200 dark:border-white/[0.06]"></div>
 						{/if}

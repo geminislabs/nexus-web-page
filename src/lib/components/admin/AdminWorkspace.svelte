@@ -1,5 +1,7 @@
 <script>
 	import Icon from '@iconify/svelte';
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
 	import logoUrl from '$lib/assets/logo.png';
 	import { user } from '$lib/stores/auth.js';
 	import { theme } from '$lib/stores/themeStore.js';
@@ -31,7 +33,8 @@
 		settings: { title: 'Configuración' }
 	};
 
-	let collapsed = false;
+	/** En móvil arranca colapsado para dejar espacio al contenido. */
+	let collapsed = browser ? window.matchMedia('(max-width: 639px)').matches : false;
 	let showUserMenu = false;
 
 	$: section = $adminSection;
@@ -47,6 +50,11 @@
 	function onDocClick(e) {
 		if (!e.target.closest('[data-admin-user-menu]')) showUserMenu = false;
 	}
+
+	onMount(() => {
+		// Refuerza colapsado en viewport móvil tras hidratar.
+		if (window.matchMedia('(max-width: 639px)').matches) collapsed = true;
+	});
 </script>
 
 <svelte:head>

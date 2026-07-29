@@ -66,11 +66,14 @@ describe('sessionService', () => {
 	});
 
 	it('logoutSession clears local session even if API fails', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		localStorage.getItem.mockImplementation((key) => (key === 'token' ? 'tok' : null));
 		apiMocks.logout.mockRejectedValueOnce(new Error('network'));
 		const { logoutSession } = await import('../src/lib/services/sessionService.js');
 		await logoutSession();
 		expect(localStorage.removeItem).toHaveBeenCalled();
+		expect(warn).toHaveBeenCalled();
+		warn.mockRestore();
 	});
 
 	it('validateSessionWithApi returns false without token', async () => {
@@ -86,9 +89,12 @@ describe('sessionService', () => {
 	});
 
 	it('validateSessionWithApi clears session when API fails', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		localStorage.getItem.mockImplementation((key) => (key === 'token' ? 'tok' : null));
 		apiMocks.getCurrentUser.mockRejectedValueOnce(new Error('401'));
 		const { validateSessionWithApi } = await import('../src/lib/services/sessionService.js');
 		await expect(validateSessionWithApi()).resolves.toBe(false);
+		expect(warn).toHaveBeenCalled();
+		warn.mockRestore();
 	});
 });

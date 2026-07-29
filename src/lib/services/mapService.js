@@ -27,6 +27,9 @@ const TRAIL_MAX_OPACITY = 0.75;
 /** Unidad actualmente en modo "seguir" (o null). Para reactividad en UI (botón Seguir). */
 export const followedVehicleId = writable(/** @type {string | null} */ (null));
 
+/** Street View visible — para mostrar el botón propio de salir. */
+export const streetViewVisible = writable(false);
+
 class MapService {
 	constructor() {
 		this.map = null;
@@ -72,6 +75,10 @@ class MapService {
 		this._suppressFollowClear = false;
 		this._followZoom = 15;
 		this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
+		/** @type {google.maps.TrafficLayer | null} Capa de tráfico */
+		this._trafficLayer = null;
+		/** @type {boolean} Estado de visibilidad de tráfico */
+		this._trafficVisible = false;
 	}
 
 	/** Alineado con themeStore (`html.dark` en tema oscuro). */
@@ -81,17 +88,27 @@ class MapService {
 	}
 
 	/**
+	 * Regenera el HTML de todos los InfoWindow de unidades con el tema indicado
+	 * (o el del DOM). Así el primer click tras cambiar tema no muestra el tema viejo.
+	 * @param {'light' | 'dark' | undefined} [mode]
+	 */
+	refreshAllVehicleInfoWindowThemes(mode) {
+		if (!this.google) return;
+		const themeMode = mode ?? (this._isDarkVehiclePopupTheme() ? 'dark' : 'light');
+		for (const entry of this.markers.values()) {
+			if (!entry?.infoWindow || !entry.popupVehicle) continue;
+			entry.infoWindow.setContent(
+				this.createVehicleInfoContent(entry.popupVehicle, entry.infoWindow, themeMode)
+			);
+		}
+	}
+
+	/**
 	 * Si hay un popup de unidad abierto, vuelve a renderizarlo con el tema indicado.
 	 * @param {'light' | 'dark'} mode
 	 */
 	refreshOpenVehicleInfoWindowTheme(mode) {
-		const id = this._openVehiclePopupId;
-		if (!id || !this.google) return;
-		const entry = this.markers.get(id);
-		if (!entry?.infoWindow || !entry.popupVehicle) return;
-		entry.infoWindow.setContent(
-			this.createVehicleInfoContent(entry.popupVehicle, entry.infoWindow, mode)
-		);
+		this.refreshAllVehicleInfoWindowThemes(mode);
 	}
 
 	/** @param {google.maps.Marker | null} m */
@@ -245,27 +262,13 @@ class MapService {
 				zoom: 10,
 				mapTypeId: this.google.maps.MapTypeId.ROADMAP,
 				disableDefaultUI: true,
-				zoomControl: !isMobileLayout,
-				zoomControlOptions: {
-					position: this.google.maps.ControlPosition.LEFT_BOTTOM
-				},
+				// Zoom custom (MapContainer); Street View nativo de Google (pegman)
+				zoomControl: false,
 				fullscreenControl: false,
-				// LEFT_CENTER: mitad izquierda; no compite con el combobox de workspace (arriba).
-				mapTypeControl: true,
-				mapTypeControlOptions: {
-					style: this.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-					position: this.google.maps.ControlPosition.LEFT_CENTER,
-					mapTypeIds: [
-						this.google.maps.MapTypeId.ROADMAP,
-						this.google.maps.MapTypeId.SATELLITE,
-						this.google.maps.MapTypeId.HYBRID,
-						this.google.maps.MapTypeId.TERRAIN
-					]
-				},
-				// Pegman arrastrable (Street View); mismo lado que el zoom.
-				streetViewControl: true,
+				mapTypeControl: false,
+				streetViewControl: !isMobileLayout,
 				streetViewControlOptions: {
-					position: this.google.maps.ControlPosition.LEFT_BOTTOM
+					position: this.google.maps.ControlPosition.RIGHT_BOTTOM
 				},
 				rotateControl: false,
 				scaleControl: false,
@@ -281,6 +284,28 @@ class MapService {
 				this.closeAllVehicleInfoWindows();
 			});
 			this._attachFollowInteractionListeners();
+
+			// Street View: close nativo OFF (se empalma con WorkspaceSwitcher).
+			// Dirección abajo a la izquierda; salida con botón propio en la UI.
+			const streetView = new this.google.maps.StreetViewPanorama(mapElement, {
+				visible: false,
+				enableCloseButton: false,
+				fullscreenControl: false,
+				addressControl: true,
+				addressControlOptions: {
+					position: this.google.maps.ControlPosition.BOTTOM_LEFT
+				},
+				zoomControl: false,
+				panControl: true,
+				linksControl: true
+			});
+			this.map.setStreetView(streetView);
+			this._streetView = streetView;
+			this._bindStreetViewVisibility(streetView);
+
+			// Inicializar capa de tráfico (oculta por defecto)
+			this._trafficLayer = new this.google.maps.TrafficLayer();
+			this._trafficVisible = false;
 
 			await this.setUserLocation();
 
@@ -371,7 +396,8 @@ class MapService {
 
 		marker.addListener('click', () => {
 			this._onVehicleMarkerClick?.(vehicle);
-			this.openVehicleInfoWindow(vehicle, { refreshContent: false });
+			// Siempre regenerar contenido: el HTML del InfoWindow puede quedar del tema anterior
+			this.openVehicleInfoWindow(vehicle, { refreshContent: true });
 		});
 
 		this.markers.set(vehicle.id, {
@@ -462,10 +488,36 @@ class MapService {
 		const hasMainVoltage = !Number.isNaN(mainVoltage) && mainVoltage > 0;
 		const hasBackupVoltage = !Number.isNaN(backupVoltage) && backupVoltage > 0;
 		const hasSatellites = !Number.isNaN(satellites) && satellites > 0;
+		// Nivel de señal igual que iOS/Android
+		const rxLvl = Number(vehicle.rxLvl ?? vehicle.rx_lvl);
+		const hasSignal = !Number.isNaN(rxLvl) && vehicle.rxLvl != null;
+		const signalLevel = hasSignal
+			? rxLvl <= 10
+				? 0
+				: rxLvl <= 25
+					? 1
+					: rxLvl <= 45
+						? 2
+						: rxLvl <= 60
+							? 3
+							: 4
+			: null;
+		const signalColor =
+			signalLevel == null
+				? '#64748b'
+				: signalLevel === 0
+					? '#ef4444'
+					: signalLevel === 1
+						? '#f97316'
+						: signalLevel === 2
+							? '#eab308'
+							: '#10b981';
+		// Telemetry items con nomenclatura estandarizada
 		const telemetryItems = [
-			hasMainVoltage ? `Principal ${mainVoltage.toFixed(1)}V` : null,
-			hasBackupVoltage ? `Respaldo ${backupVoltage.toFixed(1)}V` : null,
-			hasSatellites ? `${satellites} sat` : null
+			hasMainVoltage ? { label: `Voltaje ${mainVoltage.toFixed(1)}V`, color: null } : null,
+			hasBackupVoltage ? { label: `Respaldo ${backupVoltage.toFixed(1)}V`, color: null } : null,
+			hasSatellites ? { label: `${satellites} Satélites`, color: null } : null,
+			hasSignal ? { label: `Señal ${rxLvl}`, color: signalColor } : null
 		].filter(Boolean);
 
 		const divTop = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.22)';
@@ -552,14 +604,28 @@ class MapService {
 					</div>
 					<div style="border-radius:12px;padding:10px 10px 8px;${metricBg}">
 						<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Batería</div>
-						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${battery}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:1px;">Volts</span></div>
+						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${battery}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:1px;">V</span></div>
 					</div>
 				</div>
 				<div style="border-radius:12px;padding:10px 12px;${locBox}margin-bottom:10px;">
 					<div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Ubicación</div>
 					<p style="margin:0;font-size:12px;font-weight:600;color:${locText};line-height:1.35;">${location}</p>
 				</div>
-				${telemetryItems.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${telemetryItems.map((label) => `<span style="display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.02em;background:${isDark ? 'rgba(15,23,42,0.68)' : '#e2e8f0'};color:${isDark ? '#cbd5e1' : '#334155'};border:1px solid ${isDark ? 'rgba(148,163,184,0.2)' : 'rgba(100,116,139,0.22)'};">${label}</span>`).join('')}</div>` : ''}
+				${
+					telemetryItems.length > 0
+						? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${telemetryItems
+								.map((item) => {
+									const itemColor = item.color || (isDark ? '#cbd5e1' : '#334155');
+									const itemBorder = item.color
+										? `${item.color}40`
+										: isDark
+											? 'rgba(148,163,184,0.2)'
+											: 'rgba(100,116,139,0.22)';
+									return `<span style="display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.02em;background:${isDark ? 'rgba(15,23,42,0.68)' : '#e2e8f0'};color:${itemColor};border:1px solid ${itemBorder};">${item.label}</span>`;
+								})
+								.join('')}</div>`
+						: ''
+				}
 				${deviceBlock}
 				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;margin-top:4px;border-top:1px solid ${footerBorder};">
 					<span style="font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">Última señal</span>
@@ -1036,7 +1102,10 @@ class MapService {
 		this.closeAllVehicleInfoWindows();
 
 		if (refreshContent) {
-			entry.infoWindow.setContent(this.createVehicleInfoContent(vehicle, entry.infoWindow));
+			const themeMode = this._isDarkVehiclePopupTheme() ? 'dark' : 'light';
+			entry.infoWindow.setContent(
+				this.createVehicleInfoContent(vehicle, entry.infoWindow, themeMode)
+			);
 		}
 		entry.popupVehicle = vehicle;
 
@@ -1158,13 +1227,38 @@ class MapService {
 	}
 
 	/**
-	 * En móvil (≤639px) oculta el control de zoom de Google; en escritorio lo muestra.
+	 * Sincroniza store streetViewVisible con el panorama.
+	 * @param {google.maps.StreetViewPanorama} panorama
+	 */
+	_bindStreetViewVisibility(panorama) {
+		if (!panorama) return;
+		streetViewVisible.set(Boolean(panorama.getVisible()));
+		panorama.addListener('visible_changed', () => {
+			streetViewVisible.set(Boolean(panorama.getVisible()));
+		});
+	}
+
+	/** Cierra Street View y vuelve al mapa. */
+	exitStreetView() {
+		const panorama = this._streetView || this.map?.getStreetView?.();
+		if (!panorama) return;
+		panorama.setVisible(false);
+		streetViewVisible.set(false);
+	}
+
+	/**
+	 * En móvil (≤639px) oculta el pegman de Street View; en escritorio lo muestra.
+	 * El zoom sigue siendo custom en MapContainer.
 	 * @param {boolean} compact true = layout móvil
 	 */
 	setNavigationControlsCompact(compact) {
-		if (!this.map) return;
+		if (!this.map || !this.google) return;
 		this.map.setOptions({
-			zoomControl: !compact
+			zoomControl: false,
+			streetViewControl: !compact,
+			streetViewControlOptions: {
+				position: this.google.maps.ControlPosition.RIGHT_BOTTOM
+			}
 		});
 	}
 
@@ -1177,7 +1271,8 @@ class MapService {
 		this._mobileZoneZoomLocked = true;
 		this.map.setOptions({
 			streetViewControl: false,
-			mapTypeControl: false
+			mapTypeControl: false,
+			zoomControl: false
 		});
 	}
 
@@ -1188,19 +1283,29 @@ class MapService {
 		this.map.setOptions({
 			minZoom: 0,
 			maxZoom: 22,
-			streetViewControl: true,
-			mapTypeControl: true,
-			mapTypeControlOptions: {
-				style: this.google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-				position: this.google.maps.ControlPosition.LEFT_CENTER,
-				mapTypeIds: [
-					this.google.maps.MapTypeId.ROADMAP,
-					this.google.maps.MapTypeId.SATELLITE,
-					this.google.maps.MapTypeId.HYBRID,
-					this.google.maps.MapTypeId.TERRAIN
-				]
-			}
+			streetViewControl: !this._isMobileLayout(),
+			streetViewControlOptions: {
+				position: this.google.maps.ControlPosition.RIGHT_BOTTOM
+			},
+			mapTypeControl: false,
+			zoomControl: false
 		});
+	}
+
+	/** Acerca el mapa un nivel. */
+	zoomIn() {
+		if (!this.map) return;
+		const z = this.map.getZoom();
+		if (z == null) return;
+		this.map.setZoom(Math.min(z + 1, 22));
+	}
+
+	/** Aleja el mapa un nivel. */
+	zoomOut() {
+		if (!this.map) return;
+		const z = this.map.getZoom();
+		if (z == null) return;
+		this.map.setZoom(Math.max(z - 1, 0));
 	}
 
 	// ── Trip Route (Polyline) ─────────────────────────────────────────────────
@@ -1467,6 +1572,82 @@ class MapService {
 			marker.setMap(null);
 		}
 		this._tripAlertMarkers = [];
+	}
+
+	// ── Traffic Layer (Capa de tráfico) ─────────────────────────────────────────
+
+	/**
+	 * Alterna la visibilidad de la capa de tráfico
+	 * @returns {boolean} Nuevo estado de visibilidad
+	 */
+	toggleTraffic() {
+		this._trafficVisible = !this._trafficVisible;
+		this.setTrafficVisible(this._trafficVisible);
+		return this._trafficVisible;
+	}
+
+	/**
+	 * Establece la visibilidad de la capa de tráfico
+	 * @param {boolean} visible
+	 */
+	setTrafficVisible(visible) {
+		if (!this._trafficLayer || !this.map) return;
+		this._trafficVisible = visible;
+		this._trafficLayer.setMap(visible ? this.map : null);
+	}
+
+	/**
+	 * Devuelve el estado actual de visibilidad del tráfico
+	 * @returns {boolean}
+	 */
+	isTrafficVisible() {
+		return this._trafficVisible;
+	}
+
+	// ── Map Type (Tipo de mapa) ─────────────────────────────────────────────────
+
+	/**
+	 * Tipos de mapa disponibles
+	 * @readonly
+	 */
+	static MAP_TYPES = {
+		ROADMAP: 'roadmap',
+		SATELLITE: 'satellite',
+		HYBRID: 'hybrid',
+		TERRAIN: 'terrain'
+	};
+
+	/**
+	 * Cambia el tipo de mapa
+	 * @param {'roadmap' | 'satellite' | 'hybrid' | 'terrain'} mapType
+	 */
+	setMapType(mapType) {
+		if (!this.map || !this.google) return;
+		const typeId = {
+			roadmap: this.google.maps.MapTypeId.ROADMAP,
+			satellite: this.google.maps.MapTypeId.SATELLITE,
+			hybrid: this.google.maps.MapTypeId.HYBRID,
+			terrain: this.google.maps.MapTypeId.TERRAIN
+		}[mapType];
+		if (typeId) {
+			this.map.setMapTypeId(typeId);
+		}
+	}
+
+	/**
+	 * Obtiene el tipo de mapa actual
+	 * @returns {'roadmap' | 'satellite' | 'hybrid' | 'terrain' | null}
+	 */
+	getMapType() {
+		if (!this.map) return null;
+		const typeId = this.map.getMapTypeId();
+		const reverseMap = {
+			roadmap: 'roadmap',
+			satellite: 'satellite',
+			hybrid: 'hybrid',
+			terrain: 'terrain'
+		};
+		return reverseMap[typeId] || 'roadmap';
 	}
 }
 

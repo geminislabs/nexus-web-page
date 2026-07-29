@@ -3,7 +3,7 @@
 	import { browser } from '$app/environment';
 	import { fly } from 'svelte/transition';
 	import Icon from '@iconify/svelte';
-	import { mapService } from '$lib/services/mapService.js';
+	import { mapService, streetViewVisible } from '$lib/services/mapService.js';
 	import {
 		extraStreamDeviceIds,
 		isPositionStreamEnabled,
@@ -40,20 +40,62 @@
 	let mapElement;
 	let map;
 	let showAlertsPanel = false;
+	let showLayersPanel = false;
+	let showTraffic = false;
+	let currentMapType = 'roadmap';
+	let isDesktopNav = true;
+
+	const MAP_TYPE_OPTIONS = [
+		{ id: 'roadmap', label: 'Mapa', icon: 'mdi:map-outline' },
+		{ id: 'satellite', label: 'Satélite', icon: 'mdi:satellite-variant' },
+		{ id: 'hybrid', label: 'Híbrido', icon: 'mdi:layers-outline' },
+		{ id: 'terrain', label: 'Relieve', icon: 'mdi:terrain' }
+	];
+
+	function toggleLayersPanel() {
+		if (isLoading) return;
+		showLayersPanel = !showLayersPanel;
+		if (showLayersPanel) {
+			showAlertsPanel = false;
+		}
+	}
+
+	function selectMapType(type) {
+		if (!mapService.map) return;
+		currentMapType = type;
+		mapService.setMapType(type);
+	}
+
+	function toggleTraffic() {
+		if (isLoading || !mapService.map) return;
+		showTraffic = mapService.toggleTraffic();
+	}
+
+	function zoomIn() {
+		if (isLoading || !mapService.map) return;
+		mapService.zoomIn();
+	}
+
+	function zoomOut() {
+		if (isLoading || !mapService.map) return;
+		mapService.zoomOut();
+	}
 
 	function toggleAlertsPanel() {
 		if (isLoading) return;
 		showAlertsPanel = !showAlertsPanel;
-		if (showAlertsPanel && get(unreadAlarmCount) > 0) {
-			alertActions.markAllRead();
+		if (showAlertsPanel) {
+			showLayersPanel = false;
+			if (get(unreadAlarmCount) > 0) {
+				alertActions.markAllRead();
+			}
 		}
 	}
 
 	function handleKeydown(e) {
 		if (e.key === 'Escape') {
-			if (showAlertsPanel) {
-				showAlertsPanel = false;
-			}
+			if (showAlertsPanel) showAlertsPanel = false;
+			if (showLayersPanel) showLayersPanel = false;
 		}
 	}
 
@@ -96,8 +138,9 @@
 	const MOBILE_MQ = '(max-width: 639px)';
 
 	function syncMapNavigationControls() {
-		if (!browser || !mapService.map) return;
-		mapService.setNavigationControlsCompact(window.matchMedia(MOBILE_MQ).matches);
+		if (!browser) return;
+		isDesktopNav = !window.matchMedia(MOBILE_MQ).matches;
+		mapService.setNavigationControlsCompact(!isDesktopNav);
 	}
 
 	onMount(async () => {
@@ -291,7 +334,22 @@
 	></div>
 
 	<!-- ── Controles mapa ── -->
-	{#if !isLoading && mapService.map}
+	{#if !isLoading && map}
+		{#if $streetViewVisible}
+			<div class="pointer-events-none absolute left-3 top-[3.75rem] z-[45] sm:left-3">
+				<button
+					type="button"
+					class="pointer-events-auto inline-flex h-10 items-center gap-2 rounded-xl border-2 border-sky-400/55 bg-white/95 px-3 text-[12px] font-semibold text-sky-800 shadow-[0_4px_16px_rgba(14,165,233,0.25)] backdrop-blur-md transition-all hover:scale-[1.02] hover:border-sky-500 dark:border-cyan-400/50 dark:bg-slate-900/95 dark:text-cyan-200 dark:shadow-[0_4px_16px_rgba(34,211,238,0.3)] dark:hover:border-cyan-400"
+					on:click={() => mapService.exitStreetView()}
+					aria-label="Salir de Street View"
+					title="Salir de Street View"
+				>
+					<Icon icon="mdi:arrow-left" width={18} aria-hidden="true" />
+					Salir de Street View
+				</button>
+			</div>
+		{/if}
+
 		<div
 			class="pointer-events-none absolute right-[10px] top-[10px] z-20 flex flex-col items-end gap-1.5"
 		>
@@ -468,8 +526,175 @@
 						</div>
 					{/if}
 				</div>
+
+				<!-- Botón de capas (tipos de mapa + tráfico) -->
+				<div class="relative">
+					<button
+						type="button"
+						class="group flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border-2 text-white shadow-lg transition-all duration-200 hover:scale-[1.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400
+						{showLayersPanel
+							? 'border-cyan-400 bg-gradient-to-br from-cyan-400 to-blue-500 shadow-[0_4px_24px_rgba(34,211,238,0.5),0_0_40px_rgba(34,211,238,0.25)]'
+							: 'border-cyan-400/50 bg-gradient-to-br from-cyan-500 to-blue-600 shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:shadow-[0_4px_28px_rgba(34,211,238,0.55)]'}"
+						on:click={toggleLayersPanel}
+						aria-haspopup="menu"
+						aria-expanded={showLayersPanel}
+						aria-label="Capas del mapa"
+						title="Capas del mapa"
+					>
+						<!-- Ícono de capas estilo diamante/rombo apiladas -->
+						<svg
+							class="h-7 w-7 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor" fill-opacity="0.2" />
+							<path d="M2 17l10 5 10-5" />
+							<path d="M2 12l10 5 10-5" />
+						</svg>
+					</button>
+
+					{#if showLayersPanel}
+						<div
+							class="pointer-events-auto fixed inset-0 z-[17]"
+							role="presentation"
+							on:click={() => (showLayersPanel = false)}
+						></div>
+						<div
+							class="absolute right-[calc(100%+12px)] top-0 z-[20] w-[240px] overflow-hidden rounded-2xl border border-cyan-500/25 bg-white/98 text-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.15),0_0_0_1px_rgba(34,211,238,0.1)] backdrop-blur-xl dark:border-cyan-400/15 dark:bg-[rgb(10_15_28_/0.98)] dark:text-white dark:shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_30px_rgba(34,211,238,0.1)]"
+							role="menu"
+							aria-label="Opciones de capas"
+							transition:fly={{ x: 8, duration: 200 }}
+						>
+							<!-- Header con gradiente -->
+							<div
+								class="border-b border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 px-4 py-3 dark:from-cyan-500/15 dark:to-blue-600/10"
+							>
+								<h4
+									class="m-0 flex items-center gap-2 text-sm font-bold tracking-wide text-cyan-600 dark:text-cyan-400"
+								>
+									<svg
+										class="h-5 w-5"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									>
+										<path d="M12 2L2 7l10 5 10-5-10-5z" />
+										<path d="M2 17l10 5 10-5" />
+										<path d="M2 12l10 5 10-5" />
+									</svg>
+									Capas del Mapa
+								</h4>
+							</div>
+
+							<!-- Tipos de mapa -->
+							<div class="p-3">
+								<p
+									class="m-0 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/35"
+								>
+									Vista del Mapa
+								</p>
+								<div class="grid grid-cols-2 gap-2">
+									{#each MAP_TYPE_OPTIONS as opt (opt.id)}
+										<button
+											type="button"
+											class="flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-semibold transition-all duration-150
+											{currentMapType === opt.id
+												? 'bg-gradient-to-br from-cyan-500/20 to-blue-500/15 text-cyan-600 ring-2 ring-cyan-400/60 dark:from-cyan-500/25 dark:to-blue-600/20 dark:text-cyan-400 dark:ring-cyan-400/50'
+												: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
+											role="menuitemradio"
+											aria-checked={currentMapType === opt.id}
+											on:click={() => selectMapType(opt.id)}
+										>
+											<Icon
+												icon={opt.icon}
+												width={22}
+												class={currentMapType === opt.id ? 'text-cyan-500 dark:text-cyan-400' : ''}
+											/>
+											<span>{opt.label}</span>
+										</button>
+									{/each}
+								</div>
+							</div>
+
+							<!-- Capas adicionales -->
+							<div class="border-t border-slate-200/80 p-3 dark:border-white/[0.06]">
+								<p
+									class="m-0 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/35"
+								>
+									Capas Adicionales
+								</p>
+								<button
+									type="button"
+									class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[12px] font-semibold transition-all duration-150
+									{showTraffic
+										? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/15 text-emerald-600 ring-2 ring-emerald-400/60 dark:from-emerald-500/25 dark:to-teal-600/20 dark:text-emerald-400 dark:ring-emerald-400/50'
+										: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
+									role="menuitemcheckbox"
+									aria-checked={showTraffic}
+									on:click={toggleTraffic}
+								>
+									<Icon
+										icon="mdi:traffic-light"
+										width={20}
+										class={showTraffic ? 'text-emerald-500' : ''}
+									/>
+									<span class="flex-1 text-left">Tráfico en Vivo</span>
+									<span
+										class="flex h-5 w-5 items-center justify-center rounded-md transition-all {showTraffic
+											? 'bg-emerald-500 text-white'
+											: 'bg-slate-200 dark:bg-white/10'}"
+									>
+										{#if showTraffic}
+											<Icon icon="mdi:check" width={14} />
+										{/if}
+									</span>
+								</button>
+							</div>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
+
+		<!-- Zoom custom (look & feel app). Street View = pegman nativo de Google. -->
+		{#if isDesktopNav && !$showH3Grid}
+			<div
+				class="pointer-events-none absolute right-[10px] top-1/2 z-20 flex -translate-y-1/2 flex-col items-end"
+			>
+				<div
+					class="pointer-events-auto flex flex-col overflow-hidden rounded-2xl border-2 border-sky-400/55 bg-white/95 text-sky-700 shadow-[0_4px_20px_rgba(14,165,233,0.22)] backdrop-blur-md dark:border-cyan-400/50 dark:bg-gradient-to-br dark:from-slate-800/95 dark:to-slate-950/95 dark:text-cyan-300 dark:shadow-[0_4px_20px_rgba(34,211,238,0.3)]"
+					role="group"
+					aria-label="Controles de zoom"
+				>
+					<button
+						type="button"
+						class="flex h-11 w-11 items-center justify-center transition-colors hover:bg-sky-500/15 hover:text-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-500 dark:hover:bg-cyan-500/20 dark:hover:text-cyan-100 dark:focus-visible:outline-cyan-400"
+						on:click={zoomIn}
+						aria-label="Acercar mapa"
+						title="Acercar"
+					>
+						<Icon icon="mdi:plus" width={22} aria-hidden="true" />
+					</button>
+					<div class="h-px w-full bg-sky-300/50 dark:bg-cyan-400/25" aria-hidden="true"></div>
+					<button
+						type="button"
+						class="flex h-11 w-11 items-center justify-center transition-colors hover:bg-sky-500/15 hover:text-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-500 dark:hover:bg-cyan-500/20 dark:hover:text-cyan-100 dark:focus-visible:outline-cyan-400"
+						on:click={zoomOut}
+						aria-label="Alejar mapa"
+						title="Alejar"
+					>
+						<Icon icon="mdi:minus" width={22} aria-hidden="true" />
+					</button>
+				</div>
+			</div>
+		{/if}
 	{/if}
 
 	<!-- ── Control H3: slider tamaño + deshacer selección ── -->

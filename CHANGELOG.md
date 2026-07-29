@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Map layers menu (Mapa / Satélite / Híbrido / Relieve + tráfico en vivo) and custom zoom controls matching app look
+- Street View: custom exit control below WorkspaceSwitcher; native pegman with theme-aware background
+- Map visibility sync between Unidades and Seguimiento (eye toggles + checkboxes; selecting a unit shows it on the map)
+
 - Admin workspace for masters: Administración ↔ Seguimiento switcher, dashboard sin mapa, and unified Alertas/Zonas side panel
 - H3 resolution slider on the map (theme-aware, max 10, default 8) when creating zones or showing the grid
 - Close control on the tracking unit panel; panel is hidden while the H3 grid is active
@@ -26,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI uploads coverage artifact; `audit` and `e2e` jobs are blocking (no `continue-on-error`)
 
 ### Changed
+
+- npm overrides: `brace-expansion@5.0.8`, `minimatch@9→10.2.6`, `js-yaml>=5.2.2`, and `postcss^8.5.18` to clear high audit/OSV findings
+
+- Mobile bottom tab bar respects light/dark theme
+- Floating tracking panel moved to the left so map zoom/Street View stay usable on the right
+- Telemetry labels standardized (Voltaje, Respaldo, Satélites, Señal) with signal color chips
+- Vehicle InfoWindow regenerates with current theme when switching light/dark
+- Reports charts aligned with mobile (avg + max speed; satellites area fill)
 
 - Non-master users: hide create/edit/delete/deactivate for vehicles, zones, and alerts (view-only management UI)
 - Map type control moved to left-center so it does not overlap the workspace switcher; “Ver detalles” label on unit list
@@ -49,15 +61,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Separate `deploy.yml` for tag-based EC2 deployments (`v*.*.*` only)
 - `scripts/gitleaks-scan.sh` and `npm run scan:secrets`
 - Pull request template with base-branch and validate checklist
-
-### Changed
-
 - Split monolithic GitHub Actions workflow into `ci.yml` (quality gates) and `deploy.yml` (releases)
 - `npm run validate` shortcut: lint + check + test + build
 - Node.js 22 as target runtime in CI, `.nvmrc`, and `Dockerfile` base image
 - Deploy passes `ORIGIN` at container runtime (required by SvelteKit adapter-node)
 
 ### Fixed
+
+- Map alert/layers controls not showing due to race between session `isLoading` and Google Maps init
+- Mobile unit selection in tracking (object vs id) and eye visibility icon updating immediately
+- Partial “Seleccionar todas en mapa” state when only some filtered units are visible
 
 - El mapa ya no pierde zoom/pan en cada actualización WebSocket de posición
 - Marcadores de unidad dejan de parpadear/desaparecer en updates en vivo (clusterer usa `render()` en lugar de remove/add)
