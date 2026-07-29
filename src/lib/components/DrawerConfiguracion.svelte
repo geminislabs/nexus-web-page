@@ -170,6 +170,8 @@
 	$: allFilteredOnMap =
 		filteredVehicles.length > 0 &&
 		filteredVehicles.every((v) => $mapVisibleUnitIds.includes(String(v.id)));
+	$: someFilteredOnMap =
+		filteredVehicles.some((v) => $mapVisibleUnitIds.includes(String(v.id))) && !allFilteredOnMap;
 	$: {
 		filterStatus;
 		filterSearch;
@@ -210,6 +212,16 @@
 		);
 	}
 
+	/** Checkbox HTML: propiedad indeterminate no es atributo reactivo en Svelte. */
+	function setIndeterminate(node, value) {
+		node.indeterminate = Boolean(value);
+		return {
+			update(v) {
+				node.indeterminate = Boolean(v);
+			}
+		};
+	}
+
 	// ── Sidebar sections ──────────────────────────────────────
 	const sections = [
 		{ id: 'apariencia', label: 'Apariencia', icon: 'mdi:theme-light-dark' },
@@ -236,6 +248,7 @@
 	}
 	function centerOnVehicle(v) {
 		if ((v.latitude || v.lat) && (v.longitude || v.lng)) {
+			vehicleActions.setMapVisibility(v.id, true);
 			mapService.centerOnVehicle(v);
 			dispatch('close');
 		}
@@ -377,12 +390,22 @@
 	function formatVoltage(val) {
 		const n = Number(val);
 		if (val == null || Number.isNaN(n)) return '—';
-		return n.toFixed(1);
+		return `${n.toFixed(1)}V`;
 	}
 	function formatSignal(v) {
 		const n = Number(v?.rxLvl);
 		if (v?.rxLvl == null || Number.isNaN(n)) return '—';
-		return `${n} dBm`;
+		return String(n);
+	}
+	/** Calcula el nivel de señal (0-4) basado en rxLvl — igual que iOS/Android */
+	function getSignalLevel(v) {
+		const rx = Number(v?.rxLvl);
+		if (v?.rxLvl == null || Number.isNaN(rx)) return null;
+		if (rx <= 10) return 0;
+		if (rx <= 25) return 1;
+		if (rx <= 45) return 2;
+		if (rx <= 60) return 3;
+		return 4;
 	}
 	function statusLabelEs(status) {
 		if (status === 'active') return 'Activa';
@@ -826,10 +849,14 @@
 								type="checkbox"
 								class="size-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-500"
 								checked={allFilteredOnMap}
+								use:setIndeterminate={someFilteredOnMap}
 								disabled={filteredVehicles.length === 0}
 								on:change={toggleSelectAllOnMap}
 							/>
 							Seleccionar todas ({filteredVehicles.length}) en mapa
+							{#if someFilteredOnMap}
+								<span class="text-[10px] text-slate-400 dark:text-white/35">· parcial</span>
+							{/if}
 						</label>
 					</div>
 					<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
@@ -947,28 +974,38 @@
 														</p>
 													</div>
 												</div>
-												<div
-													class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-white/40"
-												>
-													<span>
-														<span class="font-semibold text-slate-700 dark:text-white/80"
-															>{formatVoltage(v.mainBatteryVoltage)}</span
-														>
-														Volts
+												<!-- Chips de telemetría estilo móvil -->
+												<div class="mt-2 flex flex-wrap items-center gap-1.5">
+													<span
+														class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+													>
+														Voltaje {formatVoltage(v.mainBatteryVoltage)}
 													</span>
-													<span>
-														<span class="font-semibold text-slate-700 dark:text-white/80"
-															>{formatVoltage(v.backupBatteryVoltage)}</span
-														>
-														Vint
+													<span
+														class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+													>
+														Respaldo {formatVoltage(v.backupBatteryVoltage)}
 													</span>
-													<span class="inline-flex items-center gap-1">
-														<Icon icon="mdi:signal" width={12} aria-hidden="true" />
-														<span class="font-semibold text-slate-700 dark:text-white/80"
-															>{formatSignal(v)}</span
-														>
-														Señal
+													<span
+														class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+													>
+														{v.satellites ?? 0} sat
 													</span>
+													{#if getSignalLevel(v) != null}
+														{@const level = getSignalLevel(v)}
+														<span
+															class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold {level ===
+															0
+																? 'border-red-400/50 bg-red-100 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-400'
+																: level === 1
+																	? 'border-orange-400/50 bg-orange-100 text-orange-600 dark:border-orange-500/30 dark:bg-orange-500/15 dark:text-orange-400'
+																	: level === 2
+																		? 'border-amber-400/50 bg-amber-100 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-400'
+																		: 'border-emerald-400/50 bg-emerald-100 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400'}"
+														>
+															Señal {formatSignal(v)}
+														</span>
+													{/if}
 												</div>
 												<div class="mt-2.5 flex flex-wrap gap-1.5">
 													<button
@@ -1064,7 +1101,7 @@
 													{ignitionOn(v) ? 'Encendida' : 'Apagada'}
 												</span>
 												<span class={speedColor(Number(v.speed) || 0)}>{formatSpeed(v)}</span>
-												<span>{formatVoltage(v.mainBatteryVoltage)} Volts</span>
+												<span>{formatVoltage(v.mainBatteryVoltage)} Voltaje</span>
 												{#if v.lastUpdateFormatted}
 													<span class="truncate">{v.lastUpdateFormatted}</span>
 												{/if}

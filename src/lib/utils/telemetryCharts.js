@@ -38,14 +38,77 @@ function buildMultiSeries(telemetryData, unitOrder, getValue) {
 }
 
 /**
+ * Gráfica de velocidad con línea de promedio + puntos de máxima (igual que iOS/Android)
  * @param {Record<string, { series?: Array<Record<string, unknown>> }>} telemetryData
  * @param {Array<{ id: string, name: string }>} unitOrder
  */
 export function speedChartConfig(telemetryData, unitOrder) {
+	// Obtener todos los labels de bucket ordenados
+	const labelsSet = new Set();
+	for (const entry of Object.values(telemetryData)) {
+		for (const b of entry.series || []) {
+			if (b.bucket) labelsSet.add(String(b.bucket));
+		}
+	}
+	const rawLabels = [...labelsSet].sort();
+	const labels = rawLabels.map(formatBucketLabel);
+
+	// Serie de velocidad promedio (línea) + máxima (puntos)
+	const avgDatasets = [];
+	const maxDatasets = [];
+
+	unitOrder.forEach((u, idx) => {
+		const series = telemetryData[u.id]?.series || [];
+		const byBucket = new Map(series.map((b) => [String(b.bucket), b]));
+		const color = getUnitChartColor(u.id, idx);
+
+		// Velocidad promedio (línea)
+		avgDatasets.push({
+			label: u.name,
+			data: rawLabels.map((lb) => {
+				const v = byBucket.get(lb)?.speed?.avg_speed;
+				return v == null ? null : v;
+			}),
+			borderColor: color,
+			backgroundColor: color + '33',
+			borderWidth: 2,
+			pointRadius: 0,
+			spanGaps: true,
+			tension: 0.25
+		});
+
+		// Velocidad máxima (puntos semitransparentes) — igual que iOS PointMark
+		maxDatasets.push({
+			label: `${u.name} (máx)`,
+			data: rawLabels.map((lb) => {
+				const v = byBucket.get(lb)?.speed?.max_speed;
+				return v == null ? null : v;
+			}),
+			borderColor: color + '50',
+			backgroundColor: color + '30',
+			borderWidth: 0,
+			pointRadius: 3,
+			pointStyle: 'circle',
+			showLine: false,
+			spanGaps: true
+		});
+	});
+
 	return {
 		type: 'line',
-		data: buildMultiSeries(telemetryData, unitOrder, (b) => b?.speed?.avg_speed),
-		options: { scales: { y: { title: { display: true, text: 'km/h', color: '#94a3b8' } } } }
+		data: {
+			labels,
+			datasets: [...avgDatasets, ...maxDatasets]
+		},
+		options: {
+			scales: { y: { title: { display: true, text: 'km/h', color: '#94a3b8' } } },
+			plugins: {
+				legend: {
+					display: unitOrder.length > 1,
+					labels: { color: 'rgba(255,255,255,0.7)', boxWidth: 12, font: { size: 10 } }
+				}
+			}
+		}
 	};
 }
 
@@ -140,12 +203,30 @@ export function signalChartConfig(telemetryData, unitOrder) {
 	};
 }
 
+/**
+ * Gráfica de satélites con área + línea (igual que iOS AreaMark + LineMark)
+ */
 export function satellitesChartConfig(telemetryData, unitOrder) {
+	const baseData = buildMultiSeries(telemetryData, unitOrder, (b) => b?.satellites?.avg);
+	// Agregar fill a cada dataset
+	const datasetsWithFill = baseData.datasets.map((ds, idx) => ({
+		...ds,
+		fill: true,
+		backgroundColor: getUnitChartColor(unitOrder[idx]?.id, idx) + '25'
+	}));
 	return {
 		type: 'line',
-		data: buildMultiSeries(telemetryData, unitOrder, (b) => b?.satellites?.avg),
+		data: {
+			labels: baseData.labels,
+			datasets: datasetsWithFill
+		},
 		options: {
-			scales: { y: { title: { display: true, text: '#', color: '#94a3b8' } } }
+			scales: {
+				y: {
+					title: { display: true, text: 'satélites', color: '#94a3b8' },
+					beginAtZero: true
+				}
+			}
 		}
 	};
 }

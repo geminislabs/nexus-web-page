@@ -33,8 +33,8 @@
 		<Icon icon="mdi:car-multiple" width={22} class="shrink-0 text-cyan-500" />
 		<span class="flex-1 text-sm font-medium">
 			{$selectedReportUnitIds.size === 0
-				? 'Seleccionar dispositivos'
-				: `${$selectedReportUnitIds.size} dispositivo(s) seleccionado(s)`}
+				? 'Seleccionar unidades'
+				: `${$selectedReportUnitIds.size} unidad${$selectedReportUnitIds.size !== 1 ? 'es' : ''} seleccionada${$selectedReportUnitIds.size !== 1 ? 's' : ''}`}
 		</span>
 		<Icon icon="mdi:chevron-right" width={20} class="text-slate-400" />
 	</button>

@@ -34,7 +34,7 @@
 	<article class="{cardClass} {wide ? 'lg:col-span-2' : ''}">
 		<h3 class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
 			<Icon icon="mdi:speedometer" class="text-blue-500" width={18} />
-			Velocidad promedio
+			Velocidad Promedio e Histórica
 		</h3>
 		{#if speedCfg}<ChartPanel config={speedCfg} height={wide ? 220 : 200} />{/if}
 	</article>
