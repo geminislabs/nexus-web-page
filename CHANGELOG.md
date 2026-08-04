@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Telemetry chips now show icons and clearer texts: Batería (V), Respaldo (V), Satélites, Señal
 - Report chart x-axis labels rendered fully vertical for readability
 
-- npm overrides: `brace-expansion@5.0.8`, `minimatch@9→10.2.6`, `js-yaml>=5.2.2`, and `postcss^8.5.18` to clear high audit/OSV findings
+- npm overrides: `brace-expansion@5.0.9`, `fast-uri>=4.1.2`, `minimatch@9→10.2.6`, `js-yaml>=5.2.2`, and `postcss^8.5.18` to clear high audit/OSV findings
 
 - Mobile bottom tab bar respects light/dark theme
 - Floating tracking panel moved to the left so map zoom/Street View stay usable on the right
