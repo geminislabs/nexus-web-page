@@ -29,7 +29,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/GOVERNANCE.md` — branch protection, coverage policy, Dependabot merge rules
 - CI uploads coverage artifact; `audit` and `e2e` jobs are blocking (no `continue-on-error`)
 
+### Added
+
+- Expand button on report charts: opens each chart in a horizontally scrollable modal showing every bucket label
+
 ### Changed
+
+- Signal intensity classified as Malo/Regular/Bueno (red/yellow/green only) across telemetry chips and map InfoWindow
+- Telemetry chips now show icons and clearer texts: Batería (V), Respaldo (V), Satélites, Señal
+- Report chart x-axis labels rendered fully vertical for readability
 
 - npm overrides: `brace-expansion@5.0.8`, `minimatch@9→10.2.6`, `js-yaml>=5.2.2`, and `postcss^8.5.18` to clear high audit/OSV findings
 
@@ -67,6 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deploy passes `ORIGIN` at container runtime (required by SvelteKit adapter-node)
 
 ### Fixed
+
+- Mouse wheel zoom no longer blocked while the map layers/alerts dropdown is open (removed full-screen backdrop; close on outside click)
+- Reports: Comms Fixable / Comms Fix totals read the API's `count_comm_fixable`/`count_comm_with_fix` keys (accepting camelCase variants) instead of always showing 0
+- Reports: detected exceptions listed in stable selection order (matching mobile) instead of request-completion order
+- Mobile: H3 resolution slider hidden while the “Guardar zona” sheet is open (no longer overlaps the modal)
 
 - Map alert/layers controls not showing due to race between session `isLoading` and Google Maps init
 - Mobile unit selection in tracking (object vs id) and eye visibility icon updating immediately

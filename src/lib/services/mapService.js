@@ -5,6 +5,7 @@ import {
 	SuperClusterAlgorithm
 } from '@googlemaps/markerclusterer/dist/index.esm.mjs';
 import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyles';
+import { getSignalQuality } from '$lib/utils/telemetryUtils.js';
 import { theme } from '$lib/stores/themeStore.js';
 import {
 	buildVehicleMarkerDataUrl,
@@ -488,36 +489,14 @@ class MapService {
 		const hasMainVoltage = !Number.isNaN(mainVoltage) && mainVoltage > 0;
 		const hasBackupVoltage = !Number.isNaN(backupVoltage) && backupVoltage > 0;
 		const hasSatellites = !Number.isNaN(satellites) && satellites > 0;
-		// Nivel de señal igual que iOS/Android
-		const rxLvl = Number(vehicle.rxLvl ?? vehicle.rx_lvl);
-		const hasSignal = !Number.isNaN(rxLvl) && vehicle.rxLvl != null;
-		const signalLevel = hasSignal
-			? rxLvl <= 10
-				? 0
-				: rxLvl <= 25
-					? 1
-					: rxLvl <= 45
-						? 2
-						: rxLvl <= 60
-							? 3
-							: 4
-			: null;
-		const signalColor =
-			signalLevel == null
-				? '#64748b'
-				: signalLevel === 0
-					? '#ef4444'
-					: signalLevel === 1
-						? '#f97316'
-						: signalLevel === 2
-							? '#eab308'
-							: '#10b981';
+		// Señal clasificada en Malo/Regular/Bueno (rojo/amarillo/verde)
+		const signalQuality = getSignalQuality(vehicle.rxLvl ?? vehicle.rx_lvl);
 		// Telemetry items con nomenclatura estandarizada
 		const telemetryItems = [
-			hasMainVoltage ? { label: `Voltaje ${mainVoltage.toFixed(1)}V`, color: null } : null,
-			hasBackupVoltage ? { label: `Respaldo ${backupVoltage.toFixed(1)}V`, color: null } : null,
-			hasSatellites ? { label: `${satellites} Satélites`, color: null } : null,
-			hasSignal ? { label: `Señal ${rxLvl}`, color: signalColor } : null
+			hasMainVoltage ? { label: `🔋 Batería ${mainVoltage.toFixed(1)}V`, color: null } : null,
+			hasBackupVoltage ? { label: `🪫 Respaldo ${backupVoltage.toFixed(1)}V`, color: null } : null,
+			hasSatellites ? { label: `🛰️ Satélites ${satellites}`, color: null } : null,
+			signalQuality ? { label: `📶 Señal ${signalQuality.label}`, color: signalQuality.hex } : null
 		].filter(Boolean);
 
 		const divTop = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.22)';

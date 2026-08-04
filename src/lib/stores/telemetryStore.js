@@ -93,20 +93,23 @@ export const telemetryActions = {
 		try {
 			/** @type {Record<string, TelemetryEntry>} */
 			const dataMap = {};
-			const unitsMeta = [];
+			// Orden de selección estable (no según qué request termina primero)
+			const unitsMeta = unitIds
+				.map((unitId) => {
+					const unit = allVehicles.find((v) => v.id === unitId);
+					return unit?.deviceId ? { id: unitId, name: unit.name, deviceId: unit.deviceId } : null;
+				})
+				.filter(Boolean);
 
 			await Promise.all(
-				unitIds.map(async (unitId) => {
-					const unit = allVehicles.find((v) => v.id === unitId);
-					if (!unit?.deviceId) return;
-					unitsMeta.push({ id: unitId, name: unit.name });
-					const response = await apiService.getDeviceTelemetry(unit.deviceId, {
+				unitsMeta.map(async ({ id, deviceId }) => {
+					const response = await apiService.getDeviceTelemetry(deviceId, {
 						from: fromStr,
 						to: toStr,
 						granularity,
 						metrics: TELEMETRY_METRICS
 					});
-					dataMap[unitId] = response;
+					dataMap[id] = response;
 				})
 			);
 
