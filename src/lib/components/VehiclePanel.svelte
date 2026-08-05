@@ -19,6 +19,7 @@
 		getSpeedColor
 	} from '$lib/utils/vehicleUtils.js';
 	import { unitIcons } from '$lib/data/unitIcons';
+	import { getSignalQuality, SIGNAL_CHIP_CLASSES } from '$lib/utils/telemetryUtils.js';
 	import { mapService } from '$lib/services/mapService.js';
 
 	export let showVehiclePanel = false;
@@ -144,21 +145,8 @@
 		return `${n.toFixed(1)}V`;
 	}
 
-	function formatSignal(v) {
-		const n = Number(v?.rxLvl);
-		if (v?.rxLvl == null || Number.isNaN(n)) return '—';
-		return String(n);
-	}
-
-	/** Calcula el nivel de señal (0-4) basado en rxLvl — igual que iOS/Android */
-	function getSignalLevel(v) {
-		const rx = Number(v?.rxLvl);
-		if (v?.rxLvl == null || Number.isNaN(rx)) return null;
-		if (rx <= 10) return 0;
-		if (rx <= 25) return 1;
-		if (rx <= 45) return 2;
-		if (rx <= 60) return 3;
-		return 4;
+	function getVehicleSignal(v) {
+		return getSignalQuality(v?.rxLvl);
 	}
 </script>
 
@@ -417,33 +405,36 @@
 									<!-- Chips de telemetría estilo móvil -->
 									<div class="mt-2 flex flex-wrap items-center gap-1.5">
 										<span
-											class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+											class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+											title="Batería principal"
 										>
-											Voltaje {formatVoltage(vehicle.mainBatteryVoltage)}
+											<Icon icon="mdi:car-battery" width={12} aria-hidden="true" />
+											Batería {formatVoltage(vehicle.mainBatteryVoltage)}
 										</span>
 										<span
-											class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+											class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+											title="Batería de respaldo"
 										>
+											<Icon icon="mdi:battery-high" width={12} aria-hidden="true" />
 											Respaldo {formatVoltage(vehicle.backupBatteryVoltage)}
 										</span>
 										<span
-											class="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+											class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+											title="Satélites GPS"
 										>
-											{vehicle.satellites ?? 0} sat
+											<Icon icon="mdi:satellite-variant" width={12} aria-hidden="true" />
+											Satélites {vehicle.satellites ?? 0}
 										</span>
-										{#if getSignalLevel(vehicle) != null}
-											{@const level = getSignalLevel(vehicle)}
+										{#if getVehicleSignal(vehicle)}
+											{@const signal = getVehicleSignal(vehicle)}
 											<span
-												class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold {level ===
-												0
-													? 'border-red-400/50 bg-red-100 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-400'
-													: level === 1
-														? 'border-orange-400/50 bg-orange-100 text-orange-600 dark:border-orange-500/30 dark:bg-orange-500/15 dark:text-orange-400'
-														: level === 2
-															? 'border-amber-400/50 bg-amber-100 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-400'
-															: 'border-emerald-400/50 bg-emerald-100 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400'}"
+												class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold {SIGNAL_CHIP_CLASSES[
+													signal.grade
+												]}"
+												title="Intensidad de señal: {vehicle.rxLvl}"
 											>
-												Señal {formatSignal(vehicle)}
+												<Icon icon="mdi:signal" width={12} aria-hidden="true" />
+												Señal {signal.label}
 											</span>
 										{/if}
 									</div>

@@ -4,6 +4,8 @@
 
 	export let config = null;
 	export let height = 200;
+	/** Modal expandido: muestra todas las etiquetas (sin autoSkip) */
+	export let expanded = false;
 
 	let canvas = null;
 	let chart = null;
@@ -40,11 +42,13 @@
 				},
 				scales: {
 					x: {
+						// Etiquetas del eje X completamente verticales (petición de producto)
 						ticks: {
 							color: darkDefaults.tickColor,
-							maxRotation: 0,
-							autoSkip: true,
-							maxTicksLimit: 6
+							minRotation: 90,
+							maxRotation: 90,
+							autoSkip: !expanded,
+							...(expanded ? {} : { maxTicksLimit: 6 })
 						},
 						grid: { color: darkDefaults.gridColor },
 						...(config.options?.scales?.x ?? {})

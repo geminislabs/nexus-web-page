@@ -14,7 +14,8 @@
 		mobileZoneMapActive,
 		mobileCrearZonaMapPassesPointer,
 		desktopZonePanelSubView,
-		showZoneUiToast
+		showZoneUiToast,
+		zoneSaveSheetOpen
 	} from '$lib/stores/h3Store.js';
 	import { activeTab } from '$lib/stores/navigationStore.js';
 	import { mapService } from '$lib/services/mapService.js';
@@ -247,6 +248,8 @@
 		browser && zv === 'crear_zona_map' && (variant === 'desktop' || $activeTab === 'alertas')
 	);
 
+	$: zoneSaveSheetOpen.set(browser && zv === 'guardar_zona');
+
 	$: if (browser && variant === 'desktop' && portalHost) {
 		tick().then(() => {
 			if (portalHost && portalHost.parentNode !== document.body) {
@@ -262,6 +265,7 @@
 			variant === 'desktop' && !useDesktopOverlayStore && get(desktopZonePanelSubView) !== 'zonas';
 		if (!handingOffToDesktopOverlay) {
 			mobileCrearZonaMapPassesPointer.set(false);
+			zoneSaveSheetOpen.set(false);
 		}
 		if (get(mobileZoneMapActive) && !handingOffToDesktopOverlay) {
 			mapService.disableMobileZoneEditorZoomLock();
