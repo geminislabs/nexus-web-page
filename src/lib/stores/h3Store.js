@@ -45,6 +45,12 @@ export const mobileZoneMapActive = writable(false);
 export const mobileCrearZonaMapPassesPointer = writable(false);
 
 /**
+ * Sheet «Guardar zona» abierto: los controles H3 del mapa (slider) se ocultan
+ * para no encimarse al modal y evitar cambiar la resolución (borra la selección).
+ */
+export const zoneSaveSheetOpen = writable(false);
+
+/**
  * Flujo «crear/guardar zona» en escritorio con el drawer cerrado
  */
 export const desktopZonePanelSubView = writable(

@@ -9,6 +9,7 @@
 		formatUnitStatusDate,
 		unitMatchesTrackingFilter
 	} from '$lib/utils/unitTrackingStatus.js';
+	import { getSignalQuality, SIGNAL_CHIP_CLASSES } from '$lib/utils/telemetryUtils.js';
 	export let unit = null;
 	export let units = [];
 	export let panelView = 'unit-info';
@@ -85,16 +86,8 @@
 		const v = Number(unit?.backupBatteryVoltage ?? unit?.backup_battery_voltage);
 		return !Number.isNaN(v) && v > 0 ? `${v.toFixed(1)}V` : '--';
 	})();
-	// Señal (rxLvl) — 0-100 aprox, igual que iOS SignalStrengthView
-	$: signalLevel = (() => {
-		const rx = Number(unit?.rxLvl ?? unit?.rx_lvl);
-		if (Number.isNaN(rx) || (unit?.rxLvl == null && unit?.rx_lvl == null)) return null;
-		if (rx <= 10) return 0;
-		if (rx <= 25) return 1;
-		if (rx <= 45) return 2;
-		if (rx <= 60) return 3;
-		return 4;
-	})();
+	// Señal (rxLvl) clasificada en Malo/Regular/Bueno (rojo/amarillo/verde)
+	$: signalQuality = getSignalQuality(unit?.rxLvl ?? unit?.rx_lvl);
 	$: isOnline = engineOn || isMoving;
 	$: isFollowing = Boolean(unit && $followedVehicleId === unit.id);
 	function handleSelectUnit(u) {
@@ -178,35 +171,34 @@
 					<div class="mt-2 flex flex-wrap items-center gap-1.5">
 						<span
 							class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
-							title="Voltaje principal"
+							title="Batería principal"
 						>
-							Voltaje {mainBattery}
+							<Icon icon="mdi:car-battery" class="h-3.5 w-3.5" aria-hidden="true" />
+							Batería {mainBattery}
 						</span>
 						<span
 							class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
 							title="Batería de respaldo"
 						>
+							<Icon icon="mdi:battery-high" class="h-3.5 w-3.5" aria-hidden="true" />
 							Respaldo {backupBattery}
 						</span>
 						<span
 							class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
 							title="Satélites GPS"
 						>
-							{unit?.satellites ?? 0} sat
+							<Icon icon="mdi:satellite-variant" class="h-3.5 w-3.5" aria-hidden="true" />
+							Satélites {unit?.satellites ?? 0}
 						</span>
-						{#if signalLevel != null}
+						{#if signalQuality}
 							<span
-								class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold {signalLevel ===
-								0
-									? 'border-red-400/50 bg-red-100/80 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-400'
-									: signalLevel === 1
-										? 'border-orange-400/50 bg-orange-100/80 text-orange-600 dark:border-orange-500/30 dark:bg-orange-500/15 dark:text-orange-400'
-										: signalLevel === 2
-											? 'border-amber-400/50 bg-amber-100/80 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-400'
-											: 'border-emerald-400/50 bg-emerald-100/80 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-400'}"
-								title="Nivel de señal"
+								class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold {SIGNAL_CHIP_CLASSES[
+									signalQuality.grade
+								]}"
+								title="Intensidad de señal: {unit.rxLvl ?? unit.rx_lvl}"
 							>
-								Señal {unit.rxLvl ?? unit.rx_lvl}
+								<Icon icon="mdi:signal" class="h-3.5 w-3.5" aria-hidden="true" />
+								Señal {signalQuality.label}
 							</span>
 						{/if}
 					</div>

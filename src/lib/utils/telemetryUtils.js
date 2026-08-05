@@ -15,6 +15,28 @@ export const TELEMETRY_METRICS = [
 	'idle_minutes'
 ];
 
+/**
+ * Clasifica la intensidad de señal (rxLvl) en 3 niveles pedidos por producto:
+ * Malo (rojo), Regular (amarillo) y Bueno (verde). Nada de naranjas ni matices.
+ * @param {number|string|null|undefined} rxLvl
+ * @returns {{ grade: 'bad'|'regular'|'good', label: string, hex: string } | null}
+ */
+export function getSignalQuality(rxLvl) {
+	const rx = Number(rxLvl);
+	if (rxLvl == null || Number.isNaN(rx)) return null;
+	if (rx <= 25) return { grade: 'bad', label: 'Malo', hex: '#ef4444' };
+	if (rx <= 45) return { grade: 'regular', label: 'Regular', hex: '#eab308' };
+	return { grade: 'good', label: 'Bueno', hex: '#22c55e' };
+}
+
+/** Clases Tailwind del chip de señal por nivel (solo rojo/amarillo/verde) */
+export const SIGNAL_CHIP_CLASSES = {
+	bad: 'border-red-400/50 bg-red-100 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-400',
+	regular:
+		'border-yellow-400/60 bg-yellow-100 text-yellow-700 dark:border-yellow-500/30 dark:bg-yellow-500/15 dark:text-yellow-400',
+	good: 'border-green-400/50 bg-green-100 text-green-700 dark:border-green-500/30 dark:bg-green-500/15 dark:text-green-400'
+};
+
 /** @param {string} unitId @param {number} index */
 export function getUnitChartColor(unitId, index = 0) {
 	return REPORT_UNIT_COLORS[index % REPORT_UNIT_COLORS.length];
@@ -65,7 +87,15 @@ export function processTelemetryResults(telemetryData, unitsMeta) {
 	/** @type {Array<{ id: string, type: string, value: string, date: string, unitName: string }>} */
 	const offenders = [];
 
-	for (const [unitId, response] of Object.entries(telemetryData)) {
+	// Itera en el orden de selección (unitsMeta) para que las excepciones salgan
+	// en un orden estable e igual al de las apps móviles, no según qué request terminó primero.
+	const orderedEntries = unitsMeta.length
+		? unitsMeta
+				.map((u) => /** @type {const} */ ([u.id, telemetryData[u.id]]))
+				.filter(([, response]) => response != null)
+		: Object.entries(telemetryData);
+
+	for (const [unitId, response] of orderedEntries) {
 		const unitName = unitsMeta.find((u) => u.id === unitId)?.name || 'Desconocido';
 		let hasSignal = false;
 		let hasSats = false;
@@ -77,10 +107,18 @@ export function processTelemetryResults(telemetryData, unitsMeta) {
 				totalDistance += bucket.odometer.total_distance_mt;
 			}
 			if (bucket.alerts?.count != null) totalAlerts += bucket.alerts.count;
-			const cq = bucket.comm_quality;
+			// El API (siscom-admin-api) responde snake_case: count_comm_fixable / count_comm_with_fix.
+			// Se aceptan variantes camelCase por compatibilidad con despliegues previos.
+			const cq = bucket.comm_quality ?? bucket.commQuality;
 			if (cq) {
-				totalFixableComms += cq.countCommFixable ?? cq.fixableCount ?? 0;
-				totalWithFixComms += cq.countCommWithFix ?? cq.withFixCount ?? 0;
+				totalFixableComms +=
+					cq.count_comm_fixable ?? cq.countCommFixable ?? cq.fixable_count ?? cq.fixableCount ?? 0;
+				totalWithFixComms +=
+					cq.count_comm_with_fix ??
+					cq.countCommWithFix ??
+					cq.with_fix_count ??
+					cq.withFixCount ??
+					0;
 			}
 			if (bucket.fuel_consumed_liters != null) totalFuel += bucket.fuel_consumed_liters;
 			if (bucket.moving_minutes != null) totalMoving += bucket.moving_minutes;

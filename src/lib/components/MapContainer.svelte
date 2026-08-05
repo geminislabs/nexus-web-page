@@ -21,7 +21,8 @@
 		selectedH3Cells,
 		h3Actions,
 		mobileZoneMapActive,
-		h3EraserMode
+		h3EraserMode,
+		zoneSaveSheetOpen
 	} from '$lib/stores/h3Store.js';
 	import { h3GridOverlayService } from '$lib/services/h3GridOverlayService.js';
 	import { alerts, alarmEvents, unreadAlarmCount, alertActions } from '$lib/stores/alertStore.js';
@@ -89,6 +90,17 @@
 			if (get(unreadAlarmCount) > 0) {
 				alertActions.markAllRead();
 			}
+		}
+	}
+
+	// Cierra los paneles flotantes al hacer clic fuera. No usamos un backdrop
+	// a pantalla completa porque bloquea el zoom con la rueda del mouse.
+	function handleWindowPointerdown(e) {
+		if (!showAlertsPanel && !showLayersPanel) return;
+		const insideFlyout = e.target instanceof Element && e.target.closest('[data-map-flyout]');
+		if (!insideFlyout) {
+			showAlertsPanel = false;
+			showLayersPanel = false;
 		}
 	}
 
@@ -301,7 +313,7 @@
 	});
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window on:keydown={handleKeydown} on:pointerdown={handleWindowPointerdown} />
 
 <section
 	class="relative h-full w-full font-sans"
@@ -353,19 +365,9 @@
 		<div
 			class="pointer-events-none absolute right-[10px] top-[10px] z-20 flex flex-col items-end gap-1.5"
 		>
-			{#if showAlertsPanel}
-				<div
-					class="pointer-events-auto fixed inset-0 z-[18]"
-					role="presentation"
-					on:click={() => {
-						showAlertsPanel = false;
-					}}
-				></div>
-			{/if}
-
 			<div class="pointer-events-auto relative z-[19] flex flex-col items-end gap-1.5">
 				<!-- Centro de notificaciones escritorio -->
-				<div class="relative hidden sm:block">
+				<div class="relative hidden sm:block" data-map-flyout="alerts">
 					<button
 						type="button"
 						class="relative flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background,transform,box-shadow] duration-200 hover:scale-[1.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500/80 dark:focus-visible:outline-white/80 [&_svg]:h-6 [&_svg]:w-6
@@ -528,7 +530,7 @@
 				</div>
 
 				<!-- Botón de capas (tipos de mapa + tráfico) -->
-				<div class="relative">
+				<div class="relative" data-map-flyout="layers">
 					<button
 						type="button"
 						class="group flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border-2 text-white shadow-lg transition-all duration-200 hover:scale-[1.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400
@@ -558,11 +560,6 @@
 					</button>
 
 					{#if showLayersPanel}
-						<div
-							class="pointer-events-auto fixed inset-0 z-[17]"
-							role="presentation"
-							on:click={() => (showLayersPanel = false)}
-						></div>
 						<div
 							class="absolute right-[calc(100%+12px)] top-0 z-[20] w-[240px] overflow-hidden rounded-2xl border border-cyan-500/25 bg-white/98 text-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.15),0_0_0_1px_rgba(34,211,238,0.1)] backdrop-blur-xl dark:border-cyan-400/15 dark:bg-[rgb(10_15_28_/0.98)] dark:text-white dark:shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_30px_rgba(34,211,238,0.1)]"
 							role="menu"
@@ -697,8 +694,8 @@
 		{/if}
 	{/if}
 
-	<!-- ── Control H3: slider tamaño + deshacer selección ── -->
-	{#if $showH3Grid}
+	<!-- ── Control H3: slider tamaño + deshacer selección (oculto con el sheet «Guardar zona») ── -->
+	{#if $showH3Grid && !$zoneSaveSheetOpen}
 		<div
 			class="pointer-events-none absolute right-[max(0.625rem,env(safe-area-inset-right,0px))] top-1/2 z-[120] flex -translate-y-1/2 flex-col items-end gap-3"
 		>
