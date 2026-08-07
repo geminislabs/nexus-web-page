@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `docs/requerimientos/enlaces-legales-y-tipografias.md`: specification to hand over the work of linking the published legal documents from the app and self-hosting the fonts. NEXUS writes to the user's device before a session even exists, yet there is no legal link anywhere in login, registration, password recovery or the user menu. Also covers removing the obsolete `.docx` under `docs/legal/`, superseded by the corporate set
+- Legal document links (Privacidad, Términos, Aviso legal, Cookies) on login, register, forgot/reset password, and the signed-in user menu — shared `EnlacesLegales` component; URLs from `src/lib/constants/legal.js` (`VITE_COMPANY_URL`, fallback `https://www.geminislabs.com`)
+- Unit tests for legal URL constants (`tests/legal.test.js`)
+- `docs/requerimientos/enlaces-legales-y-tipografias.md` — requirement spec for legal linking and font self-hosting
 
 - Map layers menu (Mapa / Satélite / Híbrido / Relieve + tráfico en vivo) and custom zoom controls matching app look
 - Street View: custom exit control below WorkspaceSwitcher; native pegman with theme-aware background
@@ -36,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expand button on report charts: opens each chart in a horizontally scrollable modal showing every bucket label
 
 ### Changed
+
+- Admin workspace fonts (Sora, IBM Plex Sans) are self-hosted via Fontsource (`latin` / `latin-ext` weights in use only); removed Google Fonts CDN `<link>` tags from `AdminWorkspace.svelte` so the browser no longer sends the user IP to Google for typography
+- `.env.example`: clarify that `VITE_COMPANY_URL` is the corporate site base (auth + `/legal/*`), not the NEXUS app origin
 
 - Signal intensity classified as Malo/Regular/Bueno (red/yellow/green only) across telemetry chips and map InfoWindow
 - Telemetry chips now show icons and clearer texts: Batería (V), Respaldo (V), Satélites, Señal

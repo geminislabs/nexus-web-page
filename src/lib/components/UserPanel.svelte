@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import Icon from '@iconify/svelte';
 	import CenterSheet from '$lib/components/CenterSheet.svelte';
+	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 	import { logoutSession } from '$lib/services/sessionService.js';
 	import { theme, themeActions } from '$lib/stores/themeStore.js';
 
@@ -134,6 +135,13 @@
 					No hay información de usuario disponible.
 				</p>
 			{/if}
+		</section>
+
+		<section
+			class="rounded-xl border border-slate-200 bg-white/95 p-4 text-slate-800 shadow-sm dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-100"
+			aria-label="Información legal"
+		>
+			<EnlacesLegales variant="list" />
 		</section>
 
 		<button

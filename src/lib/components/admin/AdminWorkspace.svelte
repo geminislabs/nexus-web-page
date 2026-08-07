@@ -15,6 +15,20 @@
 	import TabInformes from '$lib/components/TabInformes.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
 
+	/* Tipografías auto-alojadas (latin/latin-ext): evita transferir la IP a Google Fonts. */
+	import '@fontsource/sora/latin-500.css';
+	import '@fontsource/sora/latin-600.css';
+	import '@fontsource/sora/latin-700.css';
+	import '@fontsource/sora/latin-ext-500.css';
+	import '@fontsource/sora/latin-ext-600.css';
+	import '@fontsource/sora/latin-ext-700.css';
+	import '@fontsource/ibm-plex-sans/latin-400.css';
+	import '@fontsource/ibm-plex-sans/latin-500.css';
+	import '@fontsource/ibm-plex-sans/latin-600.css';
+	import '@fontsource/ibm-plex-sans/latin-ext-400.css';
+	import '@fontsource/ibm-plex-sans/latin-ext-500.css';
+	import '@fontsource/ibm-plex-sans/latin-ext-600.css';
+
 	const navItems = [
 		{ id: 'dashboard', label: 'Dashboard', icon: 'mdi:view-dashboard-outline' },
 		{ id: 'users', label: 'Usuarios', icon: 'mdi:account-group-outline' },
@@ -56,15 +70,6 @@
 		if (window.matchMedia('(max-width: 639px)').matches) collapsed = true;
 	});
 </script>
-
-<svelte:head>
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-	<link
-		href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
-		rel="stylesheet"
-	/>
-</svelte:head>
 
 <svelte:window on:click={onDocClick} />
 
