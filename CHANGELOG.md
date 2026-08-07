@@ -104,4 +104,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Bump `@sveltejs/kit` to `2.70.2` (GHSA-29g2-3rmr-qm68 / OSV medium)
 - **Rotate** any Google Maps API key that was previously committed in git history (GCP Console → Credentials)
