@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/requerimientos/enlaces-legales-y-tipografias.md`: specification to hand over the work of linking the published legal documents from the app and self-hosting the fonts. NEXUS writes to the user's device before a session even exists, yet there is no legal link anywhere in login, registration, password recovery or the user menu. Also covers removing the obsolete `.docx` under `docs/legal/`, superseded by the corporate set
+
 - Map layers menu (Mapa / Satélite / Híbrido / Relieve + tráfico en vivo) and custom zoom controls matching app look
 - Street View: custom exit control below WorkspaceSwitcher; native pegman with theme-aware background
 - Map visibility sync between Unidades and Seguimiento (eye toggles + checkboxes; selecting a unit shows it on the map)
