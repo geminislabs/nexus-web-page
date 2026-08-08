@@ -3,6 +3,7 @@
 	import { apiService } from '$lib/services/api.js';
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
+	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 
 	let email = '';
 	let loading = false;
@@ -94,5 +95,8 @@
 				>Volver al inicio de sesión</a
 			>
 		</p>
+		<div class="mt-4 w-full border-t border-slate-200 pt-4 dark:border-white/10">
+			<EnlacesLegales variant="compact" />
+		</div>
 	</main>
 </div>

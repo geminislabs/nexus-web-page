@@ -8,6 +8,7 @@
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
+	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 
 	let email = '';
 	let password = '';
@@ -107,9 +108,12 @@
 		>
 			NEXUS
 		</h1>
-		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
+		<p class="mb-3 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
 			by GeminisLabs
 		</p>
+		<div class="mb-8 w-full">
+			<EnlacesLegales variant="compact" />
+		</div>
 
 		<form
 			class="flex w-full flex-col gap-4"

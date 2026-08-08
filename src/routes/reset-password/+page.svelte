@@ -5,6 +5,7 @@
 	import { validatePassword } from '$lib/utils/passwordValidation.js';
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
+	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 	import { onMount } from 'svelte';
 
 	let email = '';
@@ -174,5 +175,8 @@
 				>Iniciar sesión</a
 			>
 		</p>
+		<div class="mt-4 w-full border-t border-slate-200 pt-4 dark:border-white/10">
+			<EnlacesLegales variant="compact" />
+		</div>
 	</main>
 </div>
