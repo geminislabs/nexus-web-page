@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Added a `nanoid` override (`>=3.3.17`) for GHSA-2v37-7h3g-55p8. The advisory was published after the last green build and broke CI on `develop` in both the `quality` (npm audit) and `security` (OSV) jobs. It reaches the tree through `postcss`
+- Raised the `@sveltejs/kit` floor in `package.json` from `^2.22.0` to `^2.70.2`. The fix for GHSA-29g2-3rmr-qm68 lived only in the lockfile, so any `npm install` could resolve back to a vulnerable 2.x and silently undo it. Production was never exposed — the Dockerfile uses `npm ci` — but local environments were
+
 ### Added
 
 - Legal document links (Privacidad, Términos, Aviso legal, Cookies) on login, register, forgot/reset password, and the signed-in user menu — shared `EnlacesLegales` component; URLs from `src/lib/constants/legal.js` (`VITE_COMPANY_URL`, fallback `https://www.geminislabs.com`)
