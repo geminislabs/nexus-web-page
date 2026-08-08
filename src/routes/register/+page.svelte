@@ -6,6 +6,7 @@
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import logoUrl from '$lib/assets/logo.png';
+	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 
 	const inputClass =
 		'w-full appearance-none rounded-[14px] border border-slate-200 bg-white py-3.5 pl-[2.875rem] text-[0.9375rem] text-slate-900 outline-none transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/15 dark:bg-white/[0.08] dark:text-white dark:placeholder:text-white/30 dark:focus:border-blue-500/70 dark:focus:bg-white/11';
@@ -117,9 +118,12 @@
 		>
 			NEXUS
 		</h1>
-		<p class="mb-8 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
+		<p class="mb-3 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
 			Crear cuenta
 		</p>
+		<div class="mb-8 w-full">
+			<EnlacesLegales variant="compact" />
+		</div>
 
 		<form
 			class="flex w-full flex-col gap-4"
