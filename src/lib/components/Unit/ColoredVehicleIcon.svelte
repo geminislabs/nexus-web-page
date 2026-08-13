@@ -1,20 +1,48 @@
 <script>
+	import { browser } from '$app/environment';
+	import { buildColoredUnitIconDataUrl } from '$lib/utils/vehicleMarkerIcon.js';
+
 	export let src = '';
 	export let colorHex = '#334155';
 	export let sizeClass = 'h-8 w-8';
 	export let alt = 'Icono de vehículo';
 
-	const imgClass = 'pointer-events-none absolute inset-0 h-full w-full object-contain';
+	/** @type {string} */
+	let dataUrl = '';
+	/** @type {number} */
+	let loadGen = 0;
+
+	$: if (browser) {
+		void loadColored(src, colorHex);
+	}
+
+	/**
+	 * @param {string} nextSrc
+	 * @param {string} nextColor
+	 */
+	async function loadColored(nextSrc, nextColor) {
+		const gen = ++loadGen;
+		if (!nextSrc) {
+			dataUrl = '';
+			return;
+		}
+		try {
+			const url = await buildColoredUnitIconDataUrl(nextSrc, nextColor || '#334155', 128);
+			if (gen !== loadGen) return;
+			dataUrl = url || '';
+		} catch {
+			if (gen !== loadGen) return;
+			dataUrl = '';
+		}
+	}
 </script>
 
-<!--
-  1) Máscara del PNG → silueta con colorHex.
-  2) PNG + multiply → cuerpo coloreado con algo de detalle.
-  3) PNG + darken (alto contraste) → refuerza llantas, vidrios y accesorios oscuros.
--->
-<div class="relative {sizeClass}">
+{#if dataUrl}
+	<img src={dataUrl} {alt} class="pointer-events-none object-contain {sizeClass}" />
+{:else}
+	<!-- Fallback inmediato: silueta con el color de perfil (antes de que cargue el canvas) -->
 	<div
-		class="absolute inset-0"
+		class="pointer-events-none {sizeClass}"
 		style="
 			background-color: {colorHex};
 			-webkit-mask-image: url('{src}');
@@ -26,21 +54,7 @@
 			-webkit-mask-position: center;
 			mask-position: center;
 		"
-		aria-hidden="true"
+		role="img"
+		aria-label={alt}
 	></div>
-
-	<img
-		{src}
-		{alt}
-		class="{imgClass} mix-blend-multiply"
-		style="filter: contrast(1.35) brightness(0.92);"
-	/>
-
-	<img
-		{src}
-		alt=""
-		aria-hidden="true"
-		class="{imgClass} mix-blend-darken opacity-70"
-		style="filter: contrast(2.1) brightness(0.58);"
-	/>
-</div>
+{/if}

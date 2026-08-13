@@ -12,14 +12,10 @@
 		selectedVehicleCount,
 		vehicleActions
 	} from '$lib/stores/vehicleStore.js';
-	import {
-		getStatusText,
-		getStatusPillClass,
-		colorSlugToHex,
-		getSpeedColor
-	} from '$lib/utils/vehicleUtils.js';
+	import { getStatusText, getStatusPillClass, colorSlugToHex } from '$lib/utils/vehicleUtils.js';
 	import { unitIcons } from '$lib/data/unitIcons';
-	import { getSignalQuality, SIGNAL_CHIP_CLASSES } from '$lib/utils/telemetryUtils.js';
+	import SignalMeters from '$lib/components/SignalMeters.svelte';
+	import UnitTelemetryBadges from '$lib/components/UnitTelemetryBadges.svelte';
 	import { mapService } from '$lib/services/mapService.js';
 
 	export let showVehiclePanel = false;
@@ -124,30 +120,6 @@
 		};
 		return labels[t] || 'Unidad';
 	}
-
-	function ignitionLabel(v) {
-		return String(v?.engineStatus ?? '').toUpperCase() === 'ON' ? 'Encendida' : 'Apagada';
-	}
-
-	function ignitionOn(v) {
-		return String(v?.engineStatus ?? '').toUpperCase() === 'ON';
-	}
-
-	function formatSpeed(v) {
-		const spd = Number(v?.speed);
-		if (Number.isNaN(spd)) return '—';
-		return `${spd.toFixed(2)} km/h`;
-	}
-
-	function formatVoltage(val) {
-		const n = Number(val);
-		if (val == null || Number.isNaN(n)) return '—';
-		return `${n.toFixed(1)}V`;
-	}
-
-	function getVehicleSignal(v) {
-		return getSignalQuality(v?.rxLvl);
-	}
 </script>
 
 {#if !embedded}
@@ -247,7 +219,7 @@
 			>
 				<input
 					type="checkbox"
-					class="size-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-500"
+					class="size-3.5 rounded border-indigo-400/50 accent-indigo-500 focus:ring-indigo-500/40 dark:border-indigo-400/35 dark:accent-indigo-400"
 					checked={allFilteredSelected}
 					disabled={filteredVehicles.length === 0}
 					on:change={toggleSelectAllFiltered}
@@ -304,7 +276,7 @@
 									id="vehicle-select-{vehicle.id}"
 									type="checkbox"
 									checked={isChecked}
-									class="mt-1 size-3.5 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-500"
+									class="mt-1 size-3.5 shrink-0 rounded border-indigo-400/50 accent-indigo-500 focus:ring-indigo-500/40 dark:border-indigo-400/35 dark:accent-indigo-400"
 									aria-label="Incluir {vehicle.name} en la selección"
 									on:change={() => toggleVehicleSelection(vehicle.id)}
 								/>
@@ -360,83 +332,10 @@
 									</div>
 
 									<div
-										class="mt-2 grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 dark:border-white/[0.06]"
+										class="mt-2 flex flex-col gap-1.5 border-t border-slate-100 pt-2 dark:border-white/[0.06]"
 									>
-										<div>
-											<p class="m-0 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-												Ignición
-											</p>
-											<p
-												class="m-0 mt-0.5 inline-flex items-center gap-1 text-[12px] font-semibold text-slate-800 dark:text-slate-100"
-											>
-												<span
-													class="h-1.5 w-1.5 rounded-full {ignitionOn(vehicle)
-														? 'bg-emerald-500'
-														: 'bg-slate-400'}"
-													aria-hidden="true"
-												></span>
-												{ignitionLabel(vehicle)}
-											</p>
-										</div>
-										<div>
-											<p class="m-0 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-												Velocidad
-											</p>
-											<p
-												class="m-0 mt-0.5 text-[12px] font-bold {getSpeedColor(
-													Number(vehicle.speed) || 0
-												)}"
-											>
-												{formatSpeed(vehicle)}
-											</p>
-										</div>
-										<div>
-											<p class="m-0 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-												Actualización
-											</p>
-											<p
-												class="m-0 mt-0.5 truncate text-[11px] font-medium text-slate-700 dark:text-slate-200"
-											>
-												{vehicle.lastUpdateFormatted || '—'}
-											</p>
-										</div>
-									</div>
-
-									<!-- Chips de telemetría estilo móvil -->
-									<div class="mt-2 flex flex-wrap items-center gap-1.5">
-										<span
-											class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
-											title="Batería principal"
-										>
-											<Icon icon="mdi:car-battery" width={12} aria-hidden="true" />
-											Batería {formatVoltage(vehicle.mainBatteryVoltage)}
-										</span>
-										<span
-											class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
-											title="Batería de respaldo"
-										>
-											<Icon icon="mdi:battery-high" width={12} aria-hidden="true" />
-											Respaldo {formatVoltage(vehicle.backupBatteryVoltage)}
-										</span>
-										<span
-											class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
-											title="Satélites GPS"
-										>
-											<Icon icon="mdi:satellite-variant" width={12} aria-hidden="true" />
-											Satélites {vehicle.satellites ?? 0}
-										</span>
-										{#if getVehicleSignal(vehicle)}
-											{@const signal = getVehicleSignal(vehicle)}
-											<span
-												class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold {SIGNAL_CHIP_CLASSES[
-													signal.grade
-												]}"
-												title="Intensidad de señal: {vehicle.rxLvl}"
-											>
-												<Icon icon="mdi:signal" width={12} aria-hidden="true" />
-												Señal {signal.label}
-											</span>
-										{/if}
+										<UnitTelemetryBadges unit={vehicle} />
+										<SignalMeters unit={vehicle} />
 									</div>
 								</div>
 

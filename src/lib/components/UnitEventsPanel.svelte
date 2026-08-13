@@ -41,7 +41,7 @@
 			<Icon icon="mdi:arrow-left" width={20} />
 		</button>
 		<div class="flex-1">
-			<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">Eventos (48h)</p>
+			<p class="m-0 text-sm font-semibold text-slate-900 dark:text-white">Eventos de hoy</p>
 			<p class="m-0 text-[11px] text-slate-500 dark:text-white/50">{unit?.name || 'Unidad'}</p>
 		</div>
 		<button
@@ -80,9 +80,7 @@
 				<p class="m-0 text-sm font-medium text-slate-700 dark:text-white/80">
 					Sin eventos recientes
 				</p>
-				<p class="m-0 text-xs text-slate-500 dark:text-white/45">
-					Las últimas 48 h están despejadas
-				</p>
+				<p class="m-0 text-xs text-slate-500 dark:text-white/45">No hay eventos registrados hoy</p>
 			</div>
 		{:else}
 			<ul class="m-0 list-none p-3">

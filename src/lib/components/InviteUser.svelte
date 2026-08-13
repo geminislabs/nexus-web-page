@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import Icon from '@iconify/svelte';
 	import { apiService } from '$lib/services/api.js';
 	import { slide } from 'svelte/transition';
@@ -48,9 +49,9 @@
 				successMessage = 'Invitación reenviada';
 			}
 		} catch (error) {
-			console.error('Error inviting user:', error);
+			logger.error('Error inviting user:', error);
 
-			const errorText = error.displayMessage || error.detail || error.message || '';
+			const errorText = error.displayMessage || 'No se pudo enviar la invitación.';
 
 			if (
 				error.status === 400 &&

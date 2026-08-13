@@ -21,8 +21,23 @@
 		'w-full appearance-none rounded-[14px] border border-slate-200 bg-white py-3.5 px-4 text-[0.9375rem] text-slate-900 outline-none transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/15 dark:bg-white/[0.08] dark:text-white dark:placeholder:text-white/30 dark:focus:border-blue-500/70 dark:focus:bg-white/11';
 
 	onMount(() => {
+		let fromSession = '';
+		try {
+			fromSession = sessionStorage.getItem('nexus_reset_email') || '';
+			if (fromSession) sessionStorage.removeItem('nexus_reset_email');
+		} catch {
+			/* private mode */
+		}
+		if (fromSession) {
+			email = fromSession;
+			return;
+		}
+		// Enlaces antiguos con ?email=…: hidratar y limpiar la URL (no dejar PII en historial/Referer).
 		const q = $page.url.searchParams.get('email');
-		if (q) email = q;
+		if (q) {
+			email = q;
+			goto('/reset-password', { replaceState: true });
+		}
 	});
 
 	async function handleSubmit() {
@@ -57,8 +72,8 @@
 			});
 			success = res?.message || 'Contraseña restablecida. Ya puedes iniciar sesión.';
 			setTimeout(() => goto('/login'), 1200);
-		} catch (err) {
-			error = err?.message || 'No se pudo restablecer la contraseña';
+		} catch {
+			error = 'No se pudo restablecer la contraseña. Verifica el código e intenta de nuevo.';
 		} finally {
 			loading = false;
 		}

@@ -13,6 +13,7 @@
 		{
 			id: 'all',
 			label: 'Todas',
+			shortLabel: 'Todas',
 			icon: 'mdi:car-side',
 			iconWrap: 'bg-slate-200 text-slate-600 dark:bg-white/15 dark:text-white',
 			activeClass:
@@ -21,6 +22,7 @@
 		{
 			id: 'moving',
 			label: 'En movimiento',
+			shortLabel: 'Moviendo',
 			icon: 'mdi:play',
 			iconWrap: 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400',
 			activeClass:
@@ -29,6 +31,7 @@
 		{
 			id: 'stopped',
 			label: 'Paradas',
+			shortLabel: 'Paradas',
 			icon: 'mdi:pause',
 			iconWrap: 'bg-orange-500/15 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400',
 			activeClass:
@@ -53,10 +56,12 @@
 		{@const isActive = value === panel.id}
 		<button
 			type="button"
-			class="flex min-h-[72px] flex-col justify-between rounded-2xl border px-2.5 py-2.5 text-left transition-colors
+			class="flex flex-col justify-between rounded-2xl border px-2.5 py-2.5 text-left transition-colors
+				{variant === 'embedded' ? 'min-h-[64px]' : 'min-h-[72px]'}
 				{isActive ? panel.activeClass : inactiveClass}"
 			on:click={() => (value = panel.id)}
 			aria-pressed={isActive}
+			title={panel.label}
 		>
 			<div class="flex w-full items-start justify-between gap-1">
 				<span
@@ -73,9 +78,11 @@
 				</span>
 			</div>
 			<span
-				class="truncate text-[11px] font-semibold {isActive ? 'text-white/95' : inactiveLabelClass}"
+				class="text-[11px] font-semibold leading-tight {isActive
+					? 'text-white/95'
+					: inactiveLabelClass}"
 			>
-				{panel.label}
+				{variant === 'embedded' ? panel.shortLabel : panel.label}
 			</span>
 		</button>
 	{/each}

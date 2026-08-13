@@ -19,12 +19,16 @@ describe('apiQuery', () => {
 });
 
 describe('apiErrors', () => {
-	it('ApiError expone detail del backend y anidado', () => {
+	it('ApiError permite detail corto conocido y oculta leaks internos', () => {
 		const err = new ApiError('HTTP error', { status: 400, detail: 'Invitación pendiente' });
 		expect(err.displayMessage).toBe('Invitación pendiente');
 		expect(err.status).toBe(400);
-		const nested = new ApiError('err', { detail: { detail: 'nested' } });
-		expect(nested.displayMessage).toBe('nested');
+
+		const leak = new ApiError('err', {
+			status: 500,
+			detail: 'Traceback (most recent call last): File "/app/main.py"'
+		});
+		expect(leak.displayMessage).toBe('Error del servidor. Intenta más tarde.');
 	});
 
 	it('parseErrorBody lee JSON y texto plano', async () => {
@@ -52,7 +56,7 @@ describe('apiErrors', () => {
 		expect(err.displayMessage).toBe('Credenciales inválidas');
 
 		const fallback = await apiErrorFromResponse(new Response('', { status: 503 }), 'fallback');
-		expect(fallback.displayMessage).toBe('fallback');
+		expect(fallback.displayMessage).toBe('Servicio en mantenimiento. Intenta más tarde.');
 	});
 });
 

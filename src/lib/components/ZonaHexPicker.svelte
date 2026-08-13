@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import Icon from '@iconify/svelte';
 	import { onMount, createEventDispatcher, tick } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
@@ -53,7 +54,7 @@
 					await initMap();
 				}
 			} catch (err) {
-				console.error('[ZonaHexPicker] No se pudo inicializar el mapa', err);
+				logger.error('[ZonaHexPicker] No se pudo inicializar el mapa', err);
 			}
 		})();
 

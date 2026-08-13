@@ -5,6 +5,9 @@ export const activeTab = writable('seguimiento');
 
 export const requestedPanelView = writable(null);
 
+/** Drawer de seguimiento a abrir al entrar desde admin (ej. 'informes'). */
+export const pendingTrackingDrawer = writable(/** @type {string | null} */ (null));
+
 export const alertasSubView = writable('list'); // 'list' | 'config' | 'gestionar' | 'crear' | 'zonas' | 'crearZona'
 export const ajustesSubView = writable('main'); // 'main' | 'unidades'
 

@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import { browser } from '$app/environment';
@@ -16,7 +17,7 @@
 		zoneUiToast,
 		showH3Grid
 	} from '$lib/stores/h3Store.js';
-	import { theme } from '$lib/stores/themeStore.js';
+	import { theme, themeActions } from '$lib/stores/themeStore.js';
 	import { vehicles, activeUnit, vehicleActions } from '$lib/stores/vehicleStore.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
@@ -32,18 +33,20 @@
 
 	import BottomTabBar from '$lib/components/BottomTabBar.svelte';
 	import TabAlertas from '$lib/components/TabAlertas.svelte';
+	import TabInformes from '$lib/components/TabInformes.svelte';
 	import TabAjustes from '$lib/components/TabAjustes.svelte';
 	import ZonasPanel from '$lib/components/ZonasPanel.svelte';
 	import TrackingSubPanel from '$lib/components/TrackingSubPanel.svelte';
 	import UnitsPickerSheet from '$lib/components/UnitsPickerSheet.svelte';
 	import { eventActions } from '$lib/stores/eventStore.js';
-	import { requestedPanelView } from '$lib/stores/navigationStore.js';
+	import { requestedPanelView, pendingTrackingDrawer } from '$lib/stores/navigationStore.js';
 	import { workspace, workspaceActions } from '$lib/stores/workspaceStore.js';
 
 	let isLoading = true;
 	let userData = null;
 	let isAppFullscreen = false;
 	let showUserMenu = false;
+	let showThemeOptions = false;
 	let showMobileUnitsSheet = false;
 	let prevMobileTab = 'seguimiento';
 	let trackingPanelView = 'unit-info';
@@ -54,20 +57,46 @@
 
 	const sidebarBtnBase =
 		'relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-[14px] border transition-[background-color,border-color,color,box-shadow] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#080b16]';
-	/** Seguimiento: unidades + alertas/zonas unificadas. */
+	/** Seguimiento: unidades + alertas/zonas + informes. */
 	const configSidebarItems = [
 		{ id: 'unidades', label: 'Unidades', title: 'Seguimiento', icon: 'mdi:car-side' },
 		{
 			id: 'alertas_zonas',
 			label: 'Alertas',
 			title: 'Alertas y zonas',
-			icon: 'mdi:bell-ring-outline'
+			icon: 'mdi:bell-ring-outline',
+			requiresVehicles: true
+		},
+		{
+			id: 'informes',
+			label: 'Informes',
+			title: 'Informes',
+			icon: 'mdi:file-chart-outline',
+			requiresVehicles: true
 		}
 	];
+
+	$: hasVehicles = $vehicles.length > 0;
+	$: visibleConfigSidebarItems = configSidebarItems.filter(
+		(item) => !item.requiresVehicles || hasVehicles
+	);
+	$: if (
+		!hasVehicles &&
+		(openDrawer === 'configuracion:alertas_zonas' || openDrawer === 'configuracion:informes')
+	) {
+		openDrawer = '';
+	}
 
 	$: isAdminWorkspace = !!userData?.is_master && $workspace === 'admin';
 	$: if (userData && !userData.is_master) {
 		if ($workspace === 'admin') workspaceActions.ensureTrackingForUser();
+	}
+
+	/** Al volver de admin con un drawer pendiente (p. ej. Informes). */
+	$: if (!isAdminWorkspace && $pendingTrackingDrawer) {
+		const section = $pendingTrackingDrawer;
+		pendingTrackingDrawer.set(null);
+		openDrawer = getConfigDrawerId(section);
 	}
 
 	$: canonicalUrl =
@@ -115,19 +144,27 @@
 		'Configuración';
 
 	$: isSideConfigPanel =
-		activeConfigSection === 'unidades' || activeConfigSection === 'alertas_zonas';
+		activeConfigSection === 'unidades' ||
+		activeConfigSection === 'alertas_zonas' ||
+		activeConfigSection === 'informes';
+	/** Mismo ancho para Seguimiento, Alertas e Informes (panel lateral homogéneo). */
+	const configSideWidthClass = 'w-[min(980px,78%)] max-w-[1080px]';
 	$: configDrawerSubtitle =
 		activeConfigSection === 'unidades'
 			? 'Visualiza y administra tus unidades en tiempo real'
 			: activeConfigSection === 'alertas_zonas'
 				? 'Reglas de alerta y geocercas sobre el mapa'
-				: '';
+				: activeConfigSection === 'informes'
+					? 'Telemetría y reportes de unidades'
+					: '';
 	$: configDrawerIcon =
 		activeConfigSection === 'unidades'
 			? 'mdi:car-side'
 			: activeConfigSection === 'alertas_zonas'
 				? 'mdi:bell-ring-outline'
-				: 'mdi:cog-outline';
+				: activeConfigSection === 'informes'
+					? 'mdi:file-chart-outline'
+					: 'mdi:cog-outline';
 
 	/** Master: switcher en seguimiento. */
 	$: showTrackingWorkspaceSwitcher = !!userData?.is_master && !isAdminWorkspace;
@@ -182,12 +219,16 @@
 	}
 
 	function handleBodyClick(e) {
-		if (!e.target.closest('[data-dashboard-user-menu]')) showUserMenu = false;
+		if (!e.target.closest('[data-dashboard-user-menu]')) {
+			showUserMenu = false;
+			showThemeOptions = false;
+		}
 	}
 
 	function handleGlobalKeydown(e) {
 		if (e.key === 'Escape') {
 			showUserMenu = false;
+			showThemeOptions = false;
 			if (get(desktopZonePanelSubView) !== 'zonas') {
 				mapService.disableMobileZoneEditorZoomLock();
 				h3Actions.exitMobileZoneMap();
@@ -259,13 +300,13 @@
 					return;
 				}
 				alertActions.syncZonesFromApi().catch((err) => {
-					console.error('No se pudieron sincronizar las geocercas:', err);
+					logger.error('No se pudieron sincronizar las geocercas:', err);
 				});
 				alertActions.syncAlertRulesFromApi().catch((err) => {
-					console.error('No se pudieron sincronizar las reglas de alerta:', err);
+					logger.error('No se pudieron sincronizar las reglas de alerta:', err);
 				});
 				alertActions.syncAlarmEventsFromApi().catch((err) => {
-					console.error('No se pudo sincronizar el historial de alertas:', err);
+					logger.error('No se pudo sincronizar el historial de alertas:', err);
 				});
 			});
 		})();
@@ -369,6 +410,7 @@
 						title="Cuenta"
 						on:click|stopPropagation={() => {
 							showUserMenu = !showUserMenu;
+							showThemeOptions = false;
 							openDrawer = '';
 						}}
 					>
@@ -416,12 +458,13 @@
 											<button
 												type="button"
 												class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-slate-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/55 dark:text-white/70
-												{isConfigDrawerOpen && activeConfigSection === 'apariencia'
+												{showThemeOptions
 													? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/25 dark:border-blue-500/45 dark:bg-blue-600/22 dark:text-blue-300 dark:shadow-[0_0_12px_rgba(37,99,235,0.25)]'
 													: 'border-slate-200 bg-slate-100 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-900 dark:border-white/[0.12] dark:bg-white/[0.06] dark:hover:border-white/20 dark:hover:bg-white/[0.1] dark:hover:text-white'}"
-												aria-label="Configuración"
-												title="Configuración"
-												on:click|stopPropagation={() => openConfigDrawer('apariencia')}
+												aria-label="Tema de apariencia"
+												aria-expanded={showThemeOptions}
+												title="Tema"
+												on:click|stopPropagation={() => (showThemeOptions = !showThemeOptions)}
 											>
 												<Icon
 													icon="mdi:cog-outline"
@@ -436,6 +479,69 @@
 									</div>
 								</div>
 								<div class="my-3 h-px bg-slate-200 dark:bg-white/[0.08]" role="presentation"></div>
+							{/if}
+							{#if showThemeOptions}
+								<div class="mb-3" role="group" aria-label="Selección de tema">
+									<p
+										class="m-0 mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-white/40"
+									>
+										Apariencia
+									</p>
+									<div class="flex gap-2">
+										<button
+											type="button"
+											class="flex flex-1 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all
+											{$theme === 'dark'
+												? 'border-blue-500/50 bg-blue-600/10'
+												: 'border-slate-200 hover:border-slate-300 dark:border-white/[0.08] dark:hover:border-white/[0.14]'}"
+											on:click|stopPropagation={() => themeActions.set('dark')}
+											aria-pressed={$theme === 'dark'}
+										>
+											<span
+												class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#07111f] text-indigo-300"
+												aria-hidden="true"
+											>
+												<Icon icon="mdi:weather-night" class="h-4 w-4" />
+											</span>
+											<span class="min-w-0">
+												<span
+													class="block text-[12px] font-semibold {$theme === 'dark'
+														? 'text-slate-900 dark:text-white'
+														: 'text-slate-600 dark:text-white/55'}">Oscuro</span
+												>
+												<span class="block text-[10px] text-slate-500 dark:text-white/30"
+													>Mapa nocturno</span
+												>
+											</span>
+										</button>
+										<button
+											type="button"
+											class="flex flex-1 items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition-all
+											{$theme === 'light'
+												? 'border-sky-500/50 bg-sky-500/10'
+												: 'border-slate-200 hover:border-slate-300 dark:border-white/[0.08] dark:hover:border-white/[0.14]'}"
+											on:click|stopPropagation={() => themeActions.set('light')}
+											aria-pressed={$theme === 'light'}
+										>
+											<span
+												class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#dde4ef] text-amber-500"
+												aria-hidden="true"
+											>
+												<Icon icon="mdi:white-balance-sunny" class="h-4 w-4" />
+											</span>
+											<span class="min-w-0">
+												<span
+													class="block text-[12px] font-semibold {$theme === 'light'
+														? 'text-slate-900 dark:text-white'
+														: 'text-slate-600 dark:text-white/55'}">Claro</span
+												>
+												<span class="block text-[10px] text-slate-500 dark:text-white/30"
+													>Contraste diurno</span
+												>
+											</span>
+										</button>
+									</div>
+								</div>
 							{/if}
 							<button
 								type="button"
@@ -455,7 +561,7 @@
 				<div class="min-h-0 flex-1" aria-hidden="true"></div>
 
 				<div class="flex flex-col items-center gap-1">
-					{#each configSidebarItems as item (item.id)}
+					{#each visibleConfigSidebarItems as item (item.id)}
 						{@const itemActive = openDrawer === `configuracion:${item.id}`}
 						<button
 							type="button"
@@ -529,14 +635,10 @@
 				accentColor="#10b981"
 				sidebarWidth={SW}
 				bodyPaddingClass="p-0"
-				bodyScrollable={!isSideConfigPanel}
+				bodyScrollable={activeConfigSection === 'informes' || !isSideConfigPanel}
 				placement={isSideConfigPanel ? 'side' : 'bottom'}
-				sideWidthClass={activeConfigSection === 'alertas_zonas'
-					? 'w-[min(480px,46%)] max-w-[520px]'
-					: 'w-[min(420px,40%)] max-w-[480px]'}
-				passiveBackdrop={$mobileCrearZonaMapPassesPointer ||
-					$desktopZonePanelSubView !== 'zonas' ||
-					activeConfigSection === 'unidades'}
+				sideWidthClass={configSideWidthClass}
+				passiveBackdrop={$mobileCrearZonaMapPassesPointer || $desktopZonePanelSubView !== 'zonas'}
 				on:close={closeDrawer}
 			>
 				{#if activeConfigSection === 'alertas_zonas'}
@@ -544,6 +646,8 @@
 						on:close={closeDrawer}
 						on:navigate={(e) => openConfigDrawer(e.detail.section)}
 					/>
+				{:else if activeConfigSection === 'informes'}
+					<TabInformes />
 				{:else}
 					{#key activeConfigSection}
 						<DrawerConfiguracion
@@ -568,9 +672,9 @@
 					class="pointer-events-none fixed bottom-24 left-3 z-[100] hidden w-[340px] md:left-[calc(72px+0.75rem)] md:block"
 				>
 					<div
-						class="pointer-events-auto overflow-hidden rounded-2xl border border-slate-200/80 shadow-xl dark:border-transparent dark:shadow-2xl"
+						class="pointer-events-auto flex max-h-[70vh] flex-col overflow-hidden rounded-2xl border border-slate-200/80 shadow-xl dark:border-transparent dark:shadow-2xl"
 					>
-						<div class="max-h-[70vh] bg-white dark:bg-[#0c1829]">
+						<div class="flex min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-[#0c1829]">
 							<TrackingSubPanel
 								unit={$activeUnit}
 								units={$vehicles}
@@ -646,6 +750,16 @@
 					<TabAlertas />
 				</div>
 			{/if}
+			{#if $activeTab === 'informes'}
+				<div
+					class="fixed inset-0 z-[52] flex max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] flex-col overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-black sm:hidden"
+					role="region"
+					aria-label="Informes"
+					transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
+				>
+					<TabInformes />
+				</div>
+			{/if}
 			{#if $activeTab === 'ajustes'}
 				<div
 					class="fixed inset-0 z-[52] flex max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] flex-col overflow-hidden bg-slate-50 dark:bg-black sm:hidden"
@@ -664,7 +778,7 @@
 				transition:fly={{ y: 20, duration: 200, easing: cubicOut }}
 			>
 				<div
-					class="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
+					class="flex max-h-[min(72vh,calc(100dvh-4.75rem-env(safe-area-inset-bottom,0px)))] flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]"
 				>
 					<TrackingSubPanel
 						unit={$activeUnit}

@@ -6,18 +6,26 @@ const COMM_API_URL = import.meta.env?.VITE_COMM_API_URL || 'http://localhost:800
 class EventService {
 	/**
 	 * @param {string} unitId
-	 * @param {{ hours?: number, limit?: number }} [options]
+	 * @param {{ from?: Date|string, to?: Date|string, limit?: number }} [options]
 	 */
 	async getEventsForUnit(unitId, options = {}) {
-		const hours = options.hours ?? 48;
 		const limit = options.limit ?? 50;
-		const to = new Date();
-		const from = new Date(to.getTime() - hours * 60 * 60 * 1000);
+		const { from: dayFrom, to: dayTo } = (() => {
+			const to = options.to ? new Date(options.to) : new Date();
+			const from = options.from
+				? new Date(options.from)
+				: (() => {
+						const d = new Date(to);
+						d.setHours(0, 0, 0, 0);
+						return d;
+					})();
+			return { from, to };
+		})();
 
 		const url = new URL('/api/v1/events', COMM_API_URL);
 		url.searchParams.append('unit_id', unitId);
-		url.searchParams.set('from', from.toISOString());
-		url.searchParams.set('to', to.toISOString());
+		url.searchParams.set('from', dayFrom.toISOString());
+		url.searchParams.set('to', dayTo.toISOString());
 		url.searchParams.set('limit', String(limit));
 		url.searchParams.set('order', 'desc');
 
