@@ -1,12 +1,17 @@
 import { user, authToken } from '$lib/stores/auth.js';
 import { apiService } from '$lib/services/api.js';
+import { logger } from '$lib/utils/logger.js';
 
 /** @param {Record<string, unknown> | null | undefined} apiUser */
 export function normalizeUser(apiUser) {
 	if (!apiUser) return null;
+	// Solo campos necesarios en cliente — evita persistir payload completo (PII extra) en localStorage.
 	return {
-		...apiUser,
+		id: apiUser.id ?? null,
+		email: apiUser.email ?? null,
 		name: apiUser.name || apiUser.full_name || '',
+		full_name: apiUser.full_name || apiUser.name || '',
+		role: apiUser.role ?? null,
 		is_master: apiUser.is_master ?? apiUser.role === 'master'
 	};
 }
@@ -32,7 +37,11 @@ export async function logoutSession() {
 		try {
 			await apiService.logout();
 		} catch (err) {
-			console.warn('Logout API failed; clearing local session anyway:', err);
+			logger.warn({
+				code: 'AUTH_LOGOUT_API_FAILED',
+				message: 'Logout API failed; clearing local session anyway',
+				err
+			});
 		}
 	}
 	clearLocalSession();
@@ -52,7 +61,11 @@ export async function validateSessionWithApi() {
 		user.login(normalizeUser(apiUser));
 		return true;
 	} catch (err) {
-		console.warn('Session validation failed:', err);
+		logger.warn({
+			code: 'AUTH_SESSION_INVALID',
+			message: 'Session validation failed',
+			err
+		});
 		clearLocalSession();
 		return false;
 	}

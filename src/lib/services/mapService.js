@@ -1,12 +1,15 @@
 import { get, writable } from 'svelte/store';
+import { mount, unmount } from 'svelte';
 import * as GoogleMapsLoader from '@googlemaps/js-api-loader';
 import {
 	MarkerClusterer,
 	SuperClusterAlgorithm
 } from '@googlemaps/markerclusterer/dist/index.esm.mjs';
 import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyles';
-import { getSignalQuality } from '$lib/utils/telemetryUtils.js';
+import { formatTripAlertType, tripAlertMarkerColor } from '$lib/utils/tripAlertFormat.js';
 import { theme } from '$lib/stores/themeStore.js';
+import { logger } from '$lib/utils/logger.js';
+import VehiclePositionPopup from '$lib/components/VehiclePositionPopup.svelte';
 import {
 	buildVehicleMarkerDataUrl,
 	getStatusHexColor,
@@ -15,8 +18,12 @@ import {
 	VEHICLE_MARKER_SIZE
 } from '$lib/utils/vehicleMarkerIcon.js';
 
-/** Color del rastro en vivo y del indicador de seguimiento. */
+/** Color principal del rastro en vivo y del indicador de seguimiento. */
 const LIVE_TRAIL_COLOR = '#00a6c0';
+/** Borde del rastro según velocidad (km/h): ≤40 verde, <100 amarillo, ≥100 rojo. */
+const TRAIL_EDGE_GREEN = '#22c55e';
+const TRAIL_EDGE_YELLOW = '#eab308';
+const TRAIL_EDGE_RED = '#ef4444';
 /** Breakpoint móvil (alineado con MapContainer / Tailwind `sm`). */
 const MOBILE_MQ = '(max-width: 639px)';
 /** Últimos N puntos por unidad (~5 min a 1 update/5s). */
@@ -24,6 +31,16 @@ const MAX_TRAIL_POINTS = 60;
 const TRAIL_FADE_MS = 220;
 const TRAIL_MIN_OPACITY = 0.12;
 const TRAIL_MAX_OPACITY = 0.75;
+const TRAIL_MAIN_WEIGHT = 3;
+const TRAIL_EDGE_WEIGHT = 6;
+
+/** @param {number} speedKmH */
+function trailEdgeColorForSpeed(speedKmH) {
+	const speed = Number(speedKmH) || 0;
+	if (speed > 100) return TRAIL_EDGE_RED;
+	if (speed > 40) return TRAIL_EDGE_YELLOW;
+	return TRAIL_EDGE_GREEN;
+}
 
 /** Unidad actualmente en modo "seguir" (o null). Para reactividad en UI (botón Seguir). */
 export const followedVehicleId = writable(/** @type {string | null} */ (null));
@@ -44,6 +61,8 @@ class MapService {
 		this._mobileZoneZoomLocked = false;
 		/** @type {string | null} */
 		this._openVehiclePopupId = null;
+		/** @type {Map<object, { host: HTMLElement, instance: unknown }>} */
+		this._vehiclePopupMounts = new Map();
 		/** @type {((vehicle: any) => void) | null} */
 		this._onVehicleMarkerClick = null;
 		/** @type {Map<string, ReturnType<typeof setInterval>>} */
@@ -58,9 +77,9 @@ class MapService {
 		this._ringRotation = 0;
 		/** @type {string | null} Unidad cuya cámara sigue en vivo */
 		this._followVehicleId = null;
-		/** @type {Map<string, Array<{ lat: number, lng: number }>>} Rastro por unidad */
+		/** @type {Map<string, Array<{ lat: number, lng: number, speed: number }>>} Rastro por unidad */
 		this._liveTrails = new Map();
-		/** @type {Map<string, google.maps.Polyline[]>} Segmentos de polyline por unidad (degradado) */
+		/** @type {Map<string, Array<{ border: google.maps.Polyline, main: google.maps.Polyline }>>} */
 		this._liveTrailPolylines = new Map();
 		/** @type {Set<string>} Unidades con rastro visible actualmente */
 		this._liveTrailVisible = new Set();
@@ -75,6 +94,8 @@ class MapService {
 		this._followDragListener = null;
 		this._suppressFollowClear = false;
 		this._followZoom = 15;
+		/** Vista de trayecto activa: bloquea otros movimientos de cámara. */
+		this._tripViewActive = false;
 		this.apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
 		/** @type {google.maps.TrafficLayer | null} Capa de tráfico */
 		this._trafficLayer = null;
@@ -197,14 +218,12 @@ class MapService {
 
 		if (prevId) {
 			this._applyVehicleMarkerIcon(prevId);
-			if (prevId !== this._followVehicleId) this.hideLiveTrail(prevId);
 		}
 		if (nextId) {
 			this._highlightPulsePhase = 0;
 			this._ringRotation = 0;
 			this._applyVehicleMarkerIcon(nextId);
 			this._startRingRotation();
-			this.showLiveTrail(nextId);
 		}
 	}
 
@@ -312,7 +331,7 @@ class MapService {
 
 			return this.map;
 		} catch (error) {
-			console.error('Error inicializando Google Maps:', error);
+			logger.error('Error inicializando Google Maps:', error);
 			throw error;
 		}
 	}
@@ -333,7 +352,7 @@ class MapService {
 					resolve(userLocation);
 				},
 				(error) => {
-					console.warn('Error obteniendo ubicación:', error);
+					logger.warn('Error obteniendo ubicación:', error);
 					resolve(null);
 				}
 			);
@@ -391,7 +410,9 @@ class MapService {
 		const infoWindow = new this.google.maps.InfoWindow({
 			maxWidth: 340,
 			pixelOffset: new this.google.maps.Size(0, 4),
-			disableAutoPan: false
+			disableAutoPan: false,
+			// Cierre propio en VehiclePositionPopup; ocultar X nativo de Google
+			headerDisabled: true
 		});
 		infoWindow.setContent(this.createVehicleInfoContent(vehicle, infoWindow));
 
@@ -445,197 +466,49 @@ class MapService {
 	}
 
 	/**
+	 * Popup de marcador: monta VehiclePositionPopup (mismos tiles/SignalMeters que el panel).
 	 * @param {unknown} vehicle
 	 * @param {object | undefined} infoWindow
-	 * @param {'light' | 'dark' | undefined} [forcedTheme] Si viene del store al cambiar tema; si no, se usa el DOM.
+	 * @param {'light' | 'dark' | undefined} [forcedTheme]
 	 */
 	createVehicleInfoContent(vehicle, infoWindow, forcedTheme) {
 		const isDark = forcedTheme != null ? forcedTheme === 'dark' : this._isDarkVehiclePopupTheme();
-		const speed = Number(vehicle.speed) || 0;
-		const battery = Number(vehicle.battery ?? vehicle.fuel) || 0;
-		const lastUpdate = this._escapeHtml(vehicle.lastUpdateFormatted || 'No disponible');
-		const name = this._escapeHtml(vehicle.name || 'Unidad');
-		const driver = this._escapeHtml(vehicle.driver || 'No asignado');
-		const brandModel = [vehicle.brand, vehicle.model].filter(Boolean).join(' ').trim();
-		const brandModelText = this._escapeHtml(brandModel || 'Sin modelo');
-		const plateText = this._escapeHtml(vehicle.plate || '');
-		const location = this._escapeHtml(vehicle.location || 'Desconocida');
-		const deviceId = vehicle.deviceId ? this._escapeHtml(String(vehicle.deviceId)) : '';
-		// Telemetría igual que CommunicationDTO en Android/iOS
-		const mainVoltage = Number(vehicle.mainBatteryVoltage ?? vehicle.main_battery_voltage);
-		const backupVoltage = Number(vehicle.backupBatteryVoltage ?? vehicle.backup_battery_voltage);
-		const satellites = Number(vehicle.satellites);
-		const statusLabel = this._escapeHtml(this.getStatusText(vehicle.status));
-		const statusBadge = isDark
-			? this.getStatusBadgeStyleDark(vehicle.status)
-			: this.getStatusBadgeStyleLight(vehicle.status);
-		const barGradient = this._getStatusGradient(vehicle.status);
+		this._destroyVehiclePopupMount(infoWindow);
 
-		const latRaw = vehicle.latitude ?? vehicle.lat;
-		const lngRaw = vehicle.longitude ?? vehicle.lng;
-		let coordsBlock = '';
-		if (
-			latRaw != null &&
-			lngRaw != null &&
-			!Number.isNaN(Number(latRaw)) &&
-			!Number.isNaN(Number(lngRaw))
-		) {
-			const la = Number(latRaw).toFixed(6);
-			const lo = Number(lngRaw).toFixed(6);
-			const coordColor = isDark ? '#94a3b8' : '#64748b';
-			coordsBlock = `<p style="margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:10px;color:${coordColor};letter-spacing:0.02em;">${la}, ${lo}</p>`;
-		}
+		const host = document.createElement('div');
+		host.className = 'nexus-viw-host';
+		host.setAttribute('data-nexus-vehicle-popup', '');
+		host.setAttribute('data-popup-theme', isDark ? 'dark' : 'light');
 
-		const hasMainVoltage = !Number.isNaN(mainVoltage) && mainVoltage > 0;
-		const hasBackupVoltage = !Number.isNaN(backupVoltage) && backupVoltage > 0;
-		const hasSatellites = !Number.isNaN(satellites) && satellites > 0;
-		// Señal clasificada en Malo/Regular/Bueno (rojo/amarillo/verde)
-		const signalQuality = getSignalQuality(vehicle.rxLvl ?? vehicle.rx_lvl);
-		// Telemetry items con nomenclatura estandarizada
-		const telemetryItems = [
-			hasMainVoltage ? { label: `🔋 Batería ${mainVoltage.toFixed(1)}V`, color: null } : null,
-			hasBackupVoltage ? { label: `🪫 Respaldo ${backupVoltage.toFixed(1)}V`, color: null } : null,
-			hasSatellites ? { label: `🛰️ Satélites ${satellites}`, color: null } : null,
-			signalQuality ? { label: `📶 Señal ${signalQuality.label}`, color: signalQuality.hex } : null
-		].filter(Boolean);
-
-		const divTop = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.22)';
-		const deviceBlock = deviceId
-			? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid ${divTop};">
-					<span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#64748b;">Dispositivo</span>
-					<span style="font-size:11px;color:${isDark ? '#cbd5e1' : '#334155'};font-weight:500;">${deviceId}</span>
-				</div>`
-			: '';
-
-		const cardBg = isDark
-			? 'linear-gradient(165deg,rgba(15,23,42,0.99) 0%,rgba(17,24,39,0.98) 42%,rgba(15,23,42,0.99) 100%)'
-			: 'linear-gradient(165deg,#ffffff 0%,#f8fafc 50%,#f1f5f9 100%)';
-		const cardShadow = isDark
-			? 'inset 0 1px 0 rgba(255,255,255,0.07),0 18px 40px rgba(0,0,0,0.45)'
-			: 'inset 0 1px 0 rgba(255,255,255,0.9),0 18px 40px rgba(15,23,42,0.1)';
-		const cardBorder = isDark
-			? '1px solid rgba(148,163,184,0.14)'
-			: '1px solid rgba(148,163,184,0.35)';
-		const cardColor = isDark ? '#e2e8f0' : '#0f172a';
-
-		const titleColor = isDark ? '#f8fafc' : '#0f172a';
-		const mutedColor = isDark ? '#94a3b8' : '#64748b';
-		const metricBg = isDark
-			? 'background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.06);'
-			: 'background:rgba(241,245,249,0.95);border:1px solid rgba(148,163,184,0.22);';
-		const metricValue = isDark ? '#f1f5f9' : '#0f172a';
-		const locBox = isDark
-			? 'background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.1);'
-			: 'background:#ffffff;border:1px solid rgba(148,163,184,0.22);';
-		const locText = isDark ? '#e2e8f0' : '#0f172a';
-		const footerBorder = isDark ? 'rgba(148,163,184,0.1)' : 'rgba(148,163,184,0.2)';
-		const signalMuted = isDark ? '#94a3b8' : '#64748b';
-		const coordsHeading = isDark ? '#475569' : '#94a3b8';
-		const coordsDash = isDark ? 'rgba(148,163,184,0.12)' : 'rgba(148,163,184,0.25)';
-
-		const closeBg = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
-		const closeColor = isDark ? '#cbd5e1' : '#64748b';
-		const closeInset = isDark
-			? 'inset 0 1px 0 rgba(255,255,255,0.06)'
-			: 'inset 0 1px 0 rgba(255,255,255,0.7)';
-		const closeHoverBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.1)';
-		const closeHoverColor = isDark ? '#f8fafc' : '#0f172a';
-
-		const wrapper = document.createElement('div');
-		wrapper.className = 'nexus-viw-card';
-		wrapper.setAttribute('data-nexus-vehicle-popup', '');
-		wrapper.setAttribute('data-popup-theme', isDark ? 'dark' : 'light');
-		wrapper.style.cssText = [
-			'position:relative',
-			'min-width:268px',
-			'max-width:304px',
-			'border-radius:16px',
-			'overflow:hidden',
-			`background:${cardBg}`,
-			`box-shadow:${cardShadow}`,
-			`border:${cardBorder}`,
-			'font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif',
-			`color:${cardColor}`,
-			'line-height:1.4'
-		].join(';');
-
-		wrapper.innerHTML = `
-			<div style="height:3px;width:100%;background:${barGradient};opacity:0.95;"></div>
-			<button type="button" data-action="close-popup" aria-label="Cerrar"
-				style="position:absolute;right:10px;top:14px;z-index:2;width:30px;height:30px;border:none;border-radius:9999px;cursor:pointer;
-				background:${closeBg};color:${closeColor};font-size:18px;font-weight:400;line-height:1;display:flex;align-items:center;justify-content:center;
-				box-shadow:${closeInset};transition:background 0.15s ease,color 0.15s ease;">
-				×
-			</button>
-			<div style="padding:16px 16px 14px 16px;">
-				<div style="display:flex;align-items:flex-start;gap:10px;padding-right:28px;margin-bottom:12px;">
-					<div style="flex:1;min-width:0;">
-						<h3 style="margin:0 0 6px 0;font-size:17px;font-weight:800;letter-spacing:-0.03em;color:${titleColor};line-height:1.2;">${name}</h3>
-						<p style="margin:0;font-size:12px;color:${mutedColor};font-weight:500;">${driver}</p>
-						<p style="margin:2px 0 0 0;font-size:11px;color:${mutedColor};font-weight:500;">${brandModelText}${plateText ? ` · ${plateText}` : ''}</p>
-					</div>
-					<span style="flex-shrink:0;display:inline-flex;align-items:center;padding:4px 10px;border-radius:9999px;font-size:10px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;${statusBadge}">${statusLabel}</span>
-				</div>
-				<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-					<div style="border-radius:12px;padding:10px 10px 8px;${metricBg}">
-						<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Velocidad</div>
-						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${speed}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:2px;">km/h</span></div>
-					</div>
-					<div style="border-radius:12px;padding:10px 10px 8px;${metricBg}">
-						<div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Batería</div>
-						<div style="font-size:22px;font-weight:800;color:${metricValue};letter-spacing:-0.02em;">${battery}<span style="font-size:11px;font-weight:600;color:#64748b;margin-left:1px;">V</span></div>
-					</div>
-				</div>
-				<div style="border-radius:12px;padding:10px 12px;${locBox}margin-bottom:10px;">
-					<div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Ubicación</div>
-					<p style="margin:0;font-size:12px;font-weight:600;color:${locText};line-height:1.35;">${location}</p>
-				</div>
-				${
-					telemetryItems.length > 0
-						? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${telemetryItems
-								.map((item) => {
-									const itemColor = item.color || (isDark ? '#cbd5e1' : '#334155');
-									const itemBorder = item.color
-										? `${item.color}40`
-										: isDark
-											? 'rgba(148,163,184,0.2)'
-											: 'rgba(100,116,139,0.22)';
-									return `<span style="display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:0.02em;background:${isDark ? 'rgba(15,23,42,0.68)' : '#e2e8f0'};color:${itemColor};border:1px solid ${itemBorder};">${item.label}</span>`;
-								})
-								.join('')}</div>`
-						: ''
+		const instance = mount(VehiclePositionPopup, {
+			target: host,
+			props: {
+				vehicle: vehicle || {},
+				theme: isDark ? 'dark' : 'light',
+				onClose: () => {
+					this._openVehiclePopupId = null;
+					infoWindow?.close();
 				}
-				${deviceBlock}
-				<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;margin-top:4px;border-top:1px solid ${footerBorder};">
-					<span style="font-size:10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#64748b;">Última señal</span>
-					<span style="font-size:11px;color:${signalMuted};font-weight:500;">${lastUpdate}</span>
-				</div>
-				${coordsBlock ? `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed ${coordsDash};"><div style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${coordsHeading};margin-bottom:4px;">Coordenadas</div>${coordsBlock}</div>` : ''}
-			</div>
-		`;
-		const closeBtn = wrapper.querySelector('[data-action="close-popup"]');
-		closeBtn?.addEventListener('click', (e) => {
-			e.stopPropagation();
-			this._openVehiclePopupId = null;
-			infoWindow?.close();
+			}
 		});
-		closeBtn?.addEventListener(
-			'mouseenter',
-			() => {
-				closeBtn.style.background = closeHoverBg;
-				closeBtn.style.color = closeHoverColor;
-			},
-			{ passive: true }
-		);
-		closeBtn?.addEventListener(
-			'mouseleave',
-			() => {
-				closeBtn.style.background = closeBg;
-				closeBtn.style.color = closeColor;
-			},
-			{ passive: true }
-		);
-		return wrapper;
+
+		if (infoWindow) {
+			this._vehiclePopupMounts.set(infoWindow, { host, instance });
+		}
+		return host;
+	}
+
+	/** @param {object | undefined | null} infoWindow */
+	_destroyVehiclePopupMount(infoWindow) {
+		if (!infoWindow || !this._vehiclePopupMounts) return;
+		const entry = this._vehiclePopupMounts.get(infoWindow);
+		if (!entry) return;
+		try {
+			unmount(entry.instance);
+		} catch {
+			/* ya desmontado */
+		}
+		this._vehiclePopupMounts.delete(infoWindow);
 	}
 
 	getStatusBadgeStyleDark(status) {
@@ -757,7 +630,6 @@ class MapService {
 
 			if (lat != null && lng != null) {
 				const newPosition = { lat: parseFloat(lat), lng: parseFloat(lng) };
-				console.log('[trail] update', vehicle.id, newPosition.lat, newPosition.lng);
 				existingMarkerData.marker.setPosition(newPosition);
 
 				existingMarkerData.infoWindow.setContent(
@@ -770,10 +642,14 @@ class MapService {
 					this.vehicleClusterer.render();
 				}
 
-				this._appendLiveTrailPoint(vehicle.id, newPosition.lat, newPosition.lng);
-				this.showLiveTrail(vehicle.id);
-
-				if (vehicle.id === this._followVehicleId) {
+				if (vehicle.id === this._followVehicleId && !this._tripViewActive) {
+					this._appendLiveTrailPoint(
+						vehicle.id,
+						newPosition.lat,
+						newPosition.lng,
+						Number(vehicle.speed) || 0
+					);
+					this.showLiveTrail(vehicle.id);
 					this._followLivePosition(vehicle, newPosition);
 				}
 			}
@@ -790,6 +666,7 @@ class MapService {
 	}
 
 	_onUserMapInteraction() {
+		if (this._tripViewActive) return;
 		if (this._suppressFollowClear) {
 			this._suppressFollowClear = false;
 			return;
@@ -799,10 +676,18 @@ class MapService {
 
 	/**
 	 * Activa seguimiento en vivo de una unidad (cámara + rastro + indicador).
+	 * Solo una unidad a la vez; el rastro solo existe mientras hay seguimiento.
 	 * @param {string} vehicleId
-	 * @param {{ resetTrail?: boolean, seedPosition?: { lat: number, lng: number } }} [opts]
+	 * @param {{ resetTrail?: boolean, seedPosition?: { lat: number, lng: number }, seedSpeed?: number }} [opts]
 	 */
 	setFollowVehicle(vehicleId, opts = {}) {
+		if (this._tripViewActive) return;
+
+		const prevId = this._followVehicleId;
+		if (prevId && prevId !== vehicleId) {
+			this.clearLiveTrail(prevId);
+		}
+
 		this._followVehicleId = vehicleId || null;
 		followedVehicleId.set(this._followVehicleId);
 		if (!vehicleId) {
@@ -815,24 +700,25 @@ class MapService {
 		}
 		this.showLiveTrail(vehicleId);
 		if (opts.seedPosition) {
-			this._appendLiveTrailPoint(vehicleId, opts.seedPosition.lat, opts.seedPosition.lng, {
-				force: true
-			});
+			this._appendLiveTrailPoint(
+				vehicleId,
+				opts.seedPosition.lat,
+				opts.seedPosition.lng,
+				opts.seedSpeed ?? 0
+			);
 		}
 
 		const seed = opts.seedPosition ?? this._getMarkerPosition(vehicleId);
 		if (seed) this._ensureFollowBadge(seed);
 	}
 
-	/** Detiene el seguimiento; conserva el rastro si la unidad sigue activa/seleccionada. */
+	/** Detiene el seguimiento y elimina el rastro de esa unidad. */
 	clearFollowVehicle() {
 		const id = this._followVehicleId;
 		this._followVehicleId = null;
 		followedVehicleId.set(null);
 		this._removeFollowBadge();
-		if (id && id !== this._highlightedVehicleId) {
-			this.hideLiveTrail(id);
-		}
+		if (id) this.clearLiveTrail(id);
 	}
 
 	/** @param {string | null | undefined} vehicleId */
@@ -852,13 +738,13 @@ class MapService {
 	 * @param {string} vehicleId
 	 * @param {number} lat
 	 * @param {number} lng
-	 * @param {{ force?: boolean }} [opts]
+	 * @param {number} [speed]
 	 */
-	_appendLiveTrailPoint(vehicleId, lat, lng) {
+	_appendLiveTrailPoint(vehicleId, lat, lng, speed = 0) {
 		if (!vehicleId || !this.google || Number.isNaN(lat) || Number.isNaN(lng)) return;
 
 		const path = this._liveTrails.get(vehicleId) || [];
-		path.push({ lat, lng });
+		path.push({ lat, lng, speed: Number(speed) || 0 });
 		if (path.length > MAX_TRAIL_POINTS) path.shift();
 		this._liveTrails.set(vehicleId, path);
 	}
@@ -871,7 +757,12 @@ class MapService {
 			const t = path.length > 2 ? (i - 1) / (path.length - 2) : 1;
 			const opacity =
 				(TRAIL_MIN_OPACITY + t * (TRAIL_MAX_OPACITY - TRAIL_MIN_OPACITY)) * multiplier;
-			segments.push({ path: [path[i - 1], path[i]], opacity });
+			const edgeSpeed = Math.max(Number(path[i - 1].speed) || 0, Number(path[i].speed) || 0);
+			segments.push({
+				path: [path[i - 1], path[i]],
+				opacity,
+				edgeColor: trailEdgeColorForSpeed(edgeSpeed)
+			});
 		}
 		return segments;
 	}
@@ -881,28 +772,40 @@ class MapService {
 		if (!this.map || !this.google) return;
 		const existing = this._liveTrailPolylines.get(vehicleId) || [];
 		const segments = this._buildTrailSegments(vehicleId, multiplier);
-		const points = this._liveTrails.get(vehicleId) || [];
-		console.log('[trail] drawing', vehicleId, points.length, 'points');
 
 		segments.forEach((seg, i) => {
-			let line = existing[i];
-			if (!line) {
-				line = new this.google.maps.Polyline({
+			let pair = existing[i];
+			if (!pair) {
+				const border = new this.google.maps.Polyline({
 					geodesic: true,
-					strokeColor: LIVE_TRAIL_COLOR,
-					strokeWeight: 3,
+					strokeColor: seg.edgeColor,
+					strokeWeight: TRAIL_EDGE_WEIGHT,
 					strokeOpacity: seg.opacity,
 					map: this.map,
-					zIndex: 45
+					zIndex: 44,
+					clickable: false
 				});
-				existing[i] = line;
+				const main = new this.google.maps.Polyline({
+					geodesic: true,
+					strokeColor: LIVE_TRAIL_COLOR,
+					strokeWeight: TRAIL_MAIN_WEIGHT,
+					strokeOpacity: seg.opacity,
+					map: this.map,
+					zIndex: 45,
+					clickable: false
+				});
+				pair = { border, main };
+				existing[i] = pair;
 			}
-			line.setPath(seg.path);
-			line.setOptions({ strokeOpacity: seg.opacity });
+			pair.border.setPath(seg.path);
+			pair.border.setOptions({ strokeOpacity: seg.opacity, strokeColor: seg.edgeColor });
+			pair.main.setPath(seg.path);
+			pair.main.setOptions({ strokeOpacity: seg.opacity });
 		});
 
 		for (let i = segments.length; i < existing.length; i++) {
-			existing[i]?.setMap(null);
+			existing[i]?.border?.setMap(null);
+			existing[i]?.main?.setMap(null);
 		}
 		existing.length = segments.length;
 		this._liveTrailPolylines.set(vehicleId, existing);
@@ -949,7 +852,10 @@ class MapService {
 		this._liveTrailVisible.delete(vehicleId);
 		this._animateTrailFade(vehicleId, 1, 0, () => {
 			const lines = this._liveTrailPolylines.get(vehicleId) || [];
-			lines.forEach((l) => l.setMap(null));
+			lines.forEach((pair) => {
+				pair?.border?.setMap(null);
+				pair?.main?.setMap(null);
+			});
 			this._liveTrailPolylines.delete(vehicleId);
 		});
 	}
@@ -973,7 +879,10 @@ class MapService {
 			this._trailFadeTimers.delete(vehicleId);
 		}
 		const lines = this._liveTrailPolylines.get(vehicleId) || [];
-		lines.forEach((l) => l.setMap(null));
+		lines.forEach((pair) => {
+			pair?.border?.setMap(null);
+			pair?.main?.setMap(null);
+		});
 		this._liveTrailPolylines.delete(vehicleId);
 		this._liveTrails.delete(vehicleId);
 	}
@@ -1035,6 +944,7 @@ class MapService {
 	 * @param {{ lat: number, lng: number }} [position] posición ya calculada (evita re-parsear)
 	 */
 	_followLivePosition(vehicle, position) {
+		if (this._tripViewActive) return;
 		const pos = position ?? {
 			lat: parseFloat(vehicle.latitude || vehicle.lat),
 			lng: parseFloat(vehicle.longitude || vehicle.lng)
@@ -1049,7 +959,10 @@ class MapService {
 	closeAllVehicleInfoWindows() {
 		this._openVehiclePopupId = null;
 		for (const data of this.markers.values()) {
-			if (data?.infoWindow) data.infoWindow.close();
+			if (data?.infoWindow) {
+				this._destroyVehiclePopupMount(data.infoWindow);
+				data.infoWindow.close();
+			}
 		}
 	}
 
@@ -1101,6 +1014,7 @@ class MapService {
 	}
 
 	centerOnVehicles(vehicles) {
+		if (this._tripViewActive) return;
 		if (!vehicles.length || !this.map) return;
 
 		const bounds = new this.google.maps.LatLngBounds();
@@ -1127,6 +1041,7 @@ class MapService {
 	}
 
 	centerOnVehicle(vehicle, opts = {}) {
+		if (this._tripViewActive) return;
 		const showPopup = opts.showPopup !== false;
 		const follow = opts.follow !== false;
 		const zoom = opts.zoom ?? this._followZoom;
@@ -1141,7 +1056,10 @@ class MapService {
 		this.map.setZoom(zoom);
 
 		if (follow && vehicle.id) {
-			this.setFollowVehicle(vehicle.id, { seedPosition: position });
+			this.setFollowVehicle(vehicle.id, {
+				seedPosition: position,
+				seedSpeed: Number(vehicle.speed) || 0
+			});
 		}
 
 		if (!showPopup) return;
@@ -1303,8 +1221,9 @@ class MapService {
 	drawTripRoute(points) {
 		if (!this.map || !this.google || !points?.length) return;
 
+		this._tripViewActive = true;
 		this.clearFollowVehicle();
-		this.clearTripRoute();
+		this.clearTripRoute({ keepTripView: true });
 
 		const path = points.map((p) => ({
 			lat: parseFloat(p.lat),
@@ -1353,8 +1272,11 @@ class MapService {
 		}
 	}
 
-	/** Limpia la ruta del trayecto del mapa */
-	clearTripRoute() {
+	/**
+	 * Limpia la ruta del trayecto del mapa
+	 * @param {{ keepTripView?: boolean }} [opts]
+	 */
+	clearTripRoute(opts = {}) {
 		this._hideAllLiveTrails();
 		if (this._tripPolyline) {
 			this._tripPolyline.setMap(null);
@@ -1368,6 +1290,9 @@ class MapService {
 			this._tripEndMarker.setMap(null);
 			this._tripEndMarker = null;
 		}
+		if (!opts.keepTripView) {
+			this._tripViewActive = false;
+		}
 	}
 
 	/**
@@ -1378,6 +1303,7 @@ class MapService {
 		if (!this.map || !this.google || !points?.length) return;
 
 		this.clearFollowVehicle();
+		this._tripViewActive = true;
 		const bounds = new this.google.maps.LatLngBounds();
 		for (const p of points) {
 			bounds.extend({
@@ -1385,7 +1311,45 @@ class MapService {
 				lng: parseFloat(p.lon ?? p.lng)
 			});
 		}
-		this.map.fitBounds(bounds, { padding: 50 });
+		const mobile = this._isMobileLayout();
+		const padding = mobile
+			? { top: 72, right: 36, bottom: 320, left: 36 }
+			: { top: 80, right: 360, bottom: 80, left: 100 };
+		this.map.fitBounds(bounds, padding);
+		this.google.maps.event.addListenerOnce(this.map, 'idle', () => {
+			const z = this.map.getZoom();
+			if (z != null && z > 16) this.map.setZoom(16);
+		});
+	}
+
+	/** @returns {boolean} */
+	isTripViewActive() {
+		return Boolean(this._tripViewActive);
+	}
+
+	/**
+	 * Solo mueve la cámara si el punto está cerca del borde del viewport (evita saltos).
+	 * @param {{ lat: number, lng: number }} pos
+	 */
+	_panIfNearEdge(pos) {
+		if (!this.map || !this.google) return;
+		const bounds = this.map.getBounds();
+		if (!bounds) {
+			this.map.panTo(pos);
+			return;
+		}
+		const ne = bounds.getNorthEast();
+		const sw = bounds.getSouthWest();
+		const latPad = (ne.lat() - sw.lat()) * 0.22;
+		const lngPad = (ne.lng() - sw.lng()) * 0.22;
+		const lat = pos.lat;
+		const lng = pos.lng;
+		const nearEdge =
+			lat > ne.lat() - latPad ||
+			lat < sw.lat() + latPad ||
+			lng > ne.lng() - lngPad ||
+			lng < sw.lng() + lngPad;
+		if (nearEdge) this.map.panTo(pos);
 	}
 
 	// ── Trip Playback ─────────────────────────────────────────────────────────
@@ -1413,6 +1377,7 @@ class MapService {
 	startTripPlayback(points, callbacks = {}) {
 		if (!this.map || !this.google || !points?.length) return;
 
+		this._tripViewActive = true;
 		this.stopTripPlayback();
 
 		this._playbackPath = points.map((p) => ({
@@ -1454,7 +1419,7 @@ class MapService {
 
 			const pos = this._playbackPath[this._playbackIndex];
 			this._playbackMarker?.setPosition(pos);
-			this.map.panTo(pos);
+			this._panIfNearEdge(pos);
 
 			const progress = this._playbackIndex / (this._playbackPath.length - 1);
 			this._onPlaybackProgress?.(progress);
@@ -1468,7 +1433,13 @@ class MapService {
 
 	/** Reanuda la reproducción */
 	resumeTripPlayback() {
+		if (!this._playbackPath.length || !this._playbackInterval) return;
 		this._playbackPaused = false;
+	}
+
+	/** True si hay una reproducción pausada que se puede continuar. */
+	canResumeTripPlayback() {
+		return Boolean(this._playbackPaused && this._playbackPath.length > 0 && this._playbackInterval);
 	}
 
 	/** Detiene y resetea la reproducción */
@@ -1484,6 +1455,8 @@ class MapService {
 		this._playbackIndex = 0;
 		this._playbackPath = [];
 		this._playbackPaused = false;
+		this._onPlaybackProgress = null;
+		this._onPlaybackComplete = null;
 	}
 
 	// ── Trip Alerts ───────────────────────────────────────────────────────────
@@ -1503,6 +1476,14 @@ class MapService {
 		for (const alert of alerts) {
 			if (alert.lat == null || alert.lon == null) continue;
 
+			const label = formatTripAlertType(alert.type);
+			const fillColor = tripAlertMarkerColor(alert.type);
+			const safeLabel = label
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;');
+
 			const marker = new this.google.maps.Marker({
 				position: {
 					lat: parseFloat(alert.lat),
@@ -1512,18 +1493,18 @@ class MapService {
 				icon: {
 					path: this.google.maps.SymbolPath.CIRCLE,
 					scale: 8,
-					fillColor: '#f59e0b',
+					fillColor,
 					fillOpacity: 1,
 					strokeColor: '#fff',
 					strokeWeight: 2
 				},
-				title: alert.type || 'Alerta',
+				title: label,
 				zIndex: 500
 			});
 
 			const infoWindow = new this.google.maps.InfoWindow({
 				content: `<div style="background:#0c1829;color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;">
-					<span style="color:#f59e0b;">⚠</span> ${alert.type || 'Alerta'}
+					<span style="color:${fillColor};">⚠</span> ${safeLabel}
 				</div>`
 			});
 

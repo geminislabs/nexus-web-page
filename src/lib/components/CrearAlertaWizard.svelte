@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import Icon from '@iconify/svelte';
 	import { alertWizard, alertActions, zones } from '$lib/stores/alertStore.js';
 	import { selectedH3Cells } from '$lib/stores/h3Store.js';
@@ -13,16 +14,6 @@
 
 	$: step = $alertWizard?.step ?? 1;
 	$: wizard = $alertWizard;
-
-	$: canNext = (() => {
-		if (!wizard) return false;
-		if (step === 1) return !!wizard.type;
-		if (step === 2) return !!wizard.condition;
-		if (step === 3) return wizard.units.length > 0;
-		if (step === 4) return wizard.type !== 'zone' || !!wizard.zone;
-		if (step === 5) return !!wizard.name.trim();
-		return false;
-	})();
 
 	$: effectiveSteps = wizard?.type === 'ignition' ? 4 : 5;
 	$: legacyH3Zones = $zones.map((zone) => ({
@@ -47,6 +38,17 @@
 				]
 			: [];
 	$: allH3Zones = [...liveH3SelectionZone, ...legacyH3Zones];
+	$: hasSavedZones = legacyH3Zones.length > 0;
+	$: canSelectZoneAlert = hasSavedZones || liveH3SelectionZone.length > 0;
+	$: canNext = (() => {
+		if (!wizard) return false;
+		if (step === 1) return !!wizard.type && (wizard.type !== 'zone' || canSelectZoneAlert);
+		if (step === 2) return !!wizard.condition;
+		if (step === 3) return wizard.units.length > 0;
+		if (step === 4) return wizard.type !== 'zone' || !!wizard.zone;
+		if (step === 5) return !!wizard.name.trim();
+		return false;
+	})();
 	$: normalizedCellQuery = h3CellQuery.trim().toLowerCase();
 	$: filteredH3Zones = normalizedCellQuery
 		? allH3Zones.filter((zone) =>
@@ -86,7 +88,7 @@
 			await alertActions.saveAlert();
 			dispatch('close');
 		} catch (error) {
-			console.error('No se pudo guardar la alerta:', error);
+			logger.error('No se pudo guardar la alerta:', error);
 		}
 	}
 
@@ -204,10 +206,16 @@
 					<button
 						type="button"
 						class="flex items-start gap-4 rounded-2xl border-2 p-4 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
-						{wizard.type === 'zone'
-							? 'border-emerald-500 bg-emerald-500/10'
-							: 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.12] dark:hover:bg-white/[0.08]'}"
-						on:click={() => alertActions.setType('zone')}
+						{!canSelectZoneAlert
+							? 'cursor-not-allowed border-slate-200/70 bg-slate-50 opacity-60 dark:border-transparent dark:bg-white/[0.03]'
+							: wizard.type === 'zone'
+								? 'border-emerald-500 bg-emerald-500/10'
+								: 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.12] dark:hover:bg-white/[0.08]'}"
+						disabled={!canSelectZoneAlert}
+						title={!canSelectZoneAlert
+							? 'Crea al menos una zona geográfica antes de configurar una alerta de zona'
+							: undefined}
+						on:click={() => canSelectZoneAlert && alertActions.setType('zone')}
 					>
 						<div
 							class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400"
@@ -217,7 +225,11 @@
 						<div class="min-w-0 flex-1">
 							<p class="m-0 text-[15px] font-semibold">Alerta de zona</p>
 							<p class="m-0 mt-1 text-[12px] text-slate-600 dark:text-white/45 leading-snug">
-								Notificar al entrar o salir de una zona H3 definida.
+								{#if canSelectZoneAlert}
+									Notificar al entrar o salir de una zona H3 definida.
+								{:else}
+									Necesitas crear una zona geográfica primero.
+								{/if}
 							</p>
 						</div>
 						{#if wizard.type === 'zone'}

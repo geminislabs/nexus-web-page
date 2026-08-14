@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import { apiService } from '$lib/services/api.js';
@@ -61,7 +62,7 @@
 				loadError = 'No se pudo cargar el resumen. Reintenta.';
 			}
 		} catch (err) {
-			console.error('Dashboard admin:', err);
+			logger.error('Dashboard admin:', err);
 			loadError = err?.displayMessage || err?.message || 'Error al cargar el dashboard';
 		} finally {
 			loading = false;
@@ -215,7 +216,7 @@
 						width={28}
 						class="text-slate-300 dark:text-white/25"
 					/>
-					<p class="m-0 text-sm text-slate-500 dark:text-white/45">Sin eventos recientes.</p>
+					<p class="m-0 text-sm text-slate-500 dark:text-white/45">Sin eventos de hoy.</p>
 					<p class="m-0 text-[11px] text-slate-400 dark:text-white/30">
 						Las alarmas aparecerán aquí cuando se disparen reglas.
 					</p>
@@ -268,16 +269,6 @@
 					label="Dispositivos"
 					icon="mdi:chip"
 					onClick={() => workspaceActions.goAdmin('devices')}
-				/>
-				<QuickActionButton
-					label="Informes"
-					icon="mdi:file-chart-outline"
-					onClick={() => workspaceActions.goAdmin('reports')}
-				/>
-				<QuickActionButton
-					label="Seguimiento"
-					icon="mdi:map-marker-path"
-					onClick={() => workspaceActions.goTracking()}
 				/>
 				<QuickActionButton
 					label="Configuración"

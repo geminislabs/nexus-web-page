@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import Icon from '@iconify/svelte';
 	import { onDestroy, tick } from 'svelte';
 	import { get } from 'svelte/store';
@@ -157,7 +158,7 @@
 		try {
 			await alertActions.createZone(name, cells, '#0095ff', { description: newZoneDesc.trim() });
 		} catch (err) {
-			console.error('No se pudo crear la geocerca:', err);
+			logger.error('No se pudo crear la geocerca:', err);
 			saveToast = 'No se pudo crear la zona';
 			setTimeout(() => (saveToast = ''), 2600);
 			return;
@@ -204,7 +205,7 @@
 			});
 			cancelEditZone();
 		} catch (err) {
-			console.error('No se pudo actualizar la geocerca:', err);
+			logger.error('No se pudo actualizar la geocerca:', err);
 			saveToast = 'No se pudo actualizar la zona';
 			setTimeout(() => (saveToast = ''), 2600);
 		}
@@ -235,7 +236,7 @@
 			saveToast = currentlyActive ? 'Zona desactivada' : 'Zona activada';
 			setTimeout(() => (saveToast = ''), 2600);
 		} catch (err) {
-			console.error('No se pudo actualizar la geocerca:', err);
+			logger.error('No se pudo actualizar la geocerca:', err);
 			saveToast = 'No se pudo actualizar la zona';
 			setTimeout(() => (saveToast = ''), 2600);
 		}

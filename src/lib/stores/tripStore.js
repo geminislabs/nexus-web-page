@@ -1,5 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import { apiService } from '$lib/services/api.js';
+import { logger } from '$lib/utils/logger.js';
 
 export const trips = writable([]);
 export const selectedTripId = writable(null);
@@ -55,7 +56,7 @@ export const tripActions = {
 				total: response?.total || tripList.length
 			};
 		} catch (error) {
-			console.error('Error cargando trayectos:', error);
+			logger.error('Error cargando trayectos:', error);
 			tripError.set(error.message || 'Error al cargar trayectos');
 			trips.set([]);
 			return { trips: [], hasMore: false, cursor: null, total: 0 };
@@ -82,7 +83,7 @@ export const tripActions = {
 
 			return detail;
 		} catch (error) {
-			console.error('Error cargando detalle del trayecto:', error);
+			logger.error('Error cargando detalle del trayecto:', error);
 			return null;
 		}
 	},

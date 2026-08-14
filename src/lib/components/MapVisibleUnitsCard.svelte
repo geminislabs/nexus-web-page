@@ -48,7 +48,7 @@
 			>
 				<input
 					type="checkbox"
-					class="size-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+					class="size-3.5 rounded border-indigo-400/50 accent-indigo-500 focus:ring-indigo-500/40 dark:border-indigo-400/35 dark:accent-indigo-400"
 					checked={allOnMap}
 					disabled={$vehicles.length === 0}
 					on:change={toggleAll}
@@ -63,7 +63,7 @@
 						>
 							<input
 								type="checkbox"
-								class="size-3.5 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+								class="size-3.5 shrink-0 rounded border-indigo-400/50 accent-indigo-500 focus:ring-indigo-500/40 dark:border-indigo-400/35 dark:accent-indigo-400"
 								checked={$mapVisibleUnitIds.includes(String(v.id))}
 								on:change={() => vehicleActions.toggleMapVisibility(v.id)}
 							/>

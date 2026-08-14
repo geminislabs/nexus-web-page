@@ -3,6 +3,7 @@ import { user } from '../stores/auth.js';
 import { get } from 'svelte/store';
 import { ApiError, apiErrorFromResponse } from './apiErrors.js';
 import { withQuery } from './apiQuery.js';
+import { logger } from '$lib/utils/logger.js';
 
 export { ApiError } from './apiErrors.js';
 
@@ -63,7 +64,14 @@ class ApiService {
 				await this._refreshSessionOnce();
 				return this._request(endpoint, { ...options, _isRetry: true });
 			} catch (refreshErr) {
-				console.error('Token refresh failed after 401:', refreshErr);
+				logger.error({
+					code: 'AUTH_REFRESH_FAILED',
+					message: 'Token refresh failed after 401',
+					err: refreshErr
+				});
+				// Sesión irrecuperable: limpiar para no dejar tokens/usuarios huérfanos.
+				user.logout();
+				authToken.clearToken();
 			}
 		}
 
@@ -124,7 +132,12 @@ class ApiService {
 		try {
 			response = await fetch(url, { ...fetchOptions, headers });
 		} catch (err) {
-			console.error('API request failed:', err);
+			logger.error({
+				code: 'API_NETWORK_ERROR',
+				message: 'API request failed',
+				err,
+				context: { path }
+			});
 			throw err instanceof ApiError
 				? err
 				: new ApiError(err instanceof Error ? err.message : 'Network request failed');

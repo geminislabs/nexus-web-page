@@ -1,4 +1,5 @@
 import { cellToBoundary, polygonToCells } from 'h3-js';
+import { logger } from '$lib/utils/logger.js';
 
 const DEFAULT_DEBOUNCE_MS = 180;
 const DEFAULT_MAX_CELLS = 6000;
@@ -221,7 +222,7 @@ class H3GridOverlayService {
 				cellIds = polygonToCells([viewportLoopLatLng], targetResolution, false);
 			}
 		} catch (e) {
-			console.warn('H3 polygonToCells:', e);
+			logger.warn('H3 polygonToCells:', e);
 			cellIds = [];
 		}
 

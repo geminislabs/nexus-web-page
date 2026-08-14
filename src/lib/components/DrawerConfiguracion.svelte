@@ -1,7 +1,9 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import Icon from '@iconify/svelte';
-	import { getSignalQuality, SIGNAL_CHIP_CLASSES } from '$lib/utils/telemetryUtils.js';
 	import { theme, themeActions } from '$lib/stores/themeStore.js';
+	import SignalMeters from './SignalMeters.svelte';
+	import UnitTelemetryBadges from './UnitTelemetryBadges.svelte';
 	import {
 		vehicles,
 		loadingVehicles,
@@ -41,6 +43,7 @@
 	export let showSectionSidebar = true;
 
 	$: isMaster = !!$user?.is_master;
+	$: hasVehicles = $vehicles.length > 0;
 
 	let activeSection = initialSection;
 	$: displaySection = showSectionSidebar ? activeSection : initialSection;
@@ -263,7 +266,7 @@
 			vehicleDetail = data;
 			vehicleDetailOpen = true;
 		} catch (error) {
-			console.error('Error obteniendo detalle de unidad:', error);
+			logger.error('Error obteniendo detalle de unidad:', error);
 			showHint('No se pudo obtener el detalle de la unidad', false);
 		} finally {
 			actionLoading = false;
@@ -313,7 +316,7 @@
 			}
 			vehicleToDelete = null;
 		} catch (error) {
-			console.error('Error eliminando unidad:', error);
+			logger.error('Error eliminando unidad:', error);
 			showHint('No se pudo eliminar la unidad', false);
 		} finally {
 			actionLoading = false;
@@ -334,7 +337,7 @@
 			showHint('Alerta eliminada', true);
 			alertToDelete = null;
 		} catch (error) {
-			console.error('Error eliminando alerta:', error);
+			logger.error('Error eliminando alerta:', error);
 			showHint('No se pudo eliminar la alerta', false);
 		} finally {
 			actionLoading = false;
@@ -392,9 +395,6 @@
 		const n = Number(val);
 		if (val == null || Number.isNaN(n)) return '—';
 		return `${n.toFixed(1)}V`;
-	}
-	function getVehicleSignal(v) {
-		return getSignalQuality(v?.rxLvl);
 	}
 	function statusLabelEs(status) {
 		if (status === 'active') return 'Activa';
@@ -836,7 +836,7 @@
 						>
 							<input
 								type="checkbox"
-								class="size-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-500"
+								class="size-3.5 rounded border-indigo-400/50 accent-indigo-500 focus:ring-indigo-500/40 dark:border-indigo-400/35 dark:accent-indigo-400"
 								checked={allFilteredOnMap}
 								use:setIndeterminate={someFilteredOnMap}
 								disabled={filteredVehicles.length === 0}
@@ -869,15 +869,15 @@
 								<span class="text-[12px]">Sin resultados</span>
 							</div>
 						{:else if vehicleView === 'grid'}
-							<ul class="m-0 flex list-none flex-col gap-2.5 p-0">
+							<ul class="m-0 flex list-none flex-col gap-3.5 p-0">
 								{#each pagedVehicles as v (v.id)}
 									<li
-										class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-colors dark:border-white/[0.08] dark:bg-white/[0.03]"
+										class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors dark:border-white/[0.08] dark:bg-white/[0.03]"
 									>
-										<div class="flex items-start gap-2.5">
+										<div class="flex items-start gap-3">
 											<input
 												type="checkbox"
-												class="mt-1 size-3.5 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-500"
+												class="mt-1 size-3.5 shrink-0 rounded border-indigo-400/50 accent-indigo-500 focus:ring-indigo-500/40 dark:border-indigo-400/35 dark:accent-indigo-400"
 												checked={$mapVisibleUnitIds.includes(String(v.id))}
 												on:change={() => vehicleActions.toggleMapVisibility(v.id)}
 												aria-label="Mostrar {v.name} en el mapa"
@@ -904,7 +904,7 @@
 													>
 												</div>
 												<div
-													class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-white/45"
+													class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-white/45"
 												>
 													<span class="inline-flex items-center gap-1">
 														<Icon icon="mdi:account-outline" width={12} aria-hidden="true" />
@@ -916,136 +916,87 @@
 													</span>
 												</div>
 												<div
-													class="mt-2 grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 dark:border-white/[0.06]"
+													class="mt-3 flex flex-col gap-2.5 border-t border-slate-100 pt-3 dark:border-white/[0.06]"
 												>
-													<div>
-														<p
-															class="m-0 text-[9px] font-medium uppercase tracking-wide text-slate-400 dark:text-white/30"
-														>
-															Ignición
-														</p>
-														<p
-															class="m-0 mt-0.5 inline-flex items-center gap-1 text-[11px] font-semibold text-slate-800 dark:text-white/85"
-														>
-															<span
-																class="h-1.5 w-1.5 rounded-full {ignitionOn(v)
-																	? 'bg-emerald-500'
-																	: 'bg-slate-400'}"
-																aria-hidden="true"
-															></span>
-															{ignitionOn(v) ? 'Encendida' : 'Apagada'}
-														</p>
-													</div>
-													<div>
-														<p
-															class="m-0 text-[9px] font-medium uppercase tracking-wide text-slate-400 dark:text-white/30"
-														>
-															Velocidad
-														</p>
-														<p
-															class="m-0 mt-0.5 text-[12px] font-bold {speedColor(
-																Number(v.speed) || 0
-															)}"
-														>
-															{formatSpeed(v)}
-														</p>
-													</div>
-													<div>
-														<p
-															class="m-0 text-[9px] font-medium uppercase tracking-wide text-slate-400 dark:text-white/30"
-														>
-															Actualización
-														</p>
-														<p
-															class="m-0 mt-0.5 truncate text-[11px] font-medium text-slate-700 dark:text-white/70"
-														>
-															{v.lastUpdateFormatted || '—'}
-														</p>
-													</div>
-												</div>
-												<!-- Chips de telemetría estilo móvil -->
-												<div class="mt-2 flex flex-wrap items-center gap-1.5">
-													<span
-														class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
-														title="Batería principal"
-													>
-														<Icon icon="mdi:car-battery" width={12} aria-hidden="true" />
-														Batería {formatVoltage(v.mainBatteryVoltage)}
-													</span>
-													<span
-														class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
-														title="Batería de respaldo"
-													>
-														<Icon icon="mdi:battery-high" width={12} aria-hidden="true" />
-														Respaldo {formatVoltage(v.backupBatteryVoltage)}
-													</span>
-													<span
-														class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
-														title="Satélites GPS"
-													>
-														<Icon icon="mdi:satellite-variant" width={12} aria-hidden="true" />
-														Satélites {v.satellites ?? 0}
-													</span>
-													{#if getVehicleSignal(v)}
-														{@const signal = getVehicleSignal(v)}
-														<span
-															class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold {SIGNAL_CHIP_CLASSES[
-																signal.grade
-															]}"
-															title="Intensidad de señal: {v.rxLvl}"
-														>
-															<Icon icon="mdi:signal" width={12} aria-hidden="true" />
-															Señal {signal.label}
-														</span>
-													{/if}
-												</div>
-												<div class="mt-2.5 flex flex-wrap gap-1.5">
-													<button
-														type="button"
-														class="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
-														on:click={() => fetchVehicleDetail(v.id)}
-														disabled={actionLoading}
-													>
-														<Icon
-															icon="mdi:database-search-outline"
-															width={11}
-															aria-hidden="true"
-														/>Ver detalles
-													</button>
-													{#if isMaster}
-														<button
-															type="button"
-															class="flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
-															on:click={() => openEditVehicle(v)}
-															disabled={actionLoading}
-														>
-															<Icon icon="mdi:pencil-outline" width={11} aria-hidden="true" />Editar
-														</button>
-														<button
-															type="button"
-															class="flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
-															on:click={() => requestDeleteVehicle(v)}
-															disabled={actionLoading}
-														>
-															<Icon
-																icon="mdi:trash-can-outline"
-																width={11}
-																aria-hidden="true"
-															/>Eliminar
-														</button>
-													{/if}
+													<UnitTelemetryBadges unit={v} />
+													<SignalMeters unit={v} />
 												</div>
 											</div>
-											<button
-												type="button"
-												class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
-												on:click={() => centerOnVehicle(v)}
-												disabled={!(v.latitude || v.lat) || !(v.longitude || v.lng)}
-												aria-label="Centrar el mapa en {v.name}"
-												title="Centrar en mapa"
+											<div
+												class="flex shrink-0 flex-col items-end gap-1.5 self-stretch"
+												role="group"
+												aria-label="Acciones de {v.name}"
 											>
-												<Icon icon="mdi:crosshairs-gps" width={16} aria-hidden="true" />
-											</button>
+												<button
+													type="button"
+													class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+													on:click={() => centerOnVehicle(v)}
+													disabled={!(v.latitude || v.lat) || !(v.longitude || v.lng)}
+													aria-label="Centrar el mapa en {v.name}"
+													title="Centrar en mapa"
+												>
+													<Icon icon="mdi:crosshairs-gps" width={16} aria-hidden="true" />
+												</button>
+												<button
+													type="button"
+													class="group flex h-8 max-w-8 items-center overflow-hidden rounded-lg border border-slate-200 bg-white px-2 text-slate-700 transition-all duration-200 hover:max-w-[9rem] hover:bg-slate-100 focus-visible:max-w-[9rem] dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.1]"
+													on:click={() => fetchVehicleDetail(v.id)}
+													disabled={actionLoading}
+													aria-label="Ver detalles"
+													title="Ver detalles"
+												>
+													<Icon
+														icon="mdi:database-search-outline"
+														width={14}
+														class="shrink-0"
+														aria-hidden="true"
+													/>
+													<span
+														class="max-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold opacity-0 transition-all duration-200 group-hover:ml-1.5 group-hover:max-w-[6rem] group-hover:opacity-100 group-focus-visible:ml-1.5 group-focus-visible:max-w-[6rem] group-focus-visible:opacity-100"
+														>Ver detalles</span
+													>
+												</button>
+												{#if isMaster}
+													<button
+														type="button"
+														class="group flex h-8 max-w-8 items-center overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50 px-2 text-emerald-700 transition-all duration-200 hover:max-w-[7rem] hover:bg-emerald-100 focus-visible:max-w-[7rem] dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+														on:click={() => openEditVehicle(v)}
+														disabled={actionLoading}
+														aria-label="Editar"
+														title="Editar"
+													>
+														<Icon
+															icon="mdi:pencil-outline"
+															width={14}
+															class="shrink-0"
+															aria-hidden="true"
+														/>
+														<span
+															class="max-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold opacity-0 transition-all duration-200 group-hover:ml-1.5 group-hover:max-w-[4rem] group-hover:opacity-100 group-focus-visible:ml-1.5 group-focus-visible:max-w-[4rem] group-focus-visible:opacity-100"
+															>Editar</span
+														>
+													</button>
+													<button
+														type="button"
+														class="group flex h-8 max-w-8 items-center overflow-hidden rounded-lg border border-red-300 bg-red-50 px-2 text-red-700 transition-all duration-200 hover:max-w-[7.5rem] hover:bg-red-100 focus-visible:max-w-[7.5rem] dark:border-red-500/25 dark:bg-red-600/12 dark:text-red-300 dark:hover:bg-red-600/20"
+														on:click={() => requestDeleteVehicle(v)}
+														disabled={actionLoading}
+														aria-label="Eliminar"
+														title="Eliminar"
+													>
+														<Icon
+															icon="mdi:trash-can-outline"
+															width={14}
+															class="shrink-0"
+															aria-hidden="true"
+														/>
+														<span
+															class="max-w-0 overflow-hidden whitespace-nowrap text-[10px] font-semibold opacity-0 transition-all duration-200 group-hover:ml-1.5 group-hover:max-w-[4.5rem] group-hover:opacity-100 group-focus-visible:ml-1.5 group-focus-visible:max-w-[4.5rem] group-focus-visible:opacity-100"
+															>Eliminar</span
+														>
+													</button>
+												{/if}
+											</div>
 										</div>
 									</li>
 								{/each}
@@ -1058,7 +1009,7 @@
 									>
 										<input
 											type="checkbox"
-											class="size-3.5 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-500"
+											class="size-3.5 shrink-0 rounded border-indigo-400/50 accent-indigo-500 focus:ring-indigo-500/40 dark:border-indigo-400/35 dark:accent-indigo-400"
 											checked={$mapVisibleUnitIds.includes(String(v.id))}
 											on:change={() => vehicleActions.toggleMapVisibility(v.id)}
 											aria-label="Mostrar {v.name} en el mapa"
@@ -1082,20 +1033,60 @@
 												>
 											</div>
 											<div
-												class="mt-0.5 flex flex-wrap gap-2 text-[10px] text-slate-600 dark:text-white/38"
+												class="mt-0.5 flex flex-wrap items-center gap-2 text-[10px] text-slate-600 dark:text-white/38"
 											>
-												<span class="inline-flex items-center gap-0.5">
+												<span class="inline-flex items-center gap-1 font-semibold">
 													<span
-														class="h-1.5 w-1.5 rounded-full {ignitionOn(v)
-															? 'bg-emerald-500'
-															: 'bg-slate-400'}"
-													></span>
+														class="flex h-5 w-5 items-center justify-center rounded-md {ignitionOn(
+															v
+														)
+															? 'bg-emerald-500/15 text-emerald-500'
+															: 'bg-slate-400/15 text-slate-400'}"
+														aria-hidden="true"
+													>
+														<Icon
+															icon={ignitionOn(v) ? 'mdi:engine' : 'mdi:engine-off'}
+															width={12}
+														/>
+													</span>
 													{ignitionOn(v) ? 'Encendida' : 'Apagada'}
 												</span>
-												<span class={speedColor(Number(v.speed) || 0)}>{formatSpeed(v)}</span>
-												<span>Batería {formatVoltage(v.mainBatteryVoltage)}</span>
+												<span
+													class="inline-flex items-center gap-1 font-bold {speedColor(
+														Number(v.speed) || 0
+													)}"
+												>
+													<span
+														class="flex h-5 w-5 items-center justify-center rounded-md bg-sky-500/15 text-sky-500"
+														aria-hidden="true"
+													>
+														<Icon icon="mdi:speedometer" width={12} />
+													</span>
+													{formatSpeed(v)}
+												</span>
+												<span
+													class="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400"
+												>
+													<span
+														class="flex h-5 w-5 items-center justify-center rounded-md bg-amber-500/15 text-amber-500"
+														aria-hidden="true"
+													>
+														<Icon icon="mdi:car-battery" width={12} />
+													</span>
+													{formatVoltage(v.mainBatteryVoltage)}
+												</span>
 												{#if v.lastUpdateFormatted}
-													<span class="truncate">{v.lastUpdateFormatted}</span>
+													<span
+														class="inline-flex min-w-0 items-center gap-1 truncate font-medium text-indigo-600 dark:text-indigo-300"
+													>
+														<span
+															class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-500/15 text-indigo-500"
+															aria-hidden="true"
+														>
+															<Icon icon="mdi:clock-check-outline" width={12} />
+														</span>
+														<span class="truncate">{v.lastUpdateFormatted}</span>
+													</span>
 												{/if}
 											</div>
 										</div>
@@ -1251,7 +1242,7 @@
 						class="flex flex-col items-center gap-2 py-12 text-center text-[12px] text-slate-500 dark:text-white/25"
 					>
 						<Icon icon="mdi:bell-off-outline" width={32} class="opacity-20" aria-hidden="true" />Sin
-						alarmas recientes
+						alarmas de hoy
 					</div>
 				{:else}
 					<ul class="m-0 flex list-none flex-col gap-2 p-0">
@@ -1297,7 +1288,7 @@
 					<h3 class="m-0 text-[14px] font-bold tracking-tight text-slate-900 dark:text-white">
 						Gestionar alertas
 					</h3>
-					{#if isMaster}
+					{#if isMaster && hasVehicles}
 						<button
 							type="button"
 							class="ml-auto flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/28 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"
@@ -1327,11 +1318,13 @@
 								class="m-0 mt-1 max-w-[220px] text-[11px] leading-relaxed text-slate-600 dark:text-white/35"
 							>
 								{isMaster
-									? 'Crea alertas de ignición o zona para recibir notificaciones en tiempo real.'
+									? hasVehicles
+										? 'Crea alertas de ignición o zona para recibir notificaciones en tiempo real.'
+										: 'Agrega al menos una unidad antes de configurar alertas.'
 									: 'Cuando un administrador configure alertas, aparecerán aquí.'}
 							</p>
 						</div>
-						{#if isMaster}
+						{#if isMaster && hasVehicles}
 							<button
 								type="button"
 								class="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-[12px] font-semibold text-blue-800 hover:bg-blue-100 dark:border-blue-500/30 dark:bg-blue-600/15 dark:text-blue-300 dark:hover:bg-blue-600/25"

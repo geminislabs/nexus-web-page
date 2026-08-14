@@ -35,6 +35,28 @@
 		await shareText(text);
 	}
 
+	function buildShareUrl(res) {
+		const token = res?.token;
+		if (!token || typeof token !== 'string') return null;
+		const origin = browser && typeof window !== 'undefined' ? window.location.origin : '';
+		const localPath = `/share/${encodeURIComponent(token)}`;
+		const local = origin ? `${origin}${localPath}` : localPath;
+
+		const remote = res?.share_url;
+		if (typeof remote === 'string' && remote.trim() && origin) {
+			try {
+				const u = new URL(remote.trim());
+				// Solo confiar en share_url del mismo origen (evita open-redirect / phishing).
+				if (u.origin === origin && u.pathname.startsWith('/share/')) {
+					return u.toString();
+				}
+			} catch {
+				/* ignore invalid URL */
+			}
+		}
+		return local;
+	}
+
 	async function shareTemporaryLink() {
 		if (!unit?.id) return;
 		loadingLink = true;
@@ -43,18 +65,18 @@
 		try {
 			const res = await apiService.shareUnitLocation(unit.id);
 			shareResult = res;
-			const url =
-				res?.share_url ||
-				(browser && typeof window !== 'undefined'
-					? `${window.location.origin}/share/${encodeURIComponent(res.token)}`
-					: `/share/${res.token}`);
+			const url = buildShareUrl(res);
+			if (!url) {
+				linkError = 'No se pudo generar el enlace';
+				return;
+			}
 			const name = unit?.name || 'Unidad';
 			const expires = res?.expires_at ? new Date(res.expires_at).toLocaleString('es-MX') : '';
 			const text = `🔗 Seguimiento temporal de ${name}:\n${url}${expires ? `\n\nExpira: ${expires}` : ''}`;
 			await shareText(text);
 			await copyToClipboard(url);
-		} catch (err) {
-			linkError = err?.message || 'No se pudo generar el enlace';
+		} catch {
+			linkError = 'No se pudo generar el enlace';
 		} finally {
 			loadingLink = false;
 		}

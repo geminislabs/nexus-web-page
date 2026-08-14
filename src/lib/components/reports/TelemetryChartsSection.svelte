@@ -1,5 +1,7 @@
 <script>
 	import Icon from '@iconify/svelte';
+	import { browser } from '$app/environment';
+	import { onDestroy, tick } from 'svelte';
 	import ChartPanel from './ChartPanel.svelte';
 	import {
 		speedChartConfig,
@@ -19,6 +21,8 @@
 
 	/** @type {{ title: string, icon: string, iconClass: string, cfg: object } | null} */
 	let expandedChart = null;
+	/** @type {HTMLDivElement | undefined} */
+	let expandPortalHost;
 
 	$: charts = unitOrder.length
 		? [
@@ -96,6 +100,14 @@
 		? Math.max(640, (expandedChart.cfg?.data?.labels?.length ?? 0) * 48)
 		: 0;
 
+	$: if (browser && expandedChart && expandPortalHost) {
+		tick().then(() => {
+			if (expandPortalHost && expandPortalHost.parentNode !== document.body) {
+				document.body.appendChild(expandPortalHost);
+			}
+		});
+	}
+
 	function openExpanded(chart) {
 		expandedChart = chart;
 	}
@@ -107,6 +119,13 @@
 	function onWindowKeydown(e) {
 		if (e.key === 'Escape' && expandedChart) closeExpanded();
 	}
+
+	onDestroy(() => {
+		if (browser && expandPortalHost && expandPortalHost.parentNode === document.body) {
+			// eslint-disable-next-line svelte/no-dom-manipulating -- intentional portal teardown
+			expandPortalHost.remove();
+		}
+	});
 
 	const cardClass =
 		'rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/[0.04]';
@@ -140,38 +159,40 @@
 </div>
 
 {#if expandedChart}
-	<div
-		class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-6 dark:bg-black/60"
-		role="presentation"
-		on:click|self={closeExpanded}
-	>
+	<div bind:this={expandPortalHost}>
 		<div
-			class="flex max-h-[92vh] w-full max-w-5xl flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5 dark:border-white/10 dark:bg-[#0f1626]"
-			role="dialog"
-			aria-modal="true"
-			aria-label={expandedChart.title}
+			class="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-6 dark:bg-black/60"
+			role="presentation"
+			on:click|self={closeExpanded}
 		>
-			<div class="mb-3 flex items-center justify-between gap-2">
-				<h3
-					class="m-0 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white"
-				>
-					<Icon icon={expandedChart.icon} class={expandedChart.iconClass} width={20} />
-					{expandedChart.title}
-				</h3>
-				<button
-					type="button"
-					class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
-					on:click={closeExpanded}
-					aria-label="Cerrar gráfica expandida"
-					title="Cerrar"
-				>
-					<Icon icon="mdi:close" width={20} aria-hidden="true" />
-				</button>
-			</div>
-			<!-- Scroll horizontal: el lienzo crece según la cantidad de buckets -->
-			<div class="overflow-x-auto overscroll-x-contain">
-				<div style="min-width: {expandedMinWidth}px">
-					<ChartPanel config={expandedChart.cfg} height={420} expanded />
+			<div
+				class="flex max-h-[92vh] w-full max-w-5xl flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5 dark:border-white/10 dark:bg-[#0f1626]"
+				role="dialog"
+				aria-modal="true"
+				aria-label={expandedChart.title}
+			>
+				<div class="mb-3 flex items-center justify-between gap-2">
+					<h3
+						class="m-0 flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white"
+					>
+						<Icon icon={expandedChart.icon} class={expandedChart.iconClass} width={20} />
+						{expandedChart.title}
+					</h3>
+					<button
+						type="button"
+						class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+						on:click={closeExpanded}
+						aria-label="Cerrar gráfica expandida"
+						title="Cerrar"
+					>
+						<Icon icon="mdi:close" width={20} aria-hidden="true" />
+					</button>
+				</div>
+				<!-- Scroll horizontal: el lienzo crece según la cantidad de buckets -->
+				<div class="overflow-x-auto overscroll-x-contain">
+					<div style="min-width: {expandedMinWidth}px">
+						<ChartPanel config={expandedChart.cfg} height={420} expanded />
+					</div>
 				</div>
 			</div>
 		</div>

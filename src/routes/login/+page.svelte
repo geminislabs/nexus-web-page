@@ -34,7 +34,7 @@
 	function loginErrorMessage(err) {
 		if (err instanceof ApiError) {
 			if (err.status === 403) {
-				return err.displayMessage || 'Debes verificar tu correo antes de iniciar sesión.';
+				return 'Debes verificar tu correo antes de iniciar sesión.';
 			}
 			if (err.status === 401) {
 				return 'Credenciales inválidas. Por favor, intenta de nuevo.';

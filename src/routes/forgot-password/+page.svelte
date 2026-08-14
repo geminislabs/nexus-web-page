@@ -22,9 +22,12 @@
 		error = '';
 		try {
 			await apiService.forgotPassword(trimmed);
-			goto(`/reset-password?email=${encodeURIComponent(trimmed)}`);
-		} catch (err) {
-			error = err?.message || 'No se pudo enviar el código. Intenta de nuevo.';
+			if (typeof sessionStorage !== 'undefined') {
+				sessionStorage.setItem('nexus_reset_email', trimmed);
+			}
+			goto('/reset-password');
+		} catch {
+			error = 'No se pudo enviar el código. Intenta de nuevo.';
 		} finally {
 			loading = false;
 		}

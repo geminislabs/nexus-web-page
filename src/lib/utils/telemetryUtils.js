@@ -15,27 +15,15 @@ export const TELEMETRY_METRICS = [
 	'idle_minutes'
 ];
 
-/**
- * Clasifica la intensidad de señal (rxLvl) en 3 niveles pedidos por producto:
- * Malo (rojo), Regular (amarillo) y Bueno (verde). Nada de naranjas ni matices.
- * @param {number|string|null|undefined} rxLvl
- * @returns {{ grade: 'bad'|'regular'|'good', label: string, hex: string } | null}
- */
-export function getSignalQuality(rxLvl) {
-	const rx = Number(rxLvl);
-	if (rxLvl == null || Number.isNaN(rx)) return null;
-	if (rx <= 25) return { grade: 'bad', label: 'Malo', hex: '#ef4444' };
-	if (rx <= 45) return { grade: 'regular', label: 'Regular', hex: '#eab308' };
-	return { grade: 'good', label: 'Bueno', hex: '#22c55e' };
-}
-
-/** Clases Tailwind del chip de señal por nivel (solo rojo/amarillo/verde) */
-export const SIGNAL_CHIP_CLASSES = {
-	bad: 'border-red-400/50 bg-red-100 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-400',
-	regular:
-		'border-yellow-400/60 bg-yellow-100 text-yellow-700 dark:border-yellow-500/30 dark:bg-yellow-500/15 dark:text-yellow-400',
-	good: 'border-green-400/50 bg-green-100 text-green-700 dark:border-green-500/30 dark:bg-green-500/15 dark:text-green-400'
-};
+export {
+	getSignalQuality,
+	SIGNAL_CHIP_CLASSES,
+	getGpsIndicator,
+	getCellularIndicator,
+	inferNetworkTech,
+	networkTechLabel,
+	rxLvlToDbm
+} from './signalIndicators.js';
 
 /** @param {string} unitId @param {number} index */
 export function getUnitChartColor(unitId, index = 0) {

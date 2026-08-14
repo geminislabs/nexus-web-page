@@ -33,19 +33,27 @@
 		if (isPlaying) {
 			mapService.pauseTripPlayback();
 			isPlaying = false;
-		} else {
-			if (!trip?.points?.length) return;
-			mapService.startTripPlayback(trip.points, {
-				onProgress: (progress) => {
-					playbackProgress = progress;
-				},
-				onComplete: () => {
-					isPlaying = false;
-					playbackProgress = 0;
-				}
-			});
-			isPlaying = true;
+			return;
 		}
+		if (!trip?.points?.length) return;
+
+		// Reanudar desde el punto pausado; no reiniciar la ruta.
+		if (mapService.canResumeTripPlayback()) {
+			mapService.resumeTripPlayback();
+			isPlaying = true;
+			return;
+		}
+
+		mapService.startTripPlayback(trip.points, {
+			onProgress: (progress) => {
+				playbackProgress = progress;
+			},
+			onComplete: () => {
+				isPlaying = false;
+				playbackProgress = 0;
+			}
+		});
+		isPlaying = true;
 	}
 
 	function stopPlayback() {
@@ -107,22 +115,22 @@
 
 	<!-- Playback Controls -->
 	<div class="px-4 pb-4">
-		<div class="flex items-center gap-3">
-			<div class="flex-1">
-				<p
-					class="text-xs font-semibold uppercase tracking-wide {isPlaying
-						? 'text-cyan-600 dark:text-cyan-400'
-						: 'text-slate-500 dark:text-white/50'}"
-				>
-					{isPlaying ? 'Reproduciendo' : 'Trayecto'}
-				</p>
-				<p class="text-sm text-slate-600 dark:text-white/70">Controles en vivo</p>
-			</div>
+		<div class="mb-3">
+			<p
+				class="m-0 text-xs font-semibold uppercase tracking-wide {isPlaying
+					? 'text-cyan-600 dark:text-cyan-400'
+					: 'text-slate-500 dark:text-white/50'}"
+			>
+				{isPlaying ? 'Reproduciendo' : 'Trayecto'}
+			</p>
+			<p class="m-0 text-sm text-slate-600 dark:text-white/70">Controles en vivo</p>
+		</div>
 
+		<div class="flex items-center justify-center gap-3">
 			<!-- Play/Pause -->
 			<button
 				type="button"
-				class="flex h-12 w-12 items-center justify-center rounded-full {isPlaying
+				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full {isPlaying
 					? 'bg-cyan-500'
 					: 'bg-slate-200 dark:bg-white/10'} transition-colors"
 				on:click={togglePlay}
@@ -135,22 +143,25 @@
 				/>
 			</button>
 
-			<!-- Stop -->
-			{#if isPlaying || playbackProgress > 0}
-				<button
-					type="button"
-					class="flex h-12 w-12 items-center justify-center rounded-full bg-red-500 transition-colors"
-					on:click={stopPlayback}
-					aria-label="Detener"
-				>
-					<Icon icon="mdi:stop" width={24} class="text-white" />
-				</button>
-			{/if}
+			<!-- Stop: slot fijo para evitar saltos al aparecer/desaparecer -->
+			<button
+				type="button"
+				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-500 transition-colors {isPlaying ||
+				playbackProgress > 0
+					? ''
+					: 'invisible pointer-events-none'}"
+				on:click={stopPlayback}
+				aria-label="Detener"
+				tabindex={isPlaying || playbackProgress > 0 ? 0 : -1}
+				aria-hidden={!(isPlaying || playbackProgress > 0)}
+			>
+				<Icon icon="mdi:stop" width={24} class="text-white" />
+			</button>
 
 			<!-- Alerts Toggle -->
 			<button
 				type="button"
-				class="flex h-12 w-12 items-center justify-center rounded-full {showAlerts
+				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full {showAlerts
 					? 'bg-amber-500'
 					: 'bg-slate-200 dark:bg-white/10'} transition-colors"
 				on:click={toggleAlerts}
@@ -166,7 +177,7 @@
 			<!-- Center -->
 			<button
 				type="button"
-				class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 transition-colors hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20"
+				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-200 transition-colors hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20"
 				on:click={centerOnRoute}
 				aria-label="Centrar en ruta"
 			>
@@ -174,15 +185,15 @@
 			</button>
 		</div>
 
-		<!-- Progress bar -->
-		{#if isPlaying || playbackProgress > 0}
-			<div class="mt-3 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-				<div
-					class="h-full bg-cyan-400 transition-all duration-100"
-					style="width: {playbackProgress * 100}%"
-				></div>
-			</div>
-		{/if}
+		<!-- Progress bar: altura reservada para no empujar el layout -->
+		<div class="mt-3 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+			<div
+				class="h-full bg-cyan-400 transition-all duration-100 {isPlaying || playbackProgress > 0
+					? ''
+					: 'opacity-0'}"
+				style="width: {playbackProgress * 100}%"
+			></div>
+		</div>
 	</div>
 
 	<!-- Stats: en móvil colapsable (cerrado al abrir); en sm+ siempre visible -->

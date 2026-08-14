@@ -2,14 +2,29 @@
 	import Icon from '@iconify/svelte';
 	import { activeTab, navActions } from '$lib/stores/navigationStore.js';
 	import { unreadAlarmCount } from '$lib/stores/alertStore.js';
+	import { vehicles } from '$lib/stores/vehicleStore.js';
 
 	const tabs = [
 		{ id: 'seguimiento', label: 'Seguimiento', icon: 'mdi:map-marker-radius' },
-		{ id: 'alertas', label: 'Alertas', icon: 'mdi:bell-outline' },
+		{
+			id: 'alertas',
+			label: 'Alertas',
+			icon: 'mdi:bell-outline',
+			requiresVehicles: true
+		},
+		{
+			id: 'informes',
+			label: 'Informes',
+			icon: 'mdi:file-chart-outline',
+			requiresVehicles: true
+		},
 		{ id: 'ajustes', label: 'Ajustes', icon: 'mdi:cog-outline' }
 	];
 
-	$: if ($activeTab === 'informes') {
+	$: hasVehicles = $vehicles.length > 0;
+	$: visibleTabs = tabs.filter((tab) => !tab.requiresVehicles || hasVehicles);
+
+	$: if (($activeTab === 'alertas' || $activeTab === 'informes') && !hasVehicles) {
 		navActions.setTab('seguimiento');
 	}
 
@@ -34,7 +49,7 @@
 		aria-describedby="bottom-tab-db-hint"
 		class="flex w-full flex-row"
 	>
-		{#each tabs as tab (tab.id)}
+		{#each visibleTabs as tab (tab.id)}
 			<button
 				type="button"
 				id={`bottom-tab-${tab.id}`}

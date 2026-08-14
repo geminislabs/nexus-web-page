@@ -42,6 +42,7 @@
 		.filter(Boolean);
 
 	$: distanceKm = ($telemetryTotals.totalDistance / 1000).toFixed(1);
+	$: hasVehicles = $vehicles.length > 0;
 
 	$: summaryCards = [
 		{ value: `${distanceKm} km`, title: 'Distancia', icon: 'mdi:ruler', color: 'text-violet-400' },
@@ -93,51 +94,26 @@
 		Informes
 	</h1>
 
-	<ReportControls
-		{fromInput}
-		{toInput}
-		variant="stack"
-		errorMessage={$telemetryError}
-		onFromChange={(v) => reportFrom.set(fromLocalInputValue(v))}
-		onToChange={(v) => reportTo.set(fromLocalInputValue(v))}
-		onOpenUnitPicker={() => (showUnitPicker = true)}
-		onGenerate={() => telemetryActions.fetchReport()}
-	/>
-
-	<hr class="my-6 border-slate-200 dark:border-white/10" />
-
-	<ReportResults
-		hasResults={$hasTelemetryResults}
-		loading={$loadingTelemetry}
-		{summaryCards}
-		offenders={$telemetryTotals.offenders}
-		telemetryData={$telemetryData}
-		{unitOrder}
-		layout="mobile"
-	/>
-</div>
-
-<!-- Escritorio / tablet: vive dentro del TopDrawer que ya scrollea -->
-<div
-	class="hidden w-full sm:flex sm:flex-row sm:items-start sm:gap-6 sm:px-5 sm:py-5 md:px-6 lg:gap-8 lg:px-8 lg:py-6"
->
-	<aside
-		class="w-full shrink-0 sm:sticky sm:top-0 sm:w-[240px] md:w-[260px] lg:w-[280px]"
-		aria-label="Parámetros del informe"
-	>
+	{#if !hasVehicles}
+		<p
+			class="m-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/55"
+		>
+			Agrega al menos una unidad para generar informes.
+		</p>
+	{:else}
 		<ReportControls
 			{fromInput}
 			{toInput}
-			variant="sidebar"
+			variant="stack"
 			errorMessage={$telemetryError}
 			onFromChange={(v) => reportFrom.set(fromLocalInputValue(v))}
 			onToChange={(v) => reportTo.set(fromLocalInputValue(v))}
 			onOpenUnitPicker={() => (showUnitPicker = true)}
 			onGenerate={() => telemetryActions.fetchReport()}
 		/>
-	</aside>
 
-	<div class="min-w-0 flex-1" role="region" aria-label="Resultados del informe">
+		<hr class="my-6 border-slate-200 dark:border-white/10" />
+
 		<ReportResults
 			hasResults={$hasTelemetryResults}
 			loading={$loadingTelemetry}
@@ -145,15 +121,58 @@
 			offenders={$telemetryTotals.offenders}
 			telemetryData={$telemetryData}
 			{unitOrder}
-			layout="wide"
+			layout="mobile"
 		/>
-	</div>
+	{/if}
 </div>
 
-<ReportsUnitPicker
-	open={showUnitPicker}
-	units={$vehicles}
-	selectedIds={$selectedReportUnitIds}
-	onToggle={(id) => telemetryActions.toggleUnit(id)}
-	onClose={() => (showUnitPicker = false)}
-/>
+<!-- Escritorio / tablet: scroll en el body del TopDrawer -->
+<div
+	class="hidden w-full sm:flex sm:min-h-0 sm:flex-row sm:items-start sm:gap-6 sm:px-5 sm:py-5 md:px-6 lg:gap-8 lg:px-8 lg:py-6"
+>
+	{#if !hasVehicles}
+		<p
+			class="m-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/55"
+		>
+			Agrega al menos una unidad para generar informes.
+		</p>
+	{:else}
+		<aside
+			class="w-full shrink-0 sm:sticky sm:top-0 sm:w-[240px] md:w-[260px] lg:w-[280px]"
+			aria-label="Parámetros del informe"
+		>
+			<ReportControls
+				{fromInput}
+				{toInput}
+				variant="sidebar"
+				errorMessage={$telemetryError}
+				onFromChange={(v) => reportFrom.set(fromLocalInputValue(v))}
+				onToChange={(v) => reportTo.set(fromLocalInputValue(v))}
+				onOpenUnitPicker={() => (showUnitPicker = true)}
+				onGenerate={() => telemetryActions.fetchReport()}
+			/>
+		</aside>
+
+		<div class="min-w-0 flex-1" role="region" aria-label="Resultados del informe">
+			<ReportResults
+				hasResults={$hasTelemetryResults}
+				loading={$loadingTelemetry}
+				{summaryCards}
+				offenders={$telemetryTotals.offenders}
+				telemetryData={$telemetryData}
+				{unitOrder}
+				layout="wide"
+			/>
+		</div>
+	{/if}
+</div>
+
+{#if hasVehicles}
+	<ReportsUnitPicker
+		open={showUnitPicker}
+		units={$vehicles}
+		selectedIds={$selectedReportUnitIds}
+		onToggle={(id) => telemetryActions.toggleUnit(id)}
+		onClose={() => (showUnitPicker = false)}
+	/>
+{/if}

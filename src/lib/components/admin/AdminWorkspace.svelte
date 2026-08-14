@@ -12,7 +12,6 @@
 	import AlarmBell from './AlarmBell.svelte';
 	import AdminDashboard from './AdminDashboard.svelte';
 	import AdminPanel from '$lib/components/AdminPanel.svelte';
-	import TabInformes from '$lib/components/TabInformes.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
 
 	/* Tipografías auto-alojadas (latin/latin-ext): evita transferir la IP a Google Fonts. */
@@ -34,7 +33,6 @@
 		{ id: 'users', label: 'Usuarios', icon: 'mdi:account-group-outline' },
 		{ id: 'units', label: 'Unidades', icon: 'mdi:car-side' },
 		{ id: 'devices', label: 'Dispositivos', icon: 'mdi:memory' },
-		{ id: 'reports', label: 'Informes', icon: 'mdi:file-chart-outline' },
 		{ id: 'settings', label: 'Configuración', icon: 'mdi:cog-outline' }
 	];
 
@@ -43,7 +41,6 @@
 		users: { title: 'Usuarios', locked: 'usuarios' },
 		units: { title: 'Unidades', locked: 'unidades' },
 		devices: { title: 'Dispositivos', locked: 'dispositivos' },
-		reports: { title: 'Informes' },
 		settings: { title: 'Configuración' }
 	};
 
@@ -52,6 +49,10 @@
 	let showUserMenu = false;
 
 	$: section = $adminSection;
+	$: if (section === 'reports') {
+		// Sección movida a Seguimiento; limpia estado residual.
+		workspaceActions.setAdminSection('dashboard');
+	}
 	$: meta = sectionMeta[section] ?? sectionMeta.dashboard;
 	$: displayName = $user?.name || $user?.full_name || 'Admin';
 	$: initial = displayName.charAt(0).toUpperCase();
@@ -222,24 +223,6 @@
 						{#key section}
 							<AdminPanel embedded={true} lockedSection={meta.locked} />
 						{/key}
-					</div>
-				</div>
-			{:else if section === 'reports'}
-				<div class="flex min-h-0 flex-1 flex-col">
-					<div class="mb-3 shrink-0">
-						<h1
-							class="admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white"
-						>
-							Informes
-						</h1>
-						<p class="m-0 mt-1 text-sm text-slate-500 dark:text-white/45">
-							Telemetría y reportes de unidades
-						</p>
-					</div>
-					<div
-						class="flex min-h-0 flex-1 flex-col overflow-auto rounded-2xl border border-slate-200/90 bg-white p-3 dark:border-white/[0.08] dark:bg-[#0d1424] sm:p-4"
-					>
-						<TabInformes />
 					</div>
 				</div>
 			{:else if section === 'settings'}

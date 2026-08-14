@@ -1,7 +1,8 @@
 <script>
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { user } from '$lib/stores/auth.js';
+	import { user, authToken } from '$lib/stores/auth.js';
+	import { validateSessionWithApi } from '$lib/services/sessionService.js';
 	import '$lib/styles/dashboard.css';
 
 	let { children } = $props();
@@ -9,18 +10,44 @@
 	let isLoading = $state(true);
 
 	onMount(() => {
-		user.init();
+		let cancelled = false;
+		let unsubscribe = () => {};
 
-		const unsubscribe = user.subscribe((userData) => {
-			isAuthenticated = !!userData;
-			isLoading = false;
+		(async () => {
+			user.init();
+			authToken.init();
 
-			if (!userData) {
-				goto('/login');
+			if (!authToken.getToken()) {
+				if (!cancelled) {
+					isLoading = false;
+					isAuthenticated = false;
+					goto('/login');
+				}
+				return;
 			}
-		});
 
-		return unsubscribe;
+			const ok = await validateSessionWithApi();
+			if (cancelled) return;
+
+			isAuthenticated = ok;
+			isLoading = false;
+			if (!ok) {
+				goto('/login');
+				return;
+			}
+
+			unsubscribe = user.subscribe((userData) => {
+				if (!userData || !authToken.getToken()) {
+					isAuthenticated = false;
+					goto('/login');
+				}
+			});
+		})();
+
+		return () => {
+			cancelled = true;
+			unsubscribe();
+		};
 	});
 </script>
 

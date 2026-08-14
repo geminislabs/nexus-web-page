@@ -23,6 +23,7 @@ export default defineConfig({
 				'src/lib/services/h3GridOverlayService.js',
 				'src/lib/services/vehiclePositionStream.js',
 				'src/lib/services/positionService.js',
+				'src/lib/observability/**',
 				'src/lib/utils/telemetryCharts.js',
 				'src/lib/utils/telemetryUtils.js',
 				'src/lib/utils/vehicleMarkerIcon.js',
