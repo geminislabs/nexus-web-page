@@ -27,3 +27,25 @@ export function formatAlarmWhen(iso) {
 		return String(iso);
 	}
 }
+
+/** Inicio y fin del día local actual. */
+export function getLocalDayBounds(ref = new Date()) {
+	const from = new Date(ref);
+	from.setHours(0, 0, 0, 0);
+	const to = new Date(ref);
+	to.setHours(23, 59, 59, 999);
+	return { from, to };
+}
+
+/**
+ * @param {string | Date | null | undefined} value
+ * @param {Date} [ref]
+ */
+export function isSameLocalDay(value, ref = new Date()) {
+	if (value == null) return false;
+	const d = value instanceof Date ? value : new Date(value);
+	if (Number.isNaN(d.getTime())) return false;
+	const { from, to } = getLocalDayBounds(ref);
+	const t = d.getTime();
+	return t >= from.getTime() && t <= to.getTime();
+}

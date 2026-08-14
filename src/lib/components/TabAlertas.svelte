@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import { browser } from '$app/environment';
 	import Icon from '@iconify/svelte';
 	import {
@@ -14,6 +15,7 @@
 	import ZonasPanel from './ZonasPanel.svelte';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
 	import { user } from '$lib/stores/auth.js';
+	import { vehicles } from '$lib/stores/vehicleStore.js';
 	import { onMount } from 'svelte';
 
 	let subView = 'alarmas';
@@ -21,9 +23,10 @@
 	let notifPermission = null; // null | 'granted' | 'denied' | 'default'
 
 	$: isMaster = !!$user?.is_master;
+	$: hasVehicles = $vehicles.length > 0;
 
 	function openWizard() {
-		if (!isMaster) return;
+		if (!isMaster || !hasVehicles) return;
 		alertActions.openWizard();
 	}
 
@@ -95,10 +98,10 @@
 		}
 
 		alertActions.syncAlertRulesFromApi().catch((err) => {
-			console.error('No se pudieron cargar reglas de alerta:', err);
+			logger.error('No se pudieron cargar reglas de alerta:', err);
 		});
 		alertActions.syncAlarmEventsFromApi().catch((err) => {
-			console.error('No se pudo cargar historial de alertas:', err);
+			logger.error('No se pudo cargar historial de alertas:', err);
 		});
 	});
 
@@ -188,10 +191,10 @@
 								<Icon icon="mdi:bell-off-outline" class="h-16 w-16 opacity-25" />
 							</div>
 							<h3 class="m-0 text-lg font-semibold text-slate-900 dark:text-white">
-								Sin alarmas recientes
+								Sin alarmas de hoy
 							</h3>
 							<p class="m-0 max-w-xs text-sm leading-relaxed text-slate-600 dark:text-white/40">
-								Cuando ocurra una alerta aparecerá aquí.
+								Las notificaciones del día actual aparecerán aquí.
 							</p>
 						</div>
 					{:else}
@@ -473,7 +476,7 @@
 							</ul>
 						{/if}
 					</div>
-					{#if isMaster}
+					{#if isMaster && hasVehicles}
 						<div class="shrink-0 border-t border-slate-200 p-4 dark:border-white/[0.06]">
 							<button
 								type="button"

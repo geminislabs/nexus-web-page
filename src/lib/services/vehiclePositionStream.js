@@ -1,6 +1,9 @@
+import { logger } from '$lib/utils/logger.js';
+import { authToken } from '$lib/stores/auth.js';
 /**
  * Cliente WebSocket para posiciones en vivo (siscom-api /api/v1/stream).
  * La base WS se deriva de VITE_COMM_API_URL (http→ws, https→wss), igual que positionService.
+ * Requiere sesión local; el backend debe exigir auth en /stream (pendiente en API).
  */
 
 const STREAM_PATH = '/api/v1/stream';
@@ -131,6 +134,14 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 		return () => {};
 	}
 
+	if (!authToken.getToken?.()) {
+		logger.warn({
+			code: 'WS_STREAM_AUTH_REQUIRED',
+			message: 'Refusing position stream without session'
+		});
+		return () => {};
+	}
+
 	const unique = [...new Set(deviceIds.map((id) => String(id).trim()).filter(Boolean))];
 	if (unique.length === 0) {
 		return () => {};
@@ -145,10 +156,18 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 
 	const connect = () => {
 		if (stopped) return;
+		if (!authToken.getToken?.()) {
+			stopped = true;
+			return;
+		}
 		try {
 			ws = new WebSocket(url);
 		} catch (e) {
-			console.warn('[position-stream] WebSocket:', e);
+			logger.warn({
+				code: 'WS_STREAM_CONNECT_FAILED',
+				message: 'WebSocket connect failed',
+				err: e
+			});
 			scheduleReconnect();
 			return;
 		}
@@ -159,7 +178,11 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 				const pos = parsePositionStreamMessage(parsed);
 				if (pos) onPosition(pos);
 			} catch (e) {
-				console.warn('[position-stream] Mensaje inválido:', e);
+				logger.warn({
+					code: 'WS_STREAM_PARSE_FAILED',
+					message: 'Invalid position stream message',
+					err: e
+				});
 			}
 		};
 

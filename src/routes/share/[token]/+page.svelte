@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
 	import { positionService } from '$lib/services/positionService.js';
@@ -85,7 +86,7 @@
 					// Si no hay coordenadas, tal vez solo mostrar el mapa vacío o error?
 					// El usuario dijo "mostrar el mapa", así que lo mostramos aunque no haya ubicación (se verá el mundo)
 					// Pero idealmente debería haber ubicación.
-					console.warn('No coordinates in share response');
+					logger.warn('No coordinates in share response');
 					vehicles.set([vehicle]); // Set anyway so it appears in list if we had one, but map won't center
 					success = true;
 				}
@@ -95,7 +96,7 @@
 					token,
 					handleStreamUpdate,
 					(err) => {
-						console.error('Stream error:', err);
+						logger.error('Stream error:', err);
 						// Mostrar error si es crítico
 						if (err) {
 							// Si ya tenemos éxito (mapa cargado), tal vez solo mostrar un toast o alerta no intrusiva?
@@ -116,7 +117,7 @@
 				throw new Error('Respuesta vacía del servidor');
 			}
 		} catch (e) {
-			console.error('Share location error:', e);
+			logger.error('Share location error:', e);
 			error = e;
 		} finally {
 			loading = false;

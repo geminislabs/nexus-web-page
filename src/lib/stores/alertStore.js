@@ -1,6 +1,7 @@
 import { writable, derived, get } from 'svelte/store';
 import { withZoneDbRow } from '$lib/utils/zoneDbMapper.js';
 import { apiService } from '$lib/services/api.js';
+import { getLocalDayBounds, isSameLocalDay } from '$lib/utils/alarmFormat.js';
 
 export const alerts = writable([]);
 export const alertWizard = writable(null);
@@ -154,26 +155,6 @@ function mapAlarmEvent(alertEvent) {
 	};
 }
 
-function logGeofenceGenerationPreview(zone) {
-	if (!zone || typeof zone !== 'object') return;
-	const geofenceRow = zone.dbRow && typeof zone.dbRow === 'object' ? zone.dbRow : null;
-	if (!geofenceRow) return;
-	const payload = {
-		geofence_id: geofenceRow.geofence_id,
-		device_id: geofenceRow.device_id,
-		name: geofenceRow.name,
-		type: geofenceRow.type,
-		latitude: geofenceRow.latitude,
-		longitude: geofenceRow.longitude,
-		radius: geofenceRow.radius,
-		status: geofenceRow.status
-	};
-	console.groupCollapsed('[ZONA->GEOFENCE] Vista previa de integración');
-	console.log('Zona guardada en frontend:', zone);
-	console.log('Fila compatible con public.geofences:', payload);
-	console.groupEnd();
-}
-
 export const alertActions = {
 	// Wizard
 	openWizard() {
@@ -273,21 +254,9 @@ export const alertActions = {
 	},
 
 	async createZone(name, cells, color = '#3B82F6', opts = {}) {
+		void color;
 		const description =
 			typeof opts.description === 'string' ? opts.description.trim().slice(0, 2000) : '';
-		const localZone = withZoneDbRow({
-			id: createId('zone'),
-			name,
-			cells: Array.isArray(cells) ? cells : [],
-			color,
-			createdAt: new Date().toISOString(),
-			metadata: {
-				alertType: 'inside',
-				status: 'active',
-				...(description ? { description } : {})
-			}
-		});
-		logGeofenceGenerationPreview(localZone);
 		const h3Indexes = (Array.isArray(cells) ? cells : [])
 			.map(h3HexToDecimalString)
 			.filter((v) => typeof v === 'string');
@@ -374,16 +343,20 @@ export const alertActions = {
 	},
 
 	async syncAlarmEventsFromApi() {
-		const events = await apiService.getAlerts();
+		const { from, to } = getLocalDayBounds();
+		const events = await apiService.getAlerts({
+			from: from.toISOString(),
+			to: to.toISOString()
+		});
 		const mapped = Array.isArray(events) ? events.map(mapAlarmEvent) : [];
-		alarmEvents.set(mapped);
+		// Solo día local actual (por si el API aún no filtra por rango).
+		alarmEvents.set(mapped.filter((ev) => isSameLocalDay(ev.at)));
 	},
 
 	addAlarmEvent(event) {
-		alarmEvents.update((list) => [
-			{ ...event, id: createId('ev'), read: false, at: new Date().toISOString() },
-			...list
-		]);
+		const at = event?.at || new Date().toISOString();
+		if (!isSameLocalDay(at)) return;
+		alarmEvents.update((list) => [{ ...event, id: createId('ev'), read: false, at }, ...list]);
 	},
 	deleteAlarmEvent(id) {
 		alarmEvents.update((list) => list.filter((e) => e.id !== id));

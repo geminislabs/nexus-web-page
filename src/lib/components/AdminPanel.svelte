@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 	import { apiService } from '$lib/services/api.js';
@@ -112,7 +113,7 @@
 		try {
 			devices = await apiService.getMyDevices();
 		} catch (err) {
-			console.error('Error al cargar dispositivos:', err);
+			logger.error('Error al cargar dispositivos:', err);
 			devicesError = err.displayMessage || err.message || 'Error al cargar dispositivos';
 		} finally {
 			loadingDevices = false;
@@ -125,7 +126,7 @@
 		try {
 			units = await apiService.getUnits();
 		} catch (err) {
-			console.error('Error al cargar unidades:', err);
+			logger.error('Error al cargar unidades:', err);
 			unitsError = err.displayMessage || err.message || 'Error al cargar unidades';
 		} finally {
 			loadingUnits = false;
@@ -144,7 +145,7 @@
 			newUnitName = '';
 			await loadUnits();
 		} catch (err) {
-			console.error('Error al crear unidad:', err);
+			logger.error('Error al crear unidad:', err);
 			unitsError = err.displayMessage || err.message || 'Error al crear la unidad';
 		} finally {
 			creatingUnit = false;
@@ -165,7 +166,7 @@
 		try {
 			unitProfile = await apiService.getUnitProfile(unitId);
 		} catch (err) {
-			console.error('Error al cargar perfil de unidad:', err);
+			logger.error('Error al cargar perfil de unidad:', err);
 		} finally {
 			loadingProfile = false;
 		}
@@ -187,13 +188,13 @@
 					try {
 						mapService.updateVehicleMarker({ ...unit, ...updates });
 					} catch (e) {
-						console.error('Error updating map marker from admin panel:', e);
+						logger.error('Error updating map marker from admin panel:', e);
 					}
 				}
 			}
 			if (event?.target) event.target.blur();
 		} catch (err) {
-			console.error(`Error al actualizar ${field}:`, err);
+			logger.error(`Error al actualizar ${field}:`, err);
 		}
 	}
 
@@ -203,7 +204,7 @@
 			unassignedDevices = await apiService.getUnassignedDevices();
 			selectedDeviceId = '';
 		} catch (err) {
-			console.error('Error al cargar dispositivos no asignados:', err);
+			logger.error('Error al cargar dispositivos no asignados:', err);
 			unitsError = err.displayMessage || err.message || 'Error al cargar dispositivos';
 		} finally {
 			loadingUnassignedDevices = false;
@@ -222,7 +223,7 @@
 			selectedDeviceId = '';
 			await Promise.all([loadUnits(), loadDevices()]);
 		} catch (err) {
-			console.error('Error al asignar dispositivo:', err);
+			logger.error('Error al asignar dispositivo:', err);
 			unitsError = err.displayMessage || err.message || 'Error al asignar el dispositivo';
 		} finally {
 			assigningDevice = false;
@@ -243,7 +244,7 @@
 			unassignTarget = null;
 			await Promise.all([loadUnits(), loadDevices()]);
 		} catch (err) {
-			console.error('Error al desasignar dispositivo:', err);
+			logger.error('Error al desasignar dispositivo:', err);
 			unitsError = err.displayMessage || err.message || 'Error al desasignar el dispositivo';
 		} finally {
 			unassignLoading = false;

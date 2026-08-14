@@ -250,8 +250,13 @@ html[data-theme='light'] .gm-style .gm-style-iw-c {
 	max-height: none !important;
 }
 .gm-style .gm-style-iw-chr {
-	position: relative;
+	display: none !important;
 	height: 0 !important;
+	overflow: hidden !important;
+	pointer-events: none !important;
+}
+.gm-style .gm-style-iw-chr button {
+	display: none !important;
 }
 .gm-style .gm-style-iw-tc::after {
 	background: linear-gradient(165deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.95)) !important;

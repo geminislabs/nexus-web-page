@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
@@ -27,7 +28,7 @@
 			const allUsers = await apiService.getUsers();
 			users = allUsers.filter((u) => !u.is_master);
 		} catch (e) {
-			console.error('Error loading users:', e);
+			logger.error('Error loading users:', e);
 			showToast('Error al cargar usuarios', 'error');
 		} finally {
 			loadingUsers = false;
@@ -54,7 +55,7 @@
 			assignments = assignmentsData;
 			mergeData();
 		} catch (e) {
-			console.error('Error loading data:', e);
+			logger.error('Error loading data:', e);
 			error = 'No se pudieron cargar los datos. Intente nuevamente.';
 			showToast('Error al cargar datos', 'error');
 		} finally {
@@ -105,7 +106,7 @@
 				showToast('Acceso removido correctamente', 'success');
 			}
 		} catch (e) {
-			console.error('Error updating assignment:', e);
+			logger.error('Error updating assignment:', e);
 			unit.assigned = isAssigned;
 			mergedUnits = [...mergedUnits];
 			showToast('Error al actualizar asignación', 'error');

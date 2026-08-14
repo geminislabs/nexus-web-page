@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Logger estructurado (`src/lib/utils/logger.js`) con puente de observability y `hooks.server.js` (headers de seguridad + CSP Report-Only)
+- Indicadores GPS/LTE unificados (`SignalMeters`, `signalIndicators`) con detalle técnico al hover
+- Badges de telemetría reutilizables (`UnitTelemetryBadges`) en Seguimiento, panel de unidad y listados
+- Popup de posición en mapa (`VehiclePositionPopup`) montado desde `mapService` (coords copiar/Maps, señales, sin X nativo de Google)
+- Tests: `signalIndicators`, logger/alertas, `workspaceStore`
+
 - Legal document links (Privacidad, Términos, Aviso legal, Cookies) on login, register, forgot/reset password, and the signed-in user menu — shared `EnlacesLegales` component; URLs from `src/lib/constants/legal.js` (`VITE_COMPANY_URL`, fallback `https://www.geminislabs.com`)
 - Unit tests for legal URL constants (`tests/legal.test.js`)
 - `docs/requerimientos/enlaces-legales-y-tipografias.md` — requirement spec for legal linking and font self-hosting
@@ -43,6 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expand button on report charts: opens each chart in a horizontally scrollable modal showing every bucket label
 
 ### Changed
+
+- Paneles laterales de Seguimiento, Alertas e Informes con el mismo ancho; Informes con scroll en el body del drawer
+- Cerrar Seguimiento al hacer clic fuera / en el mapa (mismo comportamiento que Alertas e Informes)
+- Selector de tema Oscuro/Claro inline en el menú de usuario (ya no abre ventana de Configuración)
+- Tarjetas de unidad en Seguimiento: una fila por registro; acciones (detalles/editar/eliminar) en columna a la derecha con texto al hover
+- Panel de unidad: telemetría en grillas 2×2, icono de color de perfil, botones de acción compactos
+- Informes movidos al workspace de Seguimiento (acceso desde sidebar, no solo admin)
 
 - Admin workspace fonts (Sora, IBM Plex Sans) are self-hosted via Fontsource (`latin` / `latin-ext` weights in use only); removed Google Fonts CDN `<link>` tags from `AdminWorkspace.svelte` so the browser no longer sends the user IP to Google for typography
 - `.env.example`: clarify that `VITE_COMPANY_URL` is the corporate site base (auth + `/legal/*`), not the NEXUS app origin

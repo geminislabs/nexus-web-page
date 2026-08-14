@@ -16,7 +16,7 @@ vi.mock('../src/lib/services/api.js', () => ({
 }));
 
 describe('apiErrors', () => {
-	it('ApiError expone detail del backend', () => {
+	it('ApiError expone detail de auth seguro', () => {
 		const err = new ApiError('HTTP error', { status: 403, detail: 'Email no verificado' });
 		expect(err.displayMessage).toBe('Email no verificado');
 	});

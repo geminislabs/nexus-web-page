@@ -156,6 +156,40 @@ function drawColoredVehicle(ctx, img, colorHex, x, y, size) {
 }
 
 /**
+ * Icono de unidad teñido con el color de perfil (mismo algoritmo que el marcador).
+ * Funciona en fondos claros y oscuros (no depende de mix-blend CSS).
+ * @param {string} src
+ * @param {string} colorHex
+ * @param {number} [size=128]
+ * @returns {Promise<string>}
+ */
+export async function buildColoredUnitIconDataUrl(src, colorHex, size = 128) {
+	const hex = colorHex || DEFAULT_PROFILE_COLOR;
+	const cacheKey = `unit-icon|${src}|${hex}|${size}`;
+	if (dataUrlCache.has(cacheKey)) return dataUrlCache.get(cacheKey);
+
+	const canvas = document.createElement('canvas');
+	canvas.width = size;
+	canvas.height = size;
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return '';
+
+	try {
+		const img = await loadImage(src);
+		drawColoredVehicle(ctx, img, hex, 0, 0, size);
+	} catch {
+		ctx.beginPath();
+		ctx.arc(size / 2, size / 2, size * 0.38, 0, Math.PI * 2);
+		ctx.fillStyle = hex;
+		ctx.fill();
+	}
+
+	const url = canvas.toDataURL('image/png');
+	dataUrlCache.set(cacheKey, url);
+	return url;
+}
+
+/**
  * @param {CanvasRenderingContext2D} ctx
  * @param {string} statusColor
  * @param {boolean} visible

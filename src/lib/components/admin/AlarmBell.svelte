@@ -1,4 +1,5 @@
 <script>
+	import { logger } from '$lib/utils/logger.js';
 	import Icon from '@iconify/svelte';
 	import { fly } from 'svelte/transition';
 	import { get } from 'svelte/store';
@@ -42,7 +43,7 @@
 			await alertActions.deleteAlert(alertToDelete.id);
 			alertToDelete = null;
 		} catch (err) {
-			console.error('No se pudo eliminar alerta:', err);
+			logger.error('No se pudo eliminar alerta:', err);
 		} finally {
 			deleteAlertLoading = false;
 		}
@@ -112,7 +113,7 @@
 			</div>
 			<div class="max-h-[320px] overflow-y-auto p-3 text-slate-800 dark:text-white/85">
 				<p class="m-0 mb-2 text-[11px] text-slate-500 dark:text-white/40">
-					Reglas: {$alerts.length} · Eventos: {$alarmEvents.length}
+					Reglas: {$alerts.length} · Eventos hoy: {$alarmEvents.length}
 				</p>
 				{#if $alerts.length === 0 && $alarmEvents.length === 0}
 					<p

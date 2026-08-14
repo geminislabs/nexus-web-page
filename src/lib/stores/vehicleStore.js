@@ -3,6 +3,7 @@ import { apiService } from '$lib/services/api.js';
 import { positionService } from '$lib/services/positionService.js';
 import { mapService } from '$lib/services/mapService.js';
 import { colorSlugToHex, formatLastUpdate } from '$lib/utils/vehicleUtils.js';
+import { logger } from '$lib/utils/logger.js';
 
 // Estado principal de vehículos
 export const vehicles = writable([]);
@@ -181,7 +182,7 @@ export const vehicleActions = {
 			syncMapVisibleIds(merged);
 			await this.loadVehiclePositions();
 		} catch (error) {
-			console.error('Error cargando unidades desde API:', error);
+			logger.error('Error cargando unidades desde API:', error);
 			vehicles.set([]);
 			mapVisibleUnitIds.set([]);
 		} finally {
@@ -230,7 +231,10 @@ export const vehicleActions = {
 								satellites: position.satellites,
 								rxLvl: position.rxLvl,
 								mainBatteryVoltage: position.mainBatteryVoltage,
-								backupBatteryVoltage: position.backupBatteryVoltage
+								backupBatteryVoltage: position.backupBatteryVoltage,
+								deliveryType: position.deliveryType,
+								networkStatus: position.networkStatus,
+								networkType: position.networkType
 							};
 						}
 					}
@@ -240,7 +244,7 @@ export const vehicleActions = {
 				vehicles.set(updatedVehicles);
 			}
 		} catch (error) {
-			console.error('Error cargando posiciones:', error);
+			logger.error('Error cargando posiciones:', error);
 		} finally {
 			loadingPositions.set(false);
 		}
@@ -317,7 +321,10 @@ export const vehicleActions = {
 							satellites: position.satellites,
 							rxLvl: position.rxLvl,
 							mainBatteryVoltage: position.mainBatteryVoltage,
-							backupBatteryVoltage: position.backupBatteryVoltage
+							backupBatteryVoltage: position.backupBatteryVoltage,
+							deliveryType: position.deliveryType,
+							networkStatus: position.networkStatus,
+							networkType: position.networkType
 						};
 					}
 					return vehicle;
@@ -326,7 +333,7 @@ export const vehicleActions = {
 
 			return position;
 		} catch (error) {
-			console.error(`Error actualizando posición para ${deviceId}:`, error);
+			logger.error(`Error actualizando posición para ${deviceId}:`, error);
 			throw error;
 		}
 	},
