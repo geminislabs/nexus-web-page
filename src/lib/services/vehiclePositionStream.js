@@ -1,9 +1,11 @@
 import { logger } from '$lib/utils/logger.js';
 import { authToken } from '$lib/stores/auth.js';
+import { getDataToken, WS_TOKEN_PROTOCOL } from './dataToken.js';
 /**
  * Cliente WebSocket para posiciones en vivo (siscom-api /api/v1/stream).
  * La base WS se deriva de VITE_COMM_API_URL (http→ws, https→wss), igual que positionService.
- * Requiere sesión local; el backend debe exigir auth en /stream (pendiente en API).
+ * La credencial del plano de datos viaja como subprotocolo del handshake, nunca
+ * en la query: siscom-api valida ANTES de aceptar la conexión.
  */
 
 const STREAM_PATH = '/api/v1/stream';
@@ -154,14 +156,29 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 
 	const url = `${base}${STREAM_PATH}?device_ids=${encodeURIComponent(unique.join(','))}`;
 
-	const connect = () => {
+	const connect = async () => {
 		if (stopped) return;
 		if (!authToken.getToken?.()) {
 			stopped = true;
 			return;
 		}
+
+		let dataToken;
 		try {
-			ws = new WebSocket(url);
+			dataToken = await getDataToken();
+		} catch (err) {
+			logger.error({
+				code: 'WS_STREAM_TOKEN_FAILED',
+				message: 'Sin token de plano de datos para abrir el stream',
+				err
+			});
+			stopped = true;
+			return;
+		}
+		if (stopped) return;
+
+		try {
+			ws = new WebSocket(url, [WS_TOKEN_PROTOCOL, dataToken]);
 		} catch (e) {
 			logger.warn({
 				code: 'WS_STREAM_CONNECT_FAILED',

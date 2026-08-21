@@ -5,6 +5,7 @@
 import { vehicleActions } from '../stores/vehicleStore.js';
 import { authToken } from '../stores/auth.js';
 import { logger } from '$lib/utils/logger.js';
+import { withDataToken, getDataToken, WS_TOKEN_PROTOCOL } from './dataToken.js';
 
 /** Fail-closed: sin VITE_COMM_API_URL no hay llamadas a hosts hardcodeados. */
 const COMM_API_URL = String(import.meta.env?.VITE_COMM_API_URL ?? '')
@@ -21,15 +22,6 @@ function requireCommApiUrl() {
 		throw err;
 	}
 	return COMM_API_URL;
-}
-
-/** @returns {Record<string, string>} */
-function authHeaders() {
-	/** @type {Record<string, string>} */
-	const headers = { Accept: 'application/json' };
-	const token = authToken.getToken?.();
-	if (token) headers.Authorization = `Bearer ${token}`;
-	return headers;
 }
 
 class PositionService {
@@ -59,9 +51,17 @@ class PositionService {
 		const url = new URL('/api/v1/communications/latest', base);
 		deviceIds.forEach((id) => url.searchParams.append('device_ids', String(id)));
 		try {
-			const res = await fetch(url.toString(), { method: 'GET', headers: authHeaders() });
-			if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-			return await res.json();
+			return await withDataToken(
+				(dataToken) =>
+					fetch(url.toString(), {
+						method: 'GET',
+						headers: { Accept: 'application/json', Authorization: `Bearer ${dataToken}` }
+					}),
+				async (res) => {
+					if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+					return res.json();
+				}
+			);
 		} catch (err) {
 			logger.error({
 				code: 'COMM_LATEST_FAILED',
@@ -430,23 +430,37 @@ class PositionService {
 		const deviceIdsParam = deviceIds.map((id) => encodeURIComponent(String(id))).join(',');
 		const baseUrl = this._getWebSocketUrl(base);
 		const sanitizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-		// No poner access_token en query (aparecería en logs/Referer). El backend debe
-		// exigir auth en /stream; el cliente solo abre stream con sesión local válida.
+		// La credencial nunca va en la query: acabaría en los logs de acceso del
+		// ALB y en la cabecera Referer. Viaja como subprotocolo del handshake.
 		const streamUrl = `${sanitizedBaseUrl}/api/v1/stream?device_ids=${deviceIdsParam}`;
 
 		let websocket = null;
 		let reconnectTimer = null;
 		let isClosed = false;
 
-		const connect = () => {
+		const connect = async () => {
 			if (isClosed) return;
 			if (!authToken.getToken?.()) {
 				isClosed = true;
 				return;
 			}
 
+			let dataToken;
 			try {
-				websocket = new WebSocket(streamUrl);
+				dataToken = await getDataToken();
+			} catch (err) {
+				logger.error({
+					code: 'WS_STREAM_TOKEN_FAILED',
+					message: 'Sin token de plano de datos para abrir el stream',
+					err
+				});
+				isClosed = true;
+				return;
+			}
+			if (isClosed) return;
+
+			try {
+				websocket = new WebSocket(streamUrl, [WS_TOKEN_PROTOCOL, dataToken]);
 
 				websocket.onopen = () => {};
 

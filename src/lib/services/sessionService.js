@@ -1,5 +1,6 @@
 import { user, authToken } from '$lib/stores/auth.js';
 import { apiService } from '$lib/services/api.js';
+import { clearDataToken } from '$lib/services/dataToken.js';
 import { logger } from '$lib/utils/logger.js';
 
 /** @param {Record<string, unknown> | null | undefined} apiUser */
@@ -30,6 +31,9 @@ export function persistLoginResponse(response) {
 export function clearLocalSession() {
 	user.logout();
 	authToken.clearToken();
+	// La credencial del plano de datos deriva de la sesión: si la sesión muere,
+	// muere con ella. Vive solo en memoria, así que basta con soltarla.
+	clearDataToken();
 }
 
 export async function logoutSession() {
