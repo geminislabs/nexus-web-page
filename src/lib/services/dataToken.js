@@ -62,6 +62,24 @@ export class DataPlaneForbiddenError extends Error {
 }
 
 /**
+ * El periodo pedido cae entero fuera de la ventana concedida. **No es un
+ * error de credencial y no se reintenta**: reemitir daría exactamente la misma
+ * respuesta.
+ *
+ * Es distinto de una serie vacía a propósito. Devolver `[]` afirmaría que no
+ * hubo telemetría en ese periodo, cuando la hubo y simplemente no es visible.
+ * Los tres estados quedan separados: 403 alcance rechazado (se reintenta), 404
+ * nada visible en ese rango (no se reintenta), 200 con lista vacía sin datos.
+ */
+export class DataPlaneOutOfWindowError extends Error {
+	/** @param {string} [message] */
+	constructor(message = 'El periodo solicitado queda fuera del acceso concedido') {
+		super(message);
+		this.name = 'DataPlaneOutOfWindowError';
+	}
+}
+
+/**
  * Vida útil declarada por el emisor. El TTL es adaptativo —la admin-api lo
  * recorta al siguiente límite de ventana horaria—, así que se lee de la
  * respuesta y no se asume constante.
@@ -249,6 +267,10 @@ export async function withDataToken(run, parse) {
 
 	if (response.status === 401 || response.status === 403) {
 		throw new DataPlaneForbiddenError();
+	}
+
+	if (response.status === 404) {
+		throw new DataPlaneOutOfWindowError();
 	}
 
 	return parse(response);

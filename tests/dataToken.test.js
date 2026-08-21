@@ -140,6 +140,20 @@ describe('dataToken', () => {
 		expect(await getDataToken()).toBe('token-1');
 	});
 
+	// 404 no se reintenta: reemitir daría la misma respuesta. Y no puede
+	// colapsarse con la serie vacía, que afirmaría que no hubo telemetría.
+	it('no reintenta ante un 404 y lo distingue del rechazo de alcance', async () => {
+		requestMock.mockImplementation(issued());
+		const { withDataToken, DataPlaneOutOfWindowError } = await load();
+
+		const run = vi.fn(async () => new Response('', { status: 404 }));
+
+		await expect(withDataToken(run, async (r) => r.text())).rejects.toBeInstanceOf(
+			DataPlaneOutOfWindowError
+		);
+		expect(run).toHaveBeenCalledTimes(1);
+	});
+
 	it('clearDataToken obliga a volver a emitir', async () => {
 		requestMock.mockImplementation(issued());
 		const { getDataToken, clearDataToken } = await load();

@@ -72,7 +72,12 @@ function mapUnitToVehicle(unit) {
 		name: unit?.name || 'Unidad',
 		description: unit?.description || '',
 		driver: '',
+		// deviceId es el IMEI y solo se muestra. deviceRef es la referencia opaca
+		// y es la ÚNICA que viaja por el cable: el IMEI no debe salir del cliente
+		// ni aparecer en query strings, que acaban en los logs del ALB.
 		deviceId: unit?.device_id || unit?.deviceId || null,
+		deviceRef: unit?.device_ref || unit?.deviceRef || null,
+		unitRef: unit?.unit_ref || unit?.unitRef || null,
 		status: unit?.deleted_at ? 'inactive' : 'active',
 		location: unit?.description || '',
 		lastUpdate: createdAt,
@@ -96,6 +101,8 @@ function mergeVehicleDetail(existing, mapped) {
 		...existing,
 		...mapped,
 		deviceId: mapped.deviceId || existing.deviceId || null,
+		deviceRef: mapped.deviceRef || existing.deviceRef || null,
+		unitRef: mapped.unitRef || existing.unitRef || null,
 		latitude: mapped.latitude ?? existing.latitude,
 		longitude: mapped.longitude ?? existing.longitude,
 		speed: mapped.speed ?? existing.speed,
@@ -196,8 +203,8 @@ export const vehicleActions = {
 		try {
 			const currentVehicles = get(vehicles);
 
-			const vehiclesWithDeviceId = currentVehicles.filter((v) => v.deviceId);
-			const deviceIds = vehiclesWithDeviceId.map((v) => v.deviceId);
+			const vehiclesWithDeviceId = currentVehicles.filter((v) => v.deviceRef);
+			const deviceIds = vehiclesWithDeviceId.map((v) => v.deviceRef);
 
 			if (deviceIds.length > 0) {
 				const positions = await positionService.getMultiplePositions(deviceIds);
@@ -213,8 +220,8 @@ export const vehicleActions = {
 
 				// Actualizar vehículos con datos de posición
 				const updatedVehicles = currentVehicles.map((vehicle) => {
-					if (vehicle.deviceId) {
-						const position = positionMap.get(vehicle.deviceId);
+					if (vehicle.deviceRef) {
+						const position = positionMap.get(vehicle.deviceRef);
 						if (position) {
 							return {
 								...vehicle,
@@ -265,7 +272,7 @@ export const vehicleActions = {
 		let updatedVehicle = null;
 		vehicles.update((vehicleList) =>
 			vehicleList.map((vehicle) => {
-				if (String(vehicle.deviceId ?? '') !== did) return vehicle;
+				if (String(vehicle.deviceRef ?? '') !== did) return vehicle;
 				const now = new Date().toISOString();
 				updatedVehicle = {
 					...vehicle,
@@ -305,7 +312,7 @@ export const vehicleActions = {
 			// Actualizar el vehículo en la lista
 			vehicles.update((vehicleList) => {
 				return vehicleList.map((vehicle) => {
-					if (vehicle.deviceId === deviceId) {
+					if (vehicle.deviceRef === deviceId) {
 						return {
 							...vehicle,
 							latitude: position.latitude,

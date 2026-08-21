@@ -97,7 +97,8 @@ export const telemetryActions = {
 			const unitsMeta = unitIds
 				.map((unitId) => {
 					const unit = allVehicles.find((v) => v.id === unitId);
-					return unit?.deviceId ? { id: unitId, name: unit.name, deviceId: unit.deviceId } : null;
+					// La telemetría de la admin-api acepta la referencia opaca en el path.
+					return unit?.deviceRef ? { id: unitId, name: unit.name, deviceId: unit.deviceRef } : null;
 				})
 				.filter(Boolean);
 
