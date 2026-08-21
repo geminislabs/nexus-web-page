@@ -10,7 +10,8 @@ vi.mock('../src/lib/services/api.js', () => ({
 /** @param {number} [expiresIn] */
 function issued(expiresIn = 600) {
 	let n = 0;
-	return () => Promise.resolve({ data_token: `token-${++n}`, expires_in: expiresIn });
+	return () =>
+		Promise.resolve({ token: `token-${++n}`, expires_in: expiresIn, token_type: 'Bearer' });
 }
 
 async function load() {
@@ -48,7 +49,7 @@ describe('dataToken', () => {
 		const { getDataToken } = await load();
 
 		const all = Promise.all([getDataToken(), getDataToken(), getDataToken()]);
-		release({ data_token: 'token-1', expires_in: 600 });
+		release({ token: 'token-1', expires_in: 600 });
 
 		expect(await all).toEqual(['token-1', 'token-1', 'token-1']);
 		expect(requestMock).toHaveBeenCalledTimes(1);
@@ -101,7 +102,10 @@ describe('dataToken', () => {
 		requestMock.mockImplementation(issued());
 		const { primeDataToken, getDataToken } = await load();
 
-		primeDataToken({ data_token: 'del-login', data_token_expires_in: 600 });
+		primeDataToken({
+			expires_in: 3600,
+			data_token: { token: 'del-login', expires_in: 600, token_type: 'Bearer' }
+		});
 
 		expect(await getDataToken()).toBe('del-login');
 		expect(requestMock).not.toHaveBeenCalled();
@@ -119,15 +123,19 @@ describe('dataToken', () => {
 		expect(requestMock).toHaveBeenCalledTimes(1);
 	});
 
-	// El expires_in del login es el de la sesión (una hora), no el del data
-	// token. Tomarlo daría por fresca una credencial caducada.
-	it('no toma la vida de la sesión como vida del data token', async () => {
+	// Hay dos expires_in en la respuesta de login: el de fuera es el de la
+	// sesión (una hora) y el de dentro el del data token (minutos). Tomar el de
+	// fuera daría por fresca una credencial caducada hace rato.
+	it('usa la vida del data token, no la de la sesión que lo envuelve', async () => {
 		requestMock.mockImplementation(issued());
 		const { primeDataToken, getDataToken } = await load();
 
-		primeDataToken({ data_token: 'del-login', expires_in: 3600 });
+		primeDataToken({
+			expires_in: 3600,
+			data_token: { token: 'del-login', expires_in: 600 }
+		});
 
-		// Pasados 9 minutos, el techo de 10 del contrato ya obliga a refrescar.
+		// A los 9 minutos, la credencial sembrada ya entró en su último 20%.
 		vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 9 * 60_000);
 		expect(await getDataToken()).toBe('token-1');
 	});

@@ -80,6 +80,31 @@ function readExpiry(payload) {
 }
 
 /**
+ * La credencial tiene la **misma forma** en los dos caminos que la producen:
+ * anidada bajo `data_token` en `/auth/login`, y como cuerpo entero en
+ * `POST /auth/data-token`. Un solo parser para ambos — si se aplanara uno de
+ * los dos, harían falta dos y se desincronizarían.
+ *
+ * @param {any} payload
+ * @returns {DataTokenEntry | null}
+ */
+function parseCredential(payload) {
+	const token = payload?.token ?? payload?.data_token ?? payload?.access_token;
+	if (typeof token !== 'string' || !token) return null;
+
+	const expiresAtMs = readExpiry(payload);
+	const lifetime = Math.max(expiresAtMs - Date.now(), 0);
+
+	return {
+		token,
+		expiresAtMs,
+		// Margen proporcional: con un TTL adaptativo de 45 s un margen fijo se
+		// comería casi toda la vida útil.
+		refreshAtMs: Date.now() + lifetime * REFRESH_AT_FRACTION
+	};
+}
+
+/**
  * @param {DataTokenEntry | null} entry
  * @returns {boolean}
  */
@@ -107,21 +132,13 @@ function isUsable(entry) {
  * @returns {Promise<DataTokenEntry>}
  */
 async function issue() {
-	const payload = await apiService.request('/auth/data-token', { method: 'POST' });
-	const token = payload?.data_token ?? payload?.token ?? payload?.access_token;
+	const entry = parseCredential(await apiService.request('/auth/data-token', { method: 'POST' }));
 
-	if (typeof token !== 'string' || !token) {
+	if (!entry) {
 		throw new Error('La admin-api no devolvió un token de plano de datos');
 	}
 
-	const expiresAtMs = readExpiry(payload);
-	const lifetime = Math.max(expiresAtMs - Date.now(), 0);
-
-	return {
-		token,
-		expiresAtMs,
-		refreshAtMs: Date.now() + lifetime * REFRESH_AT_FRACTION
-	};
+	return entry;
 }
 
 /**
@@ -175,28 +192,17 @@ export async function getDataToken({ force = false } = {}) {
  * igual. En ese caso no se siembra nada y el token se pedirá al endpoint
  * dedicado, que es la autoridad.
  *
- * Ojo con la vida útil: el `expires_in` de `/auth/login` es el de la **sesión**
- * —una hora—, no el del data token, que vive minutos. Leerlo de ahí daría por
- * fresca una credencial caducada hace rato y todas las peticiones se irían al
- * camino de reintento. Se usa el campo dedicado, y si no viene, el techo
- * conservador del contrato.
+ * Ojo con la vida útil, porque hay dos `expires_in` en la misma respuesta: el
+ * de primer nivel es el de la **sesión** —una hora—; el que vale está
+ * **dentro** de `data_token` y son minutos, ya con el TTL adaptativo aplicado.
+ * Tomar el de fuera daría por fresca una credencial caducada hace rato y
+ * mandaría cada petición al camino de reintento.
  *
- * @param {{ data_token?: string | null, data_token_expires_in?: number, data_token_expires_at?: string } | null | undefined} payload
+ * @param {{ data_token?: { token?: string, expires_in?: number, expires_at?: string } | null } | null | undefined} loginResponse
  */
-export function primeDataToken(payload) {
-	const token = payload?.data_token;
-	if (typeof token !== 'string' || !token) return;
-
-	const expiresAtMs = readExpiry({
-		expires_in: payload?.data_token_expires_in,
-		expires_at: payload?.data_token_expires_at
-	});
-	const lifetime = Math.max(expiresAtMs - Date.now(), 0);
-	cached = {
-		token,
-		expiresAtMs,
-		refreshAtMs: Date.now() + lifetime * REFRESH_AT_FRACTION
-	};
+export function primeDataToken(loginResponse) {
+	const entry = parseCredential(loginResponse?.data_token);
+	if (entry) cached = entry;
 }
 
 /** Descarta la credencial en memoria. Llamar al cerrar sesión. */
