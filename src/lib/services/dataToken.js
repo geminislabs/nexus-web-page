@@ -36,8 +36,13 @@ const FALLBACK_TTL_MS = 600_000;
 /**
  * Marcador de subprotocolo del WebSocket. El servidor hace eco de ESTE valor,
  * nunca del token, para que la credencial no acabe en los logs del proxy.
+ *
+ * Nombra el protocolo y no a quien lo habla: son tres los frontends que hablan
+ * con siscom-api, así que un marcador llamado «nexus» obligaría a gac-web a
+ * anunciarse con el nombre de otro cliente. Lleva versión para poder negociar
+ * el día que cambie el formato.
  */
-export const WS_TOKEN_PROTOCOL = 'nexus.data-token';
+export const WS_TOKEN_PROTOCOL = 'siscom.data-token.v1';
 
 /** @typedef {{ token: string, expiresAtMs: number, refreshAtMs: number }} DataTokenEntry */
 
@@ -89,7 +94,10 @@ function readExpiry(payload) {
  * @returns {DataTokenEntry | null}
  */
 function parseCredential(payload) {
-	const token = payload?.token ?? payload?.data_token ?? payload?.access_token;
+	// Una sola forma, sin alternativas toleradas: aceptar varios nombres para el
+	// mismo campo esconde un renombrado del emisor hasta que algo falla en
+	// producción por un motivo que parece no tener relación.
+	const token = payload?.token;
 	if (typeof token !== 'string' || !token) return null;
 
 	const expiresAtMs = readExpiry(payload);
