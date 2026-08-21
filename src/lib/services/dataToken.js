@@ -164,6 +164,41 @@ export async function getDataToken({ force = false } = {}) {
 	return (await inFlight).token;
 }
 
+/**
+ * Siembra la credencial con la que `/auth/login` adjunta como conveniencia, y
+ * ahorra un round trip en el arranque en frío — justo cuando el mapa tiene que
+ * pintar.
+ *
+ * La admin-api la adjunta en *best effort*: si el plano de datos no está
+ * configurado o Valkey no responde, viene a `null` y el login sigue siendo
+ * válido. **Eso es funcionamiento normal, no un error**: sin mapa se entra
+ * igual. En ese caso no se siembra nada y el token se pedirá al endpoint
+ * dedicado, que es la autoridad.
+ *
+ * Ojo con la vida útil: el `expires_in` de `/auth/login` es el de la **sesión**
+ * —una hora—, no el del data token, que vive minutos. Leerlo de ahí daría por
+ * fresca una credencial caducada hace rato y todas las peticiones se irían al
+ * camino de reintento. Se usa el campo dedicado, y si no viene, el techo
+ * conservador del contrato.
+ *
+ * @param {{ data_token?: string | null, data_token_expires_in?: number, data_token_expires_at?: string } | null | undefined} payload
+ */
+export function primeDataToken(payload) {
+	const token = payload?.data_token;
+	if (typeof token !== 'string' || !token) return;
+
+	const expiresAtMs = readExpiry({
+		expires_in: payload?.data_token_expires_in,
+		expires_at: payload?.data_token_expires_at
+	});
+	const lifetime = Math.max(expiresAtMs - Date.now(), 0);
+	cached = {
+		token,
+		expiresAtMs,
+		refreshAtMs: Date.now() + lifetime * REFRESH_AT_FRACTION
+	};
+}
+
 /** Descarta la credencial en memoria. Llamar al cerrar sesión. */
 export function clearDataToken() {
 	cached = null;

@@ -97,6 +97,41 @@ describe('dataToken', () => {
 		expect(run).toHaveBeenCalledTimes(2);
 	});
 
+	it('siembra la credencial que adjunta el login y evita el round trip', async () => {
+		requestMock.mockImplementation(issued());
+		const { primeDataToken, getDataToken } = await load();
+
+		primeDataToken({ data_token: 'del-login', data_token_expires_in: 600 });
+
+		expect(await getDataToken()).toBe('del-login');
+		expect(requestMock).not.toHaveBeenCalled();
+	});
+
+	// El plano de datos no puede impedir iniciar sesión: sin Valkey se entra y se
+	// ve la aplicación sin mapa. `data_token: null` es normal, no un error.
+	it('ignora un login sin data_token y pide el token al endpoint dedicado', async () => {
+		requestMock.mockImplementation(issued());
+		const { primeDataToken, getDataToken } = await load();
+
+		primeDataToken({ data_token: null });
+
+		expect(await getDataToken()).toBe('token-1');
+		expect(requestMock).toHaveBeenCalledTimes(1);
+	});
+
+	// El expires_in del login es el de la sesión (una hora), no el del data
+	// token. Tomarlo daría por fresca una credencial caducada.
+	it('no toma la vida de la sesión como vida del data token', async () => {
+		requestMock.mockImplementation(issued());
+		const { primeDataToken, getDataToken } = await load();
+
+		primeDataToken({ data_token: 'del-login', expires_in: 3600 });
+
+		// Pasados 9 minutos, el techo de 10 del contrato ya obliga a refrescar.
+		vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 9 * 60_000);
+		expect(await getDataToken()).toBe('token-1');
+	});
+
 	it('clearDataToken obliga a volver a emitir', async () => {
 		requestMock.mockImplementation(issued());
 		const { getDataToken, clearDataToken } = await load();
