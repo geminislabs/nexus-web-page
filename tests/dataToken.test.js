@@ -173,3 +173,24 @@ describe('dataToken', () => {
 		expect(await getDataToken()).toBe('token-1');
 	});
 });
+
+describe('dataPlaneRef', () => {
+	// El respaldo existe para que este cliente pueda desplegarse antes que la
+	// admin-api que expone device_ref: sin él, los vehículos se filtrarían por
+	// falta de referencia y el mapa quedaría vacío en silencio.
+	it('prefiere la referencia opaca cuando existe', async () => {
+		const { dataPlaneRef } = await import('../src/lib/stores/vehicleStore.js');
+		expect(dataPlaneRef({ deviceRef: 'ref-1', deviceId: '864537040123456' })).toBe('ref-1');
+	});
+
+	it('cae al IMEI mientras la admin-api no exponga device_ref', async () => {
+		const { dataPlaneRef } = await import('../src/lib/stores/vehicleStore.js');
+		expect(dataPlaneRef({ deviceRef: null, deviceId: '864537040123456' })).toBe('864537040123456');
+	});
+
+	it('devuelve null si no hay ninguno', async () => {
+		const { dataPlaneRef } = await import('../src/lib/stores/vehicleStore.js');
+		expect(dataPlaneRef({})).toBeNull();
+		expect(dataPlaneRef(null)).toBeNull();
+	});
+});

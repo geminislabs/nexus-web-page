@@ -6,6 +6,26 @@ import { colorSlugToHex, formatLastUpdate } from '$lib/utils/vehicleUtils.js';
 import { logger } from '$lib/utils/logger.js';
 
 // Estado principal de vehículos
+/**
+ * Identificador con el que se habla con el plano de datos.
+ *
+ * `deviceRef` es la referencia opaca y es lo correcto. El respaldo al IMEI
+ * existe solo para que este cliente pueda desplegarse **antes** que la
+ * admin-api que expone `device_ref`: sin él, los vehículos se filtrarían por
+ * falta de referencia y el mapa quedaría vacío en silencio, sin error.
+ *
+ * siscom-api acepta ambos espacios y responde en el que se le pregunta, así
+ * que la transición es transparente. **Retirar este respaldo** cuando las tres
+ * APIs expongan `device_ref` en producción — mientras exista, el IMEI puede
+ * seguir viajando en la query string.
+ *
+ * @param {{ deviceRef?: string | null, deviceId?: string | null }} vehicle
+ * @returns {string | null}
+ */
+export function dataPlaneRef(vehicle) {
+	return vehicle?.deviceRef || vehicle?.deviceId || null;
+}
+
 export const vehicles = writable([]);
 export const selectedVehicles = writable([]);
 /** IDs de unidades visibles en el mapa (marcadores). */
@@ -203,8 +223,8 @@ export const vehicleActions = {
 		try {
 			const currentVehicles = get(vehicles);
 
-			const vehiclesWithDeviceId = currentVehicles.filter((v) => v.deviceRef);
-			const deviceIds = vehiclesWithDeviceId.map((v) => v.deviceRef);
+			const vehiclesWithDeviceId = currentVehicles.filter((v) => dataPlaneRef(v));
+			const deviceIds = vehiclesWithDeviceId.map((v) => dataPlaneRef(v));
 
 			if (deviceIds.length > 0) {
 				const positions = await positionService.getMultiplePositions(deviceIds);
@@ -220,8 +240,9 @@ export const vehicleActions = {
 
 				// Actualizar vehículos con datos de posición
 				const updatedVehicles = currentVehicles.map((vehicle) => {
-					if (vehicle.deviceRef) {
-						const position = positionMap.get(vehicle.deviceRef);
+					const ref = dataPlaneRef(vehicle);
+					if (ref) {
+						const position = positionMap.get(ref);
 						if (position) {
 							return {
 								...vehicle,
@@ -272,7 +293,7 @@ export const vehicleActions = {
 		let updatedVehicle = null;
 		vehicles.update((vehicleList) =>
 			vehicleList.map((vehicle) => {
-				if (String(vehicle.deviceRef ?? '') !== did) return vehicle;
+				if (String(dataPlaneRef(vehicle) ?? '') !== did) return vehicle;
 				const now = new Date().toISOString();
 				updatedVehicle = {
 					...vehicle,
@@ -312,7 +333,7 @@ export const vehicleActions = {
 			// Actualizar el vehículo en la lista
 			vehicles.update((vehicleList) => {
 				return vehicleList.map((vehicle) => {
-					if (vehicle.deviceRef === deviceId) {
+					if (dataPlaneRef(vehicle) === deviceId) {
 						return {
 							...vehicle,
 							latitude: position.latitude,
