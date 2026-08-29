@@ -1,5 +1,5 @@
 # Usar imagen base de Node.js
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 
 # Establecer directorio de trabajo
 WORKDIR /app
@@ -42,7 +42,7 @@ RUN npm run build
 RUN npm ci --only=production --ignore-scripts
 
 # Etapa de producción
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 
 # Instalar dumb-init para manejo de señales
 RUN apk add --no-cache dumb-init
