@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added a `nanoid` override (`>=3.3.17`) for GHSA-2v37-7h3g-55p8. The advisory was published after the last green build and broke CI on `develop` in both the `quality` (npm audit) and `security` (OSV) jobs. It reaches the tree through `postcss`
 - Raised the `@sveltejs/kit` floor in `package.json` from `^2.22.0` to `^2.70.2`. The fix for GHSA-29g2-3rmr-qm68 lived only in the lockfile, so any `npm install` could resolve back to a vulnerable 2.x and silently undo it. Production was never exposed — the Dockerfile uses `npm ci` — but local environments were
+- Bumped `fast-uri` from 4.1.2 to 4.1.4 for GHSA-5jgf-p345-68v8, GHSA-f65p-4m7j-42xc, GHSA-fph4-wmhf-6fwf and GHSA-jqff-g426-hqxp (host confusion and SSRF). Same pattern as the `nanoid` entry above: the advisories were published after the last green build, so CI went red on `develop` without anyone touching the repo. It is a dev dependency and never reached the served bundle
 
 ### Added
 
