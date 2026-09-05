@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- Credencial dedicada para el plano de datos (`src/lib/services/dataToken.js`). siscom-api deja de recibir el token de sesión de Cognito —que lleva identidad de usuario y sirve para toda la admin-api— y pasa a recibir un PASETO v4.public cuyo contenido es solo `{ jti, scope_ref, aud, iat, nbf, exp }`. El alcance vive en Valkey, así que el plano de datos autoriza sin poder saber de quién es la flota
+- Los WebSockets pasan la credencial por subprotocolo del handshake (`siscom.data-token.v1`) en vez de la query string: en v4.public el payload va en claro y una query acaba en los logs del ALB y en la cabecera `Referer`
+- El IMEI deja de viajar por el cable. `deviceRef` opaco sustituye a `device_id` en query strings y paths; `deviceId` se conserva solo para mostrar en pantalla
+- Tres estados diferenciados del plano de datos: 403 alcance rechazado (se reemite y reintenta una vez), 404 nada visible en el rango pedido (no se reintenta), 200 con lista vacía sin datos. Una lista vacía ante un rango sin permiso afirmaría que no hubo telemetría, cuando la hubo y no es visible
+- `eventService` deja de caer a un `http://localhost:8000` cableado si falta `VITE_COMM_API_URL`, igual que ya hacía `positionService`
+
 - Added a `nanoid` override (`>=3.3.17`) for GHSA-2v37-7h3g-55p8. The advisory was published after the last green build and broke CI on `develop` in both the `quality` (npm audit) and `security` (OSV) jobs. It reaches the tree through `postcss`
 - Raised the `@sveltejs/kit` floor in `package.json` from `^2.22.0` to `^2.70.2`. The fix for GHSA-29g2-3rmr-qm68 lived only in the lockfile, so any `npm install` could resolve back to a vulnerable 2.x and silently undo it. Production was never exposed — the Dockerfile uses `npm ci` — but local environments were
 

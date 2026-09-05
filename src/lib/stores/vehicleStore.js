@@ -6,6 +6,26 @@ import { colorSlugToHex, formatLastUpdate } from '$lib/utils/vehicleUtils.js';
 import { logger } from '$lib/utils/logger.js';
 
 // Estado principal de vehículos
+/**
+ * Identificador con el que se habla con el plano de datos.
+ *
+ * `deviceRef` es la referencia opaca y es lo correcto. El respaldo al IMEI
+ * existe solo para que este cliente pueda desplegarse **antes** que la
+ * admin-api que expone `device_ref`: sin él, los vehículos se filtrarían por
+ * falta de referencia y el mapa quedaría vacío en silencio, sin error.
+ *
+ * siscom-api acepta ambos espacios y responde en el que se le pregunta, así
+ * que la transición es transparente. **Retirar este respaldo** cuando las tres
+ * APIs expongan `device_ref` en producción — mientras exista, el IMEI puede
+ * seguir viajando en la query string.
+ *
+ * @param {{ deviceRef?: string | null, deviceId?: string | null }} vehicle
+ * @returns {string | null}
+ */
+export function dataPlaneRef(vehicle) {
+	return vehicle?.deviceRef || vehicle?.deviceId || null;
+}
+
 export const vehicles = writable([]);
 export const selectedVehicles = writable([]);
 /** IDs de unidades visibles en el mapa (marcadores). */
@@ -72,7 +92,12 @@ function mapUnitToVehicle(unit) {
 		name: unit?.name || 'Unidad',
 		description: unit?.description || '',
 		driver: '',
+		// deviceId es el IMEI y solo se muestra. deviceRef es la referencia opaca
+		// y es la ÚNICA que viaja por el cable: el IMEI no debe salir del cliente
+		// ni aparecer en query strings, que acaban en los logs del ALB.
 		deviceId: unit?.device_id || unit?.deviceId || null,
+		deviceRef: unit?.device_ref || unit?.deviceRef || null,
+		unitRef: unit?.unit_ref || unit?.unitRef || null,
 		status: unit?.deleted_at ? 'inactive' : 'active',
 		location: unit?.description || '',
 		lastUpdate: createdAt,
@@ -96,6 +121,8 @@ function mergeVehicleDetail(existing, mapped) {
 		...existing,
 		...mapped,
 		deviceId: mapped.deviceId || existing.deviceId || null,
+		deviceRef: mapped.deviceRef || existing.deviceRef || null,
+		unitRef: mapped.unitRef || existing.unitRef || null,
 		latitude: mapped.latitude ?? existing.latitude,
 		longitude: mapped.longitude ?? existing.longitude,
 		speed: mapped.speed ?? existing.speed,
@@ -196,8 +223,8 @@ export const vehicleActions = {
 		try {
 			const currentVehicles = get(vehicles);
 
-			const vehiclesWithDeviceId = currentVehicles.filter((v) => v.deviceId);
-			const deviceIds = vehiclesWithDeviceId.map((v) => v.deviceId);
+			const vehiclesWithDeviceId = currentVehicles.filter((v) => dataPlaneRef(v));
+			const deviceIds = vehiclesWithDeviceId.map((v) => dataPlaneRef(v));
 
 			if (deviceIds.length > 0) {
 				const positions = await positionService.getMultiplePositions(deviceIds);
@@ -213,8 +240,9 @@ export const vehicleActions = {
 
 				// Actualizar vehículos con datos de posición
 				const updatedVehicles = currentVehicles.map((vehicle) => {
-					if (vehicle.deviceId) {
-						const position = positionMap.get(vehicle.deviceId);
+					const ref = dataPlaneRef(vehicle);
+					if (ref) {
+						const position = positionMap.get(ref);
 						if (position) {
 							return {
 								...vehicle,
@@ -265,7 +293,7 @@ export const vehicleActions = {
 		let updatedVehicle = null;
 		vehicles.update((vehicleList) =>
 			vehicleList.map((vehicle) => {
-				if (String(vehicle.deviceId ?? '') !== did) return vehicle;
+				if (String(dataPlaneRef(vehicle) ?? '') !== did) return vehicle;
 				const now = new Date().toISOString();
 				updatedVehicle = {
 					...vehicle,
@@ -305,7 +333,7 @@ export const vehicleActions = {
 			// Actualizar el vehículo en la lista
 			vehicles.update((vehicleList) => {
 				return vehicleList.map((vehicle) => {
-					if (vehicle.deviceId === deviceId) {
+					if (dataPlaneRef(vehicle) === deviceId) {
 						return {
 							...vehicle,
 							latitude: position.latitude,

@@ -14,7 +14,8 @@
 		vehicles,
 		vehicleActions,
 		activeUnitId,
-		mapVisibleUnitIds
+		mapVisibleUnitIds,
+		dataPlaneRef
 	} from '$lib/stores/vehicleStore.js';
 	import {
 		showH3Grid,
@@ -217,7 +218,7 @@
 				}
 				const extra = extraStreamDeviceIds();
 				const list = get(vehicles);
-				const fromFleet = list.map((v) => v.deviceId).filter(Boolean);
+				const fromFleet = list.map((v) => dataPlaneRef(v)).filter(Boolean);
 				const ids = [...new Set([...fromFleet.map(String), ...extra])];
 				const key = ids.slice().sort().join('\0');
 				if (key === lastPositionStreamKey) return;

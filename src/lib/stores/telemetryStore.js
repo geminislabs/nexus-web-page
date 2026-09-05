@@ -1,6 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
 import { apiService } from '$lib/services/api.js';
-import { vehicles } from '$lib/stores/vehicleStore.js';
+import { vehicles, dataPlaneRef } from '$lib/stores/vehicleStore.js';
 import {
 	TELEMETRY_METRICS,
 	processTelemetryResults,
@@ -97,7 +97,9 @@ export const telemetryActions = {
 			const unitsMeta = unitIds
 				.map((unitId) => {
 					const unit = allVehicles.find((v) => v.id === unitId);
-					return unit?.deviceId ? { id: unitId, name: unit.name, deviceId: unit.deviceId } : null;
+					// La telemetría de la admin-api acepta la referencia opaca en el path.
+					const ref = dataPlaneRef(unit);
+					return ref ? { id: unitId, name: unit.name, deviceId: ref } : null;
 				})
 				.filter(Boolean);
 

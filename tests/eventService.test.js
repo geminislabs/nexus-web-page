@@ -2,6 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('$app/environment', () => ({ browser: true }));
 
+// eventService ya no manda el token de sesión: siscom-api verifica una
+// credencial de plano de datos. El ciclo de vida de esa credencial se prueba
+// aparte, en dataToken.test.js; aquí solo interesa que llegue a la cabecera.
+vi.mock('../src/lib/services/dataToken.js', () => ({
+	withDataToken: (/** @type {any} */ run, /** @type {any} */ parse) => run('data-token').then(parse)
+}));
+
 describe('eventService', () => {
 	beforeEach(() => {
 		vi.resetModules();
@@ -37,7 +44,7 @@ describe('eventService', () => {
 			eventType: 'ignition_on',
 			id: 's1_1_ignition_on'
 		});
-		expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer access-token');
+		expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer data-token');
 	});
 
 	it('getEventsForUnit throws on HTTP error', async () => {
