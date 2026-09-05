@@ -1,5 +1,6 @@
 import { user, authToken } from '$lib/stores/auth.js';
 import { apiService } from '$lib/services/api.js';
+import { clearDataToken, primeDataToken } from '$lib/services/dataToken.js';
 import { logger } from '$lib/utils/logger.js';
 
 /** @param {Record<string, unknown> | null | undefined} apiUser */
@@ -16,7 +17,7 @@ export function normalizeUser(apiUser) {
 	};
 }
 
-/** @param {{ access_token?: string, refresh_token?: string, id_token?: string, expires_in?: number, user?: Record<string, unknown> }} response */
+/** @param {{ access_token?: string, refresh_token?: string, id_token?: string, expires_in?: number, data_token?: string | null, user?: Record<string, unknown> }} response */
 export function persistLoginResponse(response) {
 	authToken.setSession({
 		access_token: response.access_token,
@@ -24,12 +25,18 @@ export function persistLoginResponse(response) {
 		id_token: response.id_token,
 		expires_in: response.expires_in
 	});
+	// Conveniencia: si el login trae la credencial del plano de datos, el mapa
+	// pinta sin un round trip extra. Si no la trae, se pide al endpoint dedicado.
+	primeDataToken(response);
 	user.login(normalizeUser(response.user));
 }
 
 export function clearLocalSession() {
 	user.logout();
 	authToken.clearToken();
+	// La credencial del plano de datos deriva de la sesión: si la sesión muere,
+	// muere con ella. Vive solo en memoria, así que basta con soltarla.
+	clearDataToken();
 }
 
 export async function logoutSession() {
