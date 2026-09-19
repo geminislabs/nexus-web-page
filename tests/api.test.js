@@ -98,6 +98,69 @@ describe('apiService', () => {
 		expect(init.headers.Authorization).toBe('Bearer test-access-token');
 	});
 
+	it('changePassword adopta la sesión nueva que devuelve el backend', async () => {
+		// Cambiar la contraseña cierra todas las sesiones, incluida ésta. El
+		// backend manda una nueva para no echar a quien acaba de hacer lo
+		// correcto; si el cliente no la guardara, el siguiente 401 lo mandaría al
+		// login — una regresión disfrazada de medida de seguridad.
+		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
+		fetchMock.mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					message: 'Contraseña actualizada exitosamente.',
+					access_token: 'nuevo-access',
+					refresh_token: 'nuevo-refresh',
+					expires_in: 3600
+				}),
+				{ status: 200, headers: { 'content-type': 'application/json' } }
+			)
+		);
+
+		const setSession = vi.fn();
+		vi.doMock('../src/lib/stores/auth.js', () => ({
+			authToken: { getToken: () => 'tok', setSession },
+			user: { subscribe: vi.fn() }
+		}));
+
+		const { apiService } = await import('../src/lib/services/api.js');
+		await apiService.changePassword({ old_password: 'vieja', new_password: 'Nueva-1!' });
+
+		expect(setSession).toHaveBeenCalledWith(
+			expect.objectContaining({ access_token: 'nuevo-access' })
+		);
+	});
+
+	it('changePassword sin sesión nueva no rompe nada', async () => {
+		// La reautenticación del backend es best effort: si falla, la respuesta
+		// llega sólo con el mensaje. `setSession` está guardado campo a campo, así
+		// que no pisa nada — y el siguiente 401 lleva al login, que es lo correcto
+		// porque esta sesión ya fue revocada.
+		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
+		fetchMock.mockResolvedValue(
+			new Response(JSON.stringify({ message: 'Contraseña actualizada exitosamente.' }), {
+				status: 200,
+				headers: { 'content-type': 'application/json' }
+			})
+		);
+
+		const setSession = vi.fn();
+		vi.doMock('../src/lib/stores/auth.js', () => ({
+			authToken: { getToken: () => 'tok', setSession },
+			user: { subscribe: vi.fn() }
+		}));
+
+		const { apiService } = await import('../src/lib/services/api.js');
+		const data = await apiService.changePassword({
+			old_password: 'vieja',
+			new_password: 'Nueva-1!'
+		});
+
+		expect(data.access_token).toBeUndefined();
+		expect(setSession).toHaveBeenCalledWith(
+			expect.not.objectContaining({ access_token: expect.anything() })
+		);
+	});
+
 	it('assignDeviceToUnit envía POST /unit-devices', async () => {
 		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
 		fetchMock.mockResolvedValue(
