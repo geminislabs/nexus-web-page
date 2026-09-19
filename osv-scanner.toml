@@ -1,0 +1,18 @@
+# Configuración de OSV-Scanner para package-lock.json (raíz del repositorio).
+# Docs: https://google.github.io/osv-scanner/configuration/
+
+# vitest y @vitest/coverage-v8 son dependencias de DESARROLLO: no entran en el
+# bundle servido ni en la imagen de producción, que se construye con
+# `npm ci --omit=dev`. El aviso afecta al servidor de desarrollo de vitest.
+#
+# El arreglo existe (4.1.11) y se intentó. **Se revirtió porque no es gratis**:
+# medido en CI, vitest 4 mide la cobertura de otra forma y deja los umbrales de
+# `vite.config.js` por debajo —85.06% de líneas contra el 90% exigido— sin que
+# se haya dejado de probar nada. Subirlo obliga a entender ese cambio y ajustar
+# la configuración, y eso no puede viajar dentro de un arreglo de seguridad.
+#
+# DISPARADOR PARA QUITAR ESTA EXCEPCIÓN: el próximo trabajo que toque vitest por
+# cualquier motivo. No es una excepción permanente, es una que espera turno.
+[[IgnoredVulns]]
+id = "GHSA-82fw-gwwq-j7x9"
+reason = "vitest y @vitest/coverage-v8 son devDependencies; no se despliegan. El arreglo (4.1.11) rompe los umbrales de cobertura en CI y necesita su propio trabajo"
