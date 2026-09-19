@@ -65,7 +65,11 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST_TEST }} << 'EOF'
           set -e
 
-          APP_NAME="nexus-web-page-test"
+          # Se llamó `nexus-web-page-test` hasta la v1.16.2, sobre lo que es
+          # producción. El contenedor con el nombre viejo se paró a mano en esa
+          # liberación; desde entonces no queda ninguno.
+          APP_NAME="nexus-web-page"
+
           PORT="${{ vars.PORT }}"
           [ -z "$PORT" ] && PORT=3340
 
