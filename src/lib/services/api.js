@@ -221,12 +221,28 @@ class ApiService {
 		return data;
 	}
 
-	/** @param {{ old_password: string, new_password: string }} payload */
+	/**
+	 * Cambia la contraseña y adopta la sesión nueva que devuelve el backend.
+	 *
+	 * Cambiar la contraseña **cierra todas las sesiones**, incluida ésta: es lo
+	 * que hace que cambiarla sirva de algo cuando sospechas que te robaron la
+	 * cuenta. Para no echar de paso a quien acaba de hacer lo correcto, el
+	 * backend abre una sesión nueva y la manda en la respuesta.
+	 *
+	 * Si no viene —la reautenticación es best effort—, `setSession` no hace nada
+	 * y el siguiente 401 lleva al login. Que es el comportamiento correcto: la
+	 * contraseña ya cambió y esta sesión ya no vale.
+	 *
+	 * @param {{ old_password: string, new_password: string }} payload
+	 */
 	async changePassword(payload) {
-		return this.request('/auth/password', {
+		const data = await this.request('/auth/password', {
 			method: 'PATCH',
 			body: JSON.stringify(payload)
 		});
+
+		authToken.setSession?.(data);
+		return data;
 	}
 
 	/** @param {string} email */
