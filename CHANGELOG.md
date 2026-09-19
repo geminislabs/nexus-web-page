@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **El contenedor de producción deja de llamarse `nexus-web-page-test`.** El nombre afirmaba algo falso sobre el mundo —ese contenedor _es_ producción— y es la misma familia de confusión que el entorno `test` de GitHub que también lo es. Ahora es `nexus-web-page` a secas
-  - **El contenedor viejo se para a mano en esta liberación.** El script para por nombre, así que sin ese paso el `docker run` fallaría por conflicto de puerto —el anterior seguiría vivo ocupando el 3340— y el despliegue quedaría en rojo con producción servida por la versión anterior. Se hace a mano en vez de dejar código de transición porque es un gesto único y el código sobraría al día siguiente; el `deploy.yml` lleva la nota de que ese nombre existió
-- **Queda escrito por qué `VITE_GOOGLE_MAPS_API_KEY` es un `ARG`/`ENV` a propósito**, en el propio `Dockerfile`, donde salta el aviso de Docker. Vite hornea toda variable `VITE_*` en el bundle, así que esa clave ya viaja al navegador de todo el mundo: lo que la protege es la restricción por referente en GCP, no la higiene de la imagen. El aviso desaparecerá de verdad cuando la configuración pase a runtime con `$env/dynamic/public`, que es trabajo de la Fase 4
-
 ### Security
 
 > **Nota.** Lo que queda debajo es anterior a esta release y nunca se movió a su
@@ -143,6 +137,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump `@sveltejs/kit` to `2.70.2` (GHSA-29g2-3rmr-qm68 / OSV medium)
 - **Rotate** any Google Maps API key that was previously committed in git history (GCP Console → Credentials)
+
+## [1.16.2] - 2026-09-19
+
+**Paso manual en esta liberación.** El contenedor viejo —`nexus-web-page-test`— se para a mano
+durante el despliegue. El script para por nombre, así que sin ese paso el `docker run` fallaría por
+conflicto de puerto: el anterior seguiría vivo ocupando el 3340, y el despliegue quedaría en rojo
+con producción servida por la versión previa. Se hizo a mano en vez de dejar código de transición
+porque es un gesto único, y ese código sobraría al día siguiente.
+
+**Verificación después de desplegar.** `docker ps` en la EC2 debe mostrar **un** contenedor,
+llamado `nexus-web-page`, y ninguno con el sufijo viejo.
+
+### Changed
+
+- **El contenedor de producción deja de llamarse `nexus-web-page-test`.** El nombre afirmaba algo falso sobre el mundo —ese contenedor _es_ producción— y es la misma familia de confusión que el entorno `test` de GitHub que también lo es. Ahora es `nexus-web-page` a secas
+  - **El contenedor viejo se para a mano en esta liberación.** El script para por nombre, así que sin ese paso el `docker run` fallaría por conflicto de puerto —el anterior seguiría vivo ocupando el 3340— y el despliegue quedaría en rojo con producción servida por la versión anterior. Se hace a mano en vez de dejar código de transición porque es un gesto único y el código sobraría al día siguiente; el `deploy.yml` lleva la nota de que ese nombre existió
+- **Queda escrito por qué `VITE_GOOGLE_MAPS_API_KEY` es un `ARG`/`ENV` a propósito**, en el propio `Dockerfile`, donde salta el aviso de Docker. Vite hornea toda variable `VITE_*` en el bundle, así que esa clave ya viaja al navegador de todo el mundo: lo que la protege es la restricción por referente en GCP, no la higiene de la imagen. El aviso desaparecerá de verdad cuando la configuración pase a runtime con `$env/dynamic/public`, que es trabajo de la Fase 4
 
 ## [1.16.1] - 2026-09-18
 
