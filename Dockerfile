@@ -29,6 +29,20 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ARG VITE_ADMIN_API_URL
 ENV VITE_ADMIN_API_URL=$VITE_ADMIN_API_URL
 
+# Docker avisa de esta y de la de arriba con SecretsUsedInArgOrEnv. Para la
+# clave de Maps el aviso es técnicamente correcto y estratégicamente irrelevante:
+# Vite hornea toda variable `VITE_*` en el bundle del cliente, así que esta clave
+# **ya viaja al navegador de todo el mundo**. Que además quede en una capa de la
+# imagen no añade exposición.
+#
+# El control que sí la protege es la restricción por referente HTTP en la consola
+# de GCP, no la higiene del Dockerfile. Y lo que hará desaparecer el aviso de
+# verdad es mover la configuración de build a runtime con `$env/dynamic/public`,
+# que es trabajo de la Fase 4 del white-label — un build ya no podrá equivaler a
+# una configuración cuando haya varias marcas sobre el mismo despliegue.
+#
+# El aviso de `NODE_AUTH_TOKEN` de más arriba es harina de otro costal: ése sí es
+# un secreto de verdad y se arregla con un secreto de BuildKit.
 ARG VITE_GOOGLE_MAPS_API_KEY
 ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 
