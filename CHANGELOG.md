@@ -9,13 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
-- **Al cambiar la contraseña se adopta la sesión nueva que devuelve la API.** Acompaña al cambio de `siscom-admin-api` que hace que cambiar o restablecer la contraseña **cierre todas las sesiones** — hasta ahora no cerraba ninguna, y con refresh tokens de 90 días eso dejaba dentro al intruso durante meses. Esa revocación no distingue el dispositivo de quien cambia la contraseña del de nadie, así que el backend abre una sesión nueva y la manda en la respuesta; sin adoptarla aquí, hacer lo correcto te mandaba al login sin explicación. La reautenticación del backend es _best effort_: si no vienen credenciales, `setSession` no pisa nada y el siguiente 401 lleva al login, que es lo correcto porque esta sesión ya fue revocada
+> **Nota.** Lo que queda debajo es anterior a esta release y nunca se movió a su
+> sección — parte salió con la `1.16.0` y parte con tags anteriores. Se deja aquí
+> a propósito: repartirlo exigiría adivinar qué entró en cada tag, y adivinarlo
+> produciría un historial falso. A partir de la `1.16.1` sí se corta en cada
+> liberación.
 
-- **Tres avisos de dependencias, publicados después de la última build verde.** Es el mismo patrón que ya trajeron `nanoid` y `fast-uri`: el último `ci.yml` sobre `develop` corrió el 5 de septiembre, los avisos salieron después, y la CI se pone roja sin que nadie toque el repositorio
-  - `devalue` 5.8.1 → 5.9.4 por override (GHSA-9rgm-9g3h-6x36). Llega por `@sveltejs/kit` y por `svelte`, así que **sí viaja al bundle servido**: es el único de los tres que importa en producción, y el único que este cambio arregla de verdad
-  - `vitest` y `@vitest/coverage-v8` (GHSA-82fw-gwwq-j7x9) quedan **registrados como riesgo aceptado** en un `osv-scanner.toml` nuevo, con su razón y su disparador. Son dependencias de desarrollo: no entran en el bundle ni en la imagen, que se construye con `npm ci --omit=dev`
-  - **Se intentó subirlos y se revirtió, que es el dato que justifica la excepción**: vitest 4.1.11 instala y pasa los 108 tests, pero mide la cobertura de otra forma y deja los umbrales de `vite.config.js` por debajo —85.06% de líneas contra el 90% exigido— sin que se haya dejado de probar nada. Entender ese cambio y ajustar la configuración es trabajo propio, y no puede viajar dentro de un arreglo de seguridad
-  - El disparador para quitar la excepción está escrito en el propio fichero: **el próximo trabajo que toque vitest por cualquier motivo**. No es permanente, espera turno
 - Credencial dedicada para el plano de datos (`src/lib/services/dataToken.js`). siscom-api deja de recibir el token de sesión de Cognito —que lleva identidad de usuario y sirve para toda la admin-api— y pasa a recibir un PASETO v4.public cuyo contenido es solo `{ jti, scope_ref, aud, iat, nbf, exp }`. El alcance vive en Valkey, así que el plano de datos autoriza sin poder saber de quién es la flota
 - Los WebSockets pasan la credencial por subprotocolo del handshake (`siscom.data-token.v1`) en vez de la query string: en v4.public el payload va en claro y una query acaba en los logs del ALB y en la cabecera `Referer`
 - El IMEI deja de viajar por el cable. `deviceRef` opaco sustituye a `device_id` en query strings y paths; `deviceId` se conserva solo para mostrar en pantalla
@@ -138,3 +137,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump `@sveltejs/kit` to `2.70.2` (GHSA-29g2-3rmr-qm68 / OSV medium)
 - **Rotate** any Google Maps API key that was previously committed in git history (GCP Console → Credentials)
+
+## [1.16.1] - 2026-09-18
+
+**Despliegue.** Esta release **va antes** que la `v1.31.0` de `siscom-admin-api`. Las dos son seguras en cualquier orden, pero sólo así no hay ventana: mientras el backend todavía no manda credenciales en la respuesta del cambio de contraseña, `setSession` no hace nada y no cambia el comportamiento actual. Al revés, cambiar la contraseña mandaría al login sin explicación hasta que la web se desplegara.
+
+### Security
+
+- **Al cambiar la contraseña se adopta la sesión nueva que devuelve la API.** Acompaña al cambio de `siscom-admin-api` que hace que cambiar o restablecer la contraseña **cierre todas las sesiones** — hasta ahora no cerraba ninguna, y con refresh tokens de 90 días eso dejaba dentro al intruso durante meses. Esa revocación no distingue el dispositivo de quien cambia la contraseña del de nadie, así que el backend abre una sesión nueva y la manda en la respuesta; sin adoptarla aquí, hacer lo correcto te mandaba al login sin explicación. La reautenticación del backend es _best effort_: si no vienen credenciales, `setSession` no pisa nada y el siguiente 401 lleva al login, que es lo correcto porque esta sesión ya fue revocada
+
+- **Tres avisos de dependencias, publicados después de la última build verde.** Es el mismo patrón que ya trajeron `nanoid` y `fast-uri`: el último `ci.yml` sobre `develop` corrió el 5 de septiembre, los avisos salieron después, y la CI se pone roja sin que nadie toque el repositorio
+  - `devalue` 5.8.1 → 5.9.4 por override (GHSA-9rgm-9g3h-6x36). Llega por `@sveltejs/kit` y por `svelte`, así que **sí viaja al bundle servido**: es el único de los tres que importa en producción, y el único que este cambio arregla de verdad
+  - `vitest` y `@vitest/coverage-v8` (GHSA-82fw-gwwq-j7x9) quedan **registrados como riesgo aceptado** en un `osv-scanner.toml` nuevo, con su razón y su disparador. Son dependencias de desarrollo: no entran en el bundle ni en la imagen, que se construye con `npm ci --omit=dev`
+  - **Se intentó subirlos y se revirtió, que es el dato que justifica la excepción**: vitest 4.1.11 instala y pasa los 108 tests, pero mide la cobertura de otra forma y deja los umbrales de `vite.config.js` por debajo —85.06% de líneas contra el 90% exigido— sin que se haya dejado de probar nada. Entender ese cambio y ajustar la configuración es trabajo propio, y no puede viajar dentro de un arreglo de seguridad
+  - El disparador para quitar la excepción está escrito en el propio fichero: **el próximo trabajo que toque vitest por cualquier motivo**. No es permanente, espera turno
