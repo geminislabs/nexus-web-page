@@ -1,0 +1,77 @@
+# Auditoría de dependencias por tiempo, no por commit.
+#
+# POR QUE EXISTE ESTE WORKFLOW APARTE
+# ===================================
+# `ci.yml` sólo corre con `push` y `pull_request`. Eso basta para todo lo que es
+# función del código —gitleaks y semgrep no pueden ponerse rojos solos— pero no
+# para los avisos de dependencias, que son función del código **y del mundo
+# exterior**: un aviso publicado el martes deja el repositorio vulnerable sin
+# que nadie lo sepa hasta que alguien abra un PR.
+#
+# Pasó exactamente así: el último `ci.yml` sobre `develop` corrió el 5 de
+# septiembre, tres avisos se publicaron en ese hueco, y se descubrieron el 18 —
+# trece días después— porque un PR de otra cosa los destapó. Es el tercer
+# episodio del mismo patrón, tras `nanoid` y `fast-uri`.
+#
+# Dependabot ya corre los lunes, pero eso deja hasta siete días de ventana y su
+# cupo de PRs abiertos puede estar lleno. Esto no lo sustituye: lo complementa
+# avisando el día que sale el aviso, sin esperar a que haya un parche.
+#
+# QUE **NO** SE PROGRAMA, Y POR QUE
+# =================================
+# Ni gitleaks ni semgrep. Su resultado sólo cambia si cambia el código, así que
+# correrlos por reloj produce el mismo veredicto una y otra vez — ruido que
+# enseña a ignorar los correos de fallo, que es el peor resultado posible.
+#
+# DONDE CORRE, Y POR QUE SOLO EN UNA RAMA
+# =======================================
+# Los workflows programados se ejecutan **desde la rama por defecto** (`master`),
+# así que este fichero tiene que estar allí para que el `schedule` exista.
+#
+# La primera versión llevaba una matriz sobre `master` y `develop`. **CodeQL la
+# rechazó en el repositorio hermano, con razón**: un workflow programado corre
+# con los privilegios de la rama por defecto, así que hacer checkout de
+# `develop` y ejecutar sus `scripts/*.sh` da a código de una rama menos
+# protegida acceso de escritura a la caché de `master`
+# (`actions/cache-poisoning/poisonable-step`). Es la vía clásica para envenenar
+# una caché que después consumen los workflows de confianza.
+#
+# Se revisa **sólo la rama por defecto**, y se pierde poco: `develop` ya lo
+# escanea `ci.yml` en cada push y en cada PR. El hueco que este workflow viene a
+# tapar es el del tiempo sin empujar nada — y en ese hueco `develop` no cambia,
+# así que la pregunta que queda es la de producción, que la contesta `master`.
+name: Dependency audit
+
+on:
+  schedule:
+    # 13:17 UTC = 07:17 en Ciudad de México. Temprano, para que el fallo se vea
+    # al empezar el día y no a media tarde.
+    #
+    # El minuto 17 y no el 0 a propósito: el cron de GitHub es **best effort**, y
+    # la hora en punto es la franja más congestionada — todo el mundo programa
+    # ahí, y las ejecuciones se retrasan o se saltan. Un minuto raro evita la
+    # cola sin costar nada.
+    #
+    # **Lunes y jueves, no diario ni «cada 72 horas».** Cron no sabe expresar un
+    # intervalo de 72 h: `*/3` sobre el día del mes reinicia el contador en cada
+    # cambio de mes —del 31 al 1 pasa un día, no tres— y puede caer en sábado,
+    # que es una alerta que nadie mira hasta el lunes. Con lunes y jueves el
+    # hueco máximo son 4 días y siempre cae en día laborable.
+    - cron: '17 13 * * 1,4'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  osv:
+    name: OSV
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # No hace falta `npm ci`: osv-scanner lee `package-lock.json` directamente.
+      - name: OSV dependency scan
+        run: bash scripts/osv-scan.sh
