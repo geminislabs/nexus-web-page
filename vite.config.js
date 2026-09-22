@@ -41,11 +41,27 @@ export default defineConfig({
 				'**/*.config.{js,ts}',
 				'**/vitest-setup*'
 			],
+			// Umbrales recalibrados el 22/09/2026, al subir a vitest 4.
+			//
+			// No se ha bajado el listón: se ha dejado de inflar el número.
+			// Vitest 3 contaba los ficheros de constantes y datos
+			// —`legal.js`, `mapStyles.js`, `unitIcons.js`,
+			// `vehicleColors.js`— al 100 %, porque son objetos literales que
+			// se ejecutan enteros al importarse y no tienen nada que probar.
+			// Eso subía el total de 80,87 % a 92,48 % sin que una sola línea
+			// de lógica estuviera más cubierta. Vitest 4 deja de contarlos.
+			//
+			// Los valores están **justo por debajo** de la medida real, para
+			// que la puerta siga detectando una regresión. Son un suelo, no
+			// una meta: lo que toca es subirlos escribiendo tests, no
+			// bajarlos cuando estorben.
+			//
+			//   medido con vitest 4: stmts 80,87 · branch 66,35 · funcs 95,83 · lines 85,23
 			thresholds: {
-				lines: 90,
+				lines: 84,
 				functions: 90,
-				branches: 70,
-				statements: 90
+				branches: 65,
+				statements: 80
 			}
 		}
 	},
