@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`vitest` sube a 4.1.11 y cierra GHSA-82fw-gwwq-j7x9** (path traversal / lectura de ficheros
+  arbitraria vía `@vitest/mocker`, CVSS 5.9). Eran los dos únicos avisos abiertos del repositorio,
+  y venían en el PR #60 de Dependabot, cerrado en el triaje del 22/09 — cerrarlo tiró también este
+  arreglo
+  - **Alcance real, medido y no supuesto**: el aviso exige llegar al WebSocket del _dev server_ por
+    `mockerPlugin` o `interceptorPlugin`, y este repositorio **no usa ninguno ni el modo
+    navegador**; la CI corre `vitest run`, que no deja ese socket abierto. Es dependencia de
+    desarrollo y no viaja a producción. Se arregla porque es barato, no porque estuviera ardiendo
+  - Se sube a **4.1.11**, la primera versión con el parche, y no a la 5.0.1 que proponía
+    Dependabot: un salto de major es suficiente riesgo por PR
+- **Umbrales de cobertura recalibrados, y el motivo importa más que los números.** Al subir a
+  vitest 4 la cobertura «cayó» de 92,48 % a 80,87 % sin que se borrara un solo test — los 110
+  siguen pasando. La causa: **vitest 3 contaba los ficheros de constantes y datos al 100 %**
+  (`legal.js`, `mapStyles.js`, `unitIcons.js`, `vehicleColors.js`), que son objetos literales
+  ejecutados enteros al importarse y sin nada que probar. El umbral del 90 % se cumplía en parte
+  gracias a ellos
+  - Los nuevos valores están **justo por debajo de la medida honesta**, para que la puerta siga
+    detectando regresiones. **No se ha bajado el listón: se ha dejado de inflar el número**, y la
+    cobertura real de la lógica siempre fue ~81 %
 - **Auditoría de dependencias por tiempo** (`.github/workflows/dependency-audit.yml`), **lunes y jueves**, sobre `master` y `develop`. Cierra el hueco que destapó la liberación del 18/09: `ci.yml` sólo corre con `push` y `pull_request`, así que **un aviso publicado entre dos PRs deja el repositorio vulnerable sin que nadie lo sepa**. El último `ci.yml` sobre `develop` había corrido el 5 de septiembre; tres avisos salieron en ese hueco y se descubrieron trece días después, por casualidad, cuando un PR de otra cosa los destapó
   - **Sólo se programa el escaneo de dependencias.** Gitleaks y semgrep son función del código y no pueden ponerse rojos solos: correrlos por reloj repetiría el mismo veredicto y enseñaría a ignorar los correos de fallo, que es el peor resultado posible
   - **No sustituye a Dependabot**, lo complementa. Dependabot corre los lunes y sólo abre PR cuando existe un parche; esto avisa el día que sale el aviso, haya arreglo o no — y su cupo de 10 PRs abiertos puede estar lleno
