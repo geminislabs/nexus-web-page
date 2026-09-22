@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     detectando regresiones. **No se ha bajado el listón: se ha dejado de inflar el número**, y la
     cobertura real de la lógica siempre fue ~81 %
 - **Auditoría de dependencias por tiempo** (`.github/workflows/dependency-audit.yml`), **lunes y jueves**, sobre `master` y `develop`. Cierra el hueco que destapó la liberación del 18/09: `ci.yml` sólo corre con `push` y `pull_request`, así que **un aviso publicado entre dos PRs deja el repositorio vulnerable sin que nadie lo sepa**. El último `ci.yml` sobre `develop` había corrido el 5 de septiembre; tres avisos salieron en ese hueco y se descubrieron trece días después, por casualidad, cuando un PR de otra cosa los destapó
+- **CI: adiós a Node 20** en `actions/upload-artifact`, que pasa de `v4` a `v7`. GitHub ya la
+  forzaba a correr en Node 24 y lo avisaba en cada corrida. **Es la única afectada en este
+  repositorio**: `actions/checkout@v5` y `actions/setup-node@v5` ya están en Node 24, comprobado
+  en el log de la corrida `35616984624` — el aviso nombra a `upload-artifact` y a nadie más, así
+  que no se tocan
+- **Auditoría de dependencias por tiempo** (`.github/workflows/dependency-audit.yml`), **lunes y jueves**, sobre la rama por defecto. Cierra el hueco que destapó la liberación del 18/09: `ci.yml` sólo corre con `push` y `pull_request`, así que **un aviso publicado entre dos PRs deja el repositorio vulnerable sin que nadie lo sepa**. El último `ci.yml` sobre `develop` había corrido el 5 de septiembre; tres avisos salieron en ese hueco y se descubrieron trece días después, por casualidad, cuando un PR de otra cosa los destapó
   - **Sólo se programa el escaneo de dependencias.** Gitleaks y semgrep son función del código y no pueden ponerse rojos solos: correrlos por reloj repetiría el mismo veredicto y enseñaría a ignorar los correos de fallo, que es el peor resultado posible
   - **No sustituye a Dependabot**, lo complementa. Dependabot corre los lunes y sólo abre PR cuando existe un parche; esto avisa el día que sale el aviso, haya arreglo o no — y su cupo de 10 PRs abiertos puede estar lleno
   - **Lunes y jueves, no diario.** Cron no sabe expresar «cada 72 horas»: `*/3` sobre el día del mes reinicia el contador en cada cambio de mes —del 31 al 1 pasa un día, no tres— y puede caer en fin de semana, que es una alerta que nadie mira hasta el lunes. Con lunes y jueves el hueco máximo son 4 días y siempre cae en día laborable
