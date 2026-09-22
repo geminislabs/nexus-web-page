@@ -7,39 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- **`vitest` sube a 4.1.11 y cierra GHSA-82fw-gwwq-j7x9** (path traversal / lectura de ficheros
-  arbitraria vía `@vitest/mocker`, CVSS 5.9). Eran los dos únicos avisos abiertos del repositorio,
-  y venían en el PR #60 de Dependabot, cerrado en el triaje del 22/09 — cerrarlo tiró también este
-  arreglo
-  - **Alcance real, medido y no supuesto**: el aviso exige llegar al WebSocket del _dev server_ por
-    `mockerPlugin` o `interceptorPlugin`, y este repositorio **no usa ninguno ni el modo
-    navegador**; la CI corre `vitest run`, que no deja ese socket abierto. Es dependencia de
-    desarrollo y no viaja a producción. Se arregla porque es barato, no porque estuviera ardiendo
-  - Se sube a **4.1.11**, la primera versión con el parche, y no a la 5.0.1 que proponía
-    Dependabot: un salto de major es suficiente riesgo por PR
-- **Umbrales de cobertura recalibrados, y el motivo importa más que los números.** Al subir a
-  vitest 4 la cobertura «cayó» de 92,48 % a 80,87 % sin que se borrara un solo test — los 110
-  siguen pasando. La causa: **vitest 3 contaba los ficheros de constantes y datos al 100 %**
-  (`legal.js`, `mapStyles.js`, `unitIcons.js`, `vehicleColors.js`), que son objetos literales
-  ejecutados enteros al importarse y sin nada que probar. El umbral del 90 % se cumplía en parte
-  gracias a ellos
-  - Los nuevos valores están **justo por debajo de la medida honesta**, para que la puerta siga
-    detectando regresiones. **No se ha bajado el listón: se ha dejado de inflar el número**, y la
-    cobertura real de la lógica siempre fue ~81 %
-- **Auditoría de dependencias por tiempo** (`.github/workflows/dependency-audit.yml`), **lunes y jueves**, sobre `master` y `develop`. Cierra el hueco que destapó la liberación del 18/09: `ci.yml` sólo corre con `push` y `pull_request`, así que **un aviso publicado entre dos PRs deja el repositorio vulnerable sin que nadie lo sepa**. El último `ci.yml` sobre `develop` había corrido el 5 de septiembre; tres avisos salieron en ese hueco y se descubrieron trece días después, por casualidad, cuando un PR de otra cosa los destapó
-- **CI: adiós a Node 20** en `actions/upload-artifact`, que pasa de `v4` a `v7`. GitHub ya la
-  forzaba a correr en Node 24 y lo avisaba en cada corrida. **Es la única afectada en este
-  repositorio**: `actions/checkout@v5` y `actions/setup-node@v5` ya están en Node 24, comprobado
-  en el log de la corrida `35616984624` — el aviso nombra a `upload-artifact` y a nadie más, así
-  que no se tocan
-- **Auditoría de dependencias por tiempo** (`.github/workflows/dependency-audit.yml`), **lunes y jueves**, sobre la rama por defecto. Cierra el hueco que destapó la liberación del 18/09: `ci.yml` sólo corre con `push` y `pull_request`, así que **un aviso publicado entre dos PRs deja el repositorio vulnerable sin que nadie lo sepa**. El último `ci.yml` sobre `develop` había corrido el 5 de septiembre; tres avisos salieron en ese hueco y se descubrieron trece días después, por casualidad, cuando un PR de otra cosa los destapó
-  - **Sólo se programa el escaneo de dependencias.** Gitleaks y semgrep son función del código y no pueden ponerse rojos solos: correrlos por reloj repetiría el mismo veredicto y enseñaría a ignorar los correos de fallo, que es el peor resultado posible
-  - **No sustituye a Dependabot**, lo complementa. Dependabot corre los lunes y sólo abre PR cuando existe un parche; esto avisa el día que sale el aviso, haya arreglo o no — y su cupo de 10 PRs abiertos puede estar lleno
-  - **Lunes y jueves, no diario.** Cron no sabe expresar «cada 72 horas»: `*/3` sobre el día del mes reinicia el contador en cada cambio de mes —del 31 al 1 pasa un día, no tres— y puede caer en fin de semana, que es una alerta que nadie mira hasta el lunes. Con lunes y jueves el hueco máximo son 4 días y siempre cae en día laborable
-  - **Revisa sólo la rama por defecto**, no las dos. La primera versión llevaba matriz sobre `master` y `develop`, y **CodeQL la rechazó con dos alertas altas de `cache-poisoning`**: un workflow programado corre con los privilegios de la rama por defecto, así que hacer checkout de `develop` y ejecutar sus `scripts/*.sh` daba a código de una rama menos protegida acceso de escritura a la caché de `master`. Se pierde poco — `develop` ya lo escanea `ci.yml` en cada push y en cada PR, y en el hueco que este workflow viene a tapar `develop` no cambia
-
 ### Security
 
 > **Nota.** Lo que queda debajo es anterior a esta release y nunca se movió a su
@@ -170,6 +137,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump `@sveltejs/kit` to `2.70.2` (GHSA-29g2-3rmr-qm68 / OSV medium)
 - **Rotate** any Google Maps API key that was previously committed in git history (GCP Console → Credentials)
+
+## [1.17.0] - 2026-09-22
+
+**Despliegue.** Sin pasos manuales. El contenedor y el workflow no cambian.
+
+**Qué apaga esta liberación.** Tres cosas que sólo se resuelven al mover `master`, porque se miden
+contra la rama por defecto:
+
+1. Los **dos avisos de seguridad** abiertos (`vitest` y `@vitest/mocker`, GHSA-82fw-gwwq-j7x9).
+2. El aviso de **Node 20** en cada corrida de CI.
+3. La **auditoría de dependencias** programada, que lleva dormida desde el 19/09: `schedule` y
+   `workflow_dispatch` exigen que el fichero esté en la rama por defecto, así que hasta ahora
+   GitHub ni la registraba. **Al desplegar hay que comprobar que aparece en Actions y dispararla
+   una vez a mano** — que esté registrada no es lo mismo que que haga lo que dice.
+
+**Por qué minor.** `vitest` salta de major y los umbrales de cobertura cambian. No cambia la
+aplicación, pero sí lo que la CI exige, y eso merece señalarse en la versión.
+
+### Fixed
+
+- **`docs/RELEASE.md` no mencionaba mover `master`**, y ese hueco es lo que mantuvo dormida la
+  auditoría de dependencias tres días: seguir la guía al pie de la letra saltaba del commit de
+  release al tag, dejando la rama por defecto atrás para siempre. Ahora es el paso 3, con las tres
+  cosas que GitHub resuelve contra esa rama y contra ninguna otra
+- Una entrada duplicada del CHANGELOG: la auditoría de dependencias aparecía dos veces, y la copia
+  vieja afirmaba que revisa «`master` y `develop`» cuando revisa **sólo la rama por defecto**. La
+  introdujo una resolución de conflicto de rebase al concatenar los dos lados
+
+### Added
+
+- **`vitest` sube a 4.1.11 y cierra GHSA-82fw-gwwq-j7x9** (path traversal / lectura de ficheros
+  arbitraria vía `@vitest/mocker`, CVSS 5.9). Eran los dos únicos avisos abiertos del repositorio,
+  y venían en el PR #60 de Dependabot, cerrado en el triaje del 22/09 — cerrarlo tiró también este
+  arreglo
+  - **Alcance real, medido y no supuesto**: el aviso exige llegar al WebSocket del _dev server_ por
+    `mockerPlugin` o `interceptorPlugin`, y este repositorio **no usa ninguno ni el modo
+    navegador**; la CI corre `vitest run`, que no deja ese socket abierto. Es dependencia de
+    desarrollo y no viaja a producción. Se arregla porque es barato, no porque estuviera ardiendo
+  - Se sube a **4.1.11**, la primera versión con el parche, y no a la 5.0.1 que proponía
+    Dependabot: un salto de major es suficiente riesgo por PR
+- **Umbrales de cobertura recalibrados, y el motivo importa más que los números.** Al subir a
+  vitest 4 la cobertura «cayó» de 92,48 % a 80,87 % sin que se borrara un solo test — los 110
+  siguen pasando. La causa: **vitest 3 contaba los ficheros de constantes y datos al 100 %**
+  (`legal.js`, `mapStyles.js`, `unitIcons.js`, `vehicleColors.js`), que son objetos literales
+  ejecutados enteros al importarse y sin nada que probar. El umbral del 90 % se cumplía en parte
+  gracias a ellos
+  - Los nuevos valores están **justo por debajo de la medida honesta**, para que la puerta siga
+    detectando regresiones. **No se ha bajado el listón: se ha dejado de inflar el número**, y la
+    cobertura real de la lógica siempre fue ~81 %
+- **CI: adiós a Node 20** en `actions/upload-artifact`, que pasa de `v4` a `v7`. GitHub ya la
+  forzaba a correr en Node 24 y lo avisaba en cada corrida. **Es la única afectada en este
+  repositorio**: `actions/checkout@v5` y `actions/setup-node@v5` ya están en Node 24, comprobado
+  en el log de la corrida `35616984624` — el aviso nombra a `upload-artifact` y a nadie más, así
+  que no se tocan
+- **Auditoría de dependencias por tiempo** (`.github/workflows/dependency-audit.yml`), **lunes y jueves**, sobre la rama por defecto. Cierra el hueco que destapó la liberación del 18/09: `ci.yml` sólo corre con `push` y `pull_request`, así que **un aviso publicado entre dos PRs deja el repositorio vulnerable sin que nadie lo sepa**. El último `ci.yml` sobre `develop` había corrido el 5 de septiembre; tres avisos salieron en ese hueco y se descubrieron trece días después, por casualidad, cuando un PR de otra cosa los destapó
+  - **Sólo se programa el escaneo de dependencias.** Gitleaks y semgrep son función del código y no pueden ponerse rojos solos: correrlos por reloj repetiría el mismo veredicto y enseñaría a ignorar los correos de fallo, que es el peor resultado posible
+  - **No sustituye a Dependabot**, lo complementa. Dependabot corre los lunes y sólo abre PR cuando existe un parche; esto avisa el día que sale el aviso, haya arreglo o no — y su cupo de 10 PRs abiertos puede estar lleno
+  - **Lunes y jueves, no diario.** Cron no sabe expresar «cada 72 horas»: `*/3` sobre el día del mes reinicia el contador en cada cambio de mes —del 31 al 1 pasa un día, no tres— y puede caer en fin de semana, que es una alerta que nadie mira hasta el lunes. Con lunes y jueves el hueco máximo son 4 días y siempre cae en día laborable
+  - **Revisa sólo la rama por defecto**, no las dos. La primera versión llevaba matriz sobre `master` y `develop`, y **CodeQL la rechazó con dos alertas altas de `cache-poisoning`**: un workflow programado corre con los privilegios de la rama por defecto, así que hacer checkout de `develop` y ejecutar sus `scripts/*.sh` daba a código de una rama menos protegida acceso de escritura a la caché de `master`. Se pierde poco — `develop` ya lo escanea `ci.yml` en cada push y en cada PR, y en el hueco que este workflow viene a tapar `develop` no cambia
 
 ## [1.16.2] - 2026-09-19
 
