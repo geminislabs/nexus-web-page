@@ -137,6 +137,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Bump `@sveltejs/kit` to `2.70.2` (GHSA-29g2-3rmr-qm68 / OSV medium)
 - **Rotate** any Google Maps API key that was previously committed in git history (GCP Console → Credentials)
+- `osv-scanner.toml` se queda sin excepciones: la de `vitest` (GHSA-82fw-gwwq-j7x9) caducó cuando la 4.1.11 cerró el aviso en la `1.17.0`, y el escáner la reportaba como `unused ignores` en cada corrida. Un riesgo aceptado que ya no aplica no es inocuo: afirma que seguimos expuestos a algo que arreglamos
 
 ## [1.17.0] - 2026-09-22
 
