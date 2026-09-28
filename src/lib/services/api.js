@@ -1,6 +1,5 @@
 import { authToken } from '../stores/auth.js';
 import { user } from '../stores/auth.js';
-import { get } from 'svelte/store';
 import { ApiError, apiErrorFromResponse } from './apiErrors.js';
 import { withQuery } from './apiQuery.js';
 import { logger } from '$lib/utils/logger.js';
@@ -201,20 +200,30 @@ class ApiService {
 	}
 
 	/**
-	 * Renueva access/id token usando refresh_token + email (Cognito).
+	 * Renueva access/id token con el refresh token.
+	 *
+	 * La identidad viaja en la cabecera `Authorization`, no en el cuerpo: el
+	 * backend acepta ahí el access token **vencido** y saca el handle de la
+	 * fila del usuario. El correo ya no se manda porque deja de ser identidad
+	 * en cuanto se emitan handles propios, y el camino del email desaparece del
+	 * backend antes de eso.
+	 *
 	 * Persiste tokens vía authToken.setSession().
 	 */
 	async refreshSession() {
 		const refreshToken = authToken.getRefreshToken?.();
-		const email = get(user)?.email;
-		if (!refreshToken || !email) {
+		const accessToken = authToken.getToken?.();
+		if (!refreshToken || !accessToken) {
 			throw new ApiError('No hay sesión renovable', { status: 401 });
 		}
 
 		const data = await this._rawRequest('/auth/refresh', {
 			method: 'POST',
+			// La cabecera se pone a mano: `skipAuth` impide que `_fetch` la
+			// reponga, y aquí el token va vencido a propósito.
 			skipAuth: true,
-			body: JSON.stringify({ email, refresh_token: refreshToken })
+			headers: { Authorization: `Bearer ${accessToken}` },
+			body: JSON.stringify({ refresh_token: refreshToken })
 		});
 
 		authToken.setSession?.(data);
