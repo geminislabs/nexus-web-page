@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `/auth/refresh` se identifica con la cabecera `Authorization` —lleva el access token vencido a propósito— en vez de mandar el correo en el cuerpo. La API acepta hoy los dos caminos, pero el del correo desaparece antes de que se emitan handles propios, y el correo deja de ser identidad
 - Paneles laterales de Seguimiento, Alertas e Informes con el mismo ancho; Informes con scroll en el body del drawer
 - Cerrar Seguimiento al hacer clic fuera / en el mapa (mismo comportamiento que Alertas e Informes)
 - Selector de tema Oscuro/Claro inline en el menú de usuario (ya no abre ventana de Configuración)

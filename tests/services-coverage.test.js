@@ -1,13 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('svelte/store', async (importOriginal) => {
-	const actual = await importOriginal();
-	return {
-		...actual,
-		get: vi.fn(() => ({ email: 'user@test.com' }))
-	};
-});
-
 const authMocks = vi.hoisted(() => ({
 	setSession: vi.fn(),
 	getToken: vi.fn(() => 'access-token'),
@@ -125,7 +117,7 @@ describe('apiService method coverage', () => {
 		await apiService.unassignUnitDevice('u1');
 	});
 
-	it('refreshSession persists tokens from refresh endpoint', async () => {
+	it('refreshSession identifica por cabecera, no por email, y persiste los tokens', async () => {
 		const fetchMock = vi.fn().mockImplementation(() =>
 			Promise.resolve(
 				jsonResponse({
@@ -140,8 +132,26 @@ describe('apiService method coverage', () => {
 		const { apiService } = await import('../src/lib/services/api.js');
 		await apiService.refreshSession();
 
+		const [url, init] = fetchMock.mock.calls[0];
+		expect(url).toContain('/auth/refresh');
+		// La identidad va en la cabecera —con el access token vencido— y el
+		// cuerpo lleva sólo el refresh token: sin esto el backend responde 422.
+		expect(init.headers.Authorization).toBe('Bearer access-token');
+		expect(JSON.parse(init.body)).toEqual({ refresh_token: 'refresh-token' });
+
 		expect(authMocks.setSession).toHaveBeenCalledWith(
 			expect.objectContaining({ access_token: 'new-access' })
 		);
+	});
+
+	it('refreshSession no llama al backend sin access token que identificar', async () => {
+		authMocks.getToken.mockReturnValue(null);
+		const fetchMock = vi.fn();
+		vi.stubGlobal('fetch', fetchMock);
+
+		const { apiService } = await import('../src/lib/services/api.js');
+
+		await expect(apiService.refreshSession()).rejects.toThrow('No hay sesión renovable');
+		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });
