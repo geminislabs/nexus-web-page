@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- El contador de "usuarios verificados" en `AdminDashboard.svelte` comparaba `status` contra `'pending'`, un valor que `UserOut` nunca devolvía y que tampoco existe en el backend (`ck_users_status` solo tiene `ACTIVE`/`INACTIVE`) — esa mitad de la condición nunca excluyó a nadie. Ahora compara contra `'INACTIVE'`, una vez que `siscom-admin-api` expone `status` en `UserOut` (PR aparte, sin liberar todavía)
+
 ### Security
+
+- Bumped `brace-expansion` (`>=5.0.9` → `>=5.0.12`), `fast-uri` (`>=4.1.4` → `>=4.1.5`) and `js-yaml` (`>=5.2.2` → `>=5.4.1`) npm overrides for GHSA-6j4f-fj2g-mc7p, GHSA-q2hr-2g5m-vwhr, GHSA-qhr7-859c-m2p7, GHSA-hrr3-gc8f-f4qj, GHSA-jvvf-x445-j334 and GHSA-r3ph-w7gj-g6xm. Same pattern as the `nanoid`/`fast-uri` entries below: the advisories were published after the last green build on `develop`, so any new PR's `security` job failed without anyone touching the repo. All three are dev dependencies and never reached the served bundle
 
 > **Nota.** Lo que queda debajo es anterior a esta release y nunca se movió a su
 > sección — parte salió con la `1.16.0` y parte con tags anteriores. Se deja aquí

@@ -18,8 +18,12 @@
 	let unassigned = [];
 
 	$: userCount = users.length;
+	// `status` recién empieza a llegar del API (ACTIVE/INACTIVE). Antes se
+	// comparaba contra 'pending', que nunca fue un valor posible, así que esta
+	// condición nunca excluyó a nadie — el contador era, en la práctica,
+	// solo email_verified !== false.
 	$: verifiedUsers = users.filter(
-		(u) => u.email_verified !== false && u.status !== 'pending'
+		(u) => u.email_verified !== false && u.status !== 'INACTIVE'
 	).length;
 	$: pendingUsers = Math.max(0, userCount - verifiedUsers);
 	$: unitCount = $vehicles.length;
