@@ -7,13 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-09-30
+
 ### Added
 
-- Panel "Miembros" en Admin → Usuarios: lista con rol y estado de cada persona en la organización, cambio de rol, pausar/reactivar membresía y quitar de la organización. Primer cliente de los endpoints de `organization_users.py` — ningún cliente los llamaba hasta ahora. Requiere el backend de `siscom-admin-api#128` (sin liberar todavía); sin él, el panel carga la lista pero pausar/reactivar/cambiar rol/quitar fallan contra el API desplegado
+- Panel "Miembros" en Admin → Usuarios: lista con rol y estado de cada persona en la organización, cambio de rol, pausar/reactivar membresía y quitar de la organización. Primer cliente de los endpoints de `organization_users.py` — ningún cliente los llamaba hasta ahora. Requiere `siscom-admin-api` `v1.46.0` o superior, ya liberada
 
 ### Fixed
 
-- El contador de "usuarios verificados" en `AdminDashboard.svelte` comparaba `status` contra `'pending'`, un valor que `UserOut` nunca devolvía y que tampoco existe en el backend (`ck_users_status` solo tiene `ACTIVE`/`INACTIVE`) — esa mitad de la condición nunca excluyó a nadie. Ahora compara contra `'INACTIVE'`, una vez que `siscom-admin-api` expone `status` en `UserOut` (PR aparte, sin liberar todavía)
+- El contador de "usuarios verificados" en `AdminDashboard.svelte` comparaba `status` contra `'pending'`, un valor que `UserOut` nunca devolvía y que tampoco existe en el backend (`ck_users_status` solo tiene `ACTIVE`/`INACTIVE`) — esa mitad de la condición nunca excluyó a nadie. Ahora compara contra `'INACTIVE'`, servido desde `siscom-admin-api` `v1.46.0`
 
 ### Security
 
