@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `@eslint/js` sube de `9.39.1` a `10.0.1` (PR #75 de Dependabot). Su regla nueva `no-useless-assignment` marcaba 13 casos en 9 archivos; tres eran dead-store reales (`TabInformes.svelte`, `h3GridOverlayService.js`, `signalIndicators.js`) y se corrigieron. Los otros seis son falso positivo: el patrón «recordar el valor anterior» en bloques `$:` de Svelte (resetear estado solo cuando cambia un id o una pestaña), que la regla no ve porque analiza el script como JS plano sin saber que el bloque se re-ejecuta. Se desactiva `no-useless-assignment` solo para `*.svelte` en `eslint.config.js`; los `.js` planos siguen con la regla activa
+
 ## [1.19.0] - 2026-09-30
 
 ### Added
