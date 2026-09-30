@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `@eslint/js` sube de `9.39.1` a `10.0.1` (PR #75 de Dependabot). Su regla nueva `no-useless-assignment` marcaba 13 casos en 9 archivos; tres eran dead-store reales (`TabInformes.svelte`, `h3GridOverlayService.js`, `signalIndicators.js`) y se corrigieron. Los otros seis son falso positivo: el patrón «recordar el valor anterior» en bloques `$:` de Svelte (resetear estado solo cuando cambia un id o una pestaña), que la regla no ve porque analiza el script como JS plano sin saber que el bloque se re-ejecuta. Se desactiva `no-useless-assignment` solo para `*.svelte` en `eslint.config.js`; los `.js` planos siguen con la regla activa
+- `vitest` y `@vitest/coverage-v8` suben de `4.1.11` a `5.0.2` (PR #71 y #73 de Dependabot). Van juntos a propósito: el peer dependency de `@vitest/coverage-v8` exige la misma versión exacta de `vitest`, así que mergear cualquiera de los dos PR por separado rompía `npm ci`. La cobertura medida no se movió un solo punto (`80.59 / 66.62 / 93.87 / 84.89`, idéntica a la de vitest 4), así que los umbrales de `vite.config.js` no cambian
 
 ## [1.19.0] - 2026-09-30
 
