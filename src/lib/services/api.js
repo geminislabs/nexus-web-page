@@ -298,6 +298,52 @@ class ApiService {
 		});
 	}
 
+	// ── Miembros de organización ─────────────────────────────────────────────
+	// Distinto de getUsers()/inviteUser(): estos endpoints ven la membresía
+	// (organization_users), no solo la fila legada de users. Requieren el id de
+	// la organización porque el path va acotado a ella — nunca por id suelto.
+
+	/** @param {string} organizationId */
+	async getOrganizationMembers(organizationId) {
+		return this.request(`/organizations/${encodeURIComponent(organizationId)}/users`, {
+			method: 'GET'
+		});
+	}
+
+	/** @param {string} organizationId @param {string} userId @param {string} role */
+	async updateMemberRole(organizationId, userId, role) {
+		return this.request(
+			`/organizations/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(userId)}`,
+			{
+				method: 'PATCH',
+				body: JSON.stringify({ role })
+			}
+		);
+	}
+
+	/**
+	 * Pausa o reactiva una membresía puntual — no borra nada ni toca la cuenta
+	 * global. Distinto de removeMember() (DELETE), que es la baja completa.
+	 * @param {string} organizationId @param {string} userId @param {'ACTIVE'|'INACTIVE'} newStatus
+	 */
+	async updateMemberStatus(organizationId, userId, newStatus) {
+		return this.request(
+			`/organizations/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(userId)}/status`,
+			{
+				method: 'PATCH',
+				body: JSON.stringify({ status: newStatus })
+			}
+		);
+	}
+
+	/** @param {string} organizationId @param {string} userId */
+	async removeMember(organizationId, userId) {
+		return this.request(
+			`/organizations/${encodeURIComponent(organizationId)}/users/${encodeURIComponent(userId)}`,
+			{ method: 'DELETE' }
+		);
+	}
+
 	// ── Unidades ──────────────────────────────────────────────────────────────
 
 	async getVehicles() {

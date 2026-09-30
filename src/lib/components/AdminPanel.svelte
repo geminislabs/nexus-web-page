@@ -11,6 +11,7 @@
 	import ConfirmModal from './ConfirmModal.svelte';
 	import AssignUnits from './AssignUnits.svelte';
 	import InviteUser from './InviteUser.svelte';
+	import OrganizationMembers from './OrganizationMembers.svelte';
 
 	export let showAdminPanel = false;
 	export let toggleAdminPanel = null;
@@ -639,6 +640,24 @@
 						</div>
 					</div>
 					<InviteUser />
+				</div>
+				<div class="info-card">
+					<div class="info-card__header">
+						<Icon
+							icon="mdi:account-group-outline"
+							width={14}
+							class="text-blue-400"
+							aria-hidden="true"
+						/>
+						<div>
+							<h4 class="info-card__title">Miembros</h4>
+							<p class="info-card__desc">
+								Rol y estado de cada persona en tu organización. Pausar no borra su acceso a otras
+								organizaciones a las que pertenezca.
+							</p>
+						</div>
+					</div>
+					<OrganizationMembers />
 				</div>
 				<div class="info-card">
 					<div class="info-card__header">

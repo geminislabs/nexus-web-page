@@ -13,7 +13,10 @@ export function normalizeUser(apiUser) {
 		name: apiUser.name || apiUser.full_name || '',
 		full_name: apiUser.full_name || apiUser.name || '',
 		role: apiUser.role ?? null,
-		is_master: apiUser.is_master ?? apiUser.role === 'master'
+		is_master: apiUser.is_master ?? apiUser.role === 'master',
+		// `client_id` es el alias legado de `organization_id` en UserOut — no es
+		// PII, y el panel de miembros lo necesita para acotar sus llamadas.
+		organization_id: apiUser.client_id ?? apiUser.organization_id ?? null
 	};
 }
 

@@ -40,6 +40,13 @@ describe('sessionService', () => {
 		});
 	});
 
+	it('normalizeUser toma organization_id del alias legado client_id', async () => {
+		const { normalizeUser } = await import('../src/lib/services/sessionService.js');
+		expect(normalizeUser({ full_name: 'Ana', client_id: 'org-123' })).toMatchObject({
+			organization_id: 'org-123'
+		});
+	});
+
 	it('getRecoverPasswordUrl usa VITE_COMPANY_URL', async () => {
 		vi.stubEnv('VITE_COMPANY_URL', 'https://geminis.dev');
 		const { getRecoverPasswordUrl } = await import('../src/lib/services/sessionService.js');
