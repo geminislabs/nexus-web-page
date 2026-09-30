@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- El contador de "usuarios verificados" en `AdminDashboard.svelte` comparaba `status` contra `'pending'`, un valor que `UserOut` nunca devolvía y que tampoco existe en el backend (`ck_users_status` solo tiene `ACTIVE`/`INACTIVE`) — esa mitad de la condición nunca excluyó a nadie. Ahora compara contra `'INACTIVE'`, una vez que `siscom-admin-api` expone `status` en `UserOut` (PR aparte, sin liberar todavía)
+
 ### Security
 
 > **Nota.** Lo que queda debajo es anterior a esta release y nunca se movió a su
