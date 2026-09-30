@@ -28,9 +28,6 @@
 		return str ? new Date(str) : new Date();
 	}
 
-	let fromInput = toLocalInputValue($reportFrom);
-	let toInput = toLocalInputValue($reportTo);
-
 	$: fromInput = toLocalInputValue($reportFrom);
 	$: toInput = toLocalInputValue($reportTo);
 

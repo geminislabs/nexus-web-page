@@ -214,7 +214,7 @@ class H3GridOverlayService {
 		];
 
 		let targetResolution = this.resolution;
-		let cellIds = [];
+		let cellIds;
 
 		try {
 			cellIds = polygonToCells([viewportLoopGeoJson], targetResolution, true);

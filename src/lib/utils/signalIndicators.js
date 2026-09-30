@@ -69,7 +69,7 @@ export function getGpsIndicator(satellites, opts = {}) {
 	if (Number.isNaN(sats) || sats < 0) return null;
 
 	/** @type {SignalLevel} */
-	let level = 'none';
+	let level;
 	if (sats === 0) level = 'none';
 	else if (sats <= 4) level = 'low';
 	else if (sats <= 7) level = 'regular';
