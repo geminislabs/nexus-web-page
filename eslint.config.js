@@ -23,6 +23,20 @@ export default [
 		}
 	},
 	{
+		// no-useless-assignment (ESLint 10 / @eslint/js 10) analiza el script
+		// como JS plano y no ve que un bloque `$:` se re-ejecuta cuando cambian
+		// sus dependencias: el patrón "recordar el valor anterior" (asignar a
+		// una variable que el propio bloque lee en la siguiente pasada, p.ej.
+		// para resetear estado solo cuando cambia un id) le parece codigo
+		// muerto y no lo es. Falso positivo confirmado en 6 componentes al
+		// subir a @eslint/js 10; los .js planos no tienen este problema y
+		// siguen con la regla activa.
+		files: ['**/*.svelte'],
+		rules: {
+			'no-useless-assignment': 'off'
+		}
+	},
+	{
 		ignores: [
 			'build/',
 			'.svelte-kit/',
