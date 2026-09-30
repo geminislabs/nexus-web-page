@@ -21,9 +21,8 @@ describe('workspaceStore', () => {
 	});
 
 	it('setWorkspace persists and goAdmin/goTracking switch sections', async () => {
-		const { workspace, adminSection, workspaceActions } = await import(
-			'../src/lib/stores/workspaceStore.js'
-		);
+		const { workspace, adminSection, workspaceActions } =
+			await import('../src/lib/stores/workspaceStore.js');
 
 		workspaceActions.goTracking();
 		expect(get(workspace)).toBe('tracking');
