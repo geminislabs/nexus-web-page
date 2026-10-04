@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { user, authToken } from '$lib/stores/auth.js';
+	import { activeOrganizationId } from '$lib/stores/organizationStore.js';
 	import { validateSessionWithApi } from '$lib/services/sessionService.js';
 	import '$lib/styles/dashboard.css';
 
@@ -16,6 +17,7 @@
 		(async () => {
 			user.init();
 			authToken.init();
+			activeOrganizationId.init();
 
 			if (!authToken.getToken()) {
 				if (!cancelled) {

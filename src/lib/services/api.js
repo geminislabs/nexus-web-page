@@ -1,5 +1,6 @@
 import { authToken } from '../stores/auth.js';
 import { user } from '../stores/auth.js';
+import { activeOrganizationId } from '../stores/organizationStore.js';
 import { ApiError, apiErrorFromResponse } from './apiErrors.js';
 import { withQuery } from './apiQuery.js';
 import { logger } from '$lib/utils/logger.js';
@@ -122,6 +123,16 @@ class ApiService {
 			headers.Authorization = `Bearer ${token}`;
 		}
 
+		// Selector de cuenta (B3, §26): declara en qué organización actúa esta
+		// petición. Sin cabecera, el backend cae a `default_organization_id` —
+		// el comportamiento de siempre, nunca un error.
+		if (!options.skipAuth) {
+			const organizationId = activeOrganizationId.get();
+			if (organizationId) {
+				headers['X-Organization-Id'] = organizationId;
+			}
+		}
+
 		const fetchOptions = { ...options };
 		delete fetchOptions.skipAuth;
 		delete fetchOptions.skipRefreshRetry;
@@ -197,6 +208,16 @@ class ApiService {
 
 	async verifyToken() {
 		return this.request('/auth/verify', { method: 'GET' });
+	}
+
+	/**
+	 * Las organizaciones donde el usuario autenticado tiene membresía activa
+	 * — el punto de entrada del selector de cuenta (B3, §26). Una sola fila
+	 * es el caso de todo el mundo hoy: no hay nada que elegir.
+	 * @returns {Promise<Array<{ organization_id: string, name: string, role: string }>>}
+	 */
+	async getMyOrganizations() {
+		return this.request('/auth/organizations', { method: 'GET' });
 	}
 
 	/**

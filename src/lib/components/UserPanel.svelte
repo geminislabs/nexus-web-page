@@ -5,6 +5,7 @@
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 	import { logoutSession } from '$lib/services/sessionService.js';
 	import { theme, themeActions } from '$lib/stores/themeStore.js';
+	import { organizations, activeOrganizationId } from '$lib/stores/organizationStore.js';
 
 	export let showUserPanel = false;
 	export let userData = null;
@@ -16,6 +17,16 @@
 	async function handleLogout() {
 		await logoutSession();
 		goto('/login');
+	}
+
+	/** @param {string} organizationId */
+	function handleSwitchOrganization(organizationId) {
+		if (organizationId === $activeOrganizationId) return;
+		activeOrganizationId.setActive(organizationId);
+		// Recarga completa: casi todo lo que carga el dashboard está acotado a
+		// la organización activa en varios stores/servicios distintos — más
+		// barato y correcto que auditar e invalidar cada uno por separado.
+		window.location.reload();
 	}
 </script>
 
@@ -75,6 +86,56 @@
 				</button>
 			</div>
 		</section>
+
+		{#if $organizations.length > 1}
+			<section
+				class="rounded-xl border border-slate-200 bg-white/95 p-4 text-slate-800 shadow-sm dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-100"
+				aria-labelledby="user-panel-organization-heading"
+			>
+				<h3
+					id="user-panel-organization-heading"
+					class="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50"
+				>
+					Cuenta activa
+				</h3>
+				<p class="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+					Tienes acceso a varias organizaciones. Elige con cuál quieres trabajar.
+				</p>
+				<ul class="mt-3 space-y-2">
+					{#each $organizations as org (org.organization_id)}
+						{@const isActive =
+							org.organization_id === $activeOrganizationId ||
+							(!$activeOrganizationId && org === $organizations[0])}
+						<li
+							class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-600 dark:bg-slate-900/60"
+						>
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+									{org.name}
+								</p>
+								<p class="text-xs text-slate-500 dark:text-slate-400">{org.role}</p>
+							</div>
+							{#if isActive}
+								<span
+									class="shrink-0 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"
+								>
+									Activa
+								</span>
+							{:else}
+								<button
+									type="button"
+									class="shrink-0 rounded-lg border border-blue-600 px-2.5 py-1 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-500/10"
+									on:click={() => handleSwitchOrganization(org.organization_id)}
+									aria-label={`Cambiar a la organización ${org.name}`}
+								>
+									Cambiar
+								</button>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
 
 		<section
 			class="rounded-xl border border-slate-200 bg-white/95 p-4 text-slate-800 shadow-sm dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-100"
