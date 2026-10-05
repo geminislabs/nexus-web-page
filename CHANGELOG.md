@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-10-04
+
 ### Added
 
 - Selector de cuenta (B3, §26 del documento de arquitectura white-label): el cliente consume el nuevo `GET /auth/organizations` de `siscom-admin-api` (`v1.49.0`) y manda la cabecera `X-Organization-Id` en cada petición autenticada cuando hay una organización activa distinta de la de siempre. Nuevo store `organizationStore.js` y sección "Cuenta activa" en el panel de Cuenta (`UserPanel.svelte`), **oculta cuando el usuario sólo tiene una membresía** — el caso de todo el mundo hoy, así que la funcionalidad es inerte hasta que exista el primer usuario con dos. Cambiar de organización recarga la página: casi todo lo que carga el dashboard está acotado a la organización activa en varios stores/servicios distintos, y auditar cada uno para invalidarlo selectivamente no tiene beneficio mientras la funcionalidad sea inerte
