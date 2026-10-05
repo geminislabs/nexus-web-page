@@ -5,7 +5,11 @@
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 	import { logoutSession } from '$lib/services/sessionService.js';
 	import { theme, themeActions } from '$lib/stores/themeStore.js';
-	import { organizations, activeOrganizationId } from '$lib/stores/organizationStore.js';
+	import {
+		organizations,
+		activeOrganizationId,
+		isActiveOrganization
+	} from '$lib/stores/organizationStore.js';
 
 	export let showUserPanel = false;
 	export let userData = null;
@@ -103,9 +107,7 @@
 				</p>
 				<ul class="mt-3 space-y-2">
 					{#each $organizations as org (org.organization_id)}
-						{@const isActive =
-							org.organization_id === $activeOrganizationId ||
-							(!$activeOrganizationId && org === $organizations[0])}
+						{@const isActive = isActiveOrganization(org, $activeOrganizationId, $organizations)}
 						<li
 							class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-600 dark:bg-slate-900/60"
 						>

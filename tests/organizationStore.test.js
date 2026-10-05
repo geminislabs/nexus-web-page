@@ -77,4 +77,29 @@ describe('organizationStore', () => {
 		expect(get(activeOrganizationId)).toBeNull();
 		expect(localStorage.removeItem).toHaveBeenCalledWith('active_organization_id');
 	});
+
+	describe('isActiveOrganization', () => {
+		const a = { organization_id: 'org-a', name: 'Alfa', role: 'member', is_default: false };
+		const b = { organization_id: 'org-b', name: 'Beta', role: 'owner', is_default: true };
+
+		it('con una elegida, es esa', async () => {
+			const { isActiveOrganization } = await import('../src/lib/stores/organizationStore.js');
+			expect(isActiveOrganization(a, 'org-a', [a, b])).toBe(true);
+			expect(isActiveOrganization(b, 'org-a', [a, b])).toBe(false);
+		});
+
+		it('sin elegir, es la que el backend marca is_default, no la primera por nombre', async () => {
+			const { isActiveOrganization } = await import('../src/lib/stores/organizationStore.js');
+			expect(isActiveOrganization(a, null, [a, b])).toBe(false);
+			expect(isActiveOrganization(b, null, [a, b])).toBe(true);
+		});
+
+		it('contra un backend sin is_default, cae a la primera de la lista', async () => {
+			const { isActiveOrganization } = await import('../src/lib/stores/organizationStore.js');
+			const viejaA = { organization_id: 'org-a', name: 'Alfa', role: 'member' };
+			const viejaB = { organization_id: 'org-b', name: 'Beta', role: 'owner' };
+			expect(isActiveOrganization(viejaA, null, [viejaA, viejaB])).toBe(true);
+			expect(isActiveOrganization(viejaB, null, [viejaA, viejaB])).toBe(false);
+		});
+	});
 });

@@ -296,6 +296,37 @@ describe('apiService', () => {
 		expect(init.headers['X-Organization-Id']).toBe('org-activa');
 	});
 
+	it('no manda X-Organization-Id a /auth/*, aunque haya organización activa', async () => {
+		// Con una organización revocada, mandarla a /auth/organizations daría
+		// 403 y la sesión no podría recuperar la lista que la corrige.
+		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
+		fetchMock.mockImplementation(
+			async () =>
+				new Response(JSON.stringify([]), {
+					status: 200,
+					headers: { 'content-type': 'application/json' }
+				})
+		);
+
+		vi.doMock('../src/lib/stores/auth.js', () => ({
+			authToken: { getToken: () => 'tok' },
+			user: { subscribe: vi.fn() }
+		}));
+		vi.doMock('../src/lib/stores/organizationStore.js', () => ({
+			activeOrganizationId: { get: () => 'org-activa' }
+		}));
+
+		const { apiService } = await import('../src/lib/services/api.js');
+		await apiService.getMyOrganizations();
+		await apiService.logout();
+
+		for (const [, init] of fetchMock.mock.calls) {
+			expect(init.headers.Authorization).toBe('Bearer tok');
+			expect(init.headers['X-Organization-Id']).toBeUndefined();
+		}
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
 	it('no manda X-Organization-Id sin organización activa, ni en login (skipAuth)', async () => {
 		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
 		fetchMock.mockResolvedValue(
