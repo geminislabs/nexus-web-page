@@ -1,7 +1,39 @@
 import { user, authToken } from '$lib/stores/auth.js';
+import { organizations, activeOrganizationId } from '$lib/stores/organizationStore.js';
 import { apiService } from '$lib/services/api.js';
 import { clearDataToken, primeDataToken } from '$lib/services/dataToken.js';
 import { logger } from '$lib/utils/logger.js';
+
+/**
+ * Trae las membresías activas del usuario y las guarda en el store. Si la
+ * organización activa persistida ya no aparece en la lista (la membresía se
+ * revocó), se limpia y la sesión cae al default — nunca se manda una
+ * cabecera para una organización que el usuario ya no tiene.
+ *
+ * Best effort: si la llamada falla, degrada a "nada que elegir" en vez de
+ * romper el login (ver `getMyOrganizations`, selector de cuenta B3, §26).
+ */
+async function loadMyOrganizations() {
+	try {
+		const list = await apiService.getMyOrganizations();
+		organizations.setOrganizations(list);
+
+		const currentId = activeOrganizationId.get();
+		const stillMember = Array.isArray(list)
+			? list.some((org) => String(org.organization_id) === String(currentId))
+			: false;
+		if (currentId && !stillMember) {
+			activeOrganizationId.clear();
+		}
+	} catch (err) {
+		logger.warn({
+			code: 'AUTH_ORGANIZATIONS_FETCH_FAILED',
+			message: 'Failed to fetch user organizations',
+			err
+		});
+		organizations.clear();
+	}
+}
 
 /** @param {Record<string, unknown> | null | undefined} apiUser */
 export function normalizeUser(apiUser) {
@@ -32,11 +64,14 @@ export function persistLoginResponse(response) {
 	// pinta sin un round trip extra. Si no la trae, se pide al endpoint dedicado.
 	primeDataToken(response);
 	user.login(normalizeUser(response.user));
+	loadMyOrganizations();
 }
 
 export function clearLocalSession() {
 	user.logout();
 	authToken.clearToken();
+	organizations.clear();
+	activeOrganizationId.clear();
 	// La credencial del plano de datos deriva de la sesión: si la sesión muere,
 	// muere con ella. Vive solo en memoria, así que basta con soltarla.
 	clearDataToken();
@@ -69,6 +104,7 @@ export async function validateSessionWithApi() {
 	try {
 		const apiUser = await apiService.getCurrentUser();
 		user.login(normalizeUser(apiUser));
+		await loadMyOrganizations();
 		return true;
 	} catch (err) {
 		logger.warn({

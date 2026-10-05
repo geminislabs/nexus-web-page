@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Selector de cuenta (B3, §26 del documento de arquitectura white-label): el cliente consume el nuevo `GET /auth/organizations` de `siscom-admin-api` (`v1.49.0`) y manda la cabecera `X-Organization-Id` en cada petición autenticada cuando hay una organización activa distinta de la de siempre. Nuevo store `organizationStore.js` y sección "Cuenta activa" en el panel de Cuenta (`UserPanel.svelte`), **oculta cuando el usuario sólo tiene una membresía** — el caso de todo el mundo hoy, así que la funcionalidad es inerte hasta que exista el primer usuario con dos. Cambiar de organización recarga la página: casi todo lo que carga el dashboard está acotado a la organización activa en varios stores/servicios distintos, y auditar cada uno para invalidarlo selectivamente no tiene beneficio mientras la funcionalidad sea inerte
+  - La cabecera **no** se manda a `/auth/*`. El backend también la valida ahí, así que con una organización guardada cuya membresía se revocó, `GET /auth/organizations` respondía 403: la sesión no podía recuperar la lista que la corregía y todo el panel quedaba en 403 hasta cerrar sesión. Por el mismo motivo, `POST /auth/logout` no llegaba a revocar la sesión en Cognito
+  - Sin una organización elegida, se marca como activa la que el backend devuelve con `is_default` (`siscom-admin-api` `v1.51.0`), y no la primera por orden alfabético. Contra un backend anterior, sin el campo, se mantiene la primera
+
 ### Changed
 
 - `lint-staged` sube de `15.5.2` a `17.6.0` para cerrar GHSA-vfj7-8cjw-p6xm (`braces`, alta, DoS por patrones anidados). `braces` no tiene versión corregida: el aviso afecta a todas, así que la única salida es dejar de depender de ella, y `lint-staged` 17 cambia `micromatch` por `picomatch`. Solo afecta al hook de pre-commit, no a lo que se construye ni se despliega. Exige Node `>=22.22.1`; la CI y la imagen `node:22-alpine` ya van en `22.23`. El lock se regeneró en contenedor Linux

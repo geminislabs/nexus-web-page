@@ -5,13 +5,15 @@ vi.mock('$app/environment', () => ({ browser: true }));
 
 const apiMocks = vi.hoisted(() => ({
 	logout: vi.fn().mockResolvedValue(null),
-	getCurrentUser: vi.fn().mockResolvedValue({ email: 'a@b.com', full_name: 'Ana' })
+	getCurrentUser: vi.fn().mockResolvedValue({ email: 'a@b.com', full_name: 'Ana' }),
+	getMyOrganizations: vi.fn().mockResolvedValue([])
 }));
 
 vi.mock('../src/lib/services/api.js', () => ({
 	apiService: {
 		logout: apiMocks.logout,
-		getCurrentUser: apiMocks.getCurrentUser
+		getCurrentUser: apiMocks.getCurrentUser,
+		getMyOrganizations: apiMocks.getMyOrganizations
 	}
 }));
 
@@ -30,6 +32,8 @@ describe('sessionService', () => {
 		localStorage.removeItem.mockClear();
 		apiMocks.logout.mockClear();
 		apiMocks.getCurrentUser.mockClear();
+		apiMocks.getMyOrganizations.mockClear();
+		apiMocks.getMyOrganizations.mockResolvedValue([]);
 	});
 
 	it('normalizeUser unifica nombre y rol master', async () => {
@@ -103,5 +107,49 @@ describe('sessionService', () => {
 		await expect(validateSessionWithApi()).resolves.toBe(false);
 		expect(warn).toHaveBeenCalled();
 		warn.mockRestore();
+	});
+
+	it('validateSessionWithApi pobla las organizaciones del selector de cuenta (B3, §26)', async () => {
+		localStorage.getItem.mockImplementation((key) => (key === 'token' ? 'tok' : null));
+		apiMocks.getMyOrganizations.mockResolvedValue([
+			{ organization_id: 'org-1', name: 'Mero Mero', role: 'owner' }
+		]);
+		const { validateSessionWithApi } = await import('../src/lib/services/sessionService.js');
+		const { organizations } = await import('../src/lib/stores/organizationStore.js');
+		const { get } = await import('svelte/store');
+
+		await validateSessionWithApi();
+
+		expect(get(organizations)).toEqual([
+			{ organization_id: 'org-1', name: 'Mero Mero', role: 'owner' }
+		]);
+	});
+
+	it('validateSessionWithApi limpia la organización activa si ya no es miembro', async () => {
+		localStorage.getItem.mockImplementation((key) => {
+			if (key === 'token') return 'tok';
+			if (key === 'active_organization_id') return 'org-vieja';
+			return null;
+		});
+		apiMocks.getMyOrganizations.mockResolvedValue([
+			{ organization_id: 'org-nueva', name: 'Otra', role: 'member' }
+		]);
+		const { validateSessionWithApi } = await import('../src/lib/services/sessionService.js');
+
+		await validateSessionWithApi();
+
+		expect(localStorage.removeItem).toHaveBeenCalledWith('active_organization_id');
+	});
+
+	it('clearLocalSession limpia también el selector de cuenta', async () => {
+		const { clearLocalSession } = await import('../src/lib/services/sessionService.js');
+		const { organizations } = await import('../src/lib/stores/organizationStore.js');
+		const { get } = await import('svelte/store');
+
+		organizations.setOrganizations([{ organization_id: 'org-1', name: 'A', role: 'owner' }]);
+		clearLocalSession();
+
+		expect(get(organizations)).toEqual([]);
+		expect(localStorage.removeItem).toHaveBeenCalledWith('active_organization_id');
 	});
 });
