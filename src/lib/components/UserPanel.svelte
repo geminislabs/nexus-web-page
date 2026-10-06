@@ -100,7 +100,7 @@
 					id="user-panel-organization-heading"
 					class="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-50"
 				>
-					Cuenta activa
+					Organización activa
 				</h3>
 				<p class="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
 					Tienes acceso a varias organizaciones. Elige con cuál quieres trabajar.
