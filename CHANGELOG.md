@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - La sección del selector en el panel de Cuenta (`UserPanel.svelte`) pasa de "Cuenta activa" a "Organización activa", el mismo texto que ya usan iOS y Android. "Cuenta" nombra otra entidad en el backend (`Account`, la raíz comercial) y queda reservada para la identidad del usuario (§28); lo que el selector cambia es la `Organization`. Solo cambia el título visible; "Identificador de cuenta" y "panel de cuenta" se quedan porque sí hablan de la identidad
+- Cierra GHSA-68fv-2mgg-jv7q (`source-map-js`, alta, DoS) y GHSA-rj75-hqrm-r3gf (`postcss-selector-parser`, moderada), que hacían fallar `quality` y `security` en cualquier PR. Todo es de desarrollo y build: nada llega al navegador
+  - `source-map-js` 1.2.1 → 1.2.2 y la copia de `postcss-selector-parser` de `svelte-eslint-parser` 7.1.4 → 7.1.6, sólo en el lock, dentro de los rangos que ya pedían sus dependientes
+  - Se quita `@tailwindcss/typography`: estaba en `package.json` pero nunca se cargó (ningún `@plugin` ni clase `prose` en `src/`), y era quien fijaba `postcss-selector-parser` 6.0.10. La «corrección» que proponía `npm audit` era bajarlo a 0.5.4
+  - El lock se regeneró en `node:22-alpine` y se verificó `npm ci` en Linux y en macOS
 
 ## [1.20.0] - 2026-10-04
 
