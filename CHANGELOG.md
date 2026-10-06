@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- La sección del selector en el panel de Cuenta (`UserPanel.svelte`) pasa de "Cuenta activa" a "Organización activa", el mismo texto que ya usan iOS y Android. "Cuenta" nombra otra entidad en el backend (`Account`, la raíz comercial) y queda reservada para la identidad del usuario (§28); lo que el selector cambia es la `Organization`. Solo cambia el título visible; "Identificador de cuenta" y "panel de cuenta" se quedan porque sí hablan de la identidad
+
 ## [1.20.0] - 2026-10-04
 
 ### Added
