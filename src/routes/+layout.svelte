@@ -1,5 +1,4 @@
 <script>
-	import { logger } from '$lib/utils/logger.js';
 	import { initObservability } from '$lib/observability/index.js';
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.png';
@@ -26,19 +25,10 @@
 		};
 	});
 
-	async function checkAndRefreshToken() {
-		if (authToken.isTokenExpiringSoon(300)) {
-			try {
-				await apiService.refreshSession();
-			} catch (error) {
-				logger.error({
-					code: 'AUTH_REFRESH_PROACTIVE_FAILED',
-					message: 'Failed to refresh token proactively',
-					err: error
-				});
-				// El interceptor de api.js limpia sesión si el refresh falla en un 401.
-			}
-		}
+	function checkAndRefreshToken() {
+		// Pasa por el mismo candado que el interceptor de 401: dos caminos que
+		// renuevan por separado mandan dos refresh con el mismo token.
+		apiService.refreshIfExpiringSoon();
 	}
 </script>
 
