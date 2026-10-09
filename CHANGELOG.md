@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- El refresh de sesión ya no se lanza varias veces con el mismo refresh token. Con la rotación de refresh tokens activa en Cognito (`siscom-admin-api` `v1.54.0`) cada refresh invalida el token que usó, y la web lanzaba varios refresh a la vez: el temporizador de `+layout.svelte` llamaba a `refreshSession()` directamente, sin pasar por el candado del interceptor de 401, y cada pestaña tenía su temporizador sobre el mismo `localStorage`. Medido en producción el 09/10/2026: tres refresh en el mismo milisegundo, uno limitado por Cognito (`TooManyRequestsException`), y una pestaña reintentando cada minuto con un token ya inválido
+  - Todo refresh pasa por `_refreshSessionOnce`, que además toma un candado de la Web Locks API (`navigator.locks`) para serializar las pestañas. Al obtener el candado comprueba si otra pestaña ya renovó, y en ese caso no llama
+  - Un 401 que llega cuando el token ya cambió reintenta con el nuevo sin renovar
+  - Un 401 del refresh proactivo cierra la sesión, igual que el interceptor, en vez de reintentar cada minuto para siempre. Cualquier otro fallo espera antes de reintentar: 2 minutos, y la espera se duplica hasta 15
+
 ### Changed
 
 - La sección del selector en el panel de Cuenta (`UserPanel.svelte`) pasa de "Cuenta activa" a "Organización activa", el mismo texto que ya usan iOS y Android. "Cuenta" nombra otra entidad en el backend (`Account`, la raíz comercial) y queda reservada para la identidad del usuario (§28); lo que el selector cambia es la `Organization`. Solo cambia el título visible; "Identificador de cuenta" y "panel de cuenta" se quedan porque sí hablan de la identidad

@@ -27,11 +27,32 @@ const AUTH_NO_RETRY_PATHS = new Set([
 	'/auth/reset-password'
 ]);
 
+/**
+ * Candado de la Web Locks API que serializa el refresh **entre pestañas**.
+ *
+ * Con la rotación de refresh tokens activa en Cognito, cada refresh invalida el
+ * token que usó. Las pestañas comparten `localStorage` y cada una tiene su
+ * temporizador, así que sin candado todas renuevan en el mismo minuto con el
+ * mismo token: una gana, el resto presenta un token ya rotado y Cognito las
+ * limita (`TooManyRequestsException`) o las rechaza. Medido en producción el
+ * 09/10/2026: tres refresh en el mismo milisegundo y una pestaña atascada en 401.
+ */
+const REFRESH_LOCK = 'nexus-auth-refresh';
+
+/** Margen con el que el temporizador renueva antes de que venza el access token. */
+const PROACTIVE_THRESHOLD_S = 300;
+
+/** Espera tras un refresh proactivo fallido por algo que no es un 401; se duplica. */
+const PROACTIVE_BACKOFF_MIN_MS = 2 * 60 * 1000;
+const PROACTIVE_BACKOFF_MAX_MS = 15 * 60 * 1000;
+
 class ApiService {
 	constructor() {
 		this.baseURL = API_BASE_URL.replace(/\/$/, '');
 		/** @type {Promise<void> | null} */
 		this._refreshPromise = null;
+		this._proactiveRetryAt = 0;
+		this._proactiveBackoffMs = 0;
 	}
 
 	// ── Core HTTP ─────────────────────────────────────────────────────────────
@@ -51,6 +72,7 @@ class ApiService {
 	 */
 	async _request(endpoint, options = {}) {
 		const path = this._normalizePath(endpoint);
+		const tokenUsed = options.skipAuth ? null : authToken.getToken();
 		const response = await this._fetch(path, options);
 
 		if (
@@ -61,7 +83,11 @@ class ApiService {
 			!AUTH_NO_RETRY_PATHS.has(path.split('?')[0])
 		) {
 			try {
-				await this._refreshSessionOnce();
+				// Si el token cambió mientras la petición viajaba —otra petición u otra
+				// pestaña ya renovó—, basta con reintentar con el nuevo.
+				if (authToken.getToken() === tokenUsed) {
+					await this._refreshSessionOnce();
+				}
 				return this._request(endpoint, { ...options, _isRetry: true });
 			} catch (refreshErr) {
 				logger.error({
@@ -180,13 +206,72 @@ class ApiService {
 		return response.json();
 	}
 
+	/**
+	 * Un solo refresh a la vez: dentro de la pestaña (la promesa compartida) y
+	 * entre pestañas (el candado). Todo lo que renueva pasa por aquí.
+	 */
 	async _refreshSessionOnce() {
 		if (!this._refreshPromise) {
-			this._refreshPromise = this.refreshSession().finally(() => {
+			const seen = authToken.getRefreshToken?.();
+			this._refreshPromise = this._withRefreshLock(async () => {
+				// Otra pestaña pudo renovar mientras se esperaba el candado. Su token
+				// nuevo ya está en `localStorage`; renovar con el que se vio antes
+				// sería presentar un token ya rotado.
+				if (seen && authToken.getRefreshToken?.() !== seen) return;
+				await this.refreshSession();
+			}).finally(() => {
 				this._refreshPromise = null;
 			});
 		}
 		return this._refreshPromise;
+	}
+
+	/** @param {() => Promise<void>} fn */
+	_withRefreshLock(fn) {
+		const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
+		if (locks?.request) return locks.request(REFRESH_LOCK, fn);
+		return fn();
+	}
+
+	/**
+	 * El refresh del temporizador: renueva si el access token vence pronto.
+	 *
+	 * Un 401 es definitivo —el refresh token venció, se revocó o ya se rotó— y
+	 * cierra la sesión, igual que el interceptor. Sin eso la pestaña reintenta
+	 * cada minuto para siempre con un token que ya no sirve. Cualquier otro fallo
+	 * (red, 5xx, limitación de Cognito) espera antes de reintentar, y la espera
+	 * crece.
+	 */
+	async refreshIfExpiringSoon() {
+		if (Date.now() < this._proactiveRetryAt) return;
+		if (!authToken.isTokenExpiringSoon?.(PROACTIVE_THRESHOLD_S)) return;
+
+		try {
+			await this._refreshSessionOnce();
+			this._proactiveBackoffMs = 0;
+			this._proactiveRetryAt = 0;
+		} catch (err) {
+			if (err instanceof ApiError && err.status === 401) {
+				logger.error({
+					code: 'AUTH_REFRESH_PROACTIVE_REJECTED',
+					message: 'Proactive token refresh rejected; ending session',
+					err
+				});
+				user.logout();
+				authToken.clearToken();
+				return;
+			}
+			this._proactiveBackoffMs = Math.min(
+				this._proactiveBackoffMs ? this._proactiveBackoffMs * 2 : PROACTIVE_BACKOFF_MIN_MS,
+				PROACTIVE_BACKOFF_MAX_MS
+			);
+			this._proactiveRetryAt = Date.now() + this._proactiveBackoffMs;
+			logger.error({
+				code: 'AUTH_REFRESH_PROACTIVE_FAILED',
+				message: 'Failed to refresh token proactively',
+				err
+			});
+		}
 	}
 
 	// ── Auth ──────────────────────────────────────────────────────────────────
