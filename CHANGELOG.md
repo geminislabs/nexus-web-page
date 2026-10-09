@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-10-09
+
 ### Fixed
 
 - El refresh de sesión ya no se lanza varias veces con el mismo refresh token. Con la rotación de refresh tokens activa en Cognito (`siscom-admin-api` `v1.54.0`) cada refresh invalida el token que usó, y la web lanzaba varios refresh a la vez: el temporizador de `+layout.svelte` llamaba a `refreshSession()` directamente, sin pasar por el candado del interceptor de 401, y cada pestaña tenía su temporizador sobre el mismo `localStorage`. Medido en producción el 09/10/2026: tres refresh en el mismo milisegundo, uno limitado por Cognito (`TooManyRequestsException`), y una pestaña reintentando cada minuto con un token ya inválido
