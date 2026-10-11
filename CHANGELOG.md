@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- El CSP se aplica en vez de solo reportarse. En Report-Only (v1.22.0) el log de `/internal/csp-report` en producción quedó vacío tras usar el mapa, el stream, Street View y `/share`. Las violaciones siguen llegando a ese log, ahora como bloqueos (`"disposition":"enforce"`)
+
 ## [1.22.0] - 2026-10-11
 
 ### Added
