@@ -24,6 +24,16 @@
 import { apiService } from './api.js';
 import { logger } from '$lib/utils/logger.js';
 
+/** Carga el journey solo al emitir, para no arrastrar OTel en cada import. */
+async function beginJourney(name) {
+	try {
+		const { startJourney } = await import('$lib/observability/journey.js');
+		return startJourney(name);
+	} catch {
+		return { end() {} };
+	}
+}
+
 /** Se refresca al consumir esta fracción de la vida útil del token. */
 const REFRESH_AT_FRACTION = 0.8;
 
@@ -181,12 +191,23 @@ export async function getDataToken({ force = false } = {}) {
 
 	if (force) cached = null;
 
-	inFlight = issue()
-		.then((entry) => {
+	// `issue()` arranca en este turno, antes de esperar el módulo del journey.
+	// Si no, quien llama justo después (el test de una sola emisión, y la
+	// segunda pestaña) no vería la petición todavía en vuelo.
+	const journeyPromise = beginJourney('data_token.issue');
+	const pending = issue();
+	inFlight = pending
+		.then(async (entry) => {
 			cached = entry;
+			(await journeyPromise).end('success');
 			return entry;
 		})
-		.catch((err) => {
+		.catch(async (err) => {
+			try {
+				(await journeyPromise).end('failure');
+			} catch {
+				/* fail-open */
+			}
 			// Un token todavía válido es mejor que ninguno si el refresco
 			// preventivo falla por un corte puntual.
 			if (!force && isUsable(cached)) {

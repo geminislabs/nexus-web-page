@@ -16,6 +16,13 @@ RUN echo "@JesusCabrera84:registry=https://npm.pkg.github.com/" > .npmrc && \
 # Copiar el código fuente
 COPY . .
 
+# El bundle del browser hornea el endpoint: vacío apaga la telemetría del cliente.
+# No hay URL de collector escrita aquí; llega como build-arg del workflow.
+ARG OTLP_ENDPOINT=""
+ARG DEPLOY_ENV="production"
+ENV OTLP_ENDPOINT=$OTLP_ENDPOINT
+ENV DEPLOY_ENV=$DEPLOY_ENV
+
 # Permitir inyectar variables de entorno en tiempo de build (para Vite)
 ARG VITE_COMPANY_URL
 ENV VITE_COMPANY_URL=$VITE_COMPANY_URL

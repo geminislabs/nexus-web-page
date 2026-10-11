@@ -1,3 +1,4 @@
+import { startJourney } from '$lib/observability/journey.js';
 import { logger } from '$lib/utils/logger.js';
 import { authToken } from '$lib/stores/auth.js';
 import { getDataToken, WS_TOKEN_PROTOCOL } from './dataToken.js';
@@ -153,6 +154,8 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 	let stopped = false;
 	let reconnectTimer = /** @type {ReturnType<typeof setTimeout> | null} */ (null);
 	const reconnectDelayMs = 3200;
+	/** @type {ReturnType<typeof startJourney> | null} */
+	let journey = null;
 
 	const url = `${base}${STREAM_PATH}?device_ids=${encodeURIComponent(unique.join(','))}`;
 
@@ -163,10 +166,16 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 			return;
 		}
 
+		// Un journey por sesión de socket, no por mensaje. La reconexión abre otro.
+		// Sin token, sin device ids y sin coordenadas en los atributos.
+		journey = startJourney('tracking.stream');
+		let opened = false;
+
 		let dataToken;
 		try {
 			dataToken = await getDataToken();
 		} catch (err) {
+			journey.end('failure');
 			logger.error({
 				code: 'WS_STREAM_TOKEN_FAILED',
 				message: 'Sin token de plano de datos para abrir el stream',
@@ -175,11 +184,15 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 			stopped = true;
 			return;
 		}
-		if (stopped) return;
+		if (stopped) {
+			journey.end('cancelled');
+			return;
+		}
 
 		try {
 			ws = new WebSocket(url, [WS_TOKEN_PROTOCOL, dataToken]);
 		} catch (e) {
+			journey.end('failure');
 			logger.warn({
 				code: 'WS_STREAM_CONNECT_FAILED',
 				message: 'WebSocket connect failed',
@@ -188,6 +201,11 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 			scheduleReconnect();
 			return;
 		}
+
+		ws.onopen = () => {
+			opened = true;
+			journey?.end('success');
+		};
 
 		ws.onmessage = (ev) => {
 			try {
@@ -204,6 +222,7 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 		};
 
 		ws.onerror = () => {
+			if (!opened) journey?.end('failure');
 			try {
 				ws?.close();
 			} catch {
@@ -212,6 +231,7 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 		};
 
 		ws.onclose = () => {
+			if (!opened) journey?.end(stopped ? 'cancelled' : 'failure');
 			ws = null;
 			if (!stopped) scheduleReconnect();
 		};
@@ -229,6 +249,7 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 
 	return () => {
 		stopped = true;
+		journey?.end('cancelled');
 		if (reconnectTimer != null) {
 			clearTimeout(reconnectTimer);
 			reconnectTimer = null;

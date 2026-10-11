@@ -13,7 +13,11 @@ export default [
 		languageOptions: {
 			globals: {
 				...globals.browser,
-				...globals.node
+				...globals.node,
+				__SERVICE_NAME__: 'readonly',
+				__SERVICE_VERSION__: 'readonly',
+				__DEPLOY_ENV__: 'readonly',
+				__OTLP_ENDPOINT__: 'readonly'
 			}
 		}
 	},

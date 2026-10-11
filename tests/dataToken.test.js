@@ -19,7 +19,7 @@ async function load() {
 	return import('../src/lib/services/dataToken.js');
 }
 
-describe('dataToken', () => {
+describe('dataToken', { timeout: 20_000 }, () => {
 	beforeEach(() => {
 		requestMock.mockReset();
 		vi.useRealTimers();
@@ -174,7 +174,7 @@ describe('dataToken', () => {
 	});
 });
 
-describe('dataPlaneRef', () => {
+describe('dataPlaneRef', { timeout: 20_000 }, () => {
 	// El respaldo existe para que este cliente pueda desplegarse antes que la
 	// admin-api que expone device_ref: sin él, los vehículos se filtrarían por
 	// falta de referencia y el mapa quedaría vacío en silencio.

@@ -1,3 +1,4 @@
+import { instrumentedFetch } from '$lib/observability/http.js';
 import { normalizeEvent } from '$lib/utils/eventUtils.js';
 import { withDataToken } from './dataToken.js';
 
@@ -38,9 +39,11 @@ class EventService {
 
 		const json = await withDataToken(
 			(dataToken) =>
-				fetch(url.toString(), {
+				instrumentedFetch(url.toString(), {
 					method: 'GET',
-					headers: { Accept: 'application/json', Authorization: `Bearer ${dataToken}` }
+					headers: { Accept: 'application/json', Authorization: `Bearer ${dataToken}` },
+					route: '/api/v1/events',
+					targetService: 'siscom-api'
 				}),
 			async (res) => {
 				if (!res.ok) {

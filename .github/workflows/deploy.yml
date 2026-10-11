@@ -50,6 +50,8 @@ jobs:
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
             VITE_ADMIN_API_URL=${{ secrets.VITE_ADMIN_API_URL }}
             VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+            OTLP_ENDPOINT=${{ vars.OTLP_ENDPOINT }}
+            DEPLOY_ENV=production
 
       - name: Save Docker image
         run: docker save nexus-web-page:latest | gzip > nexus-web-page.tar.gz
@@ -99,6 +101,8 @@ jobs:
               -p $PORT:$PORT \
               -e PORT=$PORT \
               -e NODE_ENV=production \
+              -e DEPLOY_ENV=production \
+              -e OTLP_ENDPOINT='${{ vars.OTLP_ENDPOINT }}' \
               -e ORIGIN=${{ secrets.ORIGIN }} \
               nexus-web-page:latest
 
