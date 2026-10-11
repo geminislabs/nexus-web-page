@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-10-11
+
 ### Added
 
 - Observabilidad OpenTelemetry (`src/lib/observability/`): trazas, métricas y logs OTLP/HTTP. Sin `OTLP_ENDPOINT` no se registran providers. El navegador exporta por `/internal/otlp`; en producción un `localhost:4318` horneado no se usa
