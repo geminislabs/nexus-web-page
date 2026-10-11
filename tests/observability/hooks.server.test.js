@@ -139,9 +139,10 @@ describe('hooks.server handle', () => {
 		});
 		expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
 		expect(response.headers.get('X-Frame-Options')).toBe('DENY');
-		expect(response.headers.get('Content-Security-Policy-Report-Only')).toContain(
-			"default-src 'self'"
-		);
+		// El CSP lo pone SvelteKit (kit.csp) con el nonce; un segundo CSP desde el
+		// hook se sumaría al primero y el navegador aplicaría los dos.
+		expect(response.headers.get('Content-Security-Policy')).toBeNull();
+		expect(response.headers.get('Content-Security-Policy-Report-Only')).toBeNull();
 		expect(response.headers.get('Referrer-Policy')).toBe('no-referrer');
 		expect(record).toHaveBeenCalledWith(
 			expect.any(Number),

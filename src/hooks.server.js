@@ -6,22 +6,10 @@ import { scrubUrl } from '$lib/observability/scrubber.js';
 await init();
 installNodeErrorCapture();
 
-const CSP = [
-	"default-src 'self'",
-	"base-uri 'self'",
-	"object-src 'none'",
-	"frame-ancestors 'none'",
-	"img-src 'self' data: blob: https:",
-	"font-src 'self' data:",
-	"style-src 'self' 'unsafe-inline'",
-	"script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com",
-	"connect-src 'self' https: wss: http: ws:",
-	"worker-src 'self' blob:"
-].join('; ');
-
 /**
  * Cabeceras de seguridad que ya tenía el handle. Se conservan en todas las rutas,
- * incluido el proxy OTLP. CSP sigue en Report-Only para no romper Maps/WS.
+ * incluido el proxy OTLP. El CSP no va aquí: lo pone SvelteKit en cada página
+ * (`kit.csp` en svelte.config.js) porque es quien conoce el nonce.
  * @param {import('@sveltejs/kit').RequestEvent} event
  * @param {Response} response
  */
@@ -41,7 +29,6 @@ function applySecurityHeaders(event, response) {
 		response.headers.set('Referrer-Policy', 'no-referrer');
 	}
 
-	response.headers.set('Content-Security-Policy-Report-Only', CSP);
 	return response;
 }
 
