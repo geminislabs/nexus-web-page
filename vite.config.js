@@ -1,8 +1,27 @@
+import { readFileSync } from 'node:fs';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
+
+function otlpEndpointForBuild(mode) {
+	if (process.env.OTLP_ENDPOINT != null) return String(process.env.OTLP_ENDPOINT).trim();
+	if (process.env.DEPLOY_ENV === 'production' || process.env.DEPLOY_ENV === 'test') return '';
+	if (mode === 'production') return '';
+	return 'http://localhost:4318';
+}
+
+export default defineConfig(({ mode }) => ({
 	plugins: [sveltekit()],
+	ssr: {
+		noExternal: [/^@opentelemetry\/(?!sdk-trace-node|context-async-hooks|instrumentation-http)/]
+	},
+	define: {
+		__SERVICE_NAME__: JSON.stringify('nexus-web-page'),
+		__SERVICE_VERSION__: JSON.stringify(pkg.version),
+		__DEPLOY_ENV__: JSON.stringify(process.env.DEPLOY_ENV || 'local'),
+		__OTLP_ENDPOINT__: JSON.stringify(otlpEndpointForBuild(mode))
+	},
 	test: {
 		environment: 'happy-dom',
 		globals: true,
@@ -68,4 +87,4 @@ export default defineConfig({
 	server: {
 		hmr: {}
 	}
-});
+}));

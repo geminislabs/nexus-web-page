@@ -12,6 +12,20 @@ const COMM_API_URL = String(import.meta.env?.VITE_COMM_API_URL ?? '')
 	.trim()
 	.replace(/\/$/, '');
 
+async function tracedFetch(url, options) {
+	const { instrumentedFetch } = await import('$lib/observability/http.js');
+	return instrumentedFetch(url, options);
+}
+
+async function beginJourney(name) {
+	try {
+		const { startJourney } = await import('$lib/observability/journey.js');
+		return startJourney(name);
+	} catch {
+		return { end() {} };
+	}
+}
+
 function requireCommApiUrl() {
 	if (!COMM_API_URL) {
 		const err = new Error('VITE_COMM_API_URL is not configured');
@@ -53,9 +67,11 @@ class PositionService {
 		try {
 			return await withDataToken(
 				(dataToken) =>
-					fetch(url.toString(), {
+					tracedFetch(url.toString(), {
 						method: 'GET',
-						headers: { Accept: 'application/json', Authorization: `Bearer ${dataToken}` }
+						headers: { Accept: 'application/json', Authorization: `Bearer ${dataToken}` },
+						route: '/api/v1/communications/latest',
+						targetService: 'siscom-api'
 					}),
 				async (res) => {
 					if (!res.ok) throw new Error(`HTTP error ${res.status}`);
@@ -437,6 +453,8 @@ class PositionService {
 		let websocket = null;
 		let reconnectTimer = null;
 		let isClosed = false;
+		/** @type {{ end: (outcome?: string) => void } | null} */
+		let journey = null;
 
 		const connect = async () => {
 			if (isClosed) return;
@@ -445,10 +463,15 @@ class PositionService {
 				return;
 			}
 
+			// Un journey por sesión, no por mensaje GPS. La reconexión abre otro.
+			journey = await beginJourney('tracking.stream');
+			let opened = false;
+
 			let dataToken;
 			try {
 				dataToken = await getDataToken();
 			} catch (err) {
+				journey.end('failure');
 				logger.error({
 					code: 'WS_STREAM_TOKEN_FAILED',
 					message: 'Sin token de plano de datos para abrir el stream',
@@ -457,12 +480,18 @@ class PositionService {
 				isClosed = true;
 				return;
 			}
-			if (isClosed) return;
+			if (isClosed) {
+				journey.end('cancelled');
+				return;
+			}
 
 			try {
 				websocket = new WebSocket(streamUrl, [WS_TOKEN_PROTOCOL, dataToken]);
 
-				websocket.onopen = () => {};
+				websocket.onopen = () => {
+					opened = true;
+					journey.end('success');
+				};
 
 				websocket.onmessage = (event) => {
 					try {
@@ -537,6 +566,7 @@ class PositionService {
 				};
 
 				websocket.onerror = (error) => {
+					if (!opened) journey.end('failure');
 					logger.error({
 						code: 'WS_STREAM_ERROR',
 						message: 'Real-time stream error',
@@ -548,6 +578,7 @@ class PositionService {
 				};
 
 				websocket.onclose = (event) => {
+					if (!opened) journey.end(isClosed ? 'cancelled' : 'failure');
 					if (isClosed) return;
 
 					logger.warn({
@@ -562,6 +593,7 @@ class PositionService {
 					}, 3000);
 				};
 			} catch (error) {
+				journey.end('failure');
 				logger.error({
 					code: 'WS_STREAM_CONNECT_FAILED',
 					message: 'Error creating WebSocket connection',
@@ -579,6 +611,7 @@ class PositionService {
 		return {
 			close: () => {
 				isClosed = true;
+				journey?.end('cancelled');
 				clearTimeout(reconnectTimer);
 				if (websocket) {
 					websocket.close();
@@ -594,14 +627,17 @@ class PositionService {
 	 */
 	async initShareLocation(token) {
 		const base = requireCommApiUrl();
+		const journey = await beginJourney('tracking.share');
 		try {
-			const response = await fetch(
+			const response = await tracedFetch(
 				`${base}/api/v1/public/share-location/init?token=${encodeURIComponent(token)}`,
 				{
 					method: 'GET',
 					headers: {
 						Accept: 'application/json'
-					}
+					},
+					route: '/api/v1/public/share-location/init',
+					targetService: 'siscom-api'
 				}
 			);
 
@@ -611,11 +647,15 @@ class PositionService {
 					message: 'Error initializing share location',
 					context: { status: response.status }
 				});
+				journey.end('failure');
 				throw new Error('No se pudo abrir el enlace de seguimiento.');
 			}
 
-			return await response.json();
+			const body = await response.json();
+			journey.end('success');
+			return body;
 		} catch (error) {
+			journey.end('failure');
 			logger.error({
 				code: 'SHARE_INIT_FAILED',
 				message: 'Error initializing share location',
@@ -646,62 +686,84 @@ class PositionService {
 		const streamUrl = `${sanitizedBaseUrl}/api/v1/public/share-location/stream?token=${encodeURIComponent(token)}`;
 
 		let websocket = null;
+		let opened = false;
+		let closed = false;
+		/** @type {{ end: (outcome?: string) => void }} */
+		let journey = { end() {} };
 
-		try {
-			websocket = new WebSocket(streamUrl);
+		// El socket espera al journey para poder cerrarlo una sola vez. `close`
+		// sigue siendo síncrono: si llega antes, cancela y no abre.
+		void beginJourney('tracking.share').then((handle) => {
+			journey = handle;
+			if (closed) {
+				journey.end('cancelled');
+				return;
+			}
 
-			websocket.onopen = () => {};
+			try {
+				websocket = new WebSocket(streamUrl);
 
-			websocket.onmessage = (event) => {
-				try {
-					const data = JSON.parse(event.data);
+				websocket.onopen = () => {
+					opened = true;
+					journey.end('success');
+				};
 
-					if (data.event === 'message') {
-						if (onUpdate) onUpdate(data.data);
-					} else if (data.event === 'expired') {
-						logger.warn({
-							code: 'SHARE_TOKEN_EXPIRED',
-							message: 'Share token expired'
+				websocket.onmessage = (event) => {
+					try {
+						const data = JSON.parse(event.data);
+
+						if (data.event === 'message') {
+							if (onUpdate) onUpdate(data.data);
+						} else if (data.event === 'expired') {
+							logger.warn({
+								code: 'SHARE_TOKEN_EXPIRED',
+								message: 'Share token expired'
+							});
+							websocket.close();
+							if (onError) onError(new Error('El enlace ha expirado'));
+						} else if (data.event === 'ping') {
+							// Keep-alive, ignorar
+						}
+					} catch (e) {
+						logger.error({
+							code: 'SHARE_STREAM_PARSE_FAILED',
+							message: 'Error parsing share stream data',
+							err: e
 						});
-						websocket.close();
-						if (onError) onError(new Error('El enlace ha expirado'));
-					} else if (data.event === 'ping') {
-						// Keep-alive, ignorar
 					}
-				} catch (e) {
+				};
+
+				websocket.onclose = (event) => {
+					if (!opened) journey.end('failure');
+					if (event.code === 1008) {
+						if (onError) onError(new Error('Token inválido o expirado'));
+					}
+				};
+
+				websocket.onerror = (err) => {
+					if (!opened) journey.end('failure');
 					logger.error({
-						code: 'SHARE_STREAM_PARSE_FAILED',
-						message: 'Error parsing share stream data',
-						err: e
+						code: 'SHARE_STREAM_ERROR',
+						message: 'Share stream error',
+						err
 					});
-				}
-			};
-
-			websocket.onclose = (event) => {
-				if (event.code === 1008) {
-					if (onError) onError(new Error('Token inválido o expirado'));
-				}
-			};
-
-			websocket.onerror = (err) => {
+					if (onError) onError(err);
+				};
+			} catch (err) {
+				journey.end('failure');
 				logger.error({
-					code: 'SHARE_STREAM_ERROR',
-					message: 'Share stream error',
+					code: 'SHARE_STREAM_CONNECT_FAILED',
+					message: 'Error creating share stream',
 					err
 				});
 				if (onError) onError(err);
-			};
-		} catch (err) {
-			logger.error({
-				code: 'SHARE_STREAM_CONNECT_FAILED',
-				message: 'Error creating share stream',
-				err
-			});
-			if (onError) onError(err);
-		}
+			}
+		});
 
 		return {
 			close: () => {
+				closed = true;
+				if (!opened) journey.end('cancelled');
 				if (websocket) {
 					websocket.close();
 				}

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Observabilidad OpenTelemetry (`src/lib/observability/`): trazas, métricas y logs OTLP/HTTP. Sin `OTLP_ENDPOINT` no se registran providers. El navegador exporta por `/internal/otlp`; en producción un `localhost:4318` horneado no se usa
+- Journeys `auth.login`, `auth.refresh`, `auth.register`, `auth.password_reset`, `data_token.issue`, `tracking.stream` y `tracking.share`. Un journey por sesión de WebSocket, no por mensaje. Las peticiones a la API administrativa y a siscom-api llevan `traceparent` y la ruta plantilla, sin `device_ids` ni el data token
+- Un build de producción sin `OTLP_ENDPOINT` no arranca el tracer del navegador. Sin eso el bundle espera un import que no termina y la app no hidrata
+
 ## [1.21.0] - 2026-10-09
 
 ### Fixed

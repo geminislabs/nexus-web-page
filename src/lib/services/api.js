@@ -3,6 +3,8 @@ import { user } from '../stores/auth.js';
 import { activeOrganizationId } from '../stores/organizationStore.js';
 import { ApiError, apiErrorFromResponse } from './apiErrors.js';
 import { withQuery } from './apiQuery.js';
+import { httpRouteTemplate, instrumentedFetch } from '$lib/observability/http.js';
+import { startJourney } from '$lib/observability/journey.js';
 import { logger } from '$lib/utils/logger.js';
 
 export { ApiError } from './apiErrors.js';
@@ -171,7 +173,12 @@ class ApiService {
 
 		let response;
 		try {
-			response = await fetch(url, { ...fetchOptions, headers });
+			response = await instrumentedFetch(url, {
+				...fetchOptions,
+				headers,
+				route: httpRouteTemplate(path),
+				targetService: 'siscom-admin-api'
+			});
 		} catch (err) {
 			logger.error({
 				code: 'API_NETWORK_ERROR',
@@ -274,22 +281,46 @@ class ApiService {
 		}
 	}
 
+	/**
+	 * Un journey por operación. Se cierra una sola vez (`end` es idempotente).
+	 * Sin token, correo ni contraseña en los atributos.
+	 * @template T
+	 * @param {string} name
+	 * @param {() => Promise<T>} run
+	 * @returns {Promise<T>}
+	 */
+	async _withJourney(name, run) {
+		const journey = startJourney(name);
+		try {
+			const result = await run();
+			journey.end('success');
+			return result;
+		} catch (error) {
+			journey.end('failure');
+			throw error;
+		}
+	}
+
 	// ── Auth ──────────────────────────────────────────────────────────────────
 
 	async login(credentials) {
-		return this._rawRequest('/auth/login', {
-			method: 'POST',
-			skipAuth: true,
-			body: JSON.stringify(credentials)
-		});
+		return this._withJourney('auth.login', () =>
+			this._rawRequest('/auth/login', {
+				method: 'POST',
+				skipAuth: true,
+				body: JSON.stringify(credentials)
+			})
+		);
 	}
 
 	async register(userData) {
-		return this._rawRequest('/auth/register', {
-			method: 'POST',
-			skipAuth: true,
-			body: JSON.stringify(userData)
-		});
+		return this._withJourney('auth.register', () =>
+			this._rawRequest('/auth/register', {
+				method: 'POST',
+				skipAuth: true,
+				body: JSON.stringify(userData)
+			})
+		);
 	}
 
 	async logout() {
@@ -322,23 +353,25 @@ class ApiService {
 	 * Persiste tokens vía authToken.setSession().
 	 */
 	async refreshSession() {
-		const refreshToken = authToken.getRefreshToken?.();
-		const accessToken = authToken.getToken?.();
-		if (!refreshToken || !accessToken) {
-			throw new ApiError('No hay sesión renovable', { status: 401 });
-		}
+		return this._withJourney('auth.refresh', async () => {
+			const refreshToken = authToken.getRefreshToken?.();
+			const accessToken = authToken.getToken?.();
+			if (!refreshToken || !accessToken) {
+				throw new ApiError('No hay sesión renovable', { status: 401 });
+			}
 
-		const data = await this._rawRequest('/auth/refresh', {
-			method: 'POST',
-			// La cabecera se pone a mano: `skipAuth` impide que `_fetch` la
-			// reponga, y aquí el token va vencido a propósito.
-			skipAuth: true,
-			headers: { Authorization: `Bearer ${accessToken}` },
-			body: JSON.stringify({ refresh_token: refreshToken })
+			const data = await this._rawRequest('/auth/refresh', {
+				method: 'POST',
+				// La cabecera se pone a mano: `skipAuth` impide que `_fetch` la
+				// reponga, y aquí el token va vencido a propósito.
+				skipAuth: true,
+				headers: { Authorization: `Bearer ${accessToken}` },
+				body: JSON.stringify({ refresh_token: refreshToken })
+			});
+
+			authToken.setSession?.(data);
+			return data;
 		});
-
-		authToken.setSession?.(data);
-		return data;
 	}
 
 	/**
@@ -367,20 +400,24 @@ class ApiService {
 
 	/** @param {string} email */
 	async forgotPassword(email) {
-		return this._rawRequest('/auth/forgot-password', {
-			method: 'POST',
-			skipAuth: true,
-			body: JSON.stringify({ email })
-		});
+		return this._withJourney('auth.password_reset', () =>
+			this._rawRequest('/auth/forgot-password', {
+				method: 'POST',
+				skipAuth: true,
+				body: JSON.stringify({ email })
+			})
+		);
 	}
 
 	/** @param {{ email: string, code: string, new_password: string }} payload */
 	async resetPassword(payload) {
-		return this._rawRequest('/auth/reset-password', {
-			method: 'POST',
-			skipAuth: true,
-			body: JSON.stringify(payload)
-		});
+		return this._withJourney('auth.password_reset', () =>
+			this._rawRequest('/auth/reset-password', {
+				method: 'POST',
+				skipAuth: true,
+				body: JSON.stringify(payload)
+			})
+		);
 	}
 
 	// ── Usuario / usuarios ────────────────────────────────────────────────────
