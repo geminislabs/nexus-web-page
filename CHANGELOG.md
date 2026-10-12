@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Sección "Marca" en Administración (B4): nombre visible, correo de soporte, enlace legal, logos por URL y uno o dos colores semilla, con vista previa del login, el menú y el correo en modo claro y oscuro. Guardar deja un borrador que nadie más ve; publicar pide confirmación. La paleta y el ajuste de contraste los calcula el servidor. Requiere `siscom-admin-api#152` y `#153` (sin liberar todavía); sin ellos, la sección no aparece
+- La web lee `GET /auth/me` al iniciar sesión para conocer el rol, los permisos y las capabilities de la cuenta. Deciden qué secciones se muestran; quien autoriza sigue siendo el backend
+
 ## [1.22.1] - 2026-10-11
 
 ### Security
