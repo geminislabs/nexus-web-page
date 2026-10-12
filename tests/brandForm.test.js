@@ -287,9 +287,10 @@ describe('textos para el usuario', () => {
 		const branding = { published_at: '2026-10-12T16:30:00Z', published_by: 'u-1' };
 		expect(describeLastPublished(branding, 'u-1')).toMatch(/^Publicado el .+ por ti$/);
 		expect(describeLastPublished(branding, 'u-2')).toMatch(/por otro administrador$/);
-		expect(describeLastPublished({ published_at: '2026-10-12T16:30:00Z' }, 'u-1')).toMatch(
-			/^Publicado el [^p]+$/
-		);
+		// Sin `published_by` no se dice quién. No se mira la hora: depende de la zona.
+		const anonymous = describeLastPublished({ published_at: '2026-10-12T16:30:00Z' }, 'u-1');
+		expect(anonymous).toMatch(/^Publicado el /);
+		expect(anonymous).not.toMatch(/ por (ti|otro administrador)$/);
 	});
 
 	it('describeLastPublished: nunca publicado o fecha rota', () => {
