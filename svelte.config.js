@@ -14,10 +14,11 @@ const config = {
 			// `nonce` y no `auto`: el script del tema en app.html depende del nonce, y
 			// en una página prerenderizada no lo habría. Hoy no se prerenderiza nada.
 			mode: 'nonce',
-			// Report-Only primero: en local no hay contra qué probar el mapa (las APIs
-			// de la VPN son las de producción y su CORS no admite localhost). Cuando
-			// la consola en producción salga limpia, `reportOnly` pasa a `directives`.
-			reportOnly: cspDirectives(env)
+			// Se aplica. Salió primero en Report-Only (v1.22.0) porque en local no hay
+			// contra qué probar el mapa; el log de `/internal/csp-report` en producción
+			// quedó vacío tras usar mapa, stream, Street View y /share. Lo que se
+			// bloquee a partir de aquí sigue llegando a ese log.
+			directives: cspDirectives(env)
 		}
 	}
 };
