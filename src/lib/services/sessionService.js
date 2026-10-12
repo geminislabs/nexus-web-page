@@ -1,5 +1,6 @@
 import { user, authToken } from '$lib/stores/auth.js';
 import { organizations, activeOrganizationId } from '$lib/stores/organizationStore.js';
+import { accountAccess } from '$lib/stores/accountStore.js';
 import { apiService } from '$lib/services/api.js';
 import { clearDataToken, primeDataToken } from '$lib/services/dataToken.js';
 import { logger } from '$lib/utils/logger.js';
@@ -35,6 +36,26 @@ async function loadMyOrganizations() {
 	}
 }
 
+/**
+ * Rol, permisos y capabilities de la cuenta (`GET /auth/me`). Deciden qué
+ * secciones se muestran —hoy, la de marca—; el backend autoriza igual.
+ *
+ * Best effort, como las organizaciones: si falla, la sesión sigue y el usuario
+ * ve el menú sin las secciones que dependen de permisos.
+ */
+async function loadAccountAccess() {
+	try {
+		accountAccess.setFromMe(await apiService.getMyAccount());
+	} catch (err) {
+		logger.warn({
+			code: 'AUTH_ACCOUNT_ACCESS_FETCH_FAILED',
+			message: 'Failed to fetch account permissions',
+			err
+		});
+		accountAccess.clear();
+	}
+}
+
 /** @param {Record<string, unknown> | null | undefined} apiUser */
 export function normalizeUser(apiUser) {
 	if (!apiUser) return null;
@@ -65,6 +86,7 @@ export function persistLoginResponse(response) {
 	primeDataToken(response);
 	user.login(normalizeUser(response.user));
 	loadMyOrganizations();
+	loadAccountAccess();
 }
 
 export function clearLocalSession() {
@@ -72,6 +94,7 @@ export function clearLocalSession() {
 	authToken.clearToken();
 	organizations.clear();
 	activeOrganizationId.clear();
+	accountAccess.clear();
 	// La credencial del plano de datos deriva de la sesión: si la sesión muere,
 	// muere con ella. Vive solo en memoria, así que basta con soltarla.
 	clearDataToken();
@@ -104,7 +127,7 @@ export async function validateSessionWithApi() {
 	try {
 		const apiUser = await apiService.getCurrentUser();
 		user.login(normalizeUser(apiUser));
-		await loadMyOrganizations();
+		await Promise.all([loadMyOrganizations(), loadAccountAccess()]);
 		return true;
 	} catch (err) {
 		logger.warn({

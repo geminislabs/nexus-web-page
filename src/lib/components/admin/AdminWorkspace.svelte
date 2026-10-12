@@ -6,6 +6,7 @@
 	import { user } from '$lib/stores/auth.js';
 	import { theme } from '$lib/stores/themeStore.js';
 	import { adminSection, workspaceActions } from '$lib/stores/workspaceStore.js';
+	import { accountAccess, canEditBrand } from '$lib/stores/accountStore.js';
 	import { logoutSession } from '$lib/services/sessionService.js';
 	import { goto } from '$app/navigation';
 	import WorkspaceSwitcher from './WorkspaceSwitcher.svelte';
@@ -13,6 +14,7 @@
 	import AdminDashboard from './AdminDashboard.svelte';
 	import AdminPanel from '$lib/components/AdminPanel.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
+	import BrandWorkspace from '$lib/components/brand/BrandWorkspace.svelte';
 
 	/* Tipografías auto-alojadas (latin/latin-ext): evita transferir la IP a Google Fonts. */
 	import '@fontsource/sora/latin-500.css';
@@ -28,11 +30,12 @@
 	import '@fontsource/ibm-plex-sans/latin-ext-500.css';
 	import '@fontsource/ibm-plex-sans/latin-ext-600.css';
 
-	const navItems = [
+	const allNavItems = [
 		{ id: 'dashboard', label: 'Dashboard', icon: 'mdi:view-dashboard-outline' },
 		{ id: 'users', label: 'Usuarios', icon: 'mdi:account-group-outline' },
 		{ id: 'units', label: 'Unidades', icon: 'mdi:car-side' },
 		{ id: 'devices', label: 'Dispositivos', icon: 'mdi:memory' },
+		{ id: 'brand', label: 'Marca', icon: 'mdi:palette-outline' },
 		{ id: 'settings', label: 'Configuración', icon: 'mdi:cog-outline' }
 	];
 
@@ -41,6 +44,7 @@
 		users: { title: 'Usuarios', locked: 'usuarios' },
 		units: { title: 'Unidades', locked: 'unidades' },
 		devices: { title: 'Dispositivos', locked: 'dispositivos' },
+		brand: { title: 'Marca' },
 		settings: { title: 'Configuración' }
 	};
 
@@ -48,9 +52,18 @@
 	let collapsed = browser ? window.matchMedia('(max-width: 639px)').matches : false;
 	let showUserMenu = false;
 
+	// «Marca» se muestra con `branding.write` y `white_label_enabled`; ocultarla
+	// es comodidad, el backend vuelve a comprobar las dos cosas (B4).
+	$: brandAllowed = canEditBrand($accountAccess);
+	$: navItems = allNavItems.filter((item) => item.id !== 'brand' || brandAllowed);
+
 	$: section = $adminSection;
 	$: if (section === 'reports') {
 		// Sección movida a Seguimiento; limpia estado residual.
+		workspaceActions.setAdminSection('dashboard');
+	}
+	$: if (section === 'brand' && !brandAllowed) {
+		// Se perdió el permiso (otra cuenta, logout) con la sección abierta.
 		workspaceActions.setAdminSection('dashboard');
 	}
 	$: meta = sectionMeta[section] ?? sectionMeta.dashboard;
@@ -222,6 +235,26 @@
 					>
 						{#key section}
 							<AdminPanel embedded={true} lockedSection={meta.locked} />
+						{/key}
+					</div>
+				</div>
+			{:else if section === 'brand' && brandAllowed}
+				<div class="flex min-h-0 flex-1 flex-col">
+					<div class="mb-3 shrink-0">
+						<h1
+							class="admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white"
+						>
+							Marca
+						</h1>
+						<p class="m-0 mt-1 text-sm text-slate-500 dark:text-white/45">
+							Nombre, logos y colores con los que tus usuarios ven la plataforma
+						</p>
+					</div>
+					<div
+						class="flex min-h-0 flex-1 flex-col overflow-auto rounded-2xl border border-slate-200/90 bg-white dark:border-white/[0.08] dark:bg-[#0d1424]"
+					>
+						{#key $accountAccess.accountId}
+							<BrandWorkspace accountId={$accountAccess.accountId} />
 						{/key}
 					</div>
 				</div>

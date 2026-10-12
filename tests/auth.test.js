@@ -6,14 +6,16 @@ vi.mock('$app/environment', () => ({ browser: true }));
 const apiMocks = vi.hoisted(() => ({
 	logout: vi.fn().mockResolvedValue(null),
 	getCurrentUser: vi.fn().mockResolvedValue({ email: 'a@b.com', full_name: 'Ana' }),
-	getMyOrganizations: vi.fn().mockResolvedValue([])
+	getMyOrganizations: vi.fn().mockResolvedValue([]),
+	getMyAccount: vi.fn().mockResolvedValue({})
 }));
 
 vi.mock('../src/lib/services/api.js', () => ({
 	apiService: {
 		logout: apiMocks.logout,
 		getCurrentUser: apiMocks.getCurrentUser,
-		getMyOrganizations: apiMocks.getMyOrganizations
+		getMyOrganizations: apiMocks.getMyOrganizations,
+		getMyAccount: apiMocks.getMyAccount
 	}
 }));
 
@@ -34,6 +36,8 @@ describe('sessionService', () => {
 		apiMocks.getCurrentUser.mockClear();
 		apiMocks.getMyOrganizations.mockClear();
 		apiMocks.getMyOrganizations.mockResolvedValue([]);
+		apiMocks.getMyAccount.mockReset();
+		apiMocks.getMyAccount.mockResolvedValue({});
 	});
 
 	it('normalizeUser unifica nombre y rol master', async () => {
@@ -151,5 +155,53 @@ describe('sessionService', () => {
 
 		expect(get(organizations)).toEqual([]);
 		expect(localStorage.removeItem).toHaveBeenCalledWith('active_organization_id');
+	});
+
+	it('validateSessionWithApi carga permisos y capabilities de la cuenta (B4)', async () => {
+		localStorage.getItem.mockImplementation((key) => (key === 'token' ? 'tok' : null));
+		apiMocks.getMyAccount.mockResolvedValue({
+			account: { id: 'acc-1', account_name: 'Rastreo Norte' },
+			account_role: 'owner',
+			account_permissions: ['branding.write'],
+			account_capabilities: { white_label_enabled: true }
+		});
+		const { validateSessionWithApi } = await import('../src/lib/services/sessionService.js');
+		const { accountAccess, canEditBrand } = await import('../src/lib/stores/accountStore.js');
+		const { get } = await import('svelte/store');
+
+		await expect(validateSessionWithApi()).resolves.toBe(true);
+
+		expect(get(accountAccess)).toMatchObject({ accountId: 'acc-1', role: 'owner' });
+		expect(canEditBrand(get(accountAccess))).toBe(true);
+	});
+
+	it('si /auth/me falla la sesión sigue, sin permisos de cuenta', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		localStorage.getItem.mockImplementation((key) => (key === 'token' ? 'tok' : null));
+		apiMocks.getMyAccount.mockRejectedValue(new Error('500'));
+		const { validateSessionWithApi } = await import('../src/lib/services/sessionService.js');
+		const { accountAccess, canEditBrand } = await import('../src/lib/stores/accountStore.js');
+		const { get } = await import('svelte/store');
+
+		await expect(validateSessionWithApi()).resolves.toBe(true);
+
+		expect(canEditBrand(get(accountAccess))).toBe(false);
+		warn.mockRestore();
+	});
+
+	it('clearLocalSession olvida los permisos de la cuenta', async () => {
+		const { clearLocalSession } = await import('../src/lib/services/sessionService.js');
+		const { accountAccess } = await import('../src/lib/stores/accountStore.js');
+		const { get } = await import('svelte/store');
+
+		accountAccess.setFromMe({
+			account: { id: 'acc-1' },
+			account_permissions: ['branding.write'],
+			account_capabilities: { white_label_enabled: true }
+		});
+		clearLocalSession();
+
+		expect(get(accountAccess).accountId).toBeNull();
+		expect(get(accountAccess).permissions).toEqual([]);
 	});
 });

@@ -49,6 +49,7 @@ describe('apiService method coverage', () => {
 		await apiService.resetPassword({ email: 'a@b.com', code: '123', new_password: 'b' });
 
 		await apiService.getCurrentUser();
+		await apiService.getMyAccount();
 		await apiService.getUsers();
 		await apiService.inviteUser({ email: 'a@b.com', full_name: 'Ana' });
 		await apiService.resendInvitation({ email: 'a@b.com' });
@@ -153,5 +154,48 @@ describe('apiService method coverage', () => {
 
 		await expect(apiService.refreshSession()).rejects.toThrow('No hay sesión renovable');
 		expect(fetchMock).not.toHaveBeenCalled();
+	});
+});
+
+describe('apiService: marca (B4)', () => {
+	beforeEach(() => {
+		vi.resetModules();
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockImplementation(() => Promise.resolve(jsonResponse({ ok: true })))
+		);
+		authMocks.getToken.mockReturnValue('access-token');
+	});
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	it('los cuatro endpoints, con el método y la ruta del contrato', async () => {
+		const { apiService } = await import('../src/lib/services/api.js');
+		const draft = { brand_name: 'Norte', seed: { primary: '#0e7490' } };
+
+		await apiService.getBranding('acc-1');
+		await apiService.saveBrandingDraft('acc-1', draft);
+		await apiService.publishBranding('acc-1');
+		await apiService.discardBrandingDraft('acc-1');
+
+		const calls = fetch.mock.calls.map(([url, init]) => [
+			init?.method,
+			new URL(String(url)).pathname.replace(/^.*\/api\/v1/, '')
+		]);
+		expect(calls).toEqual([
+			['GET', '/accounts/acc-1/branding'],
+			['PUT', '/accounts/acc-1/branding/draft'],
+			['POST', '/accounts/acc-1/branding/publish'],
+			['DELETE', '/accounts/acc-1/branding/draft']
+		]);
+		expect(JSON.parse(fetch.mock.calls[1][1].body)).toEqual(draft);
+	});
+
+	it('el id de cuenta va escapado en la ruta', async () => {
+		const { apiService } = await import('../src/lib/services/api.js');
+		await apiService.getBranding('../users');
+		expect(String(fetch.mock.calls[0][0])).toContain('/accounts/..%2Fusers/branding');
 	});
 });
