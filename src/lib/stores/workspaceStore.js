@@ -4,7 +4,7 @@ import { browser } from '$app/environment';
 const LS_KEY = 'nexus-workspace';
 
 /** @typedef {'admin' | 'tracking'} WorkspaceId */
-/** @typedef {'dashboard' | 'users' | 'units' | 'devices' | 'settings'} AdminSectionId */
+/** @typedef {'dashboard' | 'users' | 'units' | 'devices' | 'brand' | 'settings'} AdminSectionId */
 
 /** @returns {WorkspaceId} */
 function readStoredWorkspace() {

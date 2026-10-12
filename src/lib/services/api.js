@@ -420,6 +420,54 @@ class ApiService {
 		);
 	}
 
+	/**
+	 * La cuenta comercial del usuario con su rol, sus permisos y sus
+	 * capabilities ya resueltas (`account_role`, `account_permissions`,
+	 * `account_capabilities`, siscom-admin-api B4 rebanada 1).
+	 */
+	async getMyAccount() {
+		return this.request('/auth/me', { method: 'GET' });
+	}
+
+	// ── Marca (B4) ────────────────────────────────────────────────────────────
+	//
+	// Los cuatro exigen `branding.write` en la cuenta y `white_label_enabled`.
+	// Guardar nunca cambia lo que ven los usuarios: solo `publishBranding`.
+
+	/** @param {string} accountId */
+	async getBranding(accountId) {
+		return this.request(`/accounts/${encodeURIComponent(accountId)}/branding`, {
+			method: 'GET'
+		});
+	}
+
+	/**
+	 * Valida, deriva los tokens en el servidor y guarda el borrador. Responde
+	 * con `contrast` y `adjustments` además del borrador.
+	 * @param {string} accountId
+	 * @param {Record<string, unknown>} draft
+	 */
+	async saveBrandingDraft(accountId, draft) {
+		return this.request(`/accounts/${encodeURIComponent(accountId)}/branding/draft`, {
+			method: 'PUT',
+			body: JSON.stringify(draft)
+		});
+	}
+
+	/** @param {string} accountId */
+	async publishBranding(accountId) {
+		return this.request(`/accounts/${encodeURIComponent(accountId)}/branding/publish`, {
+			method: 'POST'
+		});
+	}
+
+	/** @param {string} accountId */
+	async discardBrandingDraft(accountId) {
+		return this.request(`/accounts/${encodeURIComponent(accountId)}/branding/draft`, {
+			method: 'DELETE'
+		});
+	}
+
 	// ── Usuario / usuarios ────────────────────────────────────────────────────
 
 	async getCurrentUser() {
