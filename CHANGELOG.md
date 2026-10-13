@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.23.1] - 2026-10-13
+
 ### Security
 
 - Los íconos van en el bundle y ya no se descargan de `api.iconify.design` mientras se usa el panel. Ese servicio recibía la IP de cada usuario sin estar entre los terceros declarados. Iconify sale del `connect-src` del CSP
