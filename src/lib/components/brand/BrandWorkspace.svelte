@@ -61,20 +61,30 @@
 	$: ramps = { light: rampFromTokens(tokens.light), dark: rampFromTokens(tokens.dark) };
 	$: lastPublished = describeLastPublished(branding, $user?.id);
 
-	/** @param {Record<string, any> | null} next */
+	/**
+	 * `adjustments` viene en todas las respuestas (admin-api ≥ 1.58.0): son los
+	 * del borrador si lo hay, si no los de lo publicado. Contra un backend
+	 * anterior solo vienen al guardar.
+	 * @param {Record<string, any> | null} next
+	 */
 	function adopt(next) {
 		branding = next;
 		form = formFromBranding(next).form;
 		saved = structuredClone(form);
 		errors = {};
 		contrastFailures = [];
+		adjustments = adjustmentsOf(next);
+	}
+
+	/** @param {Record<string, any> | null} response */
+	function adjustmentsOf(response) {
+		return Array.isArray(response?.adjustments) ? response.adjustments : [];
 	}
 
 	async function load() {
 		status = 'loading';
 		try {
 			adopt(await apiService.getBranding(accountId));
-			adjustments = [];
 			status = 'ready';
 		} catch (err) {
 			if (err?.status === 403) {
@@ -103,7 +113,7 @@
 			// seguir escribiendo mientras se guardaba.
 			branding = result;
 			saved = formFromBranding(result).form;
-			adjustments = Array.isArray(result?.adjustments) ? result.adjustments : [];
+			adjustments = adjustmentsOf(result);
 
 			const broken = Object.entries(imageStatus)
 				.filter(([, s]) => s === 'error')
@@ -134,7 +144,6 @@
 		busy = 'publish';
 		try {
 			adopt(await apiService.publishBranding(accountId));
-			adjustments = [];
 			notice = {
 				kind: 'success',
 				text: 'Marca publicada. Los correos la usan desde ahora; la aplicación puede tardar hasta un minuto.'
@@ -172,8 +181,13 @@
 		busy = 'discard';
 		try {
 			await apiService.discardBrandingDraft(accountId);
-			adopt({ ...branding, draft: null });
-			adjustments = [];
+			// Se vuelve a leer para traer los ajustes de lo publicado, que el
+			// DELETE (204) no devuelve. Si la lectura falla, basta con lo local.
+			adopt(
+				await apiService
+					.getBranding(accountId)
+					.catch(() => ({ ...branding, draft: null, adjustments: [] }))
+			);
 			notice = { kind: 'success', text: 'Borrador descartado. Lo publicado no cambió.' };
 		} catch (err) {
 			notice = { kind: 'error', text: err?.displayMessage || 'No se pudo descartar.' };

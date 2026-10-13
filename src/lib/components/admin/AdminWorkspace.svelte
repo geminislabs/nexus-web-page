@@ -7,7 +7,7 @@
 	import { theme } from '$lib/stores/themeStore.js';
 	import { adminSection, workspaceActions } from '$lib/stores/workspaceStore.js';
 	import { accountAccess, canEditBrand } from '$lib/stores/accountStore.js';
-	import { logoutSession } from '$lib/services/sessionService.js';
+	import { logoutSession, refreshAccountAccess } from '$lib/services/sessionService.js';
 	import { goto } from '$app/navigation';
 	import WorkspaceSwitcher from './WorkspaceSwitcher.svelte';
 	import AlarmBell from './AlarmBell.svelte';
@@ -82,6 +82,9 @@
 	onMount(() => {
 		// Refuerza colapsado en viewport móvil tras hidratar.
 		if (window.matchMedia('(max-width: 639px)').matches) collapsed = true;
+		// Lo que GAC haya activado desde que se inició sesión (p. ej. la marca
+		// propia) aparece en el menú sin cerrar sesión.
+		refreshAccountAccess();
 	});
 </script>
 

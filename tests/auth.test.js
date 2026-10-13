@@ -204,4 +204,42 @@ describe('sessionService', () => {
 		expect(get(accountAccess).accountId).toBeNull();
 		expect(get(accountAccess).permissions).toEqual([]);
 	});
+
+	it('refreshAccountAccess muestra lo que GAC activó sin volver a iniciar sesión', async () => {
+		const { refreshAccountAccess } = await import('../src/lib/services/sessionService.js');
+		const { accountAccess, canEditBrand } = await import('../src/lib/stores/accountStore.js');
+		const { get } = await import('svelte/store');
+		accountAccess.setFromMe({
+			account: { id: 'acc-1' },
+			account_permissions: ['branding.write'],
+			account_capabilities: { white_label_enabled: false }
+		});
+		apiMocks.getMyAccount.mockResolvedValue({
+			account: { id: 'acc-1' },
+			account_permissions: ['branding.write'],
+			account_capabilities: { white_label_enabled: true }
+		});
+
+		await refreshAccountAccess();
+
+		expect(canEditBrand(get(accountAccess))).toBe(true);
+	});
+
+	it('refreshAccountAccess conserva los permisos si /auth/me falla', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const { refreshAccountAccess } = await import('../src/lib/services/sessionService.js');
+		const { accountAccess, canEditBrand } = await import('../src/lib/stores/accountStore.js');
+		const { get } = await import('svelte/store');
+		accountAccess.setFromMe({
+			account: { id: 'acc-1' },
+			account_permissions: ['branding.write'],
+			account_capabilities: { white_label_enabled: true }
+		});
+		apiMocks.getMyAccount.mockRejectedValue(new Error('500'));
+
+		await refreshAccountAccess();
+
+		expect(canEditBrand(get(accountAccess))).toBe(true);
+		warn.mockRestore();
+	});
 });

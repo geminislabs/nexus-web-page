@@ -56,6 +56,27 @@ async function loadAccountAccess() {
 	}
 }
 
+/**
+ * Vuelve a pedir `/auth/me` con la sesión ya abierta. Los permisos y las
+ * capabilities solo se leían al iniciar sesión, así que lo que GAC activa
+ * después —la marca propia, por ejemplo— no aparecía en el menú hasta volver
+ * a entrar. Se llama al abrir Administración.
+ *
+ * A diferencia de la carga inicial, un fallo conserva lo que ya había: un
+ * tropiezo de red no debe esconder secciones que el usuario sí tiene.
+ */
+export async function refreshAccountAccess() {
+	try {
+		accountAccess.setFromMe(await apiService.getMyAccount());
+	} catch (err) {
+		logger.warn({
+			code: 'AUTH_ACCOUNT_ACCESS_REFRESH_FAILED',
+			message: 'Failed to refresh account permissions',
+			err
+		});
+	}
+}
+
 /** @param {Record<string, unknown> | null | undefined} apiUser */
 export function normalizeUser(apiUser) {
 	if (!apiUser) return null;
