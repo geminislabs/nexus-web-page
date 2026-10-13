@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { createEventDispatcher } from 'svelte';
 
 	/** Si hay cambios en el formulario que no se han guardado. */

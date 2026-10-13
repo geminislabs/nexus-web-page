@@ -13,7 +13,8 @@
  *
  * Google Fonts queda fuera a propósito: Maps pide Roboto y se le niega; el mapa
  * usa la fuente del sistema y el navegador no le pasa la IP del usuario a Google
- * por una tipografía.
+ * por una tipografía. Por lo mismo los íconos van en el bundle
+ * (`$lib/components/Icon.svelte`) y no se piden a la API de Iconify.
  */
 
 /** Hosts de Google Maps JS API (scripts, tiles, gen_204, Street View). */
@@ -23,16 +24,6 @@ const GOOGLE_MAPS = [
 	'https://maps.gstatic.com',
 	'https://*.gstatic.com',
 	'https://*.ggpht.com'
-];
-
-/**
- * `@iconify/svelte` descarga cada ícono en tiempo de ejecución. Los dos últimos
- * son los respaldos que prueba si el primero no responde.
- */
-const ICONIFY = [
-	'https://api.iconify.design',
-	'https://api.simplesvg.com',
-	'https://api.unisvg.com'
 ];
 
 /**
@@ -88,7 +79,7 @@ export function cspDirectives(env) {
 		'font-src': ['self', 'data:'],
 		'style-src': ['self', 'unsafe-inline'],
 		'script-src': ['self', ...GOOGLE_MAPS],
-		'connect-src': ['self', ...apiOrigins(env), ...GOOGLE_MAPS, ...ICONIFY],
+		'connect-src': ['self', ...apiOrigins(env), ...GOOGLE_MAPS],
 		'worker-src': ['self', 'blob:'],
 		// Las violaciones llegan a stdout (`src/routes/internal/csp-report`).
 		'report-uri': ['/internal/csp-report']

@@ -1,6 +1,6 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { apiService } from '$lib/services/api.js';

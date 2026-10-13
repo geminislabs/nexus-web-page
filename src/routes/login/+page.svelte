@@ -6,7 +6,7 @@
 	import { persistLoginResponse } from '$lib/services/sessionService.js';
 	import { isOnboardingComplete } from '$lib/utils/onboardingStorage.js';
 	import { onMount } from 'svelte';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import logoUrl from '$lib/assets/logo.png';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 

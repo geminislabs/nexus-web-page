@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { onDestroy } from 'svelte';
 	import { PREVIEW_DELAY_MS, urlProblem } from '$lib/utils/brandForm.js';
 	import BrandTextField from './BrandTextField.svelte';

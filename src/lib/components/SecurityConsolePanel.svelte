@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import ShieldBoltIcon from '$lib/components/icons/ShieldBoltIcon.svelte';
 
 	export let unit = null;

@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { swatch } from '$lib/actions/cssVars.js';
 	import { describeAdjustment, describePair, isHexColor } from '$lib/utils/brandForm.js';
 

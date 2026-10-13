@@ -1,6 +1,6 @@
 <script>
 	import { onDestroy } from 'svelte';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import {
 		getGpsIndicator,
 		getCellularIndicator,

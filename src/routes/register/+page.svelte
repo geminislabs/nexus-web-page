@@ -4,7 +4,7 @@
 	import { user } from '$lib/stores/auth.js';
 	import { apiService } from '$lib/services/api.js';
 	import { onMount } from 'svelte';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import logoUrl from '$lib/assets/logo.png';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 

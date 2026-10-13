@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import ShieldBoltIcon from '$lib/components/icons/ShieldBoltIcon.svelte';
 	import UnitsStatusFilterPanels from './UnitsStatusFilterPanels.svelte';
 	import { mapService, followedVehicleId } from '$lib/services/mapService.js';

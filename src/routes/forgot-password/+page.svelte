@@ -1,7 +1,7 @@
 <script>
 	import { goto } from '$app/navigation';
 	import { apiService } from '$lib/services/api.js';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import logoUrl from '$lib/assets/logo.png';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 

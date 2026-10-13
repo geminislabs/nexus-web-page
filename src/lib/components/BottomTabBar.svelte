@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { activeTab, navActions } from '$lib/stores/navigationStore.js';
 	import { unreadAlarmCount } from '$lib/stores/alertStore.js';
 	import { vehicles } from '$lib/stores/vehicleStore.js';

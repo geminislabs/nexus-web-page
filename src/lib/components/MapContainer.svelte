@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { fly } from 'svelte/transition';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { mapService, streetViewVisible } from '$lib/services/mapService.js';
 	import {
 		extraStreamDeviceIds,

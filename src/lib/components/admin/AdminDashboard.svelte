@@ -1,7 +1,7 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
 	import { onMount } from 'svelte';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { apiService } from '$lib/services/api.js';
 	import { alerts, zones, alarmEvents, alertActions } from '$lib/stores/alertStore.js';
 	import { vehicles } from '$lib/stores/vehicleStore.js';

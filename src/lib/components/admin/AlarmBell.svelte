@@ -1,6 +1,6 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { fly } from 'svelte/transition';
 	import { get } from 'svelte/store';
 	import { alerts, alarmEvents, unreadAlarmCount, alertActions } from '$lib/stores/alertStore.js';
