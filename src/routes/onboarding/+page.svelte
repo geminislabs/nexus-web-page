@@ -1,7 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import logoUrl from '$lib/assets/logo.png';
 	import { setOnboardingComplete } from '$lib/utils/onboardingStorage.js';
 

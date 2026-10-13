@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { alerts, zones } from '$lib/stores/alertStore.js';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';

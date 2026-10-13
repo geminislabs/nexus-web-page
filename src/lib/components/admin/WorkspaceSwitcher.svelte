@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { workspace, workspaceActions } from '$lib/stores/workspaceStore.js';
 
 	/** Variante visual: navbar admin o compacta en seguimiento. */

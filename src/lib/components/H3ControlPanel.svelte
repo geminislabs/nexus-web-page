@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import CenterSheet from '$lib/components/CenterSheet.svelte';
 	import { theme } from '$lib/stores/themeStore.js';
 	import {

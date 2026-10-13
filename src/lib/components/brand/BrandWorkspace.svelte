@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { onMount } from 'svelte';
 	import { apiService } from '$lib/services/api.js';
 	import { user } from '$lib/stores/auth.js';

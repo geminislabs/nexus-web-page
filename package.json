@@ -24,7 +24,8 @@
 		"commitlint": "commitlint",
 		"audit": "npm audit --audit-level=high",
 		"scan:secrets": "bash scripts/gitleaks-scan.sh",
-		"scan:osv": "bash scripts/osv-scan.sh"
+		"scan:osv": "bash scripts/osv-scan.sh",
+		"icons": "node scripts/iconos.mjs"
 	},
 	"lint-staged": {
 		"*.{js,svelte}": [
@@ -39,6 +40,7 @@
 		"@commitlint/cli": "^21.2.3",
 		"@commitlint/config-conventional": "^21.2.3",
 		"@eslint/js": "^10.0.1",
+		"@iconify-json/mdi": "^1.2.3",
 		"@playwright/test": "^1.63.0",
 		"@sveltejs/adapter-auto": "^6.0.0",
 		"@sveltejs/adapter-node": "^5.5.7",

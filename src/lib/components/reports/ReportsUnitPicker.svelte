@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { fly } from 'svelte/transition';
 	import { browser } from '$app/environment';
 	import { onDestroy, tick } from 'svelte';

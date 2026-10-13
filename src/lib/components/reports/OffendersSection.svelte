@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	/** @type {Array<{ id: string, type: string, value: string, date: string, unitName: string }>} */
 	export let offenders = [];

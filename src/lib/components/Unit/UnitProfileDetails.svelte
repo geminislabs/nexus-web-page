@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { apiService } from '$lib/services/api.js';
 	import ColoredVehicleIcon from '$lib/components/Unit/ColoredVehicleIcon.svelte';
 	import { unitIcons } from '$lib/data/unitIcons';

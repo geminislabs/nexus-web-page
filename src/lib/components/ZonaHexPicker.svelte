@@ -1,6 +1,6 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { onMount, createEventDispatcher, tick } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import { browser } from '$app/environment';

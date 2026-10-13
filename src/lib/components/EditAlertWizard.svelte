@@ -1,6 +1,6 @@
 <!-- src/lib/components/EditAlertWizard.svelte -->
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { vehicles } from '$lib/stores/vehicleStore.js';

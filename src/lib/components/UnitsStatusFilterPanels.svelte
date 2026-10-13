@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { isUnitMoving } from '$lib/utils/unitTrackingStatus.js';
 
 	/** @type {Array<Record<string, unknown>>} */

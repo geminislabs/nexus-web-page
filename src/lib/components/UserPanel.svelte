@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import CenterSheet from '$lib/components/CenterSheet.svelte';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 	import { logoutSession } from '$lib/services/sessionService.js';

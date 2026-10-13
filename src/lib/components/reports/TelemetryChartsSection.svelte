@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { browser } from '$app/environment';
 	import { onDestroy, tick } from 'svelte';
 	import ChartPanel from './ChartPanel.svelte';

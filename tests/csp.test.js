@@ -71,6 +71,13 @@ describe('cspDirectives', () => {
 		expect(csp['font-src']).toEqual(['self', 'data:']);
 	});
 
+	it('Iconify queda fuera: los íconos van en el bundle', () => {
+		const all = Object.values(csp).flat().join(' ');
+		for (const host of ['iconify.design', 'simplesvg.com', 'unisvg.com']) {
+			expect(all).not.toContain(host);
+		}
+	});
+
 	it('no se puede enmarcar ni cargar plugins', () => {
 		expect(csp['frame-ancestors']).toEqual(['none']);
 		expect(csp['object-src']).toEqual(['none']);

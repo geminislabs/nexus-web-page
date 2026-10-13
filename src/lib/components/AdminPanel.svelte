@@ -1,6 +1,6 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { onMount } from 'svelte';
 	import { apiService } from '$lib/services/api.js';
 	import { vehicleColors } from '$lib/data/vehicleColors';
@@ -319,7 +319,7 @@
 					<p class="error-msg">{devicesError}</p>
 				{:else if devices.length === 0}
 					<div class="empty-state">
-						<Icon icon="mdi:memory-off" width={24} class="opacity-30" aria-hidden="true" />
+						<Icon icon="mdi:memory" width={24} class="opacity-30" aria-hidden="true" />
 						Sin dispositivos registrados
 					</div>
 				{:else}

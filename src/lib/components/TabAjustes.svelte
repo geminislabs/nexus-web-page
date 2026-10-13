@@ -1,5 +1,5 @@
 <script>
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { goto } from '$app/navigation';
 	import { user } from '$lib/stores/auth.js';
 	import { logoutSession } from '$lib/services/sessionService.js';

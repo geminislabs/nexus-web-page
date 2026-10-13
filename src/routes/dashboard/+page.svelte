@@ -22,7 +22,7 @@
 	import { mapService } from '$lib/services/mapService.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
 	import logoUrl from '$lib/assets/logo.png';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 
 	import MapContainer from '$lib/components/MapContainer.svelte';
 	import TopDrawer from '$lib/components/TopDrawer.svelte';

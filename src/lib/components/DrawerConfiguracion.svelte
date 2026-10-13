@@ -1,6 +1,6 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { theme, themeActions } from '$lib/stores/themeStore.js';
 	import SignalMeters from './SignalMeters.svelte';
 	import UnitTelemetryBadges from './UnitTelemetryBadges.svelte';

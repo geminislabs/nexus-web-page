@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Los íconos van en el bundle y ya no se descargan de `api.iconify.design` mientras se usa el panel. Ese servicio recibía la IP de cada usuario sin estar entre los terceros declarados. Iconify sale del `connect-src` del CSP
+- `scripts/iconos.mjs` (`npm run icons`) genera `src/lib/icons/mdi.json` con los 145 íconos `mdi:*` que aparecen en `src/` (14 KB comprimido). Un test falla si el archivo no está al día o si un nombre no existe en el set
+
+### Fixed
+
+- El estado vacío de Dispositivos en el panel antiguo de administración pedía `mdi:memory-off`, que no existe, y salía en blanco. Ahora usa `mdi:memory`
+
 ## [1.23.0] - 2026-10-12
 
 ### Added

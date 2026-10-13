@@ -1,6 +1,6 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
-	import Icon from '@iconify/svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { alertWizard, alertActions, zones } from '$lib/stores/alertStore.js';
 	import { selectedH3Cells } from '$lib/stores/h3Store.js';
 	import { vehicles } from '$lib/stores/vehicleStore.js';
