@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `@googlemaps/js-api-loader` pasa de 1.16 a 2.1. La 2.x quitó la clase `Loader` (`new Loader()` lanza al instante) y el Dependabot que la subía (#90) pasaba la CI en verde porque ningún test cargaba el loader: el mapa no habría cargado en producción. Las dos entradas al mapa (`mapService` y `ZonaHexPicker`) usan ahora `src/lib/services/googleMapsLoader.js`, que llama a `setOptions()` una sola vez y a `importLibrary('maps')`, con las mismas librerías que antes. Un test fija ese contrato y que ningún otro archivo importe el paquete
+- `@types/node` 25 → 26 y `globals` 16 → 17 (dev). Reemplazan a #92 y #88, que quedaron en conflicto con el lock tras mergear #105 y #106
 
 ## [1.23.1] - 2026-10-13
 
