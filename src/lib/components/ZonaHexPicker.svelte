@@ -44,13 +44,8 @@
 					localGoogle = mapService.google;
 					await initMap();
 				} else {
-					const { Loader } = await import('@googlemaps/js-api-loader');
-					const loader = new Loader({
-						apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
-						version: 'weekly',
-						libraries: ['places']
-					});
-					localGoogle = await loader.load();
+					const { cargarGoogleMaps } = await import('$lib/services/googleMapsLoader.js');
+					localGoogle = await cargarGoogleMaps(import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '');
 					await initMap();
 				}
 			} catch (err) {

@@ -1,6 +1,6 @@
 import { get, writable } from 'svelte/store';
 import { mount, unmount } from 'svelte';
-import * as GoogleMapsLoader from '@googlemaps/js-api-loader';
+import { cargarGoogleMaps } from '$lib/services/googleMapsLoader.js';
 import {
 	MarkerClusterer,
 	SuperClusterAlgorithm
@@ -266,13 +266,7 @@ class MapService {
 				);
 			}
 
-			const loader = new GoogleMapsLoader.Loader({
-				apiKey: this.apiKey,
-				version: 'weekly',
-				libraries: ['places', 'geometry', 'drawing']
-			});
-
-			this.google = await loader.load();
+			this.google = await cargarGoogleMaps(this.apiKey);
 
 			const isMobileLayout = this._isMobileLayout();
 
