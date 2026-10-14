@@ -5,7 +5,7 @@
 	import { apiService } from '$lib/services/api.js';
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
-	import logoUrl from '$lib/assets/logo.png';
+	import { logoDe, marcaOPorDefecto, tituloDe, descripcionDe } from '$lib/brand.js';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 
 	const inputClass =
@@ -68,20 +68,18 @@
 			loading = false;
 		}
 	}
+
+	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
+	$: marca = marcaOPorDefecto($page.data.brand);
+	$: logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>
-	<title>NEXUS — Crear cuenta</title>
-	<meta
-		name="description"
-		content="Crea tu cuenta en NEXUS, plataforma de GeminisLabs para monitorización y gestión de flotas."
-	/>
+	<title>{tituloDe(marca, 'Crear cuenta')}</title>
+	<meta name="description" content={descripcionDe(marca, 'Crea tu cuenta en')} />
 	<link rel="canonical" href={`${$page.url.origin}/register`} />
-	<meta property="og:title" content="NEXUS — Crear cuenta" />
-	<meta
-		property="og:description"
-		content="Crea tu cuenta en NEXUS, plataforma de GeminisLabs para monitorización y gestión de flotas."
-	/>
+	<meta property="og:title" content={tituloDe(marca, 'Crear cuenta')} />
+	<meta property="og:description" content={descripcionDe(marca, 'Crea tu cuenta en')} />
 	<meta property="og:type" content="website" />
 	<meta name="twitter:card" content="summary" />
 </svelte:head>
@@ -116,7 +114,7 @@
 			id="register-heading"
 			class="mb-1 mt-0 text-center text-4xl font-extrabold tracking-[0.15em] text-slate-900 dark:text-white dark:[text-shadow:0_2px_20px_rgba(255,255,255,0.15)]"
 		>
-			NEXUS
+			{marca.isDefault ? 'NEXUS' : marca.name}
 		</h1>
 		<p class="mb-3 mt-0 text-center text-sm tracking-wide text-slate-600 dark:text-white/45">
 			Crear cuenta
