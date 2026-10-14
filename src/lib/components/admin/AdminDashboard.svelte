@@ -1,4 +1,6 @@
 <script>
+	import { page } from '$app/stores';
+	import { marcaOPorDefecto } from '$lib/brand.js';
 	import { logger } from '$lib/utils/logger.js';
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
@@ -74,6 +76,8 @@
 	}
 
 	onMount(loadDashboard);
+
+	$: marca = marcaOPorDefecto($page.data.brand);
 </script>
 
 <div class="admin-dashboard w-full">
@@ -125,7 +129,7 @@
 				<p
 					class="m-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-200/80"
 				>
-					Flota NEXUS
+					Flota {marca.isDefault ? 'NEXUS' : marca.name}
 				</p>
 				<p class="admin-display m-0 mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
 					{loading ? '…' : unitCount}

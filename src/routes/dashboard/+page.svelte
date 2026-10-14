@@ -21,7 +21,7 @@
 	import { vehicles, activeUnit, vehicleActions } from '$lib/stores/vehicleStore.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
-	import logoUrl from '$lib/assets/logo.png';
+	import { logoDe, marcaOPorDefecto } from '$lib/brand.js';
 	import Icon from '$lib/components/Icon.svelte';
 
 	import MapContainer from '$lib/components/MapContainer.svelte';
@@ -327,29 +327,33 @@
 			}
 		};
 	});
+
+	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
+	$: marca = marcaOPorDefecto($page.data.brand);
+	$: logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>
-	<title>Dashboard — NEXUS | GeminisLabs</title>
+	<title>{marca.isDefault ? 'Dashboard — NEXUS | GeminisLabs' : `Dashboard — ${marca.name}`}</title>
 	<meta
 		name="description"
-		content="Panel de control NEXUS: mapa en vivo, informes, alertas y configuración de flota. Acceso restringido a usuarios autenticados."
+		content={`Panel de control ${marca.isDefault ? 'NEXUS' : marca.name}: mapa en vivo, informes, alertas y configuración de flota. Acceso restringido a usuarios autenticados.`}
 	/>
 	<meta name="robots" content="noindex, nofollow" />
 	{#if canonicalUrl}
 		<link rel="canonical" href={canonicalUrl} />
 	{/if}
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Dashboard — NEXUS" />
+	<meta property="og:title" content={`Dashboard — ${marca.isDefault ? 'NEXUS' : marca.name}`} />
 	<meta
 		property="og:description"
-		content="Monitorización y gestión de flotas en tiempo real con NEXUS."
+		content={`Monitorización y gestión de flotas en tiempo real con ${marca.isDefault ? 'NEXUS' : marca.name}.`}
 	/>
 	{#if canonicalUrl}
 		<meta property="og:url" content={canonicalUrl} />
 	{/if}
 	<meta name="twitter:card" content="summary" />
-	<meta name="twitter:title" content="Dashboard — NEXUS" />
+	<meta name="twitter:title" content={`Dashboard — ${marca.isDefault ? 'NEXUS' : marca.name}`} />
 	<meta name="twitter:description" content="Panel de control para flotas y unidades." />
 </svelte:head>
 
@@ -363,7 +367,7 @@
 		Saltar al contenido principal
 	</a>
 
-	<h1 class="sr-only">Dashboard NEXUS — seguimiento de flota</h1>
+	<h1 class="sr-only">Dashboard {marca.isDefault ? 'NEXUS' : marca.name} — seguimiento de flota</h1>
 
 	{#if isAdminWorkspace}
 		<AdminWorkspace />
@@ -379,7 +383,7 @@
 				>
 					<img
 						src={logoUrl}
-						alt="NEXUS — inicio"
+						alt={`${marca.name} — inicio`}
 						class="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]"
 						width="40"
 						height="34"

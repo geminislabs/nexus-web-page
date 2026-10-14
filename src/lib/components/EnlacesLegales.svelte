@@ -1,10 +1,18 @@
 <script>
+	import { page } from '$app/stores';
 	import { getLegalLinks } from '$lib/constants/legal.js';
+	import { marcaOPorDefecto } from '$lib/brand.js';
 
 	/** @type {'compact' | 'list'} */
 	export let variant = 'compact';
 
-	const links = getLegalLinks();
+	// Con la marca de un partner, sus usuarios ven sus términos (§7): el
+	// responsable frente a ellos es el partner, no Geminis.
+	$: marca = marcaOPorDefecto($page.data.brand);
+	$: links =
+		!marca.isDefault && marca.legalUrl
+			? [{ id: 'partner', label: 'Términos y privacidad', href: marca.legalUrl }]
+			: getLegalLinks();
 
 	const linkClass =
 		'rounded-sm font-medium text-slate-700 underline-offset-2 transition-colors hover:text-slate-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:text-slate-200 dark:hover:text-white';

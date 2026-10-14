@@ -7,8 +7,11 @@
 	import { onMount } from 'svelte';
 
 	import { apiService } from '$lib/services/api.js';
+	import { marcaOPorDefecto } from '$lib/brand.js';
 
-	let { children } = $props();
+	let { children, data } = $props();
+
+	const marca = $derived(marcaOPorDefecto(data?.brand));
 
 	onMount(() => {
 		initObservability();
@@ -33,7 +36,8 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" href={marca.faviconUrl || favicon} />
+	<meta name="application-name" content={marca.isDefault ? 'NEXUS' : marca.name} />
 </svelte:head>
 
 {@render children?.()}
