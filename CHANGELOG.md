@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Pantalla de marca: los ajustes de contraste («tu amarillo se oscureció en modo claro») ya no desaparecen al volver a entrar ni al publicar o descartar. Vienen en todas las respuestas desde admin-api 1.58.0; contra un backend anterior se siguen viendo solo al guardar
+- El menú de Administración vuelve a pedir `/auth/me` cada vez que se abre, así que lo que GAC active después del inicio de sesión (la marca propia, por ejemplo) aparece sin cerrar sesión y volver a entrar. Si esa petición falla, se conservan los permisos que ya había
+
 ## [1.24.0] - 2026-10-13
 
 ### Changed
