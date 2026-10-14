@@ -7,11 +7,12 @@
  * entradas al mapa (`mapService.initialize` y `ZonaHexPicker`) pasan por aquí y
  * comparten la misma promesa.
  *
- * Las `libraries` viajan en la URL del script, como con el `Loader` de la 1.x.
+ * Sin `libraries`: todo lo que usa el panel (Map, Marker, Polyline, Polygon,
+ * InfoWindow, StreetViewPanorama, TrafficLayer) está en la librería base `maps`.
+ * `places`, `geometry` y `drawing` se pedían sin que nada las usara, y cada una
+ * es una descarga más en cada carga del mapa.
  */
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader';
-
-const LIBRARIES = ['places', 'geometry', 'drawing'];
 
 /** @type {Promise<typeof google> | null} */
 let carga = null;
@@ -23,7 +24,7 @@ let carga = null;
  */
 export function cargarGoogleMaps(apiKey) {
 	if (!carga) {
-		setOptions({ key: apiKey, v: 'weekly', libraries: LIBRARIES });
+		setOptions({ key: apiKey, v: 'weekly' });
 		carga = importLibrary('maps').then(() => window.google);
 	}
 	return carga;

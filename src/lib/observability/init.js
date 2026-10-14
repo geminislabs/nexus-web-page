@@ -269,57 +269,18 @@ async function initBrowserTracer(resource, base) {
 	});
 }
 
-async function initNodeTracer(resource, base) {
-	const [
-		{ NodeTracerProvider, BatchSpanProcessor },
-		{ AsyncLocalStorageContextManager },
-		{ W3CTraceContextPropagator },
-		{ OTLPTraceExporter },
-		{ registerInstrumentations },
-		{ HttpInstrumentation }
-	] = await Promise.all([
-		import('@opentelemetry/sdk-trace-node'),
-		import('@opentelemetry/context-async-hooks'),
-		import('@opentelemetry/core'),
-		import('@opentelemetry/exporter-trace-otlp-http'),
-		import('@opentelemetry/instrumentation'),
-		import('@opentelemetry/instrumentation-http')
-	]);
-
-	const processor = new ScrubSpanProcessor(
-		new BatchSpanProcessor(new OTLPTraceExporter({ url: `${base}/v1/traces` }))
-	);
-	const provider = new NodeTracerProvider({
-		resource,
-		spanProcessors: [processor]
-	});
-	provider.register({
-		contextManager: new AsyncLocalStorageContextManager(),
-		propagator: new W3CTraceContextPropagator()
-	});
-	registerInstrumentations({
-		tracerProvider: provider,
-		instrumentations: [
-			new HttpInstrumentation({
-				disableOutgoingRequestInstrumentation: true,
-				ignoreIncomingRequestHook(request) {
-					const url = String(request?.url || '');
-					return (
-						url.includes('/internal/otlp') ||
-						url.includes('/v1/metrics') ||
-						url.includes('/v1/traces') ||
-						url.includes('/v1/logs')
-					);
-				}
-			})
-		]
-	});
-}
-
 /**
  * Inicializa providers OTel. Sin endpoint: no-op (API global ya es no-op).
+ *
+ * El tracer de Node no vive aquí: lo inyecta `hooks.server.js` como
+ * `serverTracer` desde `$lib/server/observability/nodeTracer.js`. Con sus
+ * `import()` en este módulo, Rollup los empaquetaba como chunks del cliente
+ * —huérfanos, nunca descargados, pero con la instrumentación HTTP de servidor
+ * dentro— aunque la rama `import.meta.env.SSR` se eliminara.
+ *
+ * @param {{ serverTracer?: (resource: unknown, base: string) => Promise<void> }} [options]
  */
-export async function init() {
+export async function init({ serverTracer } = {}) {
 	if (started) return;
 	try {
 		const endpoint = readOtlpEndpoint();
@@ -330,7 +291,7 @@ export async function init() {
 		await registerMeterAndLogger(resource, base);
 		try {
 			if (import.meta.env.SSR) {
-				await initNodeTracer(resource, base);
+				if (serverTracer) await serverTracer(resource, base);
 			} else {
 				await initBrowserTracer(resource, base);
 			}

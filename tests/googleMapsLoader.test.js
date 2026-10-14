@@ -16,15 +16,14 @@ describe('cargarGoogleMaps', () => {
 		importLibrary.mockResolvedValue({});
 	});
 
-	it('configura una vez con la key y las librerías, e importa maps', async () => {
+	it('configura una vez con la key, sin librerías extra, e importa maps', async () => {
 		const { cargarGoogleMaps } = await import('../src/lib/services/googleMapsLoader.js');
 
 		const google = await cargarGoogleMaps('clave');
 
 		expect(setOptions).toHaveBeenCalledWith({
 			key: 'clave',
-			v: 'weekly',
-			libraries: ['places', 'geometry', 'drawing']
+			v: 'weekly'
 		});
 		expect(importLibrary).toHaveBeenCalledWith('maps');
 		expect(google).toBe(window.google);

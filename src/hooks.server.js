@@ -2,8 +2,9 @@ import { installNodeErrorCapture, reportUnhandled } from '$lib/observability/cap
 import { recordHttpServer } from '$lib/observability/http.js';
 import { init } from '$lib/observability/index.js';
 import { scrubUrl } from '$lib/observability/scrubber.js';
+import { initNodeTracer } from '$lib/server/observability/nodeTracer.js';
 
-await init();
+await init({ serverTracer: initNodeTracer });
 installNodeErrorCapture();
 
 /**
