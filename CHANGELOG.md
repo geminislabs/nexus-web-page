@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.24.2] - 2026-10-14
+
 ### Fixed
 
 - Un fallo transitorio al renovar la sesión tras un 401 ya no cierra la sesión. El interceptor mandaba al login ante cualquier error del refresh; ahora, como el refresh proactivo, solo lo hace con un 401. Un 429 (Cognito limitó la renovación y el refresh token sigue valiendo, visto en producción el 14/10), la red o un 5xx conservan la sesión y la petición falla con su propio error
