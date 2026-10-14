@@ -97,6 +97,12 @@ class ApiService {
 					message: 'Token refresh failed after 401',
 					err: refreshErr
 				});
+				// Solo un 401 del refresh es definitivo, igual que en el proactivo. Un
+				// 429 (Cognito limitó; el refresh token sigue valiendo), la red o un 5xx
+				// conservan la sesión: la siguiente petición vuelve a intentarlo.
+				if (!(refreshErr instanceof ApiError && refreshErr.status === 401)) {
+					throw refreshErr;
+				}
 				// Sesión irrecuperable: limpiar para no dejar tokens/usuarios huérfanos.
 				user.logout();
 				authToken.clearToken();

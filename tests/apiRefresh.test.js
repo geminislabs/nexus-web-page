@@ -173,6 +173,57 @@ describe('refresh con rotación', () => {
 		expect(llamadasARefresh(fetchMock)).toHaveLength(3);
 	});
 
+	it('un 429 del refresh tras un 401 conserva la sesión y no reintenta en bucle', async () => {
+		// Medido en producción el 14/10/2026: Cognito limitó una renovación y el
+		// backend respondió 429 con `Retry-After`. El refresh token sigue valiendo;
+		// cerrar la sesión ahí manda al login a alguien que no tenía por qué.
+		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
+		fetchMock.mockImplementation(async (url) =>
+			String(url).endsWith('/auth/refresh')
+				? respuesta({ detail: 'Demasiadas renovaciones seguidas.' }, 429)
+				: respuesta({ detail: 'expired' }, 401)
+		);
+		const sesion = sesionFalsa();
+		const api = await cargar(sesion);
+
+		await expect(api.getUnits()).rejects.toMatchObject({ status: 429 });
+
+		expect(sesion.user.logout).not.toHaveBeenCalled();
+		expect(sesion.authToken.clearToken).not.toHaveBeenCalled();
+		expect(llamadasARefresh(fetchMock)).toHaveLength(1);
+	});
+
+	it('un fallo de red del refresh tras un 401 conserva la sesión', async () => {
+		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
+		fetchMock.mockImplementation(async (url) => {
+			if (String(url).endsWith('/auth/refresh')) throw new TypeError('Failed to fetch');
+			return respuesta({ detail: 'expired' }, 401);
+		});
+		const sesion = sesionFalsa();
+		const api = await cargar(sesion);
+
+		await expect(api.getUnits()).rejects.toThrow();
+
+		expect(sesion.user.logout).not.toHaveBeenCalled();
+		expect(sesion.authToken.clearToken).not.toHaveBeenCalled();
+	});
+
+	it('un 401 del refresh tras un 401 sí cierra la sesión', async () => {
+		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
+		fetchMock.mockImplementation(async (url) =>
+			String(url).endsWith('/auth/refresh')
+				? respuesta({ detail: 'Refresh token inválido' }, 401)
+				: respuesta({ detail: 'expired' }, 401)
+		);
+		const sesion = sesionFalsa();
+		const api = await cargar(sesion);
+
+		await expect(api.getUnits()).rejects.toMatchObject({ status: 401 });
+
+		expect(sesion.user.logout).toHaveBeenCalledOnce();
+		expect(sesion.authToken.clearToken).toHaveBeenCalledOnce();
+	});
+
 	it('un refresh que funciona guarda el token rotado', async () => {
 		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
 		fetchMock.mockResolvedValue(respuesta(SESION_NUEVA));
