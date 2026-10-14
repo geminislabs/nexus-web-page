@@ -2,7 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { apiService } from '$lib/services/api.js';
 	import Icon from '$lib/components/Icon.svelte';
-	import logoUrl from '$lib/assets/logo.png';
+	import { page } from '$app/stores';
+	import { logoDe, marcaOPorDefecto, tituloDe } from '$lib/brand.js';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 
 	let email = '';
@@ -32,10 +33,14 @@
 			loading = false;
 		}
 	}
+
+	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
+	$: marca = marcaOPorDefecto($page.data.brand);
+	$: logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>
-	<title>NEXUS — Recuperar contraseña</title>
+	<title>{tituloDe(marca, 'Recuperar contraseña')}</title>
 </svelte:head>
 
 <div

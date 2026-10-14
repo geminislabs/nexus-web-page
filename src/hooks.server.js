@@ -2,6 +2,7 @@ import { installNodeErrorCapture, reportUnhandled } from '$lib/observability/cap
 import { recordHttpServer } from '$lib/observability/http.js';
 import { init } from '$lib/observability/index.js';
 import { scrubUrl } from '$lib/observability/scrubber.js';
+import { hostDeLaPeticion, resolverMarca } from '$lib/server/brand.js';
 
 await init();
 installNodeErrorCapture();
@@ -50,11 +51,32 @@ export function handleError({ error, message }) {
 	return { message };
 }
 
+const API_BASE = (() => {
+	const crudo = String(
+		import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_ADMIN_API_URL || ''
+	).replace(/\/+$/, '');
+	if (!crudo) return 'http://localhost:8100/api/v1';
+	return crudo.endsWith('/api/v1') ? crudo : `${crudo}/api/v1`;
+})();
+
 /** @type {import('@sveltejs/kit').Handle} */
 export async function handle({ event, resolve }) {
 	const pathname = event?.url?.pathname ?? '';
 	if (pathname.startsWith('/internal/otlp')) {
 		return applySecurityHeaders(event, await resolve(event));
+	}
+
+	// La marca del dominio por el que entró el navegador (§7). Solo apariencia:
+	// nunca autoriza nada. Las rutas internas no pintan HTML.
+	// Nunca tumba la petición: sin marca se pinta la por defecto.
+	if (!pathname.startsWith('/internal/') && event.locals) {
+		try {
+			event.locals.brand = await resolverMarca(hostDeLaPeticion(event.request, event.url), {
+				apiBase: API_BASE
+			});
+		} catch {
+			event.locals.brand = null;
+		}
 	}
 
 	const start = Date.now();

@@ -4,7 +4,7 @@
 	import { apiService } from '$lib/services/api.js';
 	import { validatePassword } from '$lib/utils/passwordValidation.js';
 	import Icon from '$lib/components/Icon.svelte';
-	import logoUrl from '$lib/assets/logo.png';
+	import { logoDe, marcaOPorDefecto, tituloDe } from '$lib/brand.js';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 	import { onMount } from 'svelte';
 
@@ -78,10 +78,14 @@
 			loading = false;
 		}
 	}
+
+	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
+	$: marca = marcaOPorDefecto($page.data.brand);
+	$: logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>
-	<title>NEXUS — Restablecer contraseña</title>
+	<title>{tituloDe(marca, 'Restablecer contraseña')}</title>
 </svelte:head>
 
 <div
