@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.24.1] - 2026-10-13
+
 ### Fixed
 
 - Pantalla de marca: los ajustes de contraste («tu amarillo se oscureció en modo claro») ya no desaparecen al volver a entrar ni al publicar o descartar. Vienen en todas las respuestas desde admin-api 1.58.0; contra un backend anterior se siguen viendo solo al guardar
