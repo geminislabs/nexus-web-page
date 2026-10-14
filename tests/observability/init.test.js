@@ -171,7 +171,8 @@ describe('init', () => {
 	it.skipIf(!import.meta.env.SSR)('con endpoint en Node registra NodeTracerProvider', async () => {
 		vi.stubEnv('OTLP_ENDPOINT', 'http://localhost:4318');
 		const { init } = await import('../../src/lib/observability/init.js');
-		await expect(init()).resolves.toBeUndefined();
+		const { initNodeTracer } = await import('../../src/lib/server/observability/nodeTracer.js');
+		await expect(init({ serverTracer: initNodeTracer })).resolves.toBeUndefined();
 		expect(NodeTracerProvider).toHaveBeenCalled();
 		expect(HttpInstrumentation).toHaveBeenCalledWith(
 			expect.objectContaining({ disableOutgoingRequestInstrumentation: true })
@@ -207,6 +208,24 @@ describe('init', () => {
 		expect(() => tracer()).not.toThrow();
 		expect(() => meter()).not.toThrow();
 		expect(() => otelLogger()).not.toThrow();
+	});
+});
+
+describe('el tracer de Node no entra al bundle del cliente', () => {
+	it('init.js no importa el SDK de Node ni la instrumentación HTTP', async () => {
+		// Con estos import() en init.js, Rollup los empaquetaba como chunks del
+		// cliente aunque la rama SSR se eliminara: ~32 KB huérfanos y el aviso
+		// «Module "util" has been externalized» de forwarded-parse en cada build.
+		const { readFileSync } = await import('node:fs');
+		const { resolve } = await import('node:path');
+		const fuente = readFileSync(resolve(process.cwd(), 'src/lib/observability/init.js'), 'utf8');
+		for (const paquete of [
+			'@opentelemetry/sdk-trace-node',
+			'@opentelemetry/instrumentation-http',
+			'@opentelemetry/context-async-hooks'
+		]) {
+			expect(fuente).not.toContain(paquete);
+		}
 	});
 });
 

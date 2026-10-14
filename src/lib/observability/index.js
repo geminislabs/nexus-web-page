@@ -35,13 +35,13 @@ function registerLoggerSink() {
  * Inicializa OTel y registra el sink del logger.
  * Seguro llamar más de una vez. Sin `OTLP_ENDPOINT` la telemetría es no-op.
  */
-export async function init() {
+export async function init(options) {
 	try {
 		registerLoggerSink();
 	} catch {
 		/* fail-open */
 	}
-	await initTelemetry();
+	await initTelemetry(options);
 }
 
 /** El layout ya llama este nombre. Hace lo mismo que `init()`. */

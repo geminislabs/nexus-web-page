@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- El tracer de Node pasa a `src/lib/server/observability/nodeTracer.js` y `hooks.server.js` lo inyecta en `init({ serverTracer })`. Con sus `import()` dentro de `init.js`, Rollup empaquetaba el SDK de Node y la instrumentación HTTP de servidor como chunks del cliente —huérfanos, nunca descargados, unos 32 KB— y cada build avisaba «Module "util" has been externalized» por `forwarded-parse`. El build del cliente baja de 62 a 51 chunks y el aviso desaparece. Un test impide volver a importar esos paquetes desde `init.js`
+- Google Maps se carga sin `libraries`. `places`, `geometry` y `drawing` se pedían sin que nada las usara; todo lo que usa el panel está en la librería base `maps`
+
 ## [1.24.2] - 2026-10-14
 
 ### Fixed
