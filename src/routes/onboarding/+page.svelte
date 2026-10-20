@@ -2,7 +2,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { goto } from '$app/navigation';
 	import Icon from '$lib/components/Icon.svelte';
-	import logoUrl from '$lib/assets/logo.png';
+	import { page } from '$app/stores';
+	import { logoDe, marcaOPorDefecto, tituloDe } from '$lib/brand.js';
 	import { setOnboardingComplete } from '$lib/utils/onboardingStorage.js';
 
 	const slides = [
@@ -42,10 +43,14 @@
 	onDestroy(() => {
 		if (autoTimer) clearInterval(autoTimer);
 	});
+
+	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
+	$: marca = marcaOPorDefecto($page.data.brand);
+	$: logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>
-	<title>NEXUS — Bienvenida</title>
+	<title>{tituloDe(marca, 'Bienvenida')}</title>
 </svelte:head>
 
 <div class="fixed inset-0 overflow-hidden bg-[#020617] font-sans text-white">
@@ -73,7 +78,7 @@
 	></div>
 
 	<div class="relative z-10 flex h-full flex-col items-center px-6 pb-10 pt-12">
-		<img src={logoUrl} alt="NEXUS" class="mb-8 h-20 w-20 object-contain drop-shadow-lg" />
+		<img src={logoUrl} alt={marca.name} class="mb-8 h-20 w-20 object-contain drop-shadow-lg" />
 
 		<div class="flex flex-1 flex-col items-center justify-center text-center">
 			<h1 class="m-0 max-w-md text-[1.65rem] font-bold leading-tight tracking-tight">

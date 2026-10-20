@@ -2,7 +2,8 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import logoUrl from '$lib/assets/logo.png';
+	import { page } from '$app/stores';
+	import { logoDe, marcaOPorDefecto } from '$lib/brand.js';
 	import { user } from '$lib/stores/auth.js';
 	import { theme } from '$lib/stores/themeStore.js';
 	import { adminSection, workspaceActions } from '$lib/stores/workspaceStore.js';
@@ -86,6 +87,10 @@
 		// propia) aparece en el menú sin cerrar sesión.
 		refreshAccountAccess();
 	});
+
+	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
+	$: marca = marcaOPorDefecto($page.data.brand);
+	$: logoUrl = logoDe(marca);
 </script>
 
 <svelte:window on:click={onDocClick} />
@@ -105,7 +110,7 @@
 		>
 			<img
 				src={logoUrl}
-				alt="NEXUS"
+				alt={marca.name}
 				class="h-8 w-9 object-contain"
 				width="36"
 				height="32"
@@ -114,7 +119,7 @@
 			{#if !collapsed}
 				<span
 					class="admin-display text-[15px] font-semibold tracking-wide text-slate-900 dark:text-white"
-					>NEXUS</span
+					>{marca.isDefault ? 'NEXUS' : marca.name}</span
 				>
 			{/if}
 		</div>
