@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.25.0] - 2026-10-20
+
 ### Added
 
 - **La marca del dominio desde el primer HTML** (Fase 4, §7). `hooks.server.js` resuelve la marca por la cabecera `Host` —no por `event.url`, que adapter-node fija a `ORIGIN`— con `GET /tenant-config?host=` (admin-api #163) y la pasa a toda la app por `page.data.brand`, que es de la petición: un store global se compartiría en el servidor entre dominios. Con la marca de un partner: su logo en las ocho pantallas que tenían el de Nexus, su favicon, su nombre en títulos, `og:*` y `application-name`, sus términos en vez de los documentos de Geminis, y sin «by GeminisLabs». La marca por defecto se ve igual que antes
