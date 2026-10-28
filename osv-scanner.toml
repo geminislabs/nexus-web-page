@@ -1,11 +1,37 @@
 # Configuración de OSV-Scanner para package-lock.json (raíz del repositorio).
 # Docs: https://google.github.io/osv-scanner/configuration/
 
-# Sin excepciones activas. La que vivía aquí —GHSA-82fw-gwwq-j7x9, de vitest— se
-# fue con el arreglo: la 4.1.11 cerró el aviso y los umbrales de cobertura de
-# `vite.config.js` ya se ajustaron a lo que mide vitest 4. El escáner la venía
-# señalando como `unused ignores` en cada corrida.
+# Cada `[[IgnoredVulns]]` lleva razón y disparador para quitarla, y el
+# disparador se comprueba: una excepción que nadie revisa deja de ser una
+# decisión y pasa a ser un punto ciego. `ignoreUntil` obliga a revisarlas: al
+# vencer, el escáner vuelve a fallar.
 #
-# Cada `[[IgnoredVulns]]` que se añada aquí lleva razón y disparador para
-# quitarla, y el disparador se comprueba: una excepción que nadie revisa deja de
-# ser una decisión y pasa a ser un punto ciego.
+# Las tres de abajo entraron el 28/10/2026. Las tres son de severidad baja, y
+# ninguna tiene un arreglo que se pueda tomar sin una migración.
+
+# SvelteKit < 3.0.0: XSS por una cabecera cache-control no confiable en una
+# página prerenderizada. No aplica: aquí no se prerenderiza nada (ver
+# `svelte.config.js`). Quitarla al migrar a Kit 3, o antes si alguna ruta
+# exporta `prerender`.
+[[IgnoredVulns]]
+id = "GHSA-27mw-82g8-phjj"
+ignoreUntil = 2027-01-28T00:00:00Z
+reason = "Kit < 3: solo afecta a páginas prerenderizadas y aquí no hay ninguna. Quitar al migrar a Kit 3."
+
+# SvelteKit < 3.0.0: redirección a un sitio no confiable con un formulario
+# mejorado. No aplica: no hay form actions ni `use:enhance` en `src/`. Quitarla
+# al migrar a Kit 3, o antes si aparece el primer `use:enhance`.
+[[IgnoredVulns]]
+id = "GHSA-pfhg-q3qv-9q6r"
+ignoreUntil = 2027-01-28T00:00:00Z
+reason = "Kit < 3: solo afecta a use:enhance y aquí no se usa. Quitar al migrar a Kit 3."
+
+# deepmerge <= 4.3.1: envenenamiento de prototipo del objeto devuelto. Sin
+# versión arreglada. Solo lo usan adapter-node (vía @rollup/plugin-node-resolve)
+# y vite-plugin-svelte, en el build, para mezclar su propia configuración: nunca
+# recibe datos de usuarios ni llega al bundle. Quitarla cuando salga un arreglo
+# o esas dos dependencias lo dejen.
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-01-28T00:00:00Z
+reason = "deepmerge sin arreglo; solo en el build (adapter-node, vite-plugin-svelte), sin datos de usuarios."
