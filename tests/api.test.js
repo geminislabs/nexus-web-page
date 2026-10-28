@@ -350,4 +350,31 @@ describe('apiService', () => {
 		const [, init] = fetchMock.mock.calls[0];
 		expect(init.headers['X-Organization-Id']).toBeUndefined();
 	});
+
+	it('pide las respuestas en español, también sin sesión', async () => {
+		// admin-api traduce por Accept-Language y el navegador manda el suyo:
+		// en uno en inglés, los errores llegarían en inglés a una UI en español.
+		const fetchMock = /** @type {ReturnType<typeof vi.fn>} */ (globalThis.fetch);
+		fetchMock.mockImplementation(
+			async () =>
+				new Response(JSON.stringify({ access_token: 'tok' }), {
+					status: 200,
+					headers: { 'content-type': 'application/json' }
+				})
+		);
+
+		vi.doMock('../src/lib/stores/auth.js', () => ({
+			authToken: { getToken: () => 'tok', setSession: vi.fn() },
+			user: { subscribe: vi.fn() }
+		}));
+
+		const { apiService } = await import('../src/lib/services/api.js');
+		await apiService.login({ email: 'a@a.com', password: 'x' });
+		await apiService.getUnits();
+
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		for (const [, init] of fetchMock.mock.calls) {
+			expect(init.headers['Accept-Language']).toBe('es');
+		}
+	});
 });
