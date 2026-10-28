@@ -146,9 +146,13 @@ class ApiService {
 		const url = `${this.baseURL}${path}`;
 		const token = options.skipAuth ? null : authToken.getToken();
 
+		// El panel solo está en español. admin-api responde en el idioma de
+		// `Accept-Language` desde v1.65.0, y un navegador en inglés lo manda
+		// solo: sin fijarlo, sus errores llegarían en inglés a una UI en español.
 		/** @type {Record<string, string>} */
 		const headers = {
 			Accept: 'application/json',
+			'Accept-Language': 'es',
 			...(options.body != null ? { 'Content-Type': 'application/json' } : {}),
 			.../** @type {Record<string, string>} */ (options.headers)
 		};
