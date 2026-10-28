@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- vite 7.3.7, happy-dom 21.0.4 y fast-uri 4.2.3 por los avisos de octubre que tenían en rojo `npm audit` y OSV. Los tres son de desarrollo, y happy-dom solo lo usan los tests
+- Tres excepciones en `osv-scanner.toml`, de severidad baja y con vencimiento el 28/01/2027: dos de SvelteKit < 3 (prerender y `use:enhance`, que aquí no se usan; su arreglo es Kit 3) y una de deepmerge (sin arreglo; solo en el build)
+
 ## [1.25.0] - 2026-10-20
 
 ### Added
