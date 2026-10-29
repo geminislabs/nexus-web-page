@@ -1,4 +1,5 @@
 <script>
+	import AuthBackdrop from '$lib/components/AuthBackdrop.svelte';
 	import { page } from '$app/state';
 	import { logoDe, marcaOPorDefecto, tituloDe } from '$lib/brand.js';
 	import {
@@ -28,6 +29,7 @@
 <div
 	class="fixed inset-0 flex items-center justify-center overflow-y-auto bg-slate-100 px-4 font-sans [-webkit-font-smoothing:antialiased] dark:bg-[#0a0f0a]"
 >
+	<AuthBackdrop />
 	<main
 		class="relative z-10 flex w-[min(420px,100%)] flex-col items-center rounded-[20px] border border-slate-200 bg-white px-8 pb-8 pt-8 text-center shadow-xl dark:border-white/20 dark:bg-white/[0.08]"
 		aria-labelledby="invite-heading"
