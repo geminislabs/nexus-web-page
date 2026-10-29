@@ -12,6 +12,8 @@
 	import AdminPageHeader from './AdminPageHeader.svelte';
 	import StatCard from './StatCard.svelte';
 	import QuickActionButton from './QuickActionButton.svelte';
+	import AnimatedNumber from '$lib/components/AnimatedNumber.svelte';
+	import { rise, staggerDelay, flipList } from '$lib/motion/index.js';
 
 	let loading = true;
 	let loadError = '';
@@ -113,6 +115,7 @@
 
 	<!-- Hero strip -->
 	<section
+		in:rise|global
 		class="relative mb-6 overflow-hidden rounded-3xl border border-emerald-500/25 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-5 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.06)] dark:border-emerald-500/20 dark:from-[#0a1628] dark:via-[#0d1f2e] dark:to-[#06261c] dark:text-white dark:shadow-[0_20px_50px_rgba(2,8,20,0.35)] sm:p-7"
 		aria-label="Resumen principal"
 	>
@@ -132,7 +135,15 @@
 					Flota {marca.isDefault ? 'NEXUS' : marca.name}
 				</p>
 				<p class="admin-display m-0 mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-					{loading ? '…' : unitCount}
+					{#if loading}
+						<span
+							class="inline-block h-8 w-10 animate-pulse rounded-lg bg-emerald-900/10 align-middle dark:bg-white/10 sm:h-9"
+							aria-hidden="true"
+						></span>
+						<span class="sr-only">Cargando</span>
+					{:else}
+						<AnimatedNumber value={unitCount} />
+					{/if}
 					<span class="text-lg font-medium text-slate-500 dark:text-white/55 sm:text-xl"
 						>unidades</span
 					>
@@ -157,7 +168,9 @@
 	<div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
 		<StatCard
 			label="Usuarios"
-			value={loading ? '—' : userCount}
+			delay={staggerDelay(1)}
+			value={userCount}
+			{loading}
 			hint={pendingUsers > 0 ? `${pendingUsers} pendientes` : `${verifiedUsers} en org`}
 			icon="mdi:account-group-outline"
 			accent="sky"
@@ -165,7 +178,9 @@
 		/>
 		<StatCard
 			label="Unidades"
-			value={loading ? '—' : unitCount}
+			delay={staggerDelay(2)}
+			value={unitCount}
+			{loading}
 			hint="Flota registrada"
 			icon="mdi:car-side"
 			accent="emerald"
@@ -173,7 +188,9 @@
 		/>
 		<StatCard
 			label="Dispositivos"
-			value={loading ? '—' : deviceCount}
+			delay={staggerDelay(3)}
+			value={deviceCount}
+			{loading}
 			hint={unassignedCount > 0 ? `${unassignedCount} sin asignar` : 'Todos vinculados'}
 			icon="mdi:memory"
 			accent="amber"
@@ -181,7 +198,9 @@
 		/>
 		<StatCard
 			label="Alertas"
-			value={loading ? '—' : alertCount}
+			delay={staggerDelay(4)}
+			value={alertCount}
+			{loading}
 			hint={`${enabledAlerts} activas`}
 			icon="mdi:bell-ring-outline"
 			accent="rose"
@@ -189,7 +208,9 @@
 		/>
 		<StatCard
 			label="Zonas"
-			value={loading ? '—' : zoneCount}
+			delay={staggerDelay(5)}
+			value={zoneCount}
+			{loading}
 			hint="Geocercas"
 			icon="mdi:hexagon-multiple-outline"
 			accent="slate"
@@ -197,6 +218,7 @@
 		/>
 		<StatCard
 			label="Eventos"
+			delay={staggerDelay(6)}
 			value={$alarmEvents.length}
 			hint="Historial reciente"
 			icon="mdi:history"
@@ -206,6 +228,7 @@
 
 	<div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
 		<section
+			in:rise|global={{ delay: staggerDelay(7) }}
 			class="rounded-2xl border border-slate-200/90 bg-white p-4 dark:border-white/[0.08] dark:bg-[#0d1424] sm:p-5"
 			aria-label="Actividad reciente"
 		>
@@ -231,8 +254,10 @@
 				</div>
 			{:else}
 				<ul class="m-0 list-none space-y-2 p-0">
-					{#each recentEvents as ev (ev.id)}
+					{#each recentEvents as ev, i (ev.id)}
 						<li
+							in:rise|global={{ delay: staggerDelay(i) }}
+							animate:flipList
 							class="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.03]"
 						>
 							<span
@@ -256,6 +281,7 @@
 		</section>
 
 		<section
+			in:rise|global={{ delay: staggerDelay(8) }}
 			class="rounded-2xl border border-slate-200/90 bg-white p-4 dark:border-white/[0.08] dark:bg-[#0d1424] sm:p-5"
 			aria-label="Acciones rápidas"
 		>

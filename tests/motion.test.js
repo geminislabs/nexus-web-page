@@ -246,6 +246,17 @@ describe('slidingIndicator', () => {
 		expect(node.querySelector('[data-sliding-indicator]')).toBeNull();
 	});
 
+	it('acepta otro selector para el elemento activo', async () => {
+		const { slidingIndicator } = await import('../src/lib/motion/slidingIndicator.js');
+		const node = tablist(-1);
+		node.querySelectorAll('button')[1].setAttribute('aria-current', 'page');
+		const action = slidingIndicator(node, { active: 1, selector: '[aria-current="page"]' });
+		const ind = /** @type {HTMLElement} */ (node.firstElementChild);
+		expect(ind.style.transform).toBe('translate(50px, 4px)');
+		expect(ind.style.opacity).toBe('1');
+		action.destroy();
+	});
+
 	it('modo borde superior con margen, y se oculta sin pestaña activa', async () => {
 		const { slidingIndicator } = await import('../src/lib/motion/slidingIndicator.js');
 		const node = tablist(1);
