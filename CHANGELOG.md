@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- El inicio de sesión vuelve a su fondo anterior, con los círculos que pulsan; las olas de la v1.30.0 se quitan de esa pantalla
+
 ## [1.30.0] - 2026-10-29
 
 ### Added
