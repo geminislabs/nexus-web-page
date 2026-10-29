@@ -150,4 +150,20 @@ describe('hooks.server handle', () => {
 		);
 		expect(JSON.stringify(record.mock.calls)).not.toContain('SECRETTOKEN');
 	});
+
+	it('la invitación no filtra el token por Referer ni a la métrica', async () => {
+		const response = await handle({
+			event: makeEvent({
+				routeId: '/invite/[token]',
+				pathname: '/invite/SECRETTOKEN'
+			}),
+			resolve: async () => new Response('ok', { status: 200 })
+		});
+		expect(response.headers.get('Referrer-Policy')).toBe('no-referrer');
+		expect(record).toHaveBeenCalledWith(
+			expect.any(Number),
+			expect.objectContaining({ http_route: '/invite/[token]' })
+		);
+		expect(JSON.stringify(record.mock.calls)).not.toContain('SECRETTOKEN');
+	});
 });

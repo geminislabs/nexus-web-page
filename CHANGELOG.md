@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Invitaciones a equipos en `nexus.geminislabs.com`.** El dominio sirve `/.well-known/apple-app-site-association`, que le dice a iOS que `/invite/*` abre la app INexus (`GCNV65DKL8.GeminisLabs.INexus`), y una página `/invite/[token]` para quien abre el enlace sin la app: botón «Abrir en la app» (`inexus://invite/<token>`), descarga en App Store y Smart App Banner. Es pública, no se indexa y manda `Referrer-Policy: no-referrer` como `/share/`, para que el token no salga por el Referer. Hace falta que admin-api arme los enlaces con este dominio (`INVITE_BASE_URL`) y que la app declare `applinks:nexus.geminislabs.com`
+
 ## [1.25.1] - 2026-10-28
 
 ### Fixed
