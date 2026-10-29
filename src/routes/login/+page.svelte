@@ -1,4 +1,5 @@
 <script>
+	import AuthBackdrop from '$lib/components/AuthBackdrop.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { user, authToken } from '$lib/stores/auth.js';
@@ -80,18 +81,7 @@
 <div
 	class="fixed inset-0 flex items-center justify-center overflow-hidden bg-slate-100 font-sans [-webkit-font-smoothing:antialiased] dark:bg-[#0a0f0a]"
 >
-	<div
-		class="pointer-events-none absolute -left-20 -top-[100px] h-[420px] w-[420px] animate-pulse rounded-full bg-[radial-gradient(circle,#bbf7d0_0%,transparent_70%)] opacity-25 blur-[80px] duration-[14s] dark:bg-[radial-gradient(circle,#1a4d2a_0%,transparent_70%)] dark:opacity-[0.45]"
-		aria-hidden="true"
-	></div>
-	<div
-		class="pointer-events-none absolute bottom-[-80px] right-[60px] h-80 w-80 animate-pulse rounded-full bg-[radial-gradient(circle,#a7f3d0_0%,transparent_70%)] opacity-25 blur-[80px] duration-[18s] dark:bg-[radial-gradient(circle,#0d3322_0%,transparent_70%)] dark:opacity-[0.45]"
-		aria-hidden="true"
-	></div>
-	<div
-		class="pointer-events-none absolute left-[60%] top-[40%] h-[200px] w-[200px] animate-pulse rounded-full bg-[radial-gradient(circle,#86efac_0%,transparent_70%)] opacity-20 blur-[80px] duration-[22s] dark:bg-[radial-gradient(circle,#163d1e_0%,transparent_70%)] dark:opacity-[0.45]"
-		aria-hidden="true"
-	></div>
+	<AuthBackdrop />
 
 	<main
 		class="relative z-10 flex w-[min(420px,92vw)] flex-col items-center rounded-[20px] border border-slate-200 bg-white px-8 pb-6 pt-8 shadow-xl backdrop-blur-xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-sky-500/50 hover:shadow-2xl dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] dark:hover:border-[#00a6c0] dark:hover:shadow-[0_15px_30px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
