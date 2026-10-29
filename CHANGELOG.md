@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.30.0] - 2026-10-29
+
 ### Added
 
 - **Animaciones del panel, cuarta fase.** Las pantallas sin mapa (inicio de sesión, registro, recuperar y restablecer contraseña, invitación) tienen un fondo con degradado y tres capas de olas que se desplazan lentamente a distinta velocidad. En inicio de sesión y registro sustituye a los círculos que pulsaban. Con «reducir movimiento» las olas se quedan quietas
