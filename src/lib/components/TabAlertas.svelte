@@ -2,7 +2,7 @@
 	import { logger } from '$lib/utils/logger.js';
 	import { browser } from '$app/environment';
 	import Icon from '$lib/components/Icon.svelte';
-	import { rise, staggerDelay } from '$lib/motion/index.js';
+	import { rise, staggerDelay, flipList } from '$lib/motion/index.js';
 	import {
 		alerts,
 		alarmEvents,
@@ -204,7 +204,7 @@
 							aria-label="Lista de alarmas recientes"
 						>
 							{#each $alarmEvents as ev, idx (ev.id)}
-								<li in:rise|global={{ delay: staggerDelay(idx) }}>
+								<li in:rise|global={{ delay: staggerDelay(idx) }} animate:flipList>
 									<article
 										class="flex items-stretch gap-3.5 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm dark:border-white/[0.07] dark:bg-[#121a28] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] {!ev.read
 											? 'ring-1 ring-sky-500/30 dark:shadow-[0_0_28px_-10px_rgba(56,189,248,0.35),inset_0_1px_0_rgba(255,255,255,0.05)]'

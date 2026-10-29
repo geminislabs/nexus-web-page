@@ -1,6 +1,7 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
 	import Icon from '$lib/components/Icon.svelte';
+	import { rise, staggerDelay, flipList } from '$lib/motion/index.js';
 	import { fly } from 'svelte/transition';
 	import { get } from 'svelte/store';
 	import { alerts, alarmEvents, unreadAlarmCount, alertActions } from '$lib/stores/alertStore.js';
@@ -129,8 +130,8 @@
 							Eventos recibidos
 						</div>
 						<ul class="m-0 mb-3 list-none space-y-2 p-0">
-							{#each $alarmEvents as ev (ev.id)}
-								<li>
+							{#each $alarmEvents as ev, rowIndex (ev.id)}
+								<li in:rise|global={{ delay: staggerDelay(rowIndex) }} animate:flipList>
 									<div
 										class="flex items-stretch gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-white/[0.08] dark:bg-[#121a28] {!ev.read
 											? 'ring-1 ring-sky-400/40 dark:ring-sky-500/25'
@@ -174,8 +175,9 @@
 							Alertas configuradas
 						</div>
 						<ul class="m-0 list-none space-y-1.5 p-0">
-							{#each $alerts as al (al.id)}
+							{#each $alerts as al, rowIndex (al.id)}
 								<li
+									in:rise|global={{ delay: staggerDelay(rowIndex) }}
 									class="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-white/[0.08] dark:bg-white/[0.03]"
 								>
 									<div class="flex items-start gap-2">

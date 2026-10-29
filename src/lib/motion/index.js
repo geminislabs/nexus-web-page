@@ -6,6 +6,7 @@
  * cuenta; las de este módulo sí, devolviendo duración 0 cuando está activa.
  */
 import { fly, fade } from 'svelte/transition';
+import { flip } from 'svelte/animate';
 import { cubicOut, cubicInOut, quintOut } from 'svelte/easing';
 import { prefersReducedMotion } from 'svelte/motion';
 
@@ -49,6 +50,35 @@ export function staggerDelay(index, { step = 35, max = 8 } = {}) {
 export function rise(node, { delay = 0, duration = DURATION.base, y = 8 } = {}) {
 	if (reducedMotion()) return { delay: 0, duration: 0 };
 	return fly(node, { delay, duration, y, easing: EASE.out });
+}
+
+/**
+ * Entrada de una vista nueva (pestaña, sección, subpanel): aparece
+ * desenfocada y se enfoca mientras sube un poco. Pensada para usarse sólo
+ * como `in:` dentro de `{#key vista}`, así la vista anterior se va al
+ * instante y no se apilan las dos en el layout.
+ * @param {Element} _node
+ * @param {{ delay?: number, duration?: number, blur?: number, y?: number }} [params]
+ */
+export function viewEnter(_node, { delay = 0, duration = 280, blur = 6, y = 6 } = {}) {
+	if (reducedMotion()) return { delay: 0, duration: 0 };
+	return {
+		delay,
+		duration,
+		easing: EASE.out,
+		css: (/** @type {number} */ t, /** @type {number} */ u) =>
+			`opacity: ${t}; filter: blur(${u * blur}px); transform: translateY(${u * y}px);`
+	};
+}
+
+/**
+ * FLIP para `animate:` en listas con clave: cuando una fila cambia de lugar
+ * (llega una alarma arriba, se filtra la lista) se desliza en vez de saltar.
+ * @param {Element} node
+ * @param {{ from: DOMRect, to: DOMRect }} fromTo
+ */
+export function flipList(node, fromTo) {
+	return flip(node, fromTo, { duration: motionDuration(DURATION.base), easing: EASE.out });
 }
 
 /**

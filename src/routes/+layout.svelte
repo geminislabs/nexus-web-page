@@ -5,6 +5,8 @@
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { themeActions } from '$lib/stores/themeStore.js';
 	import { onMount } from 'svelte';
+	import { onNavigate } from '$app/navigation';
+	import { routeTransition } from '$lib/motion/routeTransition.js';
 
 	import { apiService } from '$lib/services/api.js';
 	import { marcaOPorDefecto } from '$lib/brand.js';
@@ -12,6 +14,8 @@
 	let { children, data } = $props();
 
 	const marca = $derived(marcaOPorDefecto(data?.brand));
+
+	onNavigate(routeTransition);
 
 	onMount(() => {
 		initObservability();

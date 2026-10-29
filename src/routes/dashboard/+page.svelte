@@ -19,6 +19,7 @@
 	} from '$lib/stores/h3Store.js';
 	import { theme } from '$lib/stores/themeStore.js';
 	import { setThemeWithReveal } from '$lib/motion/themeReveal.js';
+	import { viewEnter, softFade } from '$lib/motion/index.js';
 	import { vehicles, activeUnit, vehicleActions } from '$lib/stores/vehicleStore.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
@@ -750,7 +751,8 @@
 					class:pointer-events-none={$mobileCrearZonaMapPassesPointer}
 					role="region"
 					aria-label="Alertas"
-					transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
+					in:viewEnter
+					out:softFade
 				>
 					<TabAlertas />
 				</div>
@@ -760,7 +762,8 @@
 					class="fixed inset-0 z-[52] flex max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] flex-col overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-black sm:hidden"
 					role="region"
 					aria-label="Informes"
-					transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
+					in:viewEnter
+					out:softFade
 				>
 					<TabInformes />
 				</div>
@@ -770,7 +773,8 @@
 					class="fixed inset-0 z-[52] flex max-sm:bottom-[calc(56px+env(safe-area-inset-bottom,0px))] flex-col overflow-hidden bg-slate-50 dark:bg-black sm:hidden"
 					role="region"
 					aria-label="Ajustes"
-					transition:fly={{ y: 12, duration: 200, easing: cubicOut }}
+					in:viewEnter
+					out:softFade
 				>
 					<TabAjustes />
 				</div>

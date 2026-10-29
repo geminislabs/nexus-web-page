@@ -47,10 +47,17 @@ export function circleReveal(event, apply) {
 	}
 	const { x, y } = revealOrigin(event);
 	const r = revealRadius(x, y);
+	// La clase limita a este cambio la regla CSS que apaga el fundido por
+	// defecto; las transiciones entre rutas lo conservan.
+	const root = document.documentElement;
+	root.classList.add('theme-reveal');
 	const transition = doc.startViewTransition(async () => {
 		apply();
 		await tick();
 	});
+	Promise.resolve(transition.finished)
+		.catch(() => {})
+		.finally(() => root.classList.remove('theme-reveal'));
 	transition.ready
 		.then(() => {
 			document.documentElement.animate(

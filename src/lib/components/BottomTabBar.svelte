@@ -1,5 +1,6 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
+	import { slidingIndicator } from '$lib/motion/slidingIndicator.js';
 	import { activeTab, navActions } from '$lib/stores/navigationStore.js';
 	import { unreadAlarmCount } from '$lib/stores/alertStore.js';
 	import { vehicles } from '$lib/stores/vehicleStore.js';
@@ -47,7 +48,13 @@
 		role="tablist"
 		aria-orientation="horizontal"
 		aria-describedby="bottom-tab-db-hint"
-		class="flex w-full flex-row"
+		class="relative flex w-full flex-row"
+		use:slidingIndicator={{
+			active: $activeTab,
+			edge: 'top',
+			inset: 24,
+			class: 'h-[3px] rounded-b-full bg-sky-500 dark:bg-cyan-400'
+		}}
 	>
 		{#each visibleTabs as tab (tab.id)}
 			<button

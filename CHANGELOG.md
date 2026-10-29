@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Animaciones del panel, segunda fase.** Las vistas del panel de la unidad (Trayectos, Eventos, Detalles, Compartir) y las secciones del drawer de configuración aparecen desenfocadas y se enfocan, en lugar de cambiar de golpe; las pestañas móviles hacen lo mismo y el paso del login al dashboard es un fundido. Un indicador se desliza hasta la pestaña activa en la barra inferior móvil y en la barra lateral del drawer. Cuando llega una alarma o se filtra una lista, las filas se deslizan a su nuevo lugar. Los marcadores de las unidades se deslizan entre una posición GPS y la siguiente en vez de saltar (salvo dentro de un cluster o si el salto supera 2 km)
+
+### Fixed
+
+- Las animaciones de la v1.27.0 casi no se veían en el dashboard: el escalonado y los contadores se pusieron en componentes que el dashboard no monta. Ahora están en la lista de unidades del panel de seguimiento (escritorio y móvil), las alarmas y alertas del drawer y de la campana, y la velocidad del panel de la unidad, que además vuelve a contar desde cero al cambiar de unidad
+
 ## [1.27.0] - 2026-10-28
 
 ### Added

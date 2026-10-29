@@ -9,6 +9,8 @@ import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyle
 import { formatTripAlertType, tripAlertMarkerColor } from '$lib/utils/tripAlertFormat.js';
 import { theme } from '$lib/stores/themeStore.js';
 import { logger } from '$lib/utils/logger.js';
+import { EASE, reducedMotion } from '$lib/motion/index.js';
+import { MARKER_GLIDE_MS, lerpLatLng, shouldGlide } from '$lib/motion/geo.js';
 import VehiclePositionPopup from '$lib/components/VehiclePositionPopup.svelte';
 import {
 	buildVehicleMarkerDataUrl,
@@ -87,6 +89,8 @@ class MapService {
 		this._trailFadeTimers = new Map();
 		/** @type {google.maps.Marker | null} Indicador pulsante de la unidad seguida */
 		this._followBadgeMarker = null;
+		/** @type {Map<string, number>} rAF en curso por unidad mientras su marcador se desliza */
+		this._markerGlides = new Map();
 		/** @type {ReturnType<typeof setInterval> | null} */
 		this._followBadgeTimer = null;
 		this._followBadgePhase = 0;
@@ -558,6 +562,7 @@ class MapService {
 	}
 
 	clearVehicleMarkers() {
+		this._cancelMarkerGlides();
 		this._stopHighlightPulse();
 		this._stopRingRotation();
 		this.clearLiveTrail();
@@ -624,7 +629,7 @@ class MapService {
 
 			if (lat != null && lng != null) {
 				const newPosition = { lat: parseFloat(lat), lng: parseFloat(lng) };
-				existingMarkerData.marker.setPosition(newPosition);
+				this._glideMarker(vehicle.id, existingMarkerData.marker, newPosition);
 
 				existingMarkerData.infoWindow.setContent(
 					this.createVehicleInfoContent(vehicle, existingMarkerData.infoWindow)
@@ -650,6 +655,62 @@ class MapService {
 		} else {
 			// No recrear marcador aquí: la visibilidad la controla mapVisibleUnitIds vía MapContainer.
 		}
+	}
+
+	/**
+	 * Lleva el marcador a `to` deslizándolo en lugar de saltar. Salta directo
+	 * si no se ve (está dentro de un cluster), si el cambio es un temblor o un
+	 * salto enorme, con movimiento reducido o con la pestaña en segundo plano.
+	 * @param {string} vehicleId
+	 * @param {any} marker google.maps.Marker
+	 * @param {{ lat: number, lng: number }} to
+	 */
+	_glideMarker(vehicleId, marker, to) {
+		this._cancelMarkerGlide(vehicleId);
+		const current = marker.getPosition?.();
+		const from = current ? { lat: current.lat(), lng: current.lng() } : null;
+		const visible = Boolean(marker.getMap?.());
+		const hidden = typeof document !== 'undefined' && document.hidden;
+		if (
+			!from ||
+			!visible ||
+			hidden ||
+			reducedMotion() ||
+			typeof requestAnimationFrame !== 'function' ||
+			!shouldGlide(from, to)
+		) {
+			marker.setPosition(to);
+			return;
+		}
+
+		const start = performance.now();
+		/** @param {number} now */
+		const step = (now) => {
+			const t = Math.min(1, (now - start) / MARKER_GLIDE_MS);
+			const pos = t < 1 ? lerpLatLng(from, to, EASE.inOut(t)) : to;
+			marker.setPosition(pos);
+			if (vehicleId === this._followVehicleId && !this._tripViewActive) {
+				this._ensureFollowBadge(pos);
+			}
+			if (t < 1) {
+				this._markerGlides.set(vehicleId, requestAnimationFrame(step));
+			} else {
+				this._markerGlides.delete(vehicleId);
+				this.vehicleClusterer?.render();
+			}
+		};
+		this._markerGlides.set(vehicleId, requestAnimationFrame(step));
+	}
+
+	/** @param {string} vehicleId */
+	_cancelMarkerGlide(vehicleId) {
+		const frame = this._markerGlides.get(vehicleId);
+		if (frame != null) cancelAnimationFrame(frame);
+		this._markerGlides.delete(vehicleId);
+	}
+
+	_cancelMarkerGlides() {
+		for (const id of [...this._markerGlides.keys()]) this._cancelMarkerGlide(id);
 	}
 
 	_attachFollowInteractionListeners() {
@@ -947,7 +1008,8 @@ class MapService {
 
 		this._suppressFollowClear = true;
 		this.map.panTo(pos);
-		this._ensureFollowBadge(pos);
+		// Mientras el marcador se desliza, el badge lo acompaña cuadro a cuadro.
+		if (!this._markerGlides.has(vehicle.id)) this._ensureFollowBadge(pos);
 	}
 
 	closeAllVehicleInfoWindows() {
