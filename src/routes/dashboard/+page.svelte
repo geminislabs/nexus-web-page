@@ -666,8 +666,6 @@
 				{/if}
 			</TopDrawer>
 
-			<!-- MapVisibleUnitsCard removido: la funcionalidad está en la vista de seguimiento -->
-
 			{#if $desktopZonePanelSubView !== 'zonas'}
 				<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
 			{/if}

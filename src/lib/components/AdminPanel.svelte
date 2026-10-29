@@ -12,6 +12,8 @@
 	import AssignUnits from './AssignUnits.svelte';
 	import InviteUser from './InviteUser.svelte';
 	import OrganizationMembers from './OrganizationMembers.svelte';
+	import SkeletonRows from '$lib/components/SkeletonRows.svelte';
+	import { rise, staggerDelay } from '$lib/motion/index.js';
 
 	export let showAdminPanel = false;
 	export let toggleAdminPanel = null;
@@ -311,10 +313,7 @@
 					<p class="count-label">{devices.length} dispositivo{devices.length === 1 ? '' : 's'}</p>
 				{/if}
 				{#if loadingDevices}
-					<div class="loading-row">
-						<Icon icon="mdi:loading" class="h-5 w-5 animate-spin" aria-hidden="true" />
-						<span>Cargando dispositivos…</span>
-					</div>
+					<SkeletonRows count={5} label="Cargando dispositivos…" avatar={false} />
 				{:else if devicesError}
 					<p class="error-msg">{devicesError}</p>
 				{:else if devices.length === 0}
@@ -324,8 +323,8 @@
 					</div>
 				{:else}
 					<ul class="item-list">
-						{#each devices as device (device.device_id)}
-							<li>
+						{#each devices as device, i (device.device_id)}
+							<li in:rise|global={{ delay: staggerDelay(i) }}>
 								<button
 									type="button"
 									class="item-row"
@@ -359,10 +358,7 @@
 		{:else if activeSection === 'unidades'}
 			<div class="tab-content">
 				{#if loadingUnits}
-					<div class="loading-row">
-						<Icon icon="mdi:loading" class="h-5 w-5 animate-spin" aria-hidden="true" />
-						<span>Cargando unidades…</span>
-					</div>
+					<SkeletonRows count={5} label="Cargando unidades…" />
 				{:else if unitsError}
 					<p class="error-msg">{unitsError}</p>
 				{:else}
@@ -370,8 +366,8 @@
 						<p class="count-label">{units.length} unidad{units.length === 1 ? '' : 'es'}</p>
 					{/if}
 					<ul class="item-list">
-						{#each units as unit (unit.id)}
-							<li>
+						{#each units as unit, i (unit.id)}
+							<li in:rise|global={{ delay: staggerDelay(i) }}>
 								<button
 									type="button"
 									class="item-row"

@@ -1,5 +1,4 @@
 <script>
-	import AuthBackdrop from '$lib/components/AuthBackdrop.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { apiService } from '$lib/services/api.js';
@@ -92,7 +91,6 @@
 <div
 	class="fixed inset-0 flex items-center justify-center overflow-hidden bg-slate-100 font-sans dark:bg-[#0a0f0a]"
 >
-	<AuthBackdrop />
 	<main
 		class="relative z-10 flex w-[min(420px,92vw)] flex-col items-center rounded-[20px] border border-slate-200 bg-white px-8 pb-6 pt-8 shadow-xl dark:border-white/20 dark:bg-white/[0.08]"
 	>

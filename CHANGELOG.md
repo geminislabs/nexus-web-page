@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Más animaciones.** Mientras cargan, las listas de Usuarios (miembros), Unidades y Dispositivos de administración, la de trayectos y la de eventos de la unidad muestran filas grises que parpadean en lugar de un icono girando, y al llegar las filas entran una tras otra. El contador de la campana rebota cuando llega una alarma o una alerta nueva. En Informes, las cifras del resumen cuentan hasta su valor, el resumen y las excepciones entran escalonados, y la gráfica expandida se abre y se cierra con un fundido en lugar de aparecer de golpe
+
+### Changed
+
+- Las pantallas sin mapa vuelven a su fondo anterior: inicio de sesión y registro con los círculos que pulsan; recuperar y restablecer contraseña e invitación con su fondo liso. Se quitan las olas de la v1.30.0
+
+### Removed
+
+- Componentes que nada montaba: `VehicleListPanel`, `MapVisibleUnitsCard`, `VehiclePanel`, `Sidebar` y, porque sólo los usaba `Sidebar`, `OptionPanel` y `UserPanel`. También `AuthBackdrop`, el fondo de olas
+
 ## [1.30.0] - 2026-10-29
 
 ### Added

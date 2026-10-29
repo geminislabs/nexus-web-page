@@ -41,40 +41,61 @@
 	$: distanceKm = ($telemetryTotals.totalDistance / 1000).toFixed(1);
 	$: hasVehicles = $vehicles.length > 0;
 
+	const formatKm = (/** @type {number} */ n) => `${n.toFixed(1)} km`;
+	const formatLiters = (/** @type {number} */ n) => `${n.toFixed(1)} L`;
+
+	// `number` + `format` dejan que la tarjeta cuente hasta el valor; `value`
+	// es el texto final por si no hay número.
 	$: summaryCards = [
-		{ value: `${distanceKm} km`, title: 'Distancia', icon: 'mdi:ruler', color: 'text-violet-400' },
+		{
+			value: `${distanceKm} km`,
+			number: $telemetryTotals.totalDistance / 1000,
+			format: formatKm,
+			title: 'Distancia',
+			icon: 'mdi:ruler',
+			color: 'text-violet-400'
+		},
 		{
 			value: `${$telemetryTotals.totalFuel.toFixed(1)} L`,
+			number: $telemetryTotals.totalFuel,
+			format: formatLiters,
 			title: 'Combustible',
 			icon: 'mdi:gas-station',
 			color: 'text-orange-400'
 		},
 		{
 			value: formatMinutes($telemetryTotals.totalMoving),
+			number: $telemetryTotals.totalMoving,
+			format: formatMinutes,
 			title: 'En movimiento',
 			icon: 'mdi:play',
 			color: 'text-blue-400'
 		},
 		{
 			value: formatMinutes($telemetryTotals.totalIdle),
+			number: $telemetryTotals.totalIdle,
+			format: formatMinutes,
 			title: 'Detenido',
 			icon: 'mdi:pause',
 			color: 'text-slate-400'
 		},
 		{
 			value: String($telemetryTotals.totalAlerts),
+			number: $telemetryTotals.totalAlerts,
 			title: 'Alertas',
 			icon: 'mdi:bell',
 			color: 'text-red-400'
 		},
 		{
 			value: String($telemetryTotals.totalFixableComms),
+			number: $telemetryTotals.totalFixableComms,
 			title: 'Comms fixable',
 			icon: 'mdi:wrench',
 			color: 'text-amber-400'
 		},
 		{
 			value: String($telemetryTotals.totalWithFixComms),
+			number: $telemetryTotals.totalWithFixComms,
 			title: 'Comms fix',
 			icon: 'mdi:shield-check',
 			color: 'text-emerald-400'

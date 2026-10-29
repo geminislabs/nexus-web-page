@@ -5,9 +5,9 @@
  * Las transiciones de `svelte/transition` no miran esa preferencia por su
  * cuenta; las de este módulo sí, devolviendo duración 0 cuando está activa.
  */
-import { fly, fade } from 'svelte/transition';
+import { fly, fade, scale } from 'svelte/transition';
 import { flip } from 'svelte/animate';
-import { cubicOut, cubicInOut, quintOut } from 'svelte/easing';
+import { backOut, cubicOut, cubicInOut, quintOut } from 'svelte/easing';
 import { prefersReducedMotion } from 'svelte/motion';
 
 export const DURATION = Object.freeze({ fast: 150, base: 250, slow: 450 });
@@ -79,6 +79,33 @@ export function viewEnter(_node, { delay = 0, duration = 280, blur = 6, y = 6 } 
  */
 export function flipList(node, fromTo) {
 	return flip(node, fromTo, { duration: motionDuration(DURATION.base), easing: EASE.out });
+}
+
+/**
+ * Apertura de un diálogo: crece un poco desde el centro mientras aparece.
+ * Sirve también de salida (`transition:`), en reversa.
+ * @param {Element} node
+ * @param {{ duration?: number, start?: number }} [params]
+ */
+export function dialogScale(node, { duration = DURATION.base, start = 0.96 } = {}) {
+	if (reducedMotion()) return { delay: 0, duration: 0 };
+	return scale(node, { duration, start, opacity: 0, easing: EASE.out });
+}
+
+/**
+ * Rebote de un contador que acaba de subir (badge de notificaciones): crece
+ * pasándose un poco de su tamaño y vuelve. Pensado para `in:` dentro de un
+ * `{#key}` que sólo cambia cuando el número aumenta.
+ * @param {Element} _node
+ * @param {{ duration?: number, from?: number }} [params]
+ */
+export function pop(_node, { duration = 420, from = 0.55 } = {}) {
+	if (reducedMotion()) return { delay: 0, duration: 0 };
+	return {
+		duration,
+		css: (/** @type {number} */ t) =>
+			`transform: scale(${Number((from + (1 - from) * backOut(t)).toFixed(4))});`
+	};
 }
 
 /**

@@ -3,6 +3,7 @@
 	import { browser } from '$app/environment';
 	import { onDestroy, tick } from 'svelte';
 	import ChartPanel from './ChartPanel.svelte';
+	import { dialogScale, softFade } from '$lib/motion/index.js';
 	import {
 		speedChartConfig,
 		mainBatteryChartConfig,
@@ -162,10 +163,12 @@
 	<div bind:this={expandPortalHost}>
 		<div
 			class="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-6 dark:bg-black/60"
+			transition:softFade
 			role="presentation"
 			on:click|self={closeExpanded}
 		>
 			<div
+				transition:dialogScale
 				class="flex max-h-[92vh] w-full max-w-5xl flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5 dark:border-white/10 dark:bg-[#0f1626]"
 				role="dialog"
 				aria-modal="true"

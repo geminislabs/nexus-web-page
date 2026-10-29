@@ -2,6 +2,8 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import TelemetryChartsSection from './TelemetryChartsSection.svelte';
 	import OffendersSection from './OffendersSection.svelte';
+	import AnimatedNumber from '$lib/components/AnimatedNumber.svelte';
+	import { rise, staggerDelay } from '$lib/motion/index.js';
 
 	export let hasResults = false;
 	export let loading = false;
@@ -35,14 +37,21 @@
 			? 'mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7'
 			: 'mb-5 grid grid-cols-2 gap-3'}
 	>
-		{#each summaryCards as card (card.title)}
+		{#each summaryCards as card, i (card.title)}
 			<article
+				in:rise|global={{ delay: staggerDelay(i) }}
 				class="rounded-2xl border bg-white p-4 dark:bg-white/[0.04] {cardBorder(card.color)}"
 			>
 				<span class={card.color} aria-hidden="true">
 					<Icon icon={card.icon} width={20} />
 				</span>
-				<p class="m-0 mt-3 text-[18px] font-bold text-slate-900 dark:text-white">{card.value}</p>
+				<p class="m-0 mt-3 text-[18px] font-bold text-slate-900 dark:text-white">
+					{#if Number.isFinite(card.number)}
+						<AnimatedNumber value={card.number} format={card.format} />
+					{:else}
+						{card.value}
+					{/if}
+				</p>
 				<p class="m-0 text-[11px] text-slate-500 dark:text-white/45">{card.title}</p>
 			</article>
 		{/each}
