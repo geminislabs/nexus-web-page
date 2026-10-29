@@ -1,6 +1,8 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
 	import Icon from '$lib/components/Icon.svelte';
+	import { rise, staggerDelay, viewEnter, flipList } from '$lib/motion/index.js';
+	import { slidingIndicator } from '$lib/motion/slidingIndicator.js';
 	import { theme } from '$lib/stores/themeStore.js';
 	import { setThemeWithReveal } from '$lib/motion/themeReveal.js';
 	import SignalMeters from './SignalMeters.svelte';
@@ -421,8 +423,12 @@
 	<!-- SIDEBAR -->
 	{#if showSectionSidebar}
 		<div
-			class="flex w-[68px] shrink-0 flex-col items-center gap-0.5 overflow-y-auto border-r border-slate-200 bg-white py-3 dark:border-white/[0.07] dark:bg-[#060a15]"
+			class="relative flex w-[68px] shrink-0 flex-col items-center gap-0.5 overflow-y-auto border-r border-slate-200 bg-white py-3 dark:border-white/[0.07] dark:bg-[#060a15]"
 			role="tablist"
+			use:slidingIndicator={{
+				active: activeSection,
+				class: 'rounded-xl bg-blue-100 dark:bg-blue-600/15'
+			}}
 		>
 			{#each sections as sec (sec.id)}
 				{@const badge = sectionBadge(sec.id)}
@@ -430,7 +436,7 @@
 					type="button"
 					class="relative flex w-14 flex-col items-center gap-1 rounded-xl px-1 py-2.5 text-center transition-all duration-150
 						{activeSection === sec.id
-						? 'bg-blue-100 text-blue-700 dark:bg-blue-600/15 dark:text-blue-300'
+						? 'text-blue-700 dark:text-blue-300'
 						: 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-white/38 dark:hover:bg-white/[0.06] dark:hover:text-white/65'}"
 					role="tab"
 					aria-selected={activeSection === sec.id}
@@ -463,7 +469,7 @@
 	>
 		<!-- ═══ APARIENCIA ═══ -->
 		{#if displaySection === 'apariencia'}
-			<div class="px-4 py-4">
+			<div in:viewEnter class="px-4 py-4">
 				<div class="mb-3 flex items-center gap-2">
 					<Icon
 						icon="mdi:theme-light-dark"
@@ -567,7 +573,7 @@
 
 			<!-- ═══ UNIDADES ═══ -->
 		{:else if displaySection === 'unidades'}
-			<div class="flex min-h-0 flex-1 flex-col overflow-hidden">
+			<div in:viewEnter class="flex min-h-0 flex-1 flex-col overflow-hidden">
 				{#if vehicleSubView !== 'list'}
 					<div
 						class="shrink-0 flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-white/[0.06] dark:bg-[#080d1a]"
@@ -871,8 +877,9 @@
 							</div>
 						{:else if vehicleView === 'grid'}
 							<ul class="m-0 flex list-none flex-col gap-3.5 p-0">
-								{#each pagedVehicles as v (v.id)}
+								{#each pagedVehicles as v, rowIndex (v.id)}
 									<li
+										in:rise|global={{ delay: staggerDelay(rowIndex) }}
 										class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-colors dark:border-white/[0.08] dark:bg-white/[0.03]"
 									>
 										<div class="flex items-start gap-3">
@@ -1004,8 +1011,9 @@
 							</ul>
 						{:else}
 							<ul class="m-0 flex list-none flex-col gap-1.5 p-0">
-								{#each pagedVehicles as v (v.id)}
+								{#each pagedVehicles as v, rowIndex (v.id)}
 									<li
+										in:rise|global={{ delay: staggerDelay(rowIndex) }}
 										class="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.03] dark:hover:bg-white/[0.05]"
 									>
 										<input
@@ -1211,7 +1219,7 @@
 		{:else if displaySection === 'administracion'}
 			<AdminPanel embedded={true} />
 		{:else if displaySection === 'zonas'}
-			<div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+			<div in:viewEnter class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
 				<ZonasPanel
 					variant="desktop"
 					bind:subView={drawerZoneSubView}
@@ -1220,7 +1228,7 @@
 				/>
 			</div>
 		{:else if displaySection === 'alertas'}
-			<div class="px-4 py-4">
+			<div in:viewEnter class="px-4 py-4">
 				<div class="mb-1 flex items-center gap-2">
 					<Icon
 						icon="mdi:bell-outline"
@@ -1247,8 +1255,10 @@
 					</div>
 				{:else}
 					<ul class="m-0 flex list-none flex-col gap-2 p-0">
-						{#each $alarmEvents as ev (ev.id)}
+						{#each $alarmEvents as ev, rowIndex (ev.id)}
 							<li
+								in:rise|global={{ delay: staggerDelay(rowIndex) }}
+								animate:flipList
 								class="flex items-center gap-2.5 rounded-xl border px-3 py-2.5 {!ev.read
 									? 'border-blue-300/70 bg-blue-50 dark:border-blue-500/18 dark:bg-blue-600/[0.07]'
 									: 'border-slate-200 bg-slate-50 dark:border-white/[0.06] dark:bg-white/[0.03]'}"
@@ -1278,7 +1288,7 @@
 				{/if}
 			</div>
 		{:else if displaySection === 'gestionar_alertas'}
-			<div class="px-4 py-4">
+			<div in:viewEnter class="px-4 py-4">
 				<div class="mb-4 flex items-center gap-2">
 					<Icon
 						icon="mdi:format-list-bulleted"
@@ -1337,8 +1347,8 @@
 					</div>
 				{:else}
 					<ul class="flex flex-col gap-2 list-none p-0 m-0">
-						{#each $alerts as alert (alert.id)}
-							<li>
+						{#each $alerts as alert, rowIndex (alert.id)}
+							<li in:rise|global={{ delay: staggerDelay(rowIndex) }}>
 								<div
 									class="flex items-center gap-2.5 rounded-xl border p-3 transition-colors {alert.enabled
 										? 'border-slate-200 bg-slate-50 dark:border-white/[0.07] dark:bg-white/[0.03]'

@@ -330,9 +330,10 @@ html[data-theme='light'] .gm-style .gm-svpc:hover {
 	filter: brightness(0.98);
 }
 
-/* Cambio de tema con círculo (themeReveal.js): la animación la pone JS. */
-::view-transition-old(root),
-::view-transition-new(root) {
+/* Cambio de tema con círculo (themeReveal.js): la animación la pone JS. Sólo
+   mientras dura ese cambio; entre rutas queda el fundido por defecto. */
+html.theme-reveal::view-transition-old(root),
+html.theme-reveal::view-transition-new(root) {
 	animation: none;
 	mix-blend-mode: normal;
 }

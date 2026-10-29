@@ -11,6 +11,8 @@
 	} from '$lib/utils/unitTrackingStatus.js';
 	import SignalMeters from '$lib/components/SignalMeters.svelte';
 	import UnitTelemetryBadges from '$lib/components/UnitTelemetryBadges.svelte';
+	import AnimatedNumber from '$lib/components/AnimatedNumber.svelte';
+	import { rise, staggerDelay, flipList } from '$lib/motion/index.js';
 	import ColoredVehicleIcon from '$lib/components/Unit/ColoredVehicleIcon.svelte';
 	import { unitIcons } from '$lib/data/unitIcons';
 	import { resolveProfileColorHex } from '$lib/utils/vehicleMarkerIcon.js';
@@ -95,6 +97,8 @@
 	$: hasSignal = unit?.lastUpdate != null || unit?.gpsDatetime != null;
 	$: speed = Number(unit?.speed);
 	$: isMoving = !Number.isNaN(speed) && speed > 3;
+	/** @param {number} s */
+	const formatSpeed = (s) => `${s < 10 ? s.toFixed(1) : Math.round(s)} km/h`;
 	$: statusLabel = (() => {
 		if (!hasSignal) return 'Sin señal';
 		if (engineOn || isMoving) return 'Encendido';
@@ -335,9 +339,10 @@
 										>
 										<span
 											class="block truncate text-[11px] font-bold text-sky-600 dark:text-sky-400"
-											>{Number.isNaN(speed)
-												? '—'
-												: `${speed < 10 ? speed.toFixed(1) : Math.round(speed)} km/h`}</span
+											>{#key unit.id}<AnimatedNumber
+													value={Number.isNaN(speed) ? null : speed}
+													format={formatSpeed}
+												/>{/key}</span
 										>
 									</span>
 								</div>
@@ -356,7 +361,9 @@
 								class="grid grid-cols-2 gap-1.5 [grid-auto-rows:minmax(2.75rem,auto)]"
 								aria-label="Telemetría"
 							>
-								<UnitTelemetryBadges {unit} showMotion={false} variant="grid" />
+								{#key unit.id}
+									<UnitTelemetryBadges {unit} showMotion={false} variant="grid" />
+								{/key}
 								<SignalMeters {unit} variant="grid" />
 							</div>
 						</fieldset>
@@ -410,10 +417,10 @@
 						class="m-0 min-h-0 flex-1 list-none space-y-0.5 overflow-y-auto overscroll-contain p-0 [-webkit-overflow-scrolling:touch]"
 						aria-label="Lista de unidades"
 					>
-						{#each filteredUnits as u (u.id)}
+						{#each filteredUnits as u, i (u.id)}
 							{@const st = getUnitTrackingStatus(u)}
 							{@const dt = formatUnitStatusDate(u)}
-							<li>
+							<li in:rise|global={{ delay: staggerDelay(i) }} animate:flipList>
 								<div
 									class="flex w-full items-center gap-1 rounded-lg px-1 py-1 transition-colors {u.id ===
 									unit.id

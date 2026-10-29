@@ -5,6 +5,7 @@
 	import UnitDetailsPanel from './UnitDetailsPanel.svelte';
 	import UnitSharePanel from './UnitSharePanel.svelte';
 	import SecurityConsolePanel from './SecurityConsolePanel.svelte';
+	import { viewEnter } from '$lib/motion/index.js';
 
 	export let unit = null;
 	export let units = [];
@@ -16,25 +17,29 @@
 	export let onClose = () => {};
 </script>
 
-{#if panelView === 'trips'}
-	<TripHistoryPanel {unit} onBack={onBackToUnitInfo} />
-{:else if panelView === 'events'}
-	<UnitEventsPanel {unit} panelActive={true} onBack={onBackToUnitInfo} />
-{:else if panelView === 'details'}
-	<UnitDetailsPanel {unit} panelActive={true} onClose={onBackToUnitInfo} />
-{:else if panelView === 'share'}
-	<UnitSharePanel {unit} onBack={onBackToUnitInfo} />
-{:else if panelView === 'security'}
-	<SecurityConsolePanel {unit} onBack={onBackToUnitInfo} />
-{:else}
-	<TrackingContextPanel
-		{unit}
-		{units}
-		{panelView}
-		{onPanelViewChange}
-		{onSelectUnit}
-		{onCenterUnit}
-		{onClose}
-		onOpenSecurity={() => onPanelViewChange('security')}
-	/>
-{/if}
+{#key panelView}
+	<div class="flex min-h-0 flex-col" in:viewEnter>
+		{#if panelView === 'trips'}
+			<TripHistoryPanel {unit} onBack={onBackToUnitInfo} />
+		{:else if panelView === 'events'}
+			<UnitEventsPanel {unit} panelActive={true} onBack={onBackToUnitInfo} />
+		{:else if panelView === 'details'}
+			<UnitDetailsPanel {unit} panelActive={true} onClose={onBackToUnitInfo} />
+		{:else if panelView === 'share'}
+			<UnitSharePanel {unit} onBack={onBackToUnitInfo} />
+		{:else if panelView === 'security'}
+			<SecurityConsolePanel {unit} onBack={onBackToUnitInfo} />
+		{:else}
+			<TrackingContextPanel
+				{unit}
+				{units}
+				{panelView}
+				{onPanelViewChange}
+				{onSelectUnit}
+				{onCenterUnit}
+				{onClose}
+				onOpenSecurity={() => onPanelViewChange('security')}
+			/>
+		{/if}
+	</div>
+{/key}

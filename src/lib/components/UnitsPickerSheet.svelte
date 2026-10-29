@@ -1,5 +1,6 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
+	import { rise, staggerDelay, flipList } from '$lib/motion/index.js';
 	import {
 		vehicles,
 		loadingVehicles,
@@ -142,7 +143,7 @@
 				{#each filteredUnits as v, i (v.id)}
 					{@const status = getUnitTrackingStatus(v)}
 					{@const isSelected = $activeUnitId === v.id}
-					<li>
+					<li in:rise|global={{ delay: staggerDelay(i) }} animate:flipList>
 						<div
 							class="flex w-full items-center gap-1 px-2 py-1 transition-colors {!v.onMap
 								? 'opacity-55'
