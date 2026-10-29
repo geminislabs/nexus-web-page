@@ -10,7 +10,13 @@ import { formatTripAlertType, tripAlertMarkerColor } from '$lib/utils/tripAlertF
 import { theme } from '$lib/stores/themeStore.js';
 import { logger } from '$lib/utils/logger.js';
 import { EASE, reducedMotion } from '$lib/motion/index.js';
-import { MARKER_GLIDE_MS, lerpLatLng, shouldGlide } from '$lib/motion/geo.js';
+import {
+	MARKER_GLIDE_MS,
+	cumulativeDistances,
+	lerpLatLng,
+	pathAtProgress,
+	shouldGlide
+} from '$lib/motion/geo.js';
 import VehiclePositionPopup from '$lib/components/VehiclePositionPopup.svelte';
 import {
 	buildVehicleMarkerDataUrl,
@@ -1269,6 +1275,22 @@ class MapService {
 	_tripStartMarker = null;
 	/** @type {google.maps.Marker | null} */
 	_tripEndMarker = null;
+	/** Punta que recorre la ruta mientras se dibuja. @type {google.maps.Marker | null} */
+	_tripDrawHead = null;
+	/** @type {number | null} */
+	_tripDrawFrame = null;
+
+	/** Duración del dibujo de la ruta, de inicio a fin. */
+	static TRIP_DRAW_MS = 1400;
+
+	/** Intervalo entre puntos al reproducir un trayecto. */
+	static PLAYBACK_STEP_MS = 400;
+
+	/** Si se puede animar ahora (no con movimiento reducido ni con la pestaña oculta). */
+	_canAnimate() {
+		const hidden = typeof document !== 'undefined' && document.hidden;
+		return !hidden && !reducedMotion() && typeof requestAnimationFrame === 'function';
+	}
 
 	/**
 	 * Dibuja la ruta del trayecto en el mapa
@@ -1286,8 +1308,10 @@ class MapService {
 			lng: parseFloat(p.lon ?? p.lng)
 		}));
 
+		const animate = path.length > 2 && this._canAnimate();
+
 		this._tripPolyline = new this.google.maps.Polyline({
-			path,
+			path: animate ? [path[0]] : path,
 			geodesic: true,
 			strokeColor: '#10b981',
 			strokeOpacity: 1,
@@ -1325,6 +1349,60 @@ class MapService {
 				},
 				title: 'Fin'
 			});
+			if (animate) this._tripEndMarker.setMap(null);
+		}
+
+		if (animate) this._animateTripDraw(path);
+	}
+
+	/**
+	 * La línea crece de inicio a fin con una punta que la recorre; el
+	 * marcador de fin aparece al llegar.
+	 * @param {Array<{ lat: number, lng: number }>} path
+	 */
+	_animateTripDraw(path) {
+		const cumulative = cumulativeDistances(path);
+		this._tripDrawHead = new this.google.maps.Marker({
+			position: path[0],
+			map: this.map,
+			icon: {
+				path: this.google.maps.SymbolPath.CIRCLE,
+				scale: 6,
+				fillColor: '#22d3ee',
+				fillOpacity: 1,
+				strokeColor: '#fff',
+				strokeWeight: 2
+			},
+			clickable: false,
+			zIndex: 900
+		});
+
+		const start = performance.now();
+		/** @param {number} now */
+		const step = (now) => {
+			const t = Math.min(1, (now - start) / MapService.TRIP_DRAW_MS);
+			const { path: drawn, head } = pathAtProgress(path, cumulative, EASE.inOut(t));
+			this._tripPolyline?.setPath(drawn);
+			this._tripDrawHead?.setPosition(head);
+			if (t < 1) {
+				this._tripDrawFrame = requestAnimationFrame(step);
+			} else {
+				this._tripDrawFrame = null;
+				this._removeTripDrawHead();
+				this._tripEndMarker?.setMap(this.map);
+			}
+		};
+		this._tripDrawFrame = requestAnimationFrame(step);
+	}
+
+	_removeTripDrawHead() {
+		if (this._tripDrawFrame != null) {
+			cancelAnimationFrame(this._tripDrawFrame);
+			this._tripDrawFrame = null;
+		}
+		if (this._tripDrawHead) {
+			this._tripDrawHead.setMap(null);
+			this._tripDrawHead = null;
 		}
 	}
 
@@ -1334,6 +1412,7 @@ class MapService {
 	 */
 	clearTripRoute(opts = {}) {
 		this._hideAllLiveTrails();
+		this._removeTripDrawHead();
 		if (this._tripPolyline) {
 			this._tripPolyline.setMap(null);
 			this._tripPolyline = null;
@@ -1424,6 +1503,8 @@ class MapService {
 	_onPlaybackComplete = null;
 	/** @type {boolean} */
 	_playbackPaused = false;
+	/** @type {number | null} */
+	_playbackGlideFrame = null;
 
 	/**
 	 * Inicia la reproducción animada del trayecto
@@ -1460,7 +1541,7 @@ class MapService {
 			title: 'Posición actual'
 		});
 
-		const PLAYBACK_SPEED_MS = 400;
+		const PLAYBACK_SPEED_MS = MapService.PLAYBACK_STEP_MS;
 
 		this._playbackInterval = setInterval(() => {
 			if (this._playbackPaused) return;
@@ -1474,12 +1555,60 @@ class MapService {
 			}
 
 			const pos = this._playbackPath[this._playbackIndex];
-			this._playbackMarker?.setPosition(pos);
+			this._glidePlaybackMarker(this._playbackPath[this._playbackIndex - 1], pos);
 			this._panIfNearEdge(pos);
 
 			const progress = this._playbackIndex / (this._playbackPath.length - 1);
 			this._onPlaybackProgress?.(progress);
 		}, PLAYBACK_SPEED_MS);
+	}
+
+	/**
+	 * Mueve el marcador de reproducción al siguiente punto deslizándolo
+	 * durante casi todo el intervalo, en vez de saltar cada 400 ms.
+	 * @param {{ lat: number, lng: number }} from
+	 * @param {{ lat: number, lng: number }} to
+	 */
+	_glidePlaybackMarker(from, to) {
+		this._cancelPlaybackGlide();
+		const marker = this._playbackMarker;
+		if (!marker) return;
+		if (!from || !this._canAnimate()) {
+			marker.setPosition(to);
+			return;
+		}
+		const duration = MapService.PLAYBACK_STEP_MS * 0.9;
+		const start = performance.now();
+		/** @param {number} now */
+		const step = (now) => {
+			const t = Math.min(1, (now - start) / duration);
+			marker.setPosition(t < 1 ? lerpLatLng(from, to, t) : to);
+			this._playbackGlideFrame = t < 1 ? requestAnimationFrame(step) : null;
+		};
+		this._playbackGlideFrame = requestAnimationFrame(step);
+	}
+
+	_cancelPlaybackGlide() {
+		if (this._playbackGlideFrame != null) {
+			cancelAnimationFrame(this._playbackGlideFrame);
+			this._playbackGlideFrame = null;
+		}
+	}
+
+	/**
+	 * Lleva la reproducción a una fracción del recorrido (slider).
+	 * @param {number} progress 0..1
+	 */
+	seekTripPlayback(progress) {
+		const last = this._playbackPath.length - 1;
+		if (last < 0 || !this._playbackMarker) return;
+		const index = Math.round(Math.min(1, Math.max(0, progress)) * last);
+		this._cancelPlaybackGlide();
+		this._playbackIndex = index;
+		const pos = this._playbackPath[index];
+		this._playbackMarker.setPosition(pos);
+		this._panIfNearEdge(pos);
+		this._onPlaybackProgress?.(last > 0 ? index / last : 0);
 	}
 
 	/** Pausa la reproducción */
@@ -1500,6 +1629,7 @@ class MapService {
 
 	/** Detiene y resetea la reproducción */
 	stopTripPlayback() {
+		this._cancelPlaybackGlide();
 		if (this._playbackInterval) {
 			clearInterval(this._playbackInterval);
 			this._playbackInterval = null;

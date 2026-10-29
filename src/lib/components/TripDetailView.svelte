@@ -56,6 +56,29 @@
 		isPlaying = true;
 	}
 
+	/**
+	 * Slider en vivo: arrastrarlo mueve el marcador por la ruta. Si no hay
+	 * reproducción, se crea una en pausa para poder recorrerla a mano.
+	 * @param {Event} e
+	 */
+	function seek(e) {
+		const progress = Number(/** @type {HTMLInputElement} */ (e.currentTarget).value) / 1000;
+		if (!trip?.points?.length) return;
+		if (!isPlaying && !mapService.canResumeTripPlayback()) {
+			mapService.startTripPlayback(trip.points, {
+				onProgress: (p) => {
+					playbackProgress = p;
+				},
+				onComplete: () => {
+					isPlaying = false;
+					playbackProgress = 0;
+				}
+			});
+			mapService.pauseTripPlayback();
+		}
+		mapService.seekTripPlayback(progress);
+	}
+
 	function stopPlayback() {
 		mapService.stopTripPlayback();
 		isPlaying = false;
@@ -185,15 +208,20 @@
 			</button>
 		</div>
 
-		<!-- Progress bar: altura reservada para no empujar el layout -->
-		<div class="mt-3 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-			<div
-				class="h-full bg-cyan-400 transition-all duration-100 {isPlaying || playbackProgress > 0
-					? ''
-					: 'opacity-0'}"
-				style="width: {playbackProgress * 100}%"
-			></div>
-		</div>
+		<!-- Slider de progreso: se puede arrastrar para recorrer la ruta -->
+		<input
+			type="range"
+			min="0"
+			max="1000"
+			step="1"
+			value={Math.round(playbackProgress * 1000)}
+			on:input={seek}
+			disabled={!pointsCount}
+			class="trip-scrubber mt-3 w-full"
+			style="--progress: {playbackProgress * 100}%"
+			aria-label="Posición en el recorrido"
+			aria-valuetext="{Math.round(playbackProgress * 100)}%"
+		/>
 	</div>
 
 	<!-- Stats: en móvil colapsable (cerrado al abrir); en sm+ siempre visible -->
@@ -261,3 +289,56 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	/* Pista fina con el tramo recorrido en cian; el pulgar crece al tocarlo. */
+	.trip-scrubber {
+		appearance: none;
+		height: 4px;
+		border-radius: 9999px;
+		background: linear-gradient(
+			to right,
+			rgb(34 211 238) var(--progress),
+			rgb(148 163 184 / 0.25) var(--progress)
+		);
+		cursor: pointer;
+	}
+	.trip-scrubber:focus-visible {
+		/* El pulgar ya se ilumina con el foco; el recuadro sobre toda la pista sobra. */
+		outline: none;
+	}
+	.trip-scrubber:disabled {
+		cursor: default;
+		opacity: 0.5;
+	}
+	.trip-scrubber::-webkit-slider-thumb {
+		appearance: none;
+		width: 14px;
+		height: 14px;
+		border-radius: 9999px;
+		background: #fff;
+		border: 2px solid rgb(34 211 238);
+		box-shadow: 0 0 0 0 rgb(34 211 238 / 0.35);
+		transition:
+			transform 150ms,
+			box-shadow 150ms;
+	}
+	.trip-scrubber::-moz-range-thumb {
+		width: 14px;
+		height: 14px;
+		border-radius: 9999px;
+		background: #fff;
+		border: 2px solid rgb(34 211 238);
+		transition: transform 150ms;
+	}
+	.trip-scrubber:hover::-webkit-slider-thumb,
+	.trip-scrubber:active::-webkit-slider-thumb,
+	.trip-scrubber:focus-visible::-webkit-slider-thumb {
+		transform: scale(1.2);
+		box-shadow: 0 0 0 6px rgb(34 211 238 / 0.2);
+	}
+	.trip-scrubber:hover::-moz-range-thumb,
+	.trip-scrubber:active::-moz-range-thumb {
+		transform: scale(1.2);
+	}
+</style>

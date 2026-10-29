@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Animaciones en el dashboard de administración.** Mientras cargan, las cifras del resumen (unidades de la flota y las tarjetas de usuarios, unidades, dispositivos, alertas y zonas) muestran un bloque pulsante, y al llegar los datos cuentan hasta su valor. Las tarjetas y paneles entran escalonados. El menú lateral tiene un indicador que se desliza hasta la sección activa, y cada sección entra desenfocada y se enfoca
+- **Animaciones del panel, tercera fase.** Al abrir un trayecto, la ruta se dibuja de inicio a fin con una punta que la recorre, y el marcador de fin aparece al llegar. Al reproducirlo, el marcador se desliza de un punto al siguiente en vez de saltar. La barra de progreso de la reproducción ahora es un control deslizante: arrastrarlo mueve el marcador por la ruta, incluso sin haber pulsado reproducir. En los informes, las gráficas se transforman hasta los valores nuevos al cambiar los datos, y el tooltip sigue al cursor sin tener que apuntar exactamente a una barra. La lista de trayectos aparece fila por fila y el paso entre la lista y el detalle es con desenfoque
+
+### Fixed
+
+- El indicador deslizante que la v1.28.0 añadió a la barra lateral del drawer de configuración nunca se veía: todos los lugares que montan el drawer ocultan esa barra. Queda en el código por si la barra vuelve a mostrarse; el indicador visible ahora es el del menú de administración
+
 ## [1.28.0] - 2026-10-29
 
 ### Added

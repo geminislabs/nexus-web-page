@@ -16,6 +16,8 @@
 	import AdminPanel from '$lib/components/AdminPanel.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
 	import BrandWorkspace from '$lib/components/brand/BrandWorkspace.svelte';
+	import { viewEnter } from '$lib/motion/index.js';
+	import { slidingIndicator } from '$lib/motion/slidingIndicator.js';
 
 	/* Tipografías auto-alojadas (latin/latin-ext): evita transferir la IP a Google Fonts. */
 	import '@fontsource/sora/latin-500.css';
@@ -124,13 +126,21 @@
 			{/if}
 		</div>
 
-		<nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2" aria-label="Secciones">
+		<nav
+			class="relative flex flex-1 flex-col gap-0.5 overflow-y-auto p-2"
+			aria-label="Secciones"
+			use:slidingIndicator={{
+				active: section,
+				selector: '[aria-current="page"]',
+				class: 'rounded-xl bg-emerald-500/15'
+			}}
+		>
 			{#each navItems as item (item.id)}
 				<button
 					type="button"
-					class="flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[13px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50
+					class="relative flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[13px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50
 						{section === item.id
-						? 'bg-emerald-500/15 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200'
+						? 'text-emerald-800 dark:text-emerald-200'
 						: 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-white/45 dark:hover:bg-white/[0.05] dark:hover:text-white/85'}
 						{collapsed ? 'justify-center px-0' : ''}"
 					aria-current={section === item.id ? 'page' : undefined}
@@ -225,9 +235,11 @@
 
 		<main class="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 sm:p-4" aria-label={meta.title}>
 			{#if section === 'dashboard'}
-				<AdminDashboard />
+				<div in:viewEnter>
+					<AdminDashboard />
+				</div>
 			{:else if section === 'users' || section === 'units' || section === 'devices'}
-				<div class="flex min-h-0 flex-1 flex-col">
+				<div class="flex min-h-0 flex-1 flex-col" in:viewEnter>
 					<div class="mb-3 shrink-0">
 						<h1
 							class="admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white"
@@ -242,12 +254,14 @@
 						class="admin-embed flex min-h-0 flex-1 flex-col overflow-auto rounded-2xl border border-slate-200/90 bg-white dark:border-white/[0.08] dark:bg-[#0d1424]"
 					>
 						{#key section}
-							<AdminPanel embedded={true} lockedSection={meta.locked} />
+							<div class="flex min-h-0 flex-1 flex-col" in:viewEnter>
+								<AdminPanel embedded={true} lockedSection={meta.locked} />
+							</div>
 						{/key}
 					</div>
 				</div>
 			{:else if section === 'brand' && brandAllowed}
-				<div class="flex min-h-0 flex-1 flex-col">
+				<div class="flex min-h-0 flex-1 flex-col" in:viewEnter>
 					<div class="mb-3 shrink-0">
 						<h1
 							class="admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white"
@@ -267,7 +281,7 @@
 					</div>
 				</div>
 			{:else if section === 'settings'}
-				<div class="flex min-h-0 flex-1 flex-col">
+				<div class="flex min-h-0 flex-1 flex-col" in:viewEnter>
 					<div class="mb-3 shrink-0">
 						<h1
 							class="admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white"

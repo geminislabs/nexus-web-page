@@ -1,6 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { Chart, registerables } from 'chart.js';
+	import { reducedMotion } from '$lib/motion/index.js';
 
 	export let config = null;
 	export let height = 200;
@@ -33,6 +34,12 @@
 			options: {
 				responsive: true,
 				maintainAspectRatio: false,
+				// Al cambiar los datos, barras y líneas se transforman hasta los
+				// valores nuevos en lugar de redibujarse de golpe.
+				animation: reducedMotion() ? false : { duration: 600, easing: 'easeOutCubic' },
+				// El tooltip sigue al cursor por el eje X sin tener que apuntar
+				// exactamente a una barra o un punto.
+				interaction: { mode: 'index', intersect: false },
 				plugins: {
 					legend: {
 						display: (config.data?.datasets?.length ?? 0) > 1,
@@ -68,7 +75,7 @@
 	$: if (canvas && config) {
 		if (chart) {
 			chart.data = config.data;
-			chart.update('none');
+			chart.update(reducedMotion() ? 'none' : undefined);
 		} else {
 			buildChart();
 		}

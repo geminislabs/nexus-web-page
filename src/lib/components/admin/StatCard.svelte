@@ -1,5 +1,7 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
+	import AnimatedNumber from '$lib/components/AnimatedNumber.svelte';
+	import { rise } from '$lib/motion/index.js';
 
 	/** @type {string} */
 	export let label = '';
@@ -13,6 +15,10 @@
 	export let accent = 'emerald';
 	/** @type {(() => void) | null} */
 	export let onClick = null;
+	/** Mientras carga se muestra un bloque pulsante en lugar del valor. */
+	export let loading = false;
+	/** Retraso de entrada, para escalonar una fila de tarjetas. */
+	export let delay = 0;
 
 	const accents = {
 		emerald: {
@@ -44,6 +50,7 @@
 {#if interactive}
 	<button
 		type="button"
+		in:rise|global={{ delay }}
 		class="group relative flex w-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-emerald-300/60 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:border-white/[0.08] dark:bg-[#0d1424] dark:shadow-none dark:hover:border-emerald-400/30"
 		on:click={onClick}
 	>
@@ -51,6 +58,7 @@
 	</button>
 {:else}
 	<div
+		in:rise|global={{ delay }}
 		class="relative flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] dark:border-white/[0.08] dark:bg-[#0d1424] dark:shadow-none"
 	>
 		{@render body()}
@@ -72,7 +80,17 @@
 			<p
 				class="admin-stat-value m-0 mt-2 text-[1.85rem] font-semibold leading-none tracking-tight text-slate-900 dark:text-white"
 			>
-				{value}
+				{#if loading}
+					<span
+						class="inline-block h-[1.85rem] w-12 animate-pulse rounded-lg bg-slate-200 align-top dark:bg-white/10"
+						aria-hidden="true"
+					></span>
+					<span class="sr-only">Cargando</span>
+				{:else if typeof value === 'number'}
+					<AnimatedNumber {value} />
+				{:else}
+					{value}
+				{/if}
 			</p>
 			{#if hint}
 				<p class="m-0 mt-2 text-[11px] font-medium text-slate-500 dark:text-white/40">{hint}</p>

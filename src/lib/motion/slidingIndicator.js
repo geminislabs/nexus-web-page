@@ -10,11 +10,13 @@
  *   use:slidingIndicator={{ active: tab, edge: 'top', inset: 24, class: 'h-[3px] bg-sky-500' }}
  *
  * `active` sólo sirve para que Svelte llame a `update` cuando cambia.
+ * `selector` cambia cómo se encuentra el elemento activo; un menú de
+ * navegación marca el suyo con `aria-current="page"`, no con `aria-selected`.
  */
 import { DURATION, EASE_CSS_OUT, motionDuration } from './index.js';
 
 /**
- * @typedef {{ active?: unknown, class?: string, edge?: 'top' | null, inset?: number }} IndicatorParams
+ * @typedef {{ active?: unknown, class?: string, edge?: 'top' | null, inset?: number, selector?: string }} IndicatorParams
  */
 
 /**
@@ -38,7 +40,9 @@ export function slidingIndicator(node, params = {}) {
 
 	/** @param {boolean} animate */
 	function place(animate) {
-		const el = /** @type {HTMLElement | null} */ (node.querySelector('[aria-selected="true"]'));
+		const el = /** @type {HTMLElement | null} */ (
+			node.querySelector(opts.selector ?? '[aria-selected="true"]')
+		);
 		if (!el) {
 			indicator.style.opacity = '0';
 			placed = false;
