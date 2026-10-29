@@ -49,3 +49,46 @@ export function shouldGlide(from, to, { minMeters = 1, maxMeters = 2000 } = {}) 
 	const d = distanceMeters(from, to);
 	return d >= minMeters && d <= maxMeters;
 }
+
+/**
+ * Distancia acumulada desde el primer punto hasta cada punto del recorrido.
+ * @param {LatLng[]} path
+ * @returns {number[]}
+ */
+export function cumulativeDistances(path) {
+	const out = new Array(path.length);
+	let total = 0;
+	for (let i = 0; i < path.length; i++) {
+		if (i > 0) total += distanceMeters(path[i - 1], path[i]);
+		out[i] = total;
+	}
+	return out;
+}
+
+/**
+ * Tramo del recorrido hasta la fracción `t` de su distancia, con el punto
+ * de la punta interpolado. Medir por distancia y no por índice hace que la
+ * línea avance a velocidad constante aunque los puntos no estén espaciados
+ * igual (en un semáforo se acumulan muchos).
+ * @param {LatLng[]} path
+ * @param {number[]} cumulative de `cumulativeDistances(path)`
+ * @param {number} t 0..1
+ * @returns {{ path: LatLng[], head: LatLng }}
+ */
+export function pathAtProgress(path, cumulative, t) {
+	const last = path.length - 1;
+	const total = cumulative[last] ?? 0;
+	if (last < 1 || total <= 0 || t >= 1) return { path, head: path[last] };
+	const target = Math.max(0, t) * total;
+	// Búsqueda binaria del tramo [i, i+1] que contiene `target`.
+	let lo = 0;
+	let hi = last;
+	while (hi - lo > 1) {
+		const mid = (lo + hi) >> 1;
+		if (cumulative[mid] <= target) lo = mid;
+		else hi = mid;
+	}
+	const span = cumulative[hi] - cumulative[lo];
+	const head = lerpLatLng(path[lo], path[hi], span > 0 ? (target - cumulative[lo]) / span : 0);
+	return { path: [...path.slice(0, lo + 1), head], head };
+}

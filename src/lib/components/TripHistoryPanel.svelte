@@ -9,6 +9,7 @@
 	} from '$lib/stores/tripStore.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import TripDetailView from './TripDetailView.svelte';
+	import { rise, staggerDelay, viewEnter } from '$lib/motion/index.js';
 
 	export let unit = null;
 	export let onBack = () => {};
@@ -101,9 +102,11 @@
 </script>
 
 {#if showDetail && $selectedTrip}
-	<TripDetailView trip={$selectedTrip} onBack={handleBackFromDetail} onClose={handleClose} />
+	<div class="h-full" in:viewEnter>
+		<TripDetailView trip={$selectedTrip} onBack={handleBackFromDetail} onClose={handleClose} />
+	</div>
 {:else}
-	<div class="flex h-full flex-col">
+	<div class="flex h-full flex-col" in:viewEnter>
 		<div class="flex items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-white/10">
 			<button
 				type="button"
@@ -147,8 +150,8 @@
 				</div>
 			{:else}
 				<ul class="m-0 list-none space-y-2 p-3">
-					{#each $trips as trip (trip.trip_id)}
-						<li>
+					{#each $trips as trip, i (trip.trip_id)}
+						<li in:rise|global={{ delay: staggerDelay(i) }}>
 							<button
 								type="button"
 								class="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition-colors hover:border-cyan-400/30 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
