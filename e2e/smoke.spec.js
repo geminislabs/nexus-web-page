@@ -13,4 +13,27 @@ test.describe('smoke', () => {
 		await expect(page.getByRole('heading', { name: 'NEXUS' })).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Iniciar sesión', exact: true })).toBeVisible();
 	});
+
+	test('apple-app-site-association is served as JSON from the built server', async ({
+		request
+	}) => {
+		const response = await request.get('/.well-known/apple-app-site-association', {
+			maxRedirects: 0
+		});
+		expect(response.status()).toBe(200);
+		expect(response.headers()['content-type']).toBe('application/json');
+		const body = await response.json();
+		expect(body.applinks.details[0].appIDs).toEqual(['GCNV65DKL8.GeminisLabs.INexus']);
+	});
+
+	test('invite page opens without a session and points to the app', async ({ page }) => {
+		const response = await page.goto('/invite/TOKEN_DE_PRUEBA');
+		expect(response?.headers()['referrer-policy']).toBe('no-referrer');
+		await expect(page).toHaveURL(/\/invite\/TOKEN_DE_PRUEBA$/);
+		await expect(page.getByRole('heading', { name: 'Te invitaron a un equipo' })).toBeVisible();
+		await expect(page.getByRole('link', { name: 'Abrir en la app' })).toHaveAttribute(
+			'href',
+			'inexus://invite/TOKEN_DE_PRUEBA'
+		);
+	});
 });

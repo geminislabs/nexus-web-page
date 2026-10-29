@@ -24,10 +24,11 @@ function applySecurityHeaders(event, response) {
 	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
 	response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
 
-	// Share links: no filtrar token por Referer a terceros.
-	// El route id es `/share/[token]`; el token no entra a la métrica.
+	// Share links e invitaciones: no filtrar el token por Referer a terceros
+	// (la App Store, en el caso de la invitación). Los route id son
+	// `/share/[token]` e `/invite/[token]`; el token no entra a la métrica.
 	const pathname = event?.url?.pathname ?? '';
-	if (pathname.startsWith('/share/')) {
+	if (pathname.startsWith('/share/') || pathname.startsWith('/invite/')) {
 		response.headers.set('Referrer-Policy', 'no-referrer');
 	}
 
@@ -68,9 +69,9 @@ export async function handle({ event, resolve }) {
 	}
 
 	// La marca del dominio por el que entró el navegador (§7). Solo apariencia:
-	// nunca autoriza nada. Las rutas internas no pintan HTML.
+	// nunca autoriza nada. Las rutas internas y las de `/.well-known/` no pintan HTML.
 	// Nunca tumba la petición: sin marca se pinta la por defecto.
-	if (!pathname.startsWith('/internal/') && event.locals) {
+	if (!pathname.startsWith('/internal/') && !pathname.startsWith('/.well-known/') && event.locals) {
 		try {
 			event.locals.brand = await resolverMarca(hostDeLaPeticion(event.request, event.url), {
 				apiBase: API_BASE
