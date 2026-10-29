@@ -304,3 +304,50 @@ html[data-theme='light'] .gm-style .gm-svpc:hover {
 }
 
 /* Street View: el close nativo está desactivado; la dirección va BOTTOM_LEFT vía API. */
+
+/* === Movimiento (src/lib/motion) === */
+
+/* Glow de botones principales. Fuera de @layer para que su transition gane a
+   los transition-* de Tailwind; incluye opacity para no perder su hover. */
+.nexus-glow {
+	transition-property: box-shadow, translate, opacity, filter;
+	transition-duration: 250ms;
+	transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.nexus-glow:not(:disabled):hover,
+.nexus-glow:not(:disabled):focus-visible {
+	translate: 0 -1px;
+	filter: brightness(1.06);
+	box-shadow:
+		0 0 0 1px rgb(56 189 248 / 0.35),
+		0 6px 28px -4px rgb(29 156 196 / 0.6),
+		0 0 22px -6px rgb(37 99 235 / 0.7);
+}
+
+.nexus-glow:not(:disabled):active {
+	translate: 0 0;
+	filter: brightness(0.98);
+}
+
+/* Cambio de tema con círculo (themeReveal.js): la animación la pone JS. */
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+	mix-blend-mode: normal;
+}
+
+/* No se tocan las animation-*: los spinners de carga deben seguir girando. */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	.nexus-glow:not(:disabled):hover,
+	.nexus-glow:not(:disabled):focus-visible {
+		translate: none;
+	}
+}

@@ -17,7 +17,8 @@
 		zoneUiToast,
 		showH3Grid
 	} from '$lib/stores/h3Store.js';
-	import { theme, themeActions } from '$lib/stores/themeStore.js';
+	import { theme } from '$lib/stores/themeStore.js';
+	import { setThemeWithReveal } from '$lib/motion/themeReveal.js';
 	import { vehicles, activeUnit, vehicleActions } from '$lib/stores/vehicleStore.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import { alertActions } from '$lib/stores/alertStore.js';
@@ -498,7 +499,7 @@
 											{$theme === 'dark'
 												? 'border-blue-500/50 bg-blue-600/10'
 												: 'border-slate-200 hover:border-slate-300 dark:border-white/[0.08] dark:hover:border-white/[0.14]'}"
-											on:click|stopPropagation={() => themeActions.set('dark')}
+											on:click|stopPropagation={(e) => setThemeWithReveal('dark', e)}
 											aria-pressed={$theme === 'dark'}
 										>
 											<span
@@ -524,7 +525,7 @@
 											{$theme === 'light'
 												? 'border-sky-500/50 bg-sky-500/10'
 												: 'border-slate-200 hover:border-slate-300 dark:border-white/[0.08] dark:hover:border-white/[0.14]'}"
-											on:click|stopPropagation={() => themeActions.set('light')}
+											on:click|stopPropagation={(e) => setThemeWithReveal('light', e)}
 											aria-pressed={$theme === 'light'}
 										>
 											<span

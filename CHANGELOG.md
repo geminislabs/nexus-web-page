@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Animaciones del panel, primera fase.** Los números de telemetría (velocidad y baterías) y el contador de unidades visibles cuentan hasta su valor en lugar de cambiar de golpe. Las listas de unidades, eventos, alarmas y alertas aparecen fila por fila. El cambio de tema se extiende en un círculo desde el botón pulsado. Los botones principales (login, registro, crear alerta, zonas…) brillan al pasar el cursor. Con «reducir movimiento» activado en el sistema, todo cambia al instante como antes
+
+### Fixed
+
+- La lista de alarmas usaba la posición como clave: cada alarma nueva hacía que Svelte recreara todas las filas. Ahora usa el `id` de la alarma
+
 ## [1.26.0] - 2026-10-28
 
 ### Added

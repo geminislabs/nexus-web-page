@@ -1,5 +1,6 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
+	import AnimatedNumber from '$lib/components/AnimatedNumber.svelte';
 
 	/** @type {Record<string, any> | null} */
 	export let unit = null;
@@ -14,14 +15,14 @@
 	$: ignitionOn = String(unit?.engineStatus ?? '').toUpperCase() === 'ON';
 	$: lastUpdate = unit?.lastUpdateFormatted || null;
 
-	$: mainLabel =
-		unit?.mainBatteryVoltage == null || Number.isNaN(mainV) ? '—' : `${mainV.toFixed(1)} V`;
-	$: backupLabel =
-		unit?.backupBatteryVoltage == null || Number.isNaN(backupV) ? '—' : `${backupV.toFixed(1)} V`;
-	$: speedLabel =
-		unit?.speed == null || Number.isNaN(speed)
-			? '—'
-			: `${speed < 10 ? speed.toFixed(1) : Math.round(speed)} km/h`;
+	$: mainValue = unit?.mainBatteryVoltage == null || Number.isNaN(mainV) ? null : mainV;
+	$: backupValue = unit?.backupBatteryVoltage == null || Number.isNaN(backupV) ? null : backupV;
+	$: speedValue = unit?.speed == null || Number.isNaN(speed) ? null : speed;
+
+	/** @param {number} v */
+	const formatVolts = (v) => `${v.toFixed(1)} V`;
+	/** @param {number} s */
+	const formatSpeed = (s) => `${s < 10 ? s.toFixed(1) : Math.round(s)} km/h`;
 
 	/** @param {number} v */
 	function mainTone(v) {
@@ -104,7 +105,9 @@
 					class="block text-[9px] font-bold uppercase tracking-wide text-slate-400 dark:text-white/35"
 					>Velocidad</span
 				>
-				<span class="block truncate text-[11px] font-bold {spd.fg}">{speedLabel}</span>
+				<span class="block truncate text-[11px] font-bold {spd.fg}"
+					><AnimatedNumber value={speedValue} format={formatSpeed} /></span
+				>
 			</span>
 		</div>
 
@@ -149,7 +152,9 @@
 				class="block text-[9px] font-bold uppercase tracking-wide text-slate-400 dark:text-white/35"
 				>Principal</span
 			>
-			<span class="block truncate text-[11px] font-bold {main.fg}">{mainLabel}</span>
+			<span class="block truncate text-[11px] font-bold {main.fg}"
+				><AnimatedNumber value={mainValue} format={formatVolts} /></span
+			>
 		</span>
 	</div>
 
@@ -170,7 +175,9 @@
 				class="block text-[9px] font-bold uppercase tracking-wide text-slate-400 dark:text-white/35"
 				>Interna</span
 			>
-			<span class="block truncate text-[11px] font-bold {backup.fg}">{backupLabel}</span>
+			<span class="block truncate text-[11px] font-bold {backup.fg}"
+				><AnimatedNumber value={backupValue} format={formatVolts} /></span
+			>
 		</span>
 	</div>
 </div>
