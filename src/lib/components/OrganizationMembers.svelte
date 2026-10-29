@@ -1,6 +1,8 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
 	import Icon from '$lib/components/Icon.svelte';
+	import SkeletonRows from '$lib/components/SkeletonRows.svelte';
+	import { rise, staggerDelay } from '$lib/motion/index.js';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { apiService } from '$lib/services/api.js';
@@ -141,10 +143,7 @@
 
 <div class="relative space-y-3">
 	{#if loading}
-		<div class="flex items-center gap-2 py-4 text-blue-600 dark:text-blue-400">
-			<Icon icon="mdi:loading" class="h-5 w-5 animate-spin" aria-hidden="true" />
-			<span class="text-[12px]">Cargando miembros…</span>
-		</div>
+		<SkeletonRows count={3} label="Cargando miembros…" avatar={false} />
 	{:else if loadError}
 		<div
 			class="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-center text-[12px] text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300"
@@ -164,10 +163,11 @@
 		</p>
 	{:else}
 		<ul class="m-0 list-none space-y-2 p-0">
-			{#each members as member (member.user_id)}
+			{#each members as member, i (member.user_id)}
 				{@const isSelf = member.user_id === $user?.id}
 				{@const isInactive = member.status === 'INACTIVE'}
 				<li
+					in:rise|global={{ delay: staggerDelay(i) }}
 					class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.03] {isInactive
 						? 'opacity-60'
 						: ''}"

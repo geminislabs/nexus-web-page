@@ -1,7 +1,7 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
 	import Icon from '$lib/components/Icon.svelte';
-	import { rise, staggerDelay, flipList } from '$lib/motion/index.js';
+	import { rise, staggerDelay, flipList, pop } from '$lib/motion/index.js';
 	import { fly } from 'svelte/transition';
 	import { get } from 'svelte/store';
 	import { alerts, alarmEvents, unreadAlarmCount, alertActions } from '$lib/stores/alertStore.js';
@@ -17,6 +17,17 @@
 	let deleteAlertLoading = false;
 
 	$: badge = $alerts.length + $alarmEvents.length;
+
+	// El contador rebota sólo cuando sube (llegó algo), no al bajar. Es `|global`
+	// para que también rebote al pasar de 0 a 1, cuando el `{#if}` lo crea; con
+	// `bumps` en 0 (al montarse la campana) dura 0 y no se nota.
+	let bumps = 0;
+	/** @type {number | null} */
+	let prevBadge = null;
+	$: {
+		if (prevBadge !== null && badge > prevBadge) bumps += 1;
+		prevBadge = badge;
+	}
 
 	function toggle() {
 		open = !open;
@@ -79,12 +90,15 @@
 	>
 		<Icon icon="mdi:bell-outline" aria-hidden="true" />
 		{#if badge > 0}
-			<span
-				class="absolute -right-1 -top-1 min-w-[18px] rounded-full border border-white/30 bg-rose-600 px-1.5 py-[1px] text-center text-[10px] font-bold leading-none text-white"
-				aria-label="{badge} notificaciones"
-			>
-				{badge}
-			</span>
+			{#key bumps}
+				<span
+					in:pop|global={{ duration: bumps ? 420 : 0 }}
+					class="absolute -right-1 -top-1 min-w-[18px] rounded-full border border-white/30 bg-rose-600 px-1.5 py-[1px] text-center text-[10px] font-bold leading-none text-white"
+					aria-label="{badge} notificaciones"
+				>
+					{badge}
+				</span>
+			{/key}
 		{/if}
 	</button>
 

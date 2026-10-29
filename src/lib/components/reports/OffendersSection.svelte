@@ -1,5 +1,6 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
+	import { rise, staggerDelay } from '$lib/motion/index.js';
 
 	/** @type {Array<{ id: string, type: string, value: string, date: string, unitName: string }>} */
 	export let offenders = [];
@@ -19,8 +20,9 @@
 		</h2>
 
 		<ul class="m-0 flex list-none flex-col gap-2.5 p-0">
-			{#each offenders as o (o.id)}
+			{#each offenders as o, i (o.id)}
 				<li
+					in:rise|global={{ delay: staggerDelay(i) }}
 					class="flex items-center gap-3 rounded-[10px] border border-red-500/25 bg-red-50 px-3 py-3 dark:border-red-500/30 dark:bg-red-500/10"
 				>
 					<div

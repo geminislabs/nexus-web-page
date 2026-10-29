@@ -1,5 +1,6 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
+	import SkeletonRows from './SkeletonRows.svelte';
 	import { rise, staggerDelay } from '$lib/motion/index.js';
 	import { eventActions, unitEvents, loadingEvents, eventsError } from '$lib/stores/eventStore.js';
 	import {
@@ -58,10 +59,8 @@
 
 	<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
 		{#if $loadingEvents}
-			<div class="flex h-40 items-center justify-center">
-				<div
-					class="h-7 w-7 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-500"
-				></div>
+			<div class="p-3">
+				<SkeletonRows count={5} label="Cargando eventos…" />
 			</div>
 		{:else if $eventsError}
 			<div class="flex h-40 flex-col items-center justify-center gap-3 px-4 text-center">

@@ -9,6 +9,7 @@
 	} from '$lib/stores/tripStore.js';
 	import { mapService } from '$lib/services/mapService.js';
 	import TripDetailView from './TripDetailView.svelte';
+	import SkeletonRows from './SkeletonRows.svelte';
 	import { rise, staggerDelay, viewEnter } from '$lib/motion/index.js';
 
 	export let unit = null;
@@ -133,10 +134,12 @@
 
 		<div class="flex-1 overflow-y-auto">
 			{#if $loadingTrips || loadingDetail}
-				<div class="flex h-32 items-center justify-center">
-					<div
-						class="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-500"
-					></div>
+				<div class="p-3">
+					<SkeletonRows
+						count={4}
+						label={loadingDetail ? 'Cargando trayecto…' : 'Cargando trayectos…'}
+						rowClass="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-white/10 dark:bg-white/5"
+					/>
 				</div>
 			{:else if $tripError}
 				<div class="flex h-32 flex-col items-center justify-center gap-2 px-4 text-center">

@@ -166,6 +166,32 @@ describe('viewEnter y flipList', () => {
 	});
 });
 
+describe('pop y dialogScale', () => {
+	beforeEach(() => {
+		reduced.current = false;
+	});
+
+	it('pop crece pasándose de su tamaño y termina en 1', async () => {
+		const { pop } = await import('../src/lib/motion/index.js');
+		const t = /** @type {any} */ (pop(document.createElement('span')));
+		expect(t.css(0)).toBe('transform: scale(0.55);');
+		expect(t.css(1)).toBe('transform: scale(1);');
+		const peak = Math.max(...[0.5, 0.6, 0.7, 0.8].map((x) => Number(t.css(x).match(/[\d.]+/)[0])));
+		expect(peak).toBeGreaterThan(1);
+
+		reduced.current = true;
+		expect(pop(document.createElement('span'))).toEqual({ delay: 0, duration: 0 });
+	});
+
+	it('dialogScale anima y se apaga con movimiento reducido', async () => {
+		const { dialogScale } = await import('../src/lib/motion/index.js');
+		const node = document.createElement('div');
+		expect(dialogScale(node).duration).toBeGreaterThan(0);
+		reduced.current = true;
+		expect(dialogScale(node)).toEqual({ delay: 0, duration: 0 });
+	});
+});
+
 describe('geo', () => {
 	it('lerpLatLng interpola entre dos puntos', async () => {
 		const { lerpLatLng } = await import('../src/lib/motion/geo.js');
