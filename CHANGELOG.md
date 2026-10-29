@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.31.0] - 2026-10-29
+
 ### Added
 
 - **Más animaciones.** Mientras cargan, las listas de Usuarios (miembros), Unidades y Dispositivos de administración, la de trayectos y la de eventos de la unidad muestran filas grises que parpadean en lugar de un icono girando, y al llegar las filas entran una tras otra. El contador de la campana rebota cuando llega una alarma o una alerta nueva. En Informes, las cifras del resumen cuentan hasta su valor, el resumen y las excepciones entran escalonados, y la gráfica expandida se abre y se cierra con un fundido en lugar de aparecer de golpe
