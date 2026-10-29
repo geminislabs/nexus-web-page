@@ -4,7 +4,8 @@
 	import CenterSheet from '$lib/components/CenterSheet.svelte';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 	import { logoutSession } from '$lib/services/sessionService.js';
-	import { theme, themeActions } from '$lib/stores/themeStore.js';
+	import { theme } from '$lib/stores/themeStore.js';
+	import { toggleThemeWithReveal } from '$lib/motion/themeReveal.js';
 	import {
 		organizations,
 		activeOrganizationId,
@@ -76,7 +77,7 @@
 				<button
 					type="button"
 					class="inline-flex min-h-[2.75rem] w-full shrink-0 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-sm transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-slate-500 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-700 sm:w-auto sm:px-4"
-					on:click={() => themeActions.toggle()}
+					on:click={(e) => toggleThemeWithReveal(e)}
 					aria-label={$theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
 					aria-describedby="user-panel-theme-hint"
 				>

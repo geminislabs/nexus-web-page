@@ -202,7 +202,7 @@
 
 			<button
 				type="submit"
-				class="mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb_0%,#1d9cc4_100%)] py-[0.9375rem] text-base font-semibold tracking-wide text-white shadow-[0_4px_24px_rgba(37,99,235,0.45)] transition-all duration-200 enabled:hover:-translate-y-px enabled:hover:opacity-90 enabled:active:translate-y-0 enabled:active:opacity-85 disabled:cursor-not-allowed disabled:opacity-50"
+				class="nexus-glow mt-1 flex w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb_0%,#1d9cc4_100%)] py-[0.9375rem] text-base font-semibold tracking-wide text-white shadow-[0_4px_24px_rgba(37,99,235,0.45)] transition-all duration-200 enabled:hover:-translate-y-px enabled:hover:opacity-90 enabled:active:translate-y-0 enabled:active:opacity-85 disabled:cursor-not-allowed disabled:opacity-50"
 				disabled={loading}
 				aria-busy={loading}
 			>

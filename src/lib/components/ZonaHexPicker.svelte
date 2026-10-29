@@ -288,7 +288,7 @@
 	>
 		<button
 			type="button"
-			class="w-full cursor-pointer rounded-xl border-0 bg-[linear-gradient(135deg,#2563eb,#1d9cc4)] px-4 py-[0.9375rem] text-base font-semibold text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-opacity duration-200 hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 disabled:cursor-not-allowed disabled:bg-[#2a2a2e] disabled:text-white/35 disabled:shadow-none"
+			class="nexus-glow w-full cursor-pointer rounded-xl border-0 bg-[linear-gradient(135deg,#2563eb,#1d9cc4)] px-4 py-[0.9375rem] text-base font-semibold text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-opacity duration-200 hover:opacity-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 disabled:cursor-not-allowed disabled:bg-[#2a2a2e] disabled:text-white/35 disabled:shadow-none"
 			disabled={selectedCells.size === 0}
 			on:click={handleConfirm}
 		>

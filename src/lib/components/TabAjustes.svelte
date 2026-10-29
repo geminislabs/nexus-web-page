@@ -5,7 +5,8 @@
 	import { logoutSession } from '$lib/services/sessionService.js';
 	import { vehicles, vehicleActions, loadingVehicles } from '$lib/stores/vehicleStore.js';
 	import { getStatusText, getStatusPillClass } from '$lib/utils/vehicleUtils.js';
-	import { theme, themeActions } from '$lib/stores/themeStore.js';
+	import { theme } from '$lib/stores/themeStore.js';
+	import { toggleThemeWithReveal } from '$lib/motion/themeReveal.js';
 	import { vehicleColors } from '$lib/data/vehicleColors';
 	import IconPicker from '$lib/components/Unit/IconPicker.svelte';
 	import VehicleColorPicker from '$lib/components/Unit/VehicleColorPicker.svelte';
@@ -318,7 +319,7 @@
 							'dark'
 								? 'bg-blue-600'
 								: 'bg-amber-400'}"
-							on:click={() => themeActions.toggle()}
+							on:click={(e) => toggleThemeWithReveal(e)}
 						>
 							<span
 								class="pointer-events-none absolute left-[3px] top-[3px] block h-5 w-5 rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.3)] transition-transform {$theme ===

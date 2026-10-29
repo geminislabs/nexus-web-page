@@ -84,7 +84,7 @@
 
 			<button
 				type="submit"
-				class="flex w-full items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb_0%,#1d9cc4_100%)] py-[0.9375rem] text-base font-semibold text-white disabled:opacity-50"
+				class="nexus-glow flex w-full items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb_0%,#1d9cc4_100%)] py-[0.9375rem] text-base font-semibold text-white disabled:opacity-50"
 				disabled={loading}
 			>
 				{#if loading}

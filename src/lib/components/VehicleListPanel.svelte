@@ -2,6 +2,7 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
 	import { onMount } from 'svelte';
+	import { rise, staggerDelay } from '$lib/motion/index.js';
 	import {
 		vehicles,
 		loadingVehicles,
@@ -126,11 +127,14 @@
 				</p>
 			{:else}
 				<ul class="m-0 list-none space-y-0.5 p-2" aria-label="Lista de unidades">
-					{#each $vehicles as v (v.id)}
+					{#each $vehicles as v, i (v.id)}
 						{@const hasCoords = vehicleHasCoords(v)}
 						{@const validFix = hasValidGpsFix(v)}
 						{@const isExpanded = expandedId === v.id}
-						<li class="overflow-hidden rounded-xl {isExpanded ? 'bg-white/[0.04]' : ''}">
+						<li
+							class="overflow-hidden rounded-xl {isExpanded ? 'bg-white/[0.04]' : ''}"
+							in:rise|global={{ delay: staggerDelay(i) }}
+						>
 							<!-- Fila principal -->
 							<div class="flex items-center gap-2">
 								<!-- Icono / expand toggle -->
@@ -267,7 +271,7 @@
 									<!-- Botón Trayectos -->
 									<button
 										type="button"
-										class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 py-2 text-[12px] font-semibold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+										class="nexus-glow mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 py-2 text-[12px] font-semibold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
 										disabled={!hasCoords}
 										on:click={(e) => goToTrips(v, e)}
 									>

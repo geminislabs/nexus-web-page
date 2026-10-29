@@ -1,5 +1,6 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
+	import { rise, staggerDelay } from '$lib/motion/index.js';
 	import { eventActions, unitEvents, loadingEvents, eventsError } from '$lib/stores/eventStore.js';
 	import {
 		formatEventType,
@@ -84,8 +85,11 @@
 			</div>
 		{:else}
 			<ul class="m-0 list-none p-3">
-				{#each $unitEvents as event (event.id)}
-					<li class="border-b border-slate-100 last:border-0 dark:border-white/[0.06]">
+				{#each $unitEvents as event, i (event.id)}
+					<li
+						class="border-b border-slate-100 last:border-0 dark:border-white/[0.06]"
+						in:rise|global={{ delay: staggerDelay(i) }}
+					>
 						<div class="flex gap-3 py-3">
 							<div class="flex flex-col items-center">
 								<div

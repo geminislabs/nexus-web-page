@@ -1,7 +1,8 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
 	import Icon from '$lib/components/Icon.svelte';
-	import { theme, themeActions } from '$lib/stores/themeStore.js';
+	import { theme } from '$lib/stores/themeStore.js';
+	import { setThemeWithReveal } from '$lib/motion/themeReveal.js';
 	import SignalMeters from './SignalMeters.svelte';
 	import UnitTelemetryBadges from './UnitTelemetryBadges.svelte';
 	import {
@@ -482,7 +483,7 @@
 						{$theme === 'dark'
 							? 'border-blue-500/50 bg-blue-600/10'
 							: 'border-slate-200 hover:border-slate-300 dark:border-white/[0.08] dark:hover:border-white/[0.14]'}"
-						on:click={() => themeActions.set('dark')}
+						on:click={(e) => setThemeWithReveal('dark', e)}
 						aria-pressed={$theme === 'dark'}
 					>
 						<div class="relative h-8 w-12 shrink-0 overflow-hidden rounded-md bg-[#07111f]">
@@ -524,7 +525,7 @@
 						{$theme === 'light'
 							? 'border-sky-500/50 bg-sky-500/10'
 							: 'border-slate-200 hover:border-slate-300 dark:border-white/[0.08] dark:hover:border-white/[0.14]'}"
-						on:click={() => themeActions.set('light')}
+						on:click={(e) => setThemeWithReveal('light', e)}
 						aria-pressed={$theme === 'light'}
 					>
 						<div class="relative h-8 w-12 shrink-0 overflow-hidden rounded-md bg-[#dde4ef]">

@@ -2,6 +2,7 @@
 	import { logger } from '$lib/utils/logger.js';
 	import { browser } from '$app/environment';
 	import Icon from '$lib/components/Icon.svelte';
+	import { rise, staggerDelay } from '$lib/motion/index.js';
 	import {
 		alerts,
 		alarmEvents,
@@ -202,8 +203,8 @@
 							class="m-0 flex list-none flex-col gap-3.5 p-0"
 							aria-label="Lista de alarmas recientes"
 						>
-							{#each $alarmEvents as ev, idx (`${ev.at}-${idx}`)}
-								<li>
+							{#each $alarmEvents as ev, idx (ev.id)}
+								<li in:rise|global={{ delay: staggerDelay(idx) }}>
 									<article
 										class="flex items-stretch gap-3.5 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm dark:border-white/[0.07] dark:bg-[#121a28] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] {!ev.read
 											? 'ring-1 ring-sky-500/30 dark:shadow-[0_0_28px_-10px_rgba(56,189,248,0.35),inset_0_1px_0_rgba(255,255,255,0.05)]'
@@ -385,8 +386,8 @@
 							</div>
 						{:else}
 							<ul class="m-0 flex list-none flex-col gap-2.5 p-0" aria-label="Alertas configuradas">
-								{#each $alerts as alert (alert.id)}
-									<li>
+								{#each $alerts as alert, i (alert.id)}
+									<li in:rise|global={{ delay: staggerDelay(i) }}>
 										<article
 											class="flex items-center gap-3 rounded-xl border bg-white p-3.5 dark:bg-zinc-900 {alert.enabled
 												? 'border-slate-200 dark:border-transparent'
@@ -480,7 +481,7 @@
 						<div class="shrink-0 border-t border-slate-200 p-4 dark:border-white/[0.06]">
 							<button
 								type="button"
-								class="flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb,#1d9cc4)] px-4 py-3.5 text-base font-semibold text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 [&_svg]:h-5 [&_svg]:w-5"
+								class="nexus-glow flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb,#1d9cc4)] px-4 py-3.5 text-base font-semibold text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 [&_svg]:h-5 [&_svg]:w-5"
 								on:click={openWizard}
 							>
 								<Icon icon="mdi:plus" class="shrink-0" aria-hidden="true" />
