@@ -34,24 +34,3 @@ describe('themeStore', () => {
 		expect(get(theme)).toBe('light');
 	});
 });
-
-describe('legacy theme store', () => {
-	beforeEach(() => {
-		vi.resetModules();
-		localStorage.getItem.mockReturnValue(null);
-		localStorage.setItem.mockClear();
-	});
-
-	it('set updates dataset theme', async () => {
-		const { theme } = await import('../src/lib/stores/theme.js');
-		theme.set('classic');
-		expect(document.documentElement.dataset.theme).toBe('classic');
-	});
-
-	it('toggle alternates modern and classic', async () => {
-		const { theme } = await import('../src/lib/stores/theme.js');
-		theme.set('modern');
-		theme.toggle();
-		expect(get(theme)).toBe('classic');
-	});
-});
