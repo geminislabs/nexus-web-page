@@ -1,4 +1,5 @@
 <script>
+	import { shakeOn } from '$lib/motion/shake.js';
 	/** Campo de texto de la pantalla de marca: etiqueta, ayuda y error accesibles. */
 	export let id;
 	export let label;
@@ -47,6 +48,7 @@
 		{required}
 		class={inputClass}
 		aria-invalid={error ? 'true' : undefined}
+		use:shakeOn={error}
 		aria-describedby={describedBy || undefined}
 		on:input={onInput}
 		on:blur

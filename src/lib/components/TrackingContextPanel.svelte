@@ -6,6 +6,7 @@
 	import { mapVisibleUnitIds, vehicleActions } from '$lib/stores/vehicleStore.js';
 	import {
 		getUnitTrackingStatus,
+		statusFlashKey,
 		formatUnitStatusDate,
 		unitMatchesTrackingFilter
 	} from '$lib/utils/unitTrackingStatus.js';
@@ -13,6 +14,7 @@
 	import UnitTelemetryBadges from '$lib/components/UnitTelemetryBadges.svelte';
 	import AnimatedNumber from '$lib/components/AnimatedNumber.svelte';
 	import { rise, staggerDelay, flipList } from '$lib/motion/index.js';
+	import { statusFlash } from '$lib/motion/statusFlash.js';
 	import ColoredVehicleIcon from '$lib/components/Unit/ColoredVehicleIcon.svelte';
 	import { unitIcons } from '$lib/data/unitIcons';
 	import { resolveProfileColorHex } from '$lib/utils/vehicleMarkerIcon.js';
@@ -431,6 +433,7 @@
 										type="button"
 										class="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1.5 py-2 text-left transition-colors hover:bg-slate-100/80 dark:hover:bg-white/[0.07]"
 										on:click={() => handleSelectUnit(u)}
+										use:statusFlash={{ key: statusFlashKey(st), color: st.flash }}
 									>
 										<span class="h-2 w-2 shrink-0 rounded-full {st.dotClass}"></span>
 										<div class="min-w-0 flex-1">

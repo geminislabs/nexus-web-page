@@ -297,6 +297,18 @@ describe('slidingIndicator', () => {
 		expect(ind.style.opacity).toBe('0');
 	});
 
+	it('modo borde inferior: la raya va pegada abajo de la pestaña', async () => {
+		const { slidingIndicator } = await import('../src/lib/motion/slidingIndicator.js');
+		const node = tablist(2);
+		const action = slidingIndicator(node, { active: 2, edge: 'bottom', inset: 5 });
+		const ind = /** @type {HTMLElement} */ (node.firstElementChild);
+		Object.defineProperty(ind, 'offsetHeight', { value: 2 });
+		action.update({ active: 2, edge: 'bottom', inset: 5 });
+		expect(ind.style.width).toBe('40px');
+		expect(ind.style.transform).toBe('translate(105px, 42px)');
+		action.destroy();
+	});
+
 	it('con movimiento reducido no se desliza', async () => {
 		reduced.current = true;
 		const { slidingIndicator } = await import('../src/lib/motion/slidingIndicator.js');
@@ -351,5 +363,83 @@ describe('routeTransition', () => {
 		await routeTransition(nav('/login', '/dashboard'));
 		expect(doc.startViewTransition).toHaveBeenCalledTimes(1);
 		await expect(inner).resolves.toBeUndefined();
+	});
+});
+
+describe('stepSlide', () => {
+	beforeEach(() => {
+		reduced.current = false;
+	});
+
+	it('entra desde el lado hacia el que se avanza', async () => {
+		const { stepSlide } = await import('../src/lib/motion/index.js');
+		const node = document.createElement('div');
+		const next = stepSlide(node, { direction: 1 });
+		const back = stepSlide(node, { direction: -1 });
+		expect(next.css?.(0, 1)).toContain('translateX(24px)');
+		expect(back.css?.(0, 1)).toContain('translateX(-24px)');
+		expect(next.css?.(1, 0)).toContain('opacity: 1');
+	});
+
+	it('con movimiento reducido no anima', async () => {
+		reduced.current = true;
+		const { stepSlide } = await import('../src/lib/motion/index.js');
+		expect(stepSlide(document.createElement('div')).duration).toBe(0);
+	});
+});
+
+describe('statusFlash y shakeOn', () => {
+	beforeEach(() => {
+		reduced.current = false;
+	});
+
+	/** Nodo con `animate` espiado; happy-dom no anima de verdad. */
+	function animatable() {
+		const node = document.createElement('div');
+		const cancel = vi.fn();
+		const animate = vi.fn(() => ({ cancel }));
+		Object.defineProperty(node, 'animate', { value: animate });
+		return { node, animate, cancel };
+	}
+
+	it('statusFlash no destella al montarse, sí cuando cambia la clave', async () => {
+		const { statusFlash } = await import('../src/lib/motion/statusFlash.js');
+		const { node, animate, cancel } = animatable();
+		const action = statusFlash(node, { key: 'online', color: 'red' });
+		expect(animate).not.toHaveBeenCalled();
+		action.update({ key: 'online', color: 'red' });
+		expect(animate).not.toHaveBeenCalled();
+		action.update({ key: 'no_signal', color: 'amber' });
+		expect(animate).toHaveBeenCalledTimes(1);
+		expect(animate.mock.calls[0][0][0]).toEqual({ backgroundColor: 'amber' });
+		action.destroy();
+		expect(cancel).toHaveBeenCalled();
+	});
+
+	it('statusFlash con movimiento reducido no anima', async () => {
+		reduced.current = true;
+		const { statusFlash } = await import('../src/lib/motion/statusFlash.js');
+		const { node, animate } = animatable();
+		const action = statusFlash(node, { key: 'a', color: 'red' });
+		action.update({ key: 'b', color: 'red' });
+		expect(animate).not.toHaveBeenCalled();
+	});
+
+	it('shakeOn sacude al aparecer el error, no al cambiar sólo su texto', async () => {
+		const { shakeOn } = await import('../src/lib/motion/shake.js');
+		const { node, animate } = animatable();
+		const action = shakeOn(node, null);
+		expect(animate).not.toHaveBeenCalled();
+		action.update('Requerido');
+		expect(animate).toHaveBeenCalledTimes(1);
+		action.update('Otro texto');
+		expect(animate).toHaveBeenCalledTimes(1);
+		action.update('');
+		action.update('Requerido');
+		expect(animate).toHaveBeenCalledTimes(2);
+
+		const mounted = animatable();
+		shakeOn(mounted.node, 'Error al guardar');
+		expect(mounted.animate).toHaveBeenCalledTimes(1);
 	});
 });

@@ -1,6 +1,7 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
 	import { rise, staggerDelay, flipList } from '$lib/motion/index.js';
+	import { statusFlash } from '$lib/motion/statusFlash.js';
 	import {
 		vehicles,
 		loadingVehicles,
@@ -13,6 +14,7 @@
 	import { colorSlugToHex } from '$lib/utils/vehicleUtils.js';
 	import {
 		getUnitTrackingStatus,
+		statusFlashKey,
 		unitMatchesTrackingFilter
 	} from '$lib/utils/unitTrackingStatus.js';
 	import UnitsStatusFilterPanels from './UnitsStatusFilterPanels.svelte';
@@ -134,6 +136,7 @@
 		{:else if filteredUnits.length === 0}
 			<div
 				class="flex h-40 flex-col items-center justify-center gap-2 text-slate-500 dark:text-white/35"
+				in:rise={{ y: 4 }}
 			>
 				<Icon icon="mdi:magnify" width={32} class="opacity-30" />
 				<p class="m-0 text-sm">Sin resultados</p>
@@ -153,6 +156,7 @@
 								type="button"
 								class="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04]"
 								on:click={() => handleSelect(v)}
+								use:statusFlash={{ key: statusFlashKey(status), color: status.flash }}
 							>
 								<div class="flex h-12 w-12 shrink-0 items-center justify-center">
 									<ColoredVehicleIcon

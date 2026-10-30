@@ -371,7 +371,10 @@
 					{/if}
 					<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
 						{#if $alerts.length === 0}
-							<div class="flex flex-col items-center justify-center gap-3 px-8 py-16 text-center">
+							<div
+								class="flex flex-col items-center justify-center gap-3 px-8 py-16 text-center"
+								in:rise={{ y: 4 }}
+							>
 								<div class="text-slate-400 dark:text-white" aria-hidden="true">
 									<Icon icon="mdi:bell-off-outline" class="h-16 w-16 opacity-25" />
 								</div>

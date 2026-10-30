@@ -147,7 +147,10 @@
 					<p class="m-0 text-xs text-slate-500 dark:text-white/50">{$tripError}</p>
 				</div>
 			{:else if $trips.length === 0}
-				<div class="flex h-32 flex-col items-center justify-center gap-2 px-4 text-center">
+				<div
+					class="flex h-32 flex-col items-center justify-center gap-2 px-4 text-center"
+					in:rise={{ y: 4 }}
+				>
 					<Icon icon="mdi:map-marker-path" width={28} class="text-slate-300 dark:text-white/25" />
 					<p class="m-0 text-xs text-slate-500 dark:text-white/50">Sin trayectos para esta fecha</p>
 				</div>

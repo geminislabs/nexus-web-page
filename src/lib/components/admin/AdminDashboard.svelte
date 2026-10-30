@@ -241,6 +241,7 @@
 			{#if recentEvents.length === 0}
 				<div
 					class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center dark:border-white/10"
+					in:rise={{ y: 4 }}
 				>
 					<Icon
 						icon="mdi:bell-sleep-outline"

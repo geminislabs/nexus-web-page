@@ -5,6 +5,7 @@
 	import { get } from 'svelte/store';
 	import { browser } from '$app/environment';
 	import { createEventDispatcher } from 'svelte';
+	import { rise, softFade, staggerDelay, viewEnter } from '$lib/motion/index.js';
 	import { zones, alertActions } from '$lib/stores/alertStore.js';
 	import { theme } from '$lib/stores/themeStore.js';
 	import {
@@ -313,6 +314,8 @@
 	>
 		<p
 			class="flex items-center gap-2 rounded-full border border-white/20 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg backdrop-blur-md"
+			in:rise={{ y: -8 }}
+			out:softFade
 		>
 			<span
 				class="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500 text-white"
@@ -622,7 +625,7 @@
 		{/if}
 	</div>
 {:else if zv === 'zonas'}
-	<div class="flex h-full min-h-0 flex-1 flex-col bg-slate-50 dark:bg-black">
+	<div class="flex h-full min-h-0 flex-1 flex-col bg-slate-50 dark:bg-black" in:viewEnter>
 		{#if variant === 'mobile'}
 			<header
 				class="flex shrink-0 items-center gap-3 border-b border-slate-200 px-3 py-3 pt-[max(0.35rem,env(safe-area-inset-top))] dark:border-white/[0.08]"
@@ -654,6 +657,7 @@
 						'desktop'
 							? 'min-h-0 flex-1 py-10 sm:py-12'
 							: 'py-20'}"
+						in:rise={{ y: 4 }}
 					>
 						<Icon
 							icon="mdi:map-marker-outline"
@@ -674,8 +678,8 @@
 					</div>
 				{:else}
 					<ul class="m-0 flex list-none flex-col gap-3 p-0" aria-label="Zonas guardadas">
-						{#each $zones as z (z.id)}
-							<li class="relative">
+						{#each $zones as z, i (z.id)}
+							<li class="relative" in:rise={{ delay: staggerDelay(i) }}>
 								<div
 									class="flex items-stretch gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#121a26]"
 								>
@@ -806,7 +810,7 @@
 		{/if}
 	</div>
 {:else if zv === 'zona_edit' && editingZoneId}
-	<div class="flex min-h-0 flex-1 flex-col bg-slate-50 dark:bg-black">
+	<div class="flex min-h-0 flex-1 flex-col bg-slate-50 dark:bg-black" in:viewEnter>
 		<header
 			class="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-3 py-3 pt-[max(0.35rem,env(safe-area-inset-top))] dark:border-white/[0.08]"
 		>

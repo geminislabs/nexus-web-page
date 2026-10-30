@@ -4,6 +4,7 @@
 	import SignalMeters from '$lib/components/SignalMeters.svelte';
 	import { unitIcons } from '$lib/data/unitIcons';
 	import { resolveProfileColorHex } from '$lib/utils/vehicleMarkerIcon.js';
+	import { pop } from '$lib/motion/index.js';
 
 	/** @type {Record<string, any>} */
 	export let vehicle = {};
@@ -266,7 +267,18 @@
 							on:click|stopPropagation={copyCoords}
 							title="Copiar coordenadas"
 						>
-							{copyFeedback || 'Copiar'}
+							<!-- El aviso entra con un rebote; al volver a «Copiar» cambia sin animar. -->
+							{#key copyFeedback}
+								<span
+									class="inline-flex items-center gap-0.5"
+									in:pop|global={{ duration: copyFeedback ? 420 : 0, from: 0.7 }}
+								>
+									{#if copyFeedback === '¡Listo!'}
+										<Icon icon="mdi:check" width={11} aria-hidden="true" />
+									{/if}
+									{copyFeedback || 'Copiar'}
+								</span>
+							{/key}
 						</button>
 						<button
 							type="button"

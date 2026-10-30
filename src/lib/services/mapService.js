@@ -9,10 +9,11 @@ import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyle
 import { formatTripAlertType, tripAlertMarkerColor } from '$lib/utils/tripAlertFormat.js';
 import { theme } from '$lib/stores/themeStore.js';
 import { logger } from '$lib/utils/logger.js';
-import { EASE, reducedMotion } from '$lib/motion/index.js';
+import { EASE, breathe, reducedMotion } from '$lib/motion/index.js';
 import {
 	MARKER_GLIDE_MS,
 	cumulativeDistances,
+	distanceMeters,
 	lerpLatLng,
 	pathAtProgress,
 	shouldGlide
@@ -80,6 +81,10 @@ class MapService {
 		/** @type {ReturnType<typeof setInterval> | null} */
 		this._highlightPulseTimer = null;
 		this._highlightPulsePhase = 0;
+		/** Momento en que empezó a respirar el marcador resaltado. */
+		this._highlightPulseStart = 0;
+		/** Turno del último movimiento de cámara; uno nuevo cancela lo pendiente del anterior. */
+		this._cameraMoveId = 0;
 		/** @type {ReturnType<typeof setInterval> | null} */
 		this._ringRotationTimer = null;
 		this._ringRotation = 0;
@@ -185,6 +190,9 @@ class MapService {
 			}
 			// Sentido contrario a las agujas del reloj (ángulo decreciente en canvas).
 			this._ringRotation -= 0.018;
+			this._highlightPulsePhase = this._canAnimate()
+				? breathe(performance.now() - this._highlightPulseStart)
+				: 0;
 			this._applyVehicleMarkerIcon(this._highlightedVehicleId);
 		}, 110);
 	}
@@ -202,7 +210,7 @@ class MapService {
 			badgeVisible: true,
 			showRings: true,
 			isHighlighted,
-			pulsePhase: 0,
+			pulsePhase: isHighlighted ? this._highlightPulsePhase : 0,
 			ringRotation: isHighlighted ? this._ringRotation : 0,
 			showNameLabel,
 			labelText: showNameLabel ? String(vehicle.name) : ''
@@ -231,6 +239,7 @@ class MapService {
 		}
 		if (nextId) {
 			this._highlightPulsePhase = 0;
+			this._highlightPulseStart = performance.now();
 			this._ringRotation = 0;
 			this._applyVehicleMarkerIcon(nextId);
 			this._startRingRotation();
@@ -1114,8 +1123,19 @@ class MapService {
 
 		const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
 		this._suppressFollowClear = true;
-		this.map.setCenter(position);
-		this.map.setZoom(zoom);
+		const moveId = ++this._cameraMoveId;
+		const animated = this._canAnimate();
+		if (animated) {
+			this._flyTo(
+				position,
+				zoom,
+				moveId,
+				showPopup ? () => this.openVehicleInfoWindow(vehicle) : null
+			);
+		} else {
+			this.map.setCenter(position);
+			this.map.setZoom(zoom);
+		}
 
 		if (follow && vehicle.id) {
 			this.setFollowVehicle(vehicle.id, {
@@ -1124,11 +1144,64 @@ class MapService {
 			});
 		}
 
-		if (!showPopup) return;
+		if (!showPopup || animated) return;
 
 		this.google.maps.event.addListenerOnce(this.map, 'idle', () => {
 			this.openVehicleInfoWindow(vehicle);
 		});
+	}
+
+	/**
+	 * Lleva la cámara a `position` deslizándose (`panTo` anima si el destino
+	 * está cerca; si está lejos, Google salta) y después ajusta el zoom.
+	 * Primero el desplazamiento y luego el zoom: hacer los dos a la vez
+	 * salta en los mapas raster. `onDone` no corre si otro movimiento de
+	 * cámara empezó mientras tanto.
+	 * @param {{ lat: number, lng: number }} position
+	 * @param {number} zoom
+	 * @param {number} moveId de `++this._cameraMoveId`
+	 * @param {(() => void) | null} [onDone]
+	 */
+	_flyTo(position, zoom, moveId, onDone = null) {
+		const current = () => moveId === this._cameraMoveId;
+		const finish = () => {
+			if (current()) onDone?.();
+		};
+		const zoomTo = () => {
+			if (!current()) return;
+			if (this.map.getZoom?.() === zoom) {
+				finish();
+				return;
+			}
+			this.map.setZoom(zoom);
+			this._onceIdle(finish);
+		};
+		const center = this.map.getCenter?.();
+		if (center && distanceMeters({ lat: center.lat(), lng: center.lng() }, position) < 1) {
+			zoomTo();
+			return;
+		}
+		this.map.panTo(position);
+		this._onceIdle(zoomTo);
+	}
+
+	/**
+	 * `idle` una vez, con un tope: si la cámara ya estaba ahí el mapa no
+	 * emite `idle` y lo pendiente se quedaría esperando.
+	 * @param {() => void} fn
+	 * @param {number} [timeoutMs]
+	 */
+	_onceIdle(fn, timeoutMs = MapService.CAMERA_IDLE_TIMEOUT_MS) {
+		let done = false;
+		const run = () => {
+			if (done) return;
+			done = true;
+			clearTimeout(timer);
+			listener?.remove?.();
+			fn();
+		};
+		const listener = this.google.maps.event.addListenerOnce(this.map, 'idle', run);
+		const timer = setTimeout(run, timeoutMs);
 	}
 
 	setCenter(lat, lng) {
@@ -1285,6 +1358,9 @@ class MapService {
 
 	/** Intervalo entre puntos al reproducir un trayecto. */
 	static PLAYBACK_STEP_MS = 400;
+
+	/** Tope de espera de `idle` tras mover la cámara. */
+	static CAMERA_IDLE_TIMEOUT_MS = 1500;
 
 	/** Si se puede animar ahora (no con movimiento reducido ni con la pestaña oculta). */
 	_canAnimate() {

@@ -70,7 +70,7 @@
 			title="Ignición"
 		>
 			<span
-				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 {ignitionOn
+				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 transition-colors duration-300 {ignitionOn
 					? 'bg-emerald-500/15 text-emerald-500 ring-emerald-500/30'
 					: 'bg-slate-400/15 text-slate-500 ring-slate-400/25'}"
 				aria-hidden="true"
@@ -95,7 +95,7 @@
 			title="Velocidad"
 		>
 			<span
-				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 {spd.bg} {spd.fg} {spd.ring}"
+				class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 transition-colors duration-300 {spd.bg} {spd.fg} {spd.ring}"
 				aria-hidden="true"
 			>
 				<Icon icon="mdi:speedometer" width={16} />
@@ -142,7 +142,7 @@
 		title="Batería principal"
 	>
 		<span
-			class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 {main.bg} {main.fg} {main.ring}"
+			class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 transition-colors duration-300 {main.bg} {main.fg} {main.ring}"
 			aria-hidden="true"
 		>
 			<Icon icon="mdi:car-battery" width={16} />
@@ -165,7 +165,7 @@
 		title="Batería interna / respaldo"
 	>
 		<span
-			class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 {backup.bg} {backup.fg} {backup.ring}"
+			class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 transition-colors duration-300 {backup.bg} {backup.fg} {backup.ring}"
 			aria-hidden="true"
 		>
 			<Icon icon="mdi:battery-charging-high" width={16} />

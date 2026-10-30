@@ -10,6 +10,7 @@ const CENTER = VEHICLE_MARKER_SIZE / 2;
 const INNER_RING_RADIUS = 27;
 const OUTER_RING_RADIUS = 32;
 const PULSE_RING_RADIUS = 36;
+const PULSE_RING_GROWTH = 0.08;
 
 /** @type {Map<string, Promise<HTMLImageElement>>} */
 const imageCache = new Map();
@@ -112,7 +113,8 @@ function drawGuideRings(ctx, opts = {}) {
 	);
 
 	if (isHighlighted) {
-		const scale = 1 + pulsePhase * 0.18;
+		// Crece hasta ~39 px: el lienzo mide 42 de radio y la sombra ocupa ~3 más.
+		const scale = 1 + pulsePhase * PULSE_RING_GROWTH;
 		const alpha = 0.65 - pulsePhase * 0.45;
 		drawRotatingRing(
 			ctx,

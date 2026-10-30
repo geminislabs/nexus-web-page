@@ -16,6 +16,8 @@ export function formatUnitStatusDate(unit) {
 
 /**
  * Estatus de seguimiento alineado con iOS/Android.
+ * `kind` distingue los cuatro estados (`filter` sólo separa en movimiento /
+ * detenido) y `flash` es el color con que destella la fila al cambiar.
  * @param {Record<string, unknown> | null | undefined} unit
  */
 export function getUnitTrackingStatus(unit) {
@@ -27,6 +29,8 @@ export function getUnitTrackingStatus(unit) {
 
 	if (moving) {
 		return {
+			kind: 'moving',
+			flash: 'rgba(52, 211, 153, 0.22)',
 			filter: 'moving',
 			label: `En movimiento · ${Math.round(speed)} km/h`,
 			shortLabel: `${Math.round(speed)} km/h`,
@@ -36,6 +40,8 @@ export function getUnitTrackingStatus(unit) {
 	}
 	if (engineOn) {
 		return {
+			kind: 'online',
+			flash: 'rgba(56, 189, 248, 0.22)',
 			filter: 'stopped',
 			label: dateLabel ? `Online · ${dateLabel}` : 'Online',
 			shortLabel: 'Online',
@@ -45,6 +51,8 @@ export function getUnitTrackingStatus(unit) {
 	}
 	if (!hasSignal) {
 		return {
+			kind: 'no_signal',
+			flash: 'rgba(251, 191, 36, 0.22)',
 			filter: 'stopped',
 			label: 'Sin señal',
 			shortLabel: 'Sin señal',
@@ -53,6 +61,8 @@ export function getUnitTrackingStatus(unit) {
 		};
 	}
 	return {
+		kind: 'stopped',
+		flash: 'rgba(251, 146, 60, 0.22)',
 		filter: 'stopped',
 		label: dateLabel ? `Detenido · ${dateLabel}` : 'Detenido',
 		shortLabel: 'Detenido',
@@ -66,4 +76,14 @@ export function unitMatchesTrackingFilter(unit, filter) {
 	if (filter === 'all') return true;
 	if (filter === 'moving') return isUnitMoving(unit);
 	return !isUnitMoving(unit);
+}
+
+/**
+ * Clave para destellar la fila al cambiar el estado. Arrancar y frenar con el
+ * motor encendido no cuenta: en una flota destellaría en cada semáforo. Sí
+ * cuentan encender o apagar el motor y perder o recuperar la señal.
+ * @param {{ kind: string }} status de `getUnitTrackingStatus`
+ */
+export function statusFlashKey(status) {
+	return status.kind === 'moving' ? 'online' : status.kind;
 }

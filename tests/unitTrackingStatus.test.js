@@ -48,3 +48,17 @@ describe('unitTrackingStatus', () => {
 		expect(stopped.shortLabel).toBe('Detenido');
 	});
 });
+
+describe('statusFlashKey', () => {
+	it('arrancar y frenar con el motor encendido no cambia la clave', async () => {
+		const { statusFlashKey } = await import('../src/lib/utils/unitTrackingStatus.js');
+		const moving = getUnitTrackingStatus({ speed: 40, engineStatus: 'ON' });
+		const idle = getUnitTrackingStatus({ speed: 0, engineStatus: 'ON' });
+		const off = getUnitTrackingStatus({ speed: 0, engineStatus: 'OFF', lastUpdate: 'x' });
+		const lost = getUnitTrackingStatus({ speed: 0, engineStatus: 'OFF' });
+		expect(statusFlashKey(moving)).toBe(statusFlashKey(idle));
+		expect(statusFlashKey(off)).not.toBe(statusFlashKey(idle));
+		expect(statusFlashKey(lost)).not.toBe(statusFlashKey(off));
+		expect(lost.flash).toMatch(/^rgba\(/);
+	});
+});
