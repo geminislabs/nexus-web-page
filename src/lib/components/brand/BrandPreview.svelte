@@ -70,7 +70,7 @@
 	$: noTokens = !tokens.light && !tokens.dark;
 </script>
 
-<section class="space-y-3" aria-labelledby="brand-preview-title">
+<section class="brand-preview-motion space-y-3" aria-labelledby="brand-preview-title">
 	<div class="flex flex-wrap items-center justify-between gap-2">
 		<div>
 			<h2
@@ -253,3 +253,20 @@
 		</figcaption>
 	</figure>
 </section>
+
+<style>
+	/* Al cambiar un color o el modo, la maqueta se transforma hacia el nuevo
+	   en lugar de saltar, así se ve qué parte cambió. */
+	.brand-preview-motion :global(figure *) {
+		transition:
+			background-color 300ms ease-out,
+			color 300ms ease-out,
+			border-color 300ms ease-out;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.brand-preview-motion :global(figure *) {
+			transition: none;
+		}
+	}
+</style>

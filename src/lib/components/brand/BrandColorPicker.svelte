@@ -1,4 +1,5 @@
 <script>
+	import { shakeOn } from '$lib/motion/shake.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { swatch } from '$lib/actions/cssVars.js';
 	import { describeAdjustment, describePair, isHexColor } from '$lib/utils/brandForm.js';
@@ -103,6 +104,7 @@
 								: 'border-slate-200 focus-visible:ring-emerald-500/40 dark:border-white/10'}"
 							value={form[seed.key]}
 							aria-invalid={errors[seed.key] ? 'true' : undefined}
+							use:shakeOn={errors[seed.key]}
 							aria-describedby="brand-seed-{seed.key}-help"
 							{disabled}
 							on:input={(e) => onText(seed.key, e)}

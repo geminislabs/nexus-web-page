@@ -1,4 +1,6 @@
 <script>
+	import { shakeOn } from '$lib/motion/shake.js';
+	import { rise } from '$lib/motion/index.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { goto } from '$app/navigation';
 	import { user } from '$lib/stores/auth.js';
@@ -462,7 +464,7 @@
 						<span class="sr-only">Cargando unidades…</span>
 					</div>
 				{:else if $vehicles.length === 0}
-					<div class="flex flex-col items-center gap-3 px-6 py-12 text-center">
+					<div class="flex flex-col items-center gap-3 px-6 py-12 text-center" in:rise={{ y: 4 }}>
 						<Icon icon="mdi:car-off" class="h-20 w-20 shrink-0 opacity-20" aria-hidden="true" />
 						<h3 class="m-0 text-lg font-semibold text-slate-900 dark:text-white">
 							No hay unidades disponibles
@@ -607,6 +609,7 @@
 				{#if saveError}
 					<p
 						class="mb-4 rounded-xl bg-red-500/10 px-3 py-2.5 text-[13px] text-red-500 dark:text-red-400"
+						use:shakeOn={saveError}
 					>
 						{saveError}
 					</p>
@@ -898,6 +901,7 @@
 				{#if passwordError}
 					<p
 						class="mb-4 rounded-xl bg-red-500/10 px-3 py-2.5 text-[13px] text-red-500 dark:text-red-400"
+						use:shakeOn={passwordError}
 					>
 						{passwordError}
 					</p>

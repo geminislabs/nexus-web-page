@@ -1,6 +1,6 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { apiService } from '$lib/services/api.js';
 	import { user } from '$lib/stores/auth.js';
 	import { logger } from '$lib/utils/logger.js';
@@ -46,6 +46,18 @@
 
 	/** @type {'save' | 'publish' | 'discard' | null} */
 	let busy = null;
+	/** @type {'save' | 'publish' | null} */
+	let done = null;
+	/** @type {ReturnType<typeof setTimeout> | undefined} */
+	let doneTimer;
+
+	/** @param {'save' | 'publish'} action */
+	function flashDone(action) {
+		done = action;
+		clearTimeout(doneTimer);
+		doneTimer = setTimeout(() => (done = null), 1800);
+	}
+	onDestroy(() => clearTimeout(doneTimer));
 	/** @type {{ kind: 'success' | 'warning' | 'error', text: string } | null} */
 	let notice = null;
 	/** @type {'publish' | 'discard' | null} */
@@ -124,6 +136,7 @@
 						text: 'Borrador guardado, pero alguna imagen no cargó. Revisa que sus direcciones sean públicas.'
 					}
 				: { kind: 'success', text: 'Borrador guardado. Tus usuarios todavía no lo ven.' };
+			flashDone('save');
 		} catch (err) {
 			const fromApi = fieldErrorsFromApi(err);
 			if (fromApi) {
@@ -148,6 +161,7 @@
 				kind: 'success',
 				text: 'Marca publicada. Los correos la usan desde ahora; la aplicación puede tardar hasta un minuto.'
 			};
+			flashDone('publish');
 		} catch (err) {
 			if (err?.status === 409) {
 				// Otro administrador publicó o descartó el borrador mientras tanto.
@@ -281,6 +295,7 @@
 			{hasDraft}
 			{busy}
 			{lastPublished}
+			{done}
 			on:save={save}
 			on:publish={() => (confirming = 'publish')}
 			on:discard={() => (hasDraft ? (confirming = 'discard') : discard())}

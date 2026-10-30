@@ -127,8 +127,8 @@
 							<span class="flex items-end gap-px" aria-hidden="true">
 								{#each [1, 2, 3, 4, 5] as i (i)}
 									<span
-										class="w-[3px] rounded-sm"
-										style="height:{6 + i * 2}px; background:{i <= gps.bars
+										class="signal-bar w-[3px] rounded-sm"
+										style="--i:{i}; height:{6 + i * 2}px; background:{i <= gps.bars
 											? gps.hex
 											: 'rgba(148,163,184,0.35)'}"
 									></span>
@@ -184,8 +184,8 @@
 							<span class="flex items-end gap-px" aria-hidden="true">
 								{#each [1, 2, 3, 4, 5] as i (i)}
 									<span
-										class="w-[3px] rounded-sm"
-										style="height:{6 + i * 2}px; background:{i <= cell.bars
+										class="signal-bar w-[3px] rounded-sm"
+										style="--i:{i}; height:{6 + i * 2}px; background:{i <= cell.bars
 											? cell.hex
 											: 'rgba(148,163,184,0.35)'}"
 									></span>
@@ -235,3 +235,28 @@
 		</dl>
 	</div>
 {/if}
+
+<style>
+	/* Las barras crecen desde abajo una tras otra al aparecer, y al cambiar la
+	   señal se encienden o apagan en cascada en vez de saltar. */
+	.signal-bar {
+		transform-origin: bottom;
+		transition: background-color 300ms ease-out;
+		transition-delay: calc(var(--i) * 40ms);
+		animation: signal-bar-rise 360ms cubic-bezier(0.33, 1, 0.68, 1) both;
+		animation-delay: calc(var(--i) * 40ms);
+	}
+
+	@keyframes signal-bar-rise {
+		from {
+			transform: scaleY(0.2);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.signal-bar {
+			transition: none;
+			animation: none;
+		}
+	}
+</style>

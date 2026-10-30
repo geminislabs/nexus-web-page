@@ -133,6 +133,7 @@
 				{#if $alerts.length === 0 && $alarmEvents.length === 0}
 					<p
 						class="m-0 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white/50"
+						in:rise={{ y: 4 }}
 					>
 						No hay alertas ni eventos.
 					</p>

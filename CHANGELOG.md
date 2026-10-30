@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Efectos en el resto del panel.** El diálogo de confirmación se abre con fundido y escala. Los pasos de los asistentes de alertas entran desde la derecha al avanzar y desde la izquierda al regresar. «Copiar» (coordenadas y enlace compartido) muestra una palomita con rebote, y en Marca «Guardar borrador» y «Publicar» muestran «✓ Guardado»/«✓ Publicado» un momento. Las barras de señal GPS y celular crecen en cascada, y las listas vacías, el detalle de zona y las pestañas de Alertas y zonas entran con el mismo fundido que el resto (la raya de la pestaña activa se desliza). Una fila de unidad destella con el color de su estado al encender o apagar el motor o al perder o recuperar la señal (no al arrancar o frenar). Los errores de formulario sacuden el campo o el aviso. La vista previa de marca cambia de color con transición. La página pública de ubicación compartida entra con fundido y muestra «En vivo» con un punto que pulsa
+- **Mapa.** La unidad seleccionada respira (su anillo crece y se desvanece en ciclo) y al seleccionarla la cámara se desliza hasta ella y después hace zoom, en lugar de saltar. El popup se abre al terminar el movimiento; si se selecciona otra unidad a medio camino, lo pendiente de la primera se cancela. Todo respeta «reducir movimiento»
+
 ## [1.32.0] - 2026-10-29
 
 ### Added

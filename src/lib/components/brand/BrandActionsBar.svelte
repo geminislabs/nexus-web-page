@@ -1,6 +1,7 @@
 <script>
 	import Icon from '$lib/components/Icon.svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { pop } from '$lib/motion/index.js';
 
 	/** Si hay cambios en el formulario que no se han guardado. */
 	export let dirty = false;
@@ -12,6 +13,9 @@
 	/** Texto de la última publicación, o `null` si nunca se publicó. */
 	/** @type {string | null} */
 	export let lastPublished = null;
+	/** Acción que acaba de terminar bien: su botón muestra una palomita un momento. */
+	/** @type {'save' | 'publish' | null} */
+	export let done = null;
 
 	const dispatch = createEventDispatcher();
 
@@ -65,8 +69,12 @@
 	>
 		{#if busy === 'save'}
 			<Icon icon="mdi:loading" width={16} class="animate-spin" aria-hidden="true" />
+		{:else if done === 'save'}
+			<span class="inline-flex text-emerald-600 dark:text-emerald-400" in:pop>
+				<Icon icon="mdi:check" width={16} aria-hidden="true" />
+			</span>
 		{/if}
-		Guardar borrador
+		{done === 'save' ? 'Guardado' : 'Guardar borrador'}
 	</button>
 	<button
 		type="button"
@@ -77,7 +85,11 @@
 	>
 		{#if busy === 'publish'}
 			<Icon icon="mdi:loading" width={16} class="animate-spin" aria-hidden="true" />
+		{:else if done === 'publish'}
+			<span class="inline-flex" in:pop>
+				<Icon icon="mdi:check" width={16} aria-hidden="true" />
+			</span>
 		{/if}
-		Publicar
+		{done === 'publish' ? 'Publicado' : 'Publicar'}
 	</button>
 </div>

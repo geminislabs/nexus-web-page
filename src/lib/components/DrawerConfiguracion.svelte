@@ -866,7 +866,10 @@
 								<span class="text-[12px]">Cargando unidades…</span>
 							</div>
 						{:else if pagedVehicles.length === 0}
-							<div class="flex flex-col items-center gap-2 py-12 text-slate-500 dark:text-white/28">
+							<div
+								class="flex flex-col items-center gap-2 py-12 text-slate-500 dark:text-white/28"
+								in:rise={{ y: 4 }}
+							>
 								<Icon
 									icon="mdi:car-search-outline"
 									width={32}

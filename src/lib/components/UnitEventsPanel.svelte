@@ -75,7 +75,10 @@
 				</button>
 			</div>
 		{:else if $unitEvents.length === 0}
-			<div class="flex h-40 flex-col items-center justify-center gap-2 px-4 text-center">
+			<div
+				class="flex h-40 flex-col items-center justify-center gap-2 px-4 text-center"
+				in:rise={{ y: 4 }}
+			>
 				<Icon icon="mdi:bell-off-outline" width={36} class="text-slate-300 dark:text-white/20" />
 				<p class="m-0 text-sm font-medium text-slate-700 dark:text-white/80">
 					Sin eventos recientes

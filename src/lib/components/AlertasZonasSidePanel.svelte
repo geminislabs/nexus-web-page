@@ -4,6 +4,8 @@
 	import { alerts, zones } from '$lib/stores/alertStore.js';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
 	import ZonasPanel from '$lib/components/ZonasPanel.svelte';
+	import { viewEnter } from '$lib/motion/index.js';
+	import { slidingIndicator } from '$lib/motion/slidingIndicator.js';
 
 	/** @type {'alertas' | 'zonas'} */
 	export let initialTab = 'alertas';
@@ -37,9 +39,15 @@
 
 <div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-transparent">
 	<div
-		class="flex shrink-0 gap-1 border-b border-slate-200 px-3 pt-2 dark:border-white/[0.07]"
+		class="relative flex shrink-0 gap-1 border-b border-slate-200 px-3 pt-2 dark:border-white/[0.07]"
 		role="tablist"
 		aria-label="Alertas y zonas"
+		use:slidingIndicator={{
+			active: tab,
+			edge: 'bottom',
+			inset: 12,
+			class: 'z-10 h-0.5 rounded-full bg-emerald-500'
+		}}
 	>
 		{#each tabs as t (t.id)}
 			<button
@@ -62,19 +70,13 @@
 				>
 					{t.count()}
 				</span>
-				{#if tab === t.id}
-					<span
-						class="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-emerald-500"
-						aria-hidden="true"
-					></span>
-				{/if}
 			</button>
 		{/each}
 	</div>
 
 	<div class="min-h-0 flex-1 overflow-hidden" role="tabpanel">
 		{#if tab === 'alertas'}
-			<div class="h-full min-h-0 overflow-y-auto">
+			<div class="h-full min-h-0 overflow-y-auto" in:viewEnter>
 				{#key 'alertas'}
 					<DrawerConfiguracion
 						initialSection="gestionar_alertas"
@@ -85,7 +87,7 @@
 				{/key}
 			</div>
 		{:else}
-			<div class="flex h-full min-h-0 flex-col overflow-hidden">
+			<div class="flex h-full min-h-0 flex-col overflow-hidden" in:viewEnter>
 				{#key 'zonas'}
 					<ZonasPanel
 						variant="desktop"

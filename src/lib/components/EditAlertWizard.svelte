@@ -1,5 +1,6 @@
 <!-- src/lib/components/EditAlertWizard.svelte -->
 <script>
+	import { shakeOn } from '$lib/motion/shake.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -7,12 +8,15 @@
 	import { alertActions } from '$lib/stores/alertStore.js';
 	import { user } from '$lib/stores/auth.js';
 	import { get } from 'svelte/store';
+	import { stepSlide } from '$lib/motion/index.js';
 
 	export let alert; // objeto alert del store
 
 	const dispatch = createEventDispatcher();
 
 	let step = 1; // 1 = nombre, 2 = unidades
+	// Al pasar a unidades el contenido entra por la derecha; al volver, por la izquierda.
+	$: stepDir = step === 2 ? 1 : -1;
 	let editName = alert.name ?? '';
 	let selectedUnitIds = new SvelteSet(alert.units ?? []);
 	let saving = false;
@@ -139,147 +143,156 @@
 
 	<!-- Content -->
 	<main class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5">
-		{#if step === 1}
-			<h3 class="m-0 mb-1.5 text-[17px] font-bold">Nombre de la alerta</h3>
-			<p class="mb-4 text-[12px] leading-relaxed text-slate-600 dark:text-white/40">
-				El nombre aparece en el historial y notificaciones.
-			</p>
-			<label
-				for="eaw-name"
-				class="mb-1.5 block text-[12px] font-medium text-slate-600 dark:text-white/55"
-				>Nombre visible</label
-			>
-			<input
-				id="eaw-name"
-				type="text"
-				class="w-full rounded-[14px] border border-slate-300 bg-white px-4 py-3 text-[14px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500/65 focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/[0.14] dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/25"
-				placeholder="Ej: Motor encendido nocturno"
-				autocomplete="off"
-				maxlength="255"
-				bind:value={editName}
-				on:keydown={(e) => e.key === 'Enter' && editName.trim() && (step = 2)}
-			/>
-
-			<!-- Resumen -->
-			<div
-				class="mt-5 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[0.07] dark:bg-white/[0.04]"
-			>
-				<p
-					class="m-0 mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/30"
-				>
-					Estado actual
-				</p>
-				<dl class="m-0 space-y-2">
-					{#each [['Condición', { on: 'Encendido', off: 'Apagado', enter: 'Entrada a zona', exit: 'Salida de zona' }[alert.condition] ?? alert.condition], ['Unidades', `${alert.units.length} asignada${alert.units.length !== 1 ? 's' : ''}`], ['Estado', alert.enabled ? 'Activa' : 'Inactiva']] as [dt, dd] (dt)}
-						<div class="flex items-center justify-between gap-3">
-							<dt class="m-0 text-[12px] text-slate-600 dark:text-white/45">{dt}</dt>
-							<dd class="m-0 text-[12px] font-semibold text-slate-900 dark:text-white">{dd}</dd>
-						</div>
-					{/each}
-				</dl>
-			</div>
-
-			<!-- Eliminar alerta (igual que iOS y Android) -->
-			{#if !showDeleteConfirm}
-				<button
-					type="button"
-					class="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3.5 text-[14px] font-semibold text-red-500 transition-colors hover:bg-red-500/15 dark:text-red-400"
-					on:click={() => (showDeleteConfirm = true)}
-					disabled={deleting}
-				>
-					<Icon icon="mdi:delete-outline" class="h-5 w-5" aria-hidden="true" />
-					Eliminar alerta
-				</button>
-			{:else}
-				<div class="mt-5 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-4">
-					<p class="m-0 mb-3 text-[14px] text-slate-900 dark:text-white">
-						¿Eliminar <strong>«{alert.name}»</strong>? Esta acción no se puede deshacer.
+		{#key step}
+			<div in:stepSlide={{ direction: stepDir }}>
+				{#if step === 1}
+					<h3 class="m-0 mb-1.5 text-[17px] font-bold">Nombre de la alerta</h3>
+					<p class="mb-4 text-[12px] leading-relaxed text-slate-600 dark:text-white/40">
+						El nombre aparece en el historial y notificaciones.
 					</p>
-					<div class="flex gap-2">
-						<button
-							type="button"
-							class="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-[13px] font-semibold text-slate-700 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
-							on:click={() => (showDeleteConfirm = false)}
-							disabled={deleting}>Cancelar</button
+					<label
+						for="eaw-name"
+						class="mb-1.5 block text-[12px] font-medium text-slate-600 dark:text-white/55"
+						>Nombre visible</label
+					>
+					<input
+						id="eaw-name"
+						type="text"
+						class="w-full rounded-[14px] border border-slate-300 bg-white px-4 py-3 text-[14px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500/65 focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/[0.14] dark:bg-white/[0.07] dark:text-white dark:placeholder:text-white/25"
+						placeholder="Ej: Motor encendido nocturno"
+						autocomplete="off"
+						maxlength="255"
+						bind:value={editName}
+						on:keydown={(e) => e.key === 'Enter' && editName.trim() && (step = 2)}
+					/>
+
+					<!-- Resumen -->
+					<div
+						class="mt-5 rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/[0.07] dark:bg-white/[0.04]"
+					>
+						<p
+							class="m-0 mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/30"
 						>
+							Estado actual
+						</p>
+						<dl class="m-0 space-y-2">
+							{#each [['Condición', { on: 'Encendido', off: 'Apagado', enter: 'Entrada a zona', exit: 'Salida de zona' }[alert.condition] ?? alert.condition], ['Unidades', `${alert.units.length} asignada${alert.units.length !== 1 ? 's' : ''}`], ['Estado', alert.enabled ? 'Activa' : 'Inactiva']] as [dt, dd] (dt)}
+								<div class="flex items-center justify-between gap-3">
+									<dt class="m-0 text-[12px] text-slate-600 dark:text-white/45">{dt}</dt>
+									<dd class="m-0 text-[12px] font-semibold text-slate-900 dark:text-white">{dd}</dd>
+								</div>
+							{/each}
+						</dl>
+					</div>
+
+					<!-- Eliminar alerta (igual que iOS y Android) -->
+					{#if !showDeleteConfirm}
 						<button
 							type="button"
-							class="flex-1 rounded-xl bg-red-600 py-2.5 text-[13px] font-bold text-white disabled:opacity-50"
-							on:click={deleteAlert}
+							class="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3.5 text-[14px] font-semibold text-red-500 transition-colors hover:bg-red-500/15 dark:text-red-400"
+							on:click={() => (showDeleteConfirm = true)}
 							disabled={deleting}
 						>
-							{deleting ? 'Eliminando…' : 'Eliminar'}
+							<Icon icon="mdi:delete-outline" class="h-5 w-5" aria-hidden="true" />
+							Eliminar alerta
 						</button>
-					</div>
-				</div>
-			{/if}
-		{:else}
-			<!-- Paso 2: Unidades -->
-			<h3 class="m-0 mb-1 text-[17px] font-bold">Unidades asignadas</h3>
-			<p class="mb-4 text-[12px] leading-relaxed text-slate-600 dark:text-white/40">
-				Selecciona las unidades que dispararán esta alerta.
-			</p>
-			<div class="mb-3 flex items-center justify-between">
-				<span class="text-[11px] text-slate-600 dark:text-white/45"
-					>{selectedUnitIds.size} seleccionada{selectedUnitIds.size !== 1 ? 's' : ''}</span
-				>
-				<button
-					type="button"
-					class="border-0 bg-transparent text-[12px] font-semibold text-blue-400 hover:text-blue-300"
-					on:click={toggleAll}
-				>
-					{allSelected ? 'Desmarcar todas' : 'Seleccionar todas'}
-				</button>
-			</div>
-			{#if $vehicles.length === 0}
-				<p class="py-8 text-center text-[13px] text-slate-600 dark:text-white/38">
-					No hay unidades disponibles.
-				</p>
-			{:else}
-				<div class="flex flex-col gap-2">
-					{#each $vehicles as vehicle (vehicle.id)}
-						{@const selected = selectedUnitIds.has(vehicle.id)}
+					{:else}
+						<div class="mt-5 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-4">
+							<p class="m-0 mb-3 text-[14px] text-slate-900 dark:text-white">
+								¿Eliminar <strong>«{alert.name}»</strong>? Esta acción no se puede deshacer.
+							</p>
+							<div class="flex gap-2">
+								<button
+									type="button"
+									class="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-[13px] font-semibold text-slate-700 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/70"
+									on:click={() => (showDeleteConfirm = false)}
+									disabled={deleting}>Cancelar</button
+								>
+								<button
+									type="button"
+									class="flex-1 rounded-xl bg-red-600 py-2.5 text-[13px] font-bold text-white disabled:opacity-50"
+									on:click={deleteAlert}
+									disabled={deleting}
+								>
+									{deleting ? 'Eliminando…' : 'Eliminar'}
+								</button>
+							</div>
+						</div>
+					{/if}
+				{:else}
+					<!-- Paso 2: Unidades -->
+					<h3 class="m-0 mb-1 text-[17px] font-bold">Unidades asignadas</h3>
+					<p class="mb-4 text-[12px] leading-relaxed text-slate-600 dark:text-white/40">
+						Selecciona las unidades que dispararán esta alerta.
+					</p>
+					<div class="mb-3 flex items-center justify-between">
+						<span class="text-[11px] text-slate-600 dark:text-white/45"
+							>{selectedUnitIds.size} seleccionada{selectedUnitIds.size !== 1 ? 's' : ''}</span
+						>
 						<button
 							type="button"
-							class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 {selected
-								? 'border-blue-500 bg-blue-600/10'
-								: 'border-slate-200 bg-white hover:border-slate-300 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.1]'}"
-							on:click={() => toggleUnit(vehicle.id)}
-							aria-pressed={selected}
+							class="border-0 bg-transparent text-[12px] font-semibold text-blue-400 hover:text-blue-300"
+							on:click={toggleAll}
 						>
-							<span
-								class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors {selected
-									? 'border-blue-500 bg-blue-500'
-									: 'border-slate-300 dark:border-white/25'}"
-								aria-hidden="true"
-							>
-								{#if selected}<Icon
-										icon="mdi:check"
-										width={13}
-										class="text-white"
-										aria-hidden="true"
-									/>{/if}
-							</span>
-							<div class="min-w-0 flex-1">
-								<p class="m-0 text-[13px] font-semibold leading-snug">{vehicle.name}</p>
-								<p class="m-0 mt-0.5 text-[11px] text-slate-600 dark:text-white/40">
-									{vehicle.driver || 'Sin conductor'}
-								</p>
-							</div>
-							<span
-								class="h-2 w-2 shrink-0 rounded-full {vehicle.status === 'active'
-									? 'bg-emerald-500'
-									: 'bg-slate-300 dark:bg-white/20'}"
-								aria-hidden="true"
-							></span>
+							{allSelected ? 'Desmarcar todas' : 'Seleccionar todas'}
 						</button>
-					{/each}
-				</div>
-			{/if}
-		{/if}
+					</div>
+					{#if $vehicles.length === 0}
+						<p class="py-8 text-center text-[13px] text-slate-600 dark:text-white/38">
+							No hay unidades disponibles.
+						</p>
+					{:else}
+						<div class="flex flex-col gap-2">
+							{#each $vehicles as vehicle (vehicle.id)}
+								{@const selected = selectedUnitIds.has(vehicle.id)}
+								<button
+									type="button"
+									class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 {selected
+										? 'border-blue-500 bg-blue-600/10'
+										: 'border-slate-200 bg-white hover:border-slate-300 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.1]'}"
+									on:click={() => toggleUnit(vehicle.id)}
+									aria-pressed={selected}
+								>
+									<span
+										class="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors {selected
+											? 'border-blue-500 bg-blue-500'
+											: 'border-slate-300 dark:border-white/25'}"
+										aria-hidden="true"
+									>
+										{#if selected}<Icon
+												icon="mdi:check"
+												width={13}
+												class="text-white"
+												aria-hidden="true"
+											/>{/if}
+									</span>
+									<div class="min-w-0 flex-1">
+										<p class="m-0 text-[13px] font-semibold leading-snug">{vehicle.name}</p>
+										<p class="m-0 mt-0.5 text-[11px] text-slate-600 dark:text-white/40">
+											{vehicle.driver || 'Sin conductor'}
+										</p>
+									</div>
+									<span
+										class="h-2 w-2 shrink-0 rounded-full {vehicle.status === 'active'
+											? 'bg-emerald-500'
+											: 'bg-slate-300 dark:bg-white/20'}"
+										aria-hidden="true"
+									></span>
+								</button>
+							{/each}
+						</div>
+					{/if}
+				{/if}
+			</div>
+		{/key}
 
 		{#if error}
-			<p class="mt-4 rounded-xl bg-red-500/10 px-3 py-2 text-[12px] text-red-400">{error}</p>
+			<p
+				class="mt-4 rounded-xl bg-red-500/10 px-3 py-2 text-[12px] text-red-400"
+				use:shakeOn={error}
+			>
+				{error}
+			</p>
 		{/if}
 	</main>
 

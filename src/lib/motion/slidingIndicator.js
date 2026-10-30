@@ -8,6 +8,10 @@
  *
  *   use:slidingIndicator={{ active: tab, class: 'rounded-xl bg-blue-100' }}
  *   use:slidingIndicator={{ active: tab, edge: 'top', inset: 24, class: 'h-[3px] bg-sky-500' }}
+ *   use:slidingIndicator={{ active: tab, edge: 'bottom', inset: 12, class: 'z-10 h-0.5 bg-emerald-500' }}
+ *
+ * Con `edge` la pieza es una raya en el borde superior o inferior de la
+ * pestaña; su alto lo pone la clase.
  *
  * `active` sólo sirve para que Svelte llame a `update` cuando cambia.
  * `selector` cambia cómo se encuentra el elemento activo; un menú de
@@ -16,7 +20,7 @@
 import { DURATION, EASE_CSS_OUT, motionDuration } from './index.js';
 
 /**
- * @typedef {{ active?: unknown, class?: string, edge?: 'top' | null, inset?: number, selector?: string }} IndicatorParams
+ * @typedef {{ active?: unknown, class?: string, edge?: 'top' | 'bottom' | null, inset?: number, selector?: string }} IndicatorParams
  */
 
 /**
@@ -52,9 +56,13 @@ export function slidingIndicator(node, params = {}) {
 		const ms = animate && placed ? motionDuration(DURATION.base) : 0;
 		indicator.style.transitionDuration = `${ms}ms`;
 		const inset = opts.inset ?? 0;
-		if (opts.edge === 'top') {
+		if (opts.edge === 'top' || opts.edge === 'bottom') {
+			const y =
+				opts.edge === 'bottom'
+					? el.offsetTop + el.offsetHeight - indicator.offsetHeight
+					: el.offsetTop;
 			indicator.style.width = `${Math.max(0, el.offsetWidth - inset * 2)}px`;
-			indicator.style.transform = `translate(${el.offsetLeft + inset}px, ${el.offsetTop}px)`;
+			indicator.style.transform = `translate(${el.offsetLeft + inset}px, ${y}px)`;
 		} else {
 			indicator.style.width = `${el.offsetWidth}px`;
 			indicator.style.height = `${el.offsetHeight}px`;

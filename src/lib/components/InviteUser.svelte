@@ -1,4 +1,5 @@
 <script>
+	import { shakeOn } from '$lib/motion/shake.js';
 	import { logger } from '$lib/utils/logger.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { apiService } from '$lib/services/api.js';
@@ -102,6 +103,7 @@
 	{#if errorMessage}
 		<div
 			transition:slide
+			use:shakeOn={errorMessage}
 			class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-700 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300"
 			role="alert"
 		>

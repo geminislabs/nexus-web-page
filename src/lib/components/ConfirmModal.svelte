@@ -1,6 +1,7 @@
 <script>
 	import { theme } from '$lib/stores/themeStore.js';
 	import { createEventDispatcher } from 'svelte';
+	import { dialogScale, softFade } from '$lib/motion/index.js';
 
 	export let open = false;
 	export let title = 'Confirmar';
@@ -37,6 +38,7 @@
 		class="fixed inset-0 flex items-center justify-center bg-slate-900/35 p-4 backdrop-blur-[2px] dark:bg-black/50 {zIndexClass}"
 		role="presentation"
 		on:click|self={cancel}
+		transition:softFade
 	>
 		<div
 			class="w-full max-w-[min(100%,20rem)] rounded-[1.25rem] border px-5 pb-5 pt-5 shadow-xl {$theme ===
@@ -48,6 +50,7 @@
 			aria-labelledby={titleId}
 			aria-describedby={descId}
 			tabindex="-1"
+			transition:dialogScale
 		>
 			<h2 id={titleId} class="m-0 text-center text-lg font-bold leading-snug">
 				{title}

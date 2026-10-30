@@ -5,6 +5,7 @@
 	import { positionService } from '$lib/services/positionService.js';
 	import { vehicles } from '$lib/stores/vehicleStore.js';
 	import MapContainer from '$lib/components/MapContainer.svelte';
+	import { dialogScale, softFade } from '$lib/motion/index.js';
 
 	let token = $page.params.token;
 	let loading = true;
@@ -144,7 +145,10 @@
 		</div>
 	{:else if error}
 		<div class="flex flex-col items-center justify-center h-full p-6 text-center">
-			<div class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 max-w-md w-full">
+			<div
+				class="bg-gray-900 p-8 rounded-xl shadow-2xl border border-gray-800 max-w-md w-full"
+				in:dialogScale
+			>
 				<div class="mb-6 text-red-500">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -175,7 +179,27 @@
 			</div>
 		</div>
 	{:else if success}
-		<MapContainer bind:isLoading={loading} />
+		<div class="h-full w-full" in:softFade={{ duration: 400 }}>
+			<MapContainer bind:isLoading={loading} />
+		</div>
+		<!-- Quien abre el enlace no tiene otra forma de saber que la posición se actualiza sola. -->
+		<div
+			class="pointer-events-none absolute left-1/2 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] -translate-x-1/2"
+			in:softFade={{ delay: 300, duration: 300 }}
+		>
+			<span
+				class="flex items-center gap-2 rounded-full border border-white/15 bg-slate-900/80 px-3 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur-md"
+				role="status"
+			>
+				<span class="relative flex h-2 w-2" aria-hidden="true">
+					<span
+						class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping"
+					></span>
+					<span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"></span>
+				</span>
+				En vivo
+			</span>
+		</div>
 	{/if}
 </div>
 

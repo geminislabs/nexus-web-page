@@ -4,6 +4,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { apiService } from '$lib/services/api.js';
 	import { browser } from '$app/environment';
+	import { pop, softFade } from '$lib/motion/index.js';
 
 	export let unit = null;
 	export let onBack = () => {};
@@ -195,7 +196,15 @@
 			<p class="mx-3 mt-2 text-center text-xs text-red-400">{linkError}</p>
 		{/if}
 		{#if copied}
-			<p class="mx-3 mt-2 text-center text-xs text-emerald-400">Enlace copiado al portapapeles</p>
+			<p
+				class="mx-3 mt-2 flex items-center justify-center gap-1 text-xs text-emerald-400"
+				in:softFade
+			>
+				<span class="inline-flex" in:pop>
+					<Icon icon="mdi:check-circle" width={14} aria-hidden="true" />
+				</span>
+				Enlace copiado al portapapeles
+			</p>
 		{/if}
 		{#if shareResult?.expires_at}
 			<p class="mx-3 mt-1 text-center text-[10px] text-slate-400 dark:text-white/35">

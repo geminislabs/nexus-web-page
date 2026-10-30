@@ -1,4 +1,5 @@
 <script>
+	import { rise } from '$lib/motion/index.js';
 	import { logger } from '$lib/utils/logger.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { onMount } from 'svelte';
@@ -181,7 +182,7 @@
 				</button>
 			</div>
 		{:else if mergedUnits.length === 0}
-			<p class="m-0 py-2 text-[12px] italic text-slate-500 dark:text-white/35">
+			<p class="m-0 py-2 text-[12px] italic text-slate-500 dark:text-white/35" in:rise={{ y: 4 }}>
 				No hay unidades disponibles en el cliente.
 			</p>
 		{:else}

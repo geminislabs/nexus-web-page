@@ -1,4 +1,5 @@
 <script>
+	import { shakeOn } from '$lib/motion/shake.js';
 	import { createEventDispatcher } from 'svelte';
 	import { vehicleActions } from '$lib/stores/vehicleStore.js';
 	import { vehicleColors } from '$lib/data/vehicleColors';
@@ -150,6 +151,7 @@
 			<p
 				class="rounded-lg bg-red-500/10 px-3 py-2 text-[11px] text-red-600 dark:text-red-400"
 				role="alert"
+				use:shakeOn={saveError}
 			>
 				{saveError}
 			</p>

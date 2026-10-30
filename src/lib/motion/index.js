@@ -117,3 +117,33 @@ export function softFade(node, { delay = 0, duration = DURATION.fast } = {}) {
 	if (reducedMotion()) return { delay: 0, duration: 0 };
 	return fade(node, { delay, duration });
 }
+
+/**
+ * Entrada de un paso de asistente: llega desde el lado hacia el que se
+ * avanza (`direction` 1 = siguiente, -1 = anterior). Pensada para `in:`
+ * dentro de `{#key paso}`, igual que `viewEnter`.
+ * @param {Element} _node
+ * @param {{ direction?: number, distance?: number, duration?: number }} [params]
+ */
+export function stepSlide(_node, { direction = 1, distance = 24, duration = 260 } = {}) {
+	if (reducedMotion()) return { delay: 0, duration: 0 };
+	const dx = Math.sign(direction || 1) * distance;
+	return {
+		duration,
+		easing: EASE.out,
+		css: (/** @type {number} */ t, /** @type {number} */ u) =>
+			`opacity: ${t}; transform: translateX(${u * dx}px);`
+	};
+}
+
+/**
+ * Fase de una respiración suave: 0 → 1 → 0 cada `periodMs`, empezando y
+ * terminando quieta (coseno). Para pulsos que se dibujan a mano, como el
+ * marcador resaltado del mapa.
+ * @param {number} elapsedMs
+ * @param {number} [periodMs]
+ */
+export function breathe(elapsedMs, periodMs = 1600) {
+	const t = (Math.max(0, Number(elapsedMs) || 0) % periodMs) / periodMs;
+	return Number(((1 - Math.cos(t * 2 * Math.PI)) / 2).toFixed(4));
+}
