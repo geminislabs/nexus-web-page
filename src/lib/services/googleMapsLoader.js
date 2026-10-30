@@ -3,9 +3,9 @@
  *
  * `@googlemaps/js-api-loader` 2.x quitó la clase `Loader`: `new Loader()` lanza
  * al instante. La API nueva es funcional —`setOptions()` una sola vez y luego
- * `importLibrary()`—, y un segundo `setOptions()` se ignora. Por eso las dos
- * entradas al mapa (`mapService.initialize` y `ZonaHexPicker`) pasan por aquí y
- * comparten la misma promesa.
+ * `importLibrary()`—, y un segundo `setOptions()` se ignora. Por eso la entrada
+ * al mapa (`mapService.initialize`) pasa por aquí y cualquier otra que se agregue
+ * debe compartir la misma promesa.
  *
  * Sin `libraries`: todo lo que usa el panel (Map, Marker, Polyline, Polygon,
  * InfoWindow, StreetViewPanorama, TrafficLayer) está en la librería base `maps`.

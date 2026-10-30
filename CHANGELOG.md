@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Informes: decimales de más en las gráficas.** Los promedios llegan de la API en coma flotante y se mostraban tal cual (el eje de la batería de respaldo marcaba `4.200000000000001` y `4.199999999999998`). Ahora cada gráfica redondea a la precisión de su magnitud —voltaje y litros a 2 decimales, velocidad, señal, satélites y minutos a 1, metros a enteros— en los datos, el tooltip y las marcas del eje
+- **Informes: el formato base de las gráficas no se aplicaba.** Las opciones de cada gráfica reemplazaban enteras las del panel, así que las fechas del eje X salían inclinadas en lugar de verticales, sin el límite de 6 etiquetas, y la rejilla y las marcas no tomaban los colores del tema oscuro. Ahora se mezclan por niveles (`chartOptions.js`)
+
+### Removed
+
+- `ZonaHexPicker.svelte`, que no se montaba en ningún lado, y el store de tema heredado `stores/theme.js` (`modern`/`classic`), que solo usaban sus pruebas. El tema sigue en `themeStore.js`; nada cambia para el usuario
+
 ## [1.33.0] - 2026-10-29
 
 ### Added
