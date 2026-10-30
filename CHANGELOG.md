@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.32.0] - 2026-10-29
+
 ### Added
 
 - **Las invitaciones abren la app en Android.** El panel sirve `/.well-known/assetlinks.json` con el paquete `com.geminislabs.nexus` y la huella del certificado de release, así que en Android un enlace `https://nexus.geminislabs.com/invite/…` abre NEXUS directamente en vez de preguntar con qué app abrirlo. Requiere nexus-android v1.1.0
