@@ -26,6 +26,14 @@ test.describe('smoke', () => {
 		expect(body.applinks.details[0].appIDs).toEqual(['GCNV65DKL8.GeminisLabs.INexus']);
 	});
 
+	test('assetlinks.json is served as JSON from the built server', async ({ request }) => {
+		const response = await request.get('/.well-known/assetlinks.json', { maxRedirects: 0 });
+		expect(response.status()).toBe(200);
+		expect(response.headers()['content-type']).toBe('application/json');
+		const [statement] = await response.json();
+		expect(statement.target.package_name).toBe('com.geminislabs.nexus');
+	});
+
 	test('invite page opens without a session and points to the app', async ({ page }) => {
 		const response = await page.goto('/invite/TOKEN_DE_PRUEBA');
 		expect(response?.headers()['referrer-policy']).toBe('no-referrer');
