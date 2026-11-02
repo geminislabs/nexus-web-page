@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **Excepción temporal para `minimatch`.** El escaneo de dependencias ignora GHSA-g3hv-75wg-m249 hasta el 02/12/2026: solo llega por ESLint en desarrollo, con los patrones propios del repo, y ESLint todavía no acepta la versión arreglada (11.x)
+
 ## [1.33.0] - 2026-10-29
 
 ### Added
