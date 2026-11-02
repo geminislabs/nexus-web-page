@@ -241,6 +241,23 @@ describe('estiloDeMarca', () => {
 		expect(oscuro).toContain('--color-brand-aura-3:#1a2b5c');
 	});
 
+	it('pinta las familias del mapa con la rampa del partner, paso por paso', () => {
+		const css = estiloDeMarca({
+			name: 'Mero Mero',
+			isDefault: false,
+			tokens: {
+				light: { '--color-brand-500': '#3b74f6', '--color-brand-700': '#1d3fa8' },
+				dark: {}
+			}
+		});
+		for (const familia of ['sky', 'cyan', 'blue', 'teal']) {
+			expect(css).toContain(`--color-brand-${familia}-500:#3b74f6`);
+			expect(css).toContain(`--color-brand-${familia}-700:#1d3fa8`);
+			// Un paso que el partner no publica no se inventa: queda el de Nexus.
+			expect(css).not.toContain(`--color-brand-${familia}-300`);
+		}
+	});
+
 	it('deriva la barra de pestañas y el avatar', () => {
 		const css = estiloDeMarca({
 			name: 'Mero Mero',
@@ -277,7 +294,13 @@ describe('estiloDeMarca', () => {
 				dark: {}
 			}
 		});
-		expect(css).toBe('html:root{--color-brand-600:#123456}');
 		expect(css).not.toMatch(/[<>]/);
+		// Solo un bloque, y dentro solo variables de marca con un hex: el 600 y lo que
+		// el mapa deriva de él.
+		const [, cuerpo] = css.match(/^html:root\{([^{}]*)\}$/) ?? [];
+		const decls = cuerpo.split(';');
+		expect(decls).toContain('--color-brand-600:#123456');
+		expect(decls).toContain('--color-brand-sky-600:#123456');
+		for (const d of decls) expect(d).toMatch(/^--color-brand-[a-z0-9-]+:#[0-9a-f]{6}$/);
 	});
 });

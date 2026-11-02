@@ -68,7 +68,7 @@
 				<p class="m-0 text-xs text-slate-500 dark:text-white/60">{$eventsError}</p>
 				<button
 					type="button"
-					class="rounded-lg bg-cyan-600/20 px-4 py-2 text-xs font-semibold text-cyan-600 dark:text-cyan-300"
+					class="rounded-lg bg-brand-cyan-600/20 px-4 py-2 text-xs font-semibold text-brand-cyan-600 dark:text-brand-cyan-300"
 					on:click={refresh}
 				>
 					Reintentar
@@ -108,7 +108,7 @@
 									{formatEventType(event.eventType)}
 								</p>
 								<p
-									class="m-0 mt-0.5 flex items-center gap-1 text-[11px] text-cyan-600 dark:text-cyan-400/80"
+									class="m-0 mt-0.5 flex items-center gap-1 text-[11px] text-brand-cyan-600 dark:text-brand-cyan-400/80"
 								>
 									<Icon icon="mdi:clock-outline" width={12} />
 									{formatEventDate(event.occurredAt)}

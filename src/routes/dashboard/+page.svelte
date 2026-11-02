@@ -422,7 +422,7 @@
 					>
 						{#if userData}
 							<span
-								class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-[0.9375rem] font-bold text-white"
+								class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue-600 to-brand-sky-500 text-[0.9375rem] font-bold text-white"
 								aria-hidden="true"
 							>
 								{getInitial(userData.name)}
@@ -448,7 +448,7 @@
 							{#if userData}
 								<div class="flex items-start gap-3">
 									<div
-										class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-sky-500 text-[1.1rem] font-bold text-white"
+										class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue-600 to-brand-sky-500 text-[1.1rem] font-bold text-white"
 										aria-hidden="true"
 									>
 										{getInitial(userData.name)}
@@ -716,12 +716,12 @@
 						{#if !showMobileUnitsSheet}
 							<button
 								type="button"
-								class="mx-auto mb-1 flex w-20 items-center justify-center rounded-full border border-cyan-500/35 bg-white/95 px-2 py-1 shadow-lg backdrop-blur-sm dark:border-cyan-300/30 dark:bg-slate-900/92 dark:shadow-[0_10px_28px_rgba(0,0,0,0.55)]"
+								class="mx-auto mb-1 flex w-20 items-center justify-center rounded-full border border-brand-cyan-500/35 bg-white/95 px-2 py-1 shadow-lg backdrop-blur-sm dark:border-brand-cyan-300/30 dark:bg-slate-900/92 dark:shadow-[0_10px_28px_rgba(0,0,0,0.55)]"
 								on:click={() => (showMobileUnitsSheet = !showMobileUnitsSheet)}
 								aria-label="Mostrar panel de unidades"
 							>
 								<div
-									class="h-1 w-10 rounded-full bg-cyan-500/70 dark:bg-cyan-200/80"
+									class="h-1 w-10 rounded-full bg-brand-cyan-500/70 dark:bg-brand-cyan-200/80"
 									aria-hidden="true"
 								></div>
 							</button>

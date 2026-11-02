@@ -131,8 +131,12 @@
 			class="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/5"
 			on:click={shareCurrentLocation}
 		>
-			<div class="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/15">
-				<Icon icon="mdi:map-marker" width={22} class="text-cyan-600 dark:text-cyan-400" />
+			<div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-cyan-500/15">
+				<Icon
+					icon="mdi:map-marker"
+					width={22}
+					class="text-brand-cyan-600 dark:text-brand-cyan-400"
+				/>
 			</div>
 			<div class="min-w-0 flex-1">
 				<p class="m-0 text-[13px] font-semibold text-slate-900 dark:text-white">
