@@ -14,6 +14,43 @@
 	--color-brand-cta-to: #1d9cc4;
 	--color-brand-on-cta: #ffffff;
 	--color-brand-glow: #38bdf8;
+
+	/* La rampa de la marca: en Nexus es el esmeralda de Tailwind, el de la
+	   navegación y los botones del panel de administración. */
+	--color-brand-50: oklch(97.9% 0.021 166.113);
+	--color-brand-100: oklch(95% 0.052 163.051);
+	--color-brand-200: oklch(90.5% 0.093 164.15);
+	--color-brand-300: oklch(84.5% 0.143 164.978);
+	--color-brand-400: oklch(76.5% 0.177 163.223);
+	--color-brand-500: oklch(69.6% 0.17 162.48);
+	--color-brand-600: oklch(59.6% 0.145 163.225);
+	--color-brand-700: oklch(50.8% 0.118 165.612);
+	--color-brand-800: oklch(43.2% 0.095 166.913);
+	--color-brand-900: oklch(37.8% 0.077 168.94);
+	--color-brand-950: oklch(26.2% 0.051 172.552);
+
+	/* Botón sólido: el par que admin-api mide en contraste al publicar. */
+	--color-brand-primary: oklch(59.6% 0.145 163.225);
+	--color-brand-on-primary: #ffffff;
+
+	/* Pantallas de acceso: enlaces (blue-600), foco de los campos (blue-500) y
+	   las tres manchas de luz del fondo. En oscuro cambian: ver abajo. */
+	--color-brand-link: oklch(54.6% 0.245 262.881);
+	--color-brand-focus: oklch(62.3% 0.214 259.815);
+	--color-brand-aura-1: #bbf7d0;
+	--color-brand-aura-2: #a7f3d0;
+	--color-brand-aura-3: #86efac;
+}
+
+/*
+ * Los valores de Nexus en modo oscuro. Sin capa y con especificidad cero:
+ * ganan al `@layer theme` de Tailwind y pierden contra `estiloDeMarca`.
+ */
+:where(html.dark) {
+	--color-brand-link: oklch(70.7% 0.165 254.624);
+	--color-brand-aura-1: #1a4d2a;
+	--color-brand-aura-2: #0d3322;
+	--color-brand-aura-3: #163d1e;
 }
 
 /* === Variables globales === */

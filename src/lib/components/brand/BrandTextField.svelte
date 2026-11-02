@@ -22,7 +22,7 @@
 	$: inputClass = `${base} ${
 		error
 			? 'border-rose-400 focus-visible:ring-rose-500/40 dark:border-rose-400/60'
-			: 'border-slate-200 focus-visible:ring-emerald-500/40 dark:border-white/10'
+			: 'border-slate-200 focus-visible:ring-brand-500/40 dark:border-white/10'
 	}`;
 
 	function onInput(event) {

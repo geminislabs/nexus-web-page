@@ -132,15 +132,15 @@
 			use:slidingIndicator={{
 				active: section,
 				selector: '[aria-current="page"]',
-				class: 'rounded-xl bg-emerald-500/15'
+				class: 'rounded-xl bg-brand-500/15'
 			}}
 		>
 			{#each navItems as item (item.id)}
 				<button
 					type="button"
-					class="relative flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[13px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50
+					class="relative flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[13px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50
 						{section === item.id
-						? 'text-emerald-800 dark:text-emerald-200'
+						? 'text-brand-800 dark:text-brand-200'
 						: 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-white/45 dark:hover:bg-white/[0.05] dark:hover:text-white/85'}
 						{collapsed ? 'justify-center px-0' : ''}"
 					aria-current={section === item.id ? 'page' : undefined}
@@ -157,7 +157,7 @@
 
 		<button
 			type="button"
-			class="group m-2 flex h-11 w-[calc(100%-1rem)] items-center justify-center self-center rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 transition-[background,border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-emerald-400/50 hover:bg-emerald-500/20 hover:shadow-[0_8px_20px_rgba(16,185,129,0.2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:border-emerald-400/25 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:border-emerald-300/45 dark:hover:bg-emerald-500/20
+			class="group m-2 flex h-11 w-[calc(100%-1rem)] items-center justify-center self-center rounded-xl border border-brand-500/25 bg-brand-500/10 text-brand-700 transition-[background,border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-500/20 hover:shadow-[0_8px_20px_rgba(16,185,129,0.2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 dark:border-brand-400/25 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:border-brand-300/45 dark:hover:bg-brand-500/20
 				{collapsed ? 'w-11' : ''}"
 			on:click={() => (collapsed = !collapsed)}
 			aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
@@ -182,7 +182,7 @@
 			<div class="relative" data-admin-user-menu>
 				<button
 					type="button"
-					class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1 pl-1 pr-2.5 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
+					class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white py-1 pl-1 pr-2.5 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
 					aria-expanded={showUserMenu}
 					aria-haspopup="true"
 					on:click|stopPropagation={() => (showUserMenu = !showUserMenu)}
@@ -196,7 +196,7 @@
 							class="block max-w-[9rem] truncate text-[12px] font-semibold text-slate-800 dark:text-white"
 							>{displayName}</span
 						>
-						<span class="block text-[10px] font-medium text-emerald-700 dark:text-emerald-300/90"
+						<span class="block text-[10px] font-medium text-brand-700 dark:text-brand-300/90"
 							>Administrador</span
 						>
 					</span>

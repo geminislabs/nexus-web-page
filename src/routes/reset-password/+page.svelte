@@ -18,7 +18,7 @@
 	let showPassword = false;
 
 	const inputClass =
-		'w-full appearance-none rounded-[14px] border border-slate-200 bg-white py-3.5 px-4 text-[0.9375rem] text-slate-900 outline-none transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/15 dark:bg-white/[0.08] dark:text-white dark:placeholder:text-white/30 dark:focus:border-blue-500/70 dark:focus:bg-white/11';
+		'w-full appearance-none rounded-[14px] border border-slate-200 bg-white py-3.5 px-4 text-[0.9375rem] text-slate-900 outline-none transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-brand-focus focus:bg-white focus:ring-[3px] focus:ring-brand-focus/15 dark:border-white/15 dark:bg-white/[0.08] dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-focus/70 dark:focus:bg-white/11';
 
 	onMount(() => {
 		let fromSession = '';
@@ -182,15 +182,11 @@
 		</form>
 
 		<p class="mt-5 text-center text-[0.8125rem] text-slate-600 dark:text-white/40">
-			<a
-				href="/forgot-password"
-				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+			<a href="/forgot-password" class="font-medium text-brand-link no-underline hover:underline"
 				>Reenviar código</a
 			>
 			·
-			<a
-				href="/login"
-				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+			<a href="/login" class="font-medium text-brand-link no-underline hover:underline"
 				>Iniciar sesión</a
 			>
 		</p>

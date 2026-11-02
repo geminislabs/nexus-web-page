@@ -61,22 +61,33 @@ export function descripcionDe(brand, accion) {
 
 /**
  * Los tokens de un modo más los que la web deriva de ellos: el backend publica
- * `primary`, `accent` y la rampa, pero el botón principal de Nexus es un
- * degradado con brillo. Un token que el partner ya trae no se pisa.
+ * `primary`, `accent`, `link` y la rampa, pero el botón principal de Nexus es
+ * un degradado con brillo y el fondo del acceso lleva manchas de luz. Un token
+ * que el partner ya trae no se pisa.
  * @param {Record<string, string> | null | undefined} tokens
+ * @param {'light' | 'dark'} modo
  */
-function conDerivados(tokens) {
+function conDerivados(tokens, modo) {
 	if (!tokens) return {};
-	const primary = tokens['--color-brand-primary'];
+	const t = (/** @type {string} */ nombre) => tokens[`--color-brand-${nombre}`];
+	const primary = t('primary');
+	/** @type {Record<string, string>} */
 	const derivados = {};
 	if (primary) {
-		derivados['--color-brand-cta-from'] = tokens['--color-brand-accent'] || primary;
+		derivados['--color-brand-cta-from'] = t('accent') || primary;
 		derivados['--color-brand-cta-to'] = primary;
-		derivados['--color-brand-glow'] = tokens['--color-brand-400'] || primary;
+		derivados['--color-brand-glow'] = t('400') || primary;
+		derivados['--color-brand-link'] = primary;
+		derivados['--color-brand-focus'] = t('500') || primary;
 	}
-	if (tokens['--color-brand-on-primary']) {
-		derivados['--color-brand-on-cta'] = tokens['--color-brand-on-primary'];
+	if (t('on-primary')) {
+		derivados['--color-brand-on-cta'] = t('on-primary');
 	}
+	// Las manchas: claras sobre el fondo claro, casi negras sobre el oscuro.
+	const aura = modo === 'dark' ? ['900', '950', '900'] : ['200', '100', '300'];
+	aura.forEach((paso, i) => {
+		if (t(paso)) derivados[`--color-brand-aura-${i + 1}`] = t(paso);
+	});
 	return { ...derivados, ...tokens };
 }
 
@@ -93,11 +104,18 @@ function conDerivados(tokens) {
 export function estiloDeMarca(brand) {
 	const m = marcaOPorDefecto(brand);
 	if (m.isDefault || !m.tokens) return '';
-	/** @param {string} selector @param {Record<string, string> | null | undefined} tokens */
-	const bloque = (selector, tokens) => {
-		const vars = safeCssVars(conDerivados(tokens));
+	/**
+	 * @param {string} selector
+	 * @param {Record<string, string> | null | undefined} tokens
+	 * @param {'light' | 'dark'} modo
+	 */
+	const bloque = (selector, tokens, modo) => {
+		const vars = safeCssVars(conDerivados(tokens, modo));
 		return vars.length ? `${selector}{${vars.map(([k, v]) => `${k}:${v}`).join(';')}}` : '';
 	};
-	// Más específicos que el `:root` donde Tailwind declara el tema.
-	return bloque('html:root', m.tokens.light) + bloque('html.dark:root', m.tokens.dark);
+	// Más específicos que el `:root` donde Tailwind declara el tema y que los
+	// valores oscuros de Nexus (`:where(html.dark)` en `app.css`).
+	return (
+		bloque('html:root', m.tokens.light, 'light') + bloque('html.dark:root', m.tokens.dark, 'dark')
+	);
 }

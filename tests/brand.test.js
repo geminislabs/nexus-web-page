@@ -206,6 +206,41 @@ describe('estiloDeMarca', () => {
 		expect(oscuro).toContain('--color-brand-glow:#4883ff');
 	});
 
+	it('deriva enlace, foco y manchas del acceso según el modo', () => {
+		const css = estiloDeMarca({
+			name: 'Mero Mero',
+			isDefault: false,
+			tokens: {
+				light: {
+					'--color-brand-primary': '#2563eb',
+					'--color-brand-link': '#1e40af',
+					'--color-brand-100': '#e0eaff',
+					'--color-brand-200': '#c2d5ff',
+					'--color-brand-300': '#9bbaff',
+					'--color-brand-500': '#3b74f6'
+				},
+				dark: {
+					'--color-brand-primary': '#4883ff',
+					'--color-brand-900': '#1a2b5c',
+					'--color-brand-950': '#0f1938'
+				}
+			}
+		});
+		const [claro, oscuro] = css.split('html.dark:root');
+		// El enlace que publica el partner gana; el foco sale de la rampa.
+		expect(claro).toContain('--color-brand-link:#1e40af');
+		expect(claro).toContain('--color-brand-focus:#3b74f6');
+		expect(claro).toContain('--color-brand-aura-1:#c2d5ff');
+		expect(claro).toContain('--color-brand-aura-2:#e0eaff');
+		expect(claro).toContain('--color-brand-aura-3:#9bbaff');
+		// Sin `link` ni 500 en oscuro, los dos salen del primary.
+		expect(oscuro).toContain('--color-brand-link:#4883ff');
+		expect(oscuro).toContain('--color-brand-focus:#4883ff');
+		expect(oscuro).toContain('--color-brand-aura-1:#1a2b5c');
+		expect(oscuro).toContain('--color-brand-aura-2:#0f1938');
+		expect(oscuro).toContain('--color-brand-aura-3:#1a2b5c');
+	});
+
 	it('no deja pasar nada que pueda cerrar la etiqueta o colar otra regla', () => {
 		const css = estiloDeMarca({
 			name: 'X',

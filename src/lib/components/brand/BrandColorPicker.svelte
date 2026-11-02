@@ -72,7 +72,7 @@
 					{#if seed.key === 'accent'}
 						<button
 							type="button"
-							class="text-[11px] font-semibold text-emerald-700 hover:underline disabled:opacity-50 dark:text-emerald-300"
+							class="text-[11px] font-semibold text-brand-700 hover:underline disabled:opacity-50 dark:text-brand-300"
 							on:click={toggleAccent}
 							{disabled}
 						>
@@ -101,7 +101,7 @@
 								seed.key
 							]
 								? 'border-rose-400 focus-visible:ring-rose-500/40'
-								: 'border-slate-200 focus-visible:ring-emerald-500/40 dark:border-white/10'}"
+								: 'border-slate-200 focus-visible:ring-brand-500/40 dark:border-white/10'}"
 							value={form[seed.key]}
 							aria-invalid={errors[seed.key] ? 'true' : undefined}
 							use:shakeOn={errors[seed.key]}
