@@ -138,7 +138,7 @@
 			<header class="flex items-center gap-3 px-4 py-3">
 				<button
 					type="button"
-					class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-sky-400 dark:border-0 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1] dark:hover:text-white"
+					class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-brand-sky-400 dark:border-0 dark:bg-white/[0.06] dark:text-white/60 dark:hover:bg-white/[0.1] dark:hover:text-white"
 					on:click={close}
 					aria-label="Cerrar asistente"
 				>
@@ -187,7 +187,7 @@
 							<!-- Ignición -->
 							<button
 								type="button"
-								class="flex items-start gap-4 rounded-2xl border-2 p-4 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
+								class="flex items-start gap-4 rounded-2xl border-2 p-4 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-brand-sky-400
 						{wizard.type === 'ignition'
 									? 'border-blue-500 bg-blue-600/12'
 									: 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.12] dark:hover:bg-white/[0.08]'}"
@@ -217,7 +217,7 @@
 							<!-- Zona -->
 							<button
 								type="button"
-								class="flex items-start gap-4 rounded-2xl border-2 p-4 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
+								class="flex items-start gap-4 rounded-2xl border-2 p-4 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-brand-sky-400
 						{!canSelectZoneAlert
 									? 'cursor-not-allowed border-slate-200/70 bg-slate-50 opacity-60 dark:border-transparent dark:bg-white/[0.03]'
 									: wizard.type === 'zone'
@@ -268,7 +268,7 @@
 								{#each [{ value: 'on', label: 'Encendido', icon: 'mdi:lightning-bolt', color: 'blue' }, { value: 'off', label: 'Apagado', icon: 'mdi:engine-off-outline', color: 'slate' }] as opt (opt.value)}
 									<button
 										type="button"
-										class="flex flex-col items-center gap-3 rounded-2xl border-2 py-5 text-center transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
+										class="flex flex-col items-center gap-3 rounded-2xl border-2 py-5 text-center transition-all duration-150 focus-visible:outline-2 focus-visible:outline-brand-sky-400
 								{wizard.condition === opt.value
 											? 'border-blue-500 bg-blue-600 shadow-[0_4px_20px_rgba(37,99,235,0.4)]'
 											: 'border-slate-200 bg-white hover:border-slate-300 dark:border-transparent dark:bg-white/[0.06] dark:hover:border-white/[0.14]'}"
@@ -282,7 +282,7 @@
 								{#each [{ value: 'enter', label: 'Entrada', icon: 'mdi:location-enter', color: 'emerald' }, { value: 'exit', label: 'Salida', icon: 'mdi:location-exit', color: 'orange' }] as opt (opt.value)}
 									<button
 										type="button"
-										class="flex flex-col items-center gap-3 rounded-2xl border-2 py-5 text-center transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
+										class="flex flex-col items-center gap-3 rounded-2xl border-2 py-5 text-center transition-all duration-150 focus-visible:outline-2 focus-visible:outline-brand-sky-400
 								{wizard.condition === opt.value
 											? 'border-blue-500 bg-blue-600 shadow-[0_4px_20px_rgba(37,99,235,0.4)]'
 											: 'border-slate-200 bg-white hover:border-slate-300 dark:border-transparent dark:bg-white/[0.06] dark:hover:border-white/[0.14]'}"
@@ -325,7 +325,7 @@
 									{@const selected = wizard.units?.includes(vehicle.id)}
 									<button
 										type="button"
-										class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
+										class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-brand-sky-400
 								{selected
 											? 'border-blue-500 bg-blue-600/10'
 											: 'border-slate-200 bg-white hover:border-slate-300 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.1]'}"
@@ -412,7 +412,7 @@
 									{#each filteredH3Zones as zone (zone.id)}
 										<button
 											type="button"
-											class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-sky-400
+											class="flex items-center gap-3 rounded-[14px] border-2 px-3.5 py-3 text-left transition-all duration-150 focus-visible:outline-2 focus-visible:outline-brand-sky-400
 										{wizard.zone === zone.id
 												? 'border-blue-500 bg-blue-600/10'
 												: 'border-slate-200 bg-white hover:border-slate-300 dark:border-transparent dark:bg-white/[0.05] dark:hover:border-white/[0.1]'}"
@@ -506,7 +506,7 @@
 			{#if step > 1}
 				<button
 					type="button"
-					class="h-12 flex-1 rounded-[14px] border border-slate-300 bg-white text-[14px] font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-sky-400 dark:border-white/[0.14] dark:bg-white/[0.05] dark:text-white/65 dark:hover:bg-white/[0.09]"
+					class="h-12 flex-1 rounded-[14px] border border-slate-300 bg-white text-[14px] font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-brand-sky-400 dark:border-white/[0.14] dark:bg-white/[0.05] dark:text-white/65 dark:hover:bg-white/[0.09]"
 					on:click={handleBack}
 				>
 					Atrás
@@ -516,7 +516,7 @@
 			{#if step < STEPS && !(wizard.type === 'ignition' && step === 3)}
 				<button
 					type="button"
-					class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-blue-600 to-cyan-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-white/30 focus-visible:outline-2 focus-visible:outline-sky-400"
+					class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-brand-blue-600 to-brand-cyan-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-white/30 focus-visible:outline-2 focus-visible:outline-brand-sky-400"
 					disabled={!canNext}
 					on:click={handleNext}
 				>
@@ -526,7 +526,7 @@
 				{#if wizard.type === 'ignition' && step === 3}
 					<button
 						type="button"
-						class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-blue-600 to-cyan-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-white/30"
+						class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-brand-blue-600 to-brand-cyan-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-white/30"
 						disabled={!canNext}
 						on:click={handleNext}
 					>
@@ -535,7 +535,7 @@
 				{:else}
 					<button
 						type="button"
-						class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-emerald-600 to-teal-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(5,150,105,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-white/30 focus-visible:outline-2 focus-visible:outline-sky-400"
+						class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-brand-600 to-brand-teal-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(5,150,105,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:bg-zinc-800 dark:disabled:text-white/30 focus-visible:outline-2 focus-visible:outline-brand-sky-400"
 						disabled={!wizard.name?.trim()}
 						on:click={handleSave}
 					>

@@ -308,7 +308,7 @@
 			>
 			<button
 				type="button"
-				class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-blue-600 to-cyan-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+				class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-brand-blue-600 to-brand-cyan-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
 				disabled={!editName.trim()}
 				on:click={() => (step = 2)}
 			>
@@ -322,7 +322,7 @@
 			>
 			<button
 				type="button"
-				class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-emerald-600 to-teal-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(5,150,105,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+				class="h-12 flex-[2] rounded-[14px] bg-gradient-to-br from-brand-600 to-brand-teal-600 text-[14px] font-bold text-white shadow-[0_4px_16px_rgba(5,150,105,0.4)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
 				disabled={!canSave}
 				on:click={save}
 			>
