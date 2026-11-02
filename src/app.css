@@ -40,6 +40,14 @@
 	--color-brand-aura-1: #bbf7d0;
 	--color-brand-aura-2: #a7f3d0;
 	--color-brand-aura-3: #86efac;
+
+	/* Final del degradado del avatar del menú (teal-600). */
+	--color-brand-deep: oklch(60% 0.118 184.704);
+
+	/* Barra de pestañas del dashboard: pestaña activa (sky-600) y su raya
+	   (sky-500). En oscuro las dos son cyan-400. */
+	--color-brand-nav: oklch(58.8% 0.158 241.966);
+	--color-brand-nav-bar: oklch(68.5% 0.169 237.323);
 }
 
 /*
@@ -51,6 +59,8 @@
 	--color-brand-aura-1: #1a4d2a;
 	--color-brand-aura-2: #0d3322;
 	--color-brand-aura-3: #163d1e;
+	--color-brand-nav: oklch(78.9% 0.154 211.53);
+	--color-brand-nav-bar: oklch(78.9% 0.154 211.53);
 }
 
 /* === Variables globales === */

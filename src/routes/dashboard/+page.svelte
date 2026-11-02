@@ -381,7 +381,7 @@
 			<header class="mb-1 flex w-10 shrink-0 flex-col items-center justify-center">
 				<a
 					href="/dashboard"
-					class="flex h-[34px] w-10 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080b16]"
+					class="flex h-[34px] w-10 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080b16]"
 				>
 					<img
 						src={logoUrl}
@@ -700,7 +700,7 @@
 					role="status"
 				>
 					<p
-						class="w-full rounded-2xl border border-emerald-500/35 bg-slate-900/92 px-4 py-2.5 text-center text-[13px] font-semibold text-white shadow-lg backdrop-blur-md dark:border-emerald-400/30 dark:bg-black/88"
+						class="w-full rounded-2xl border border-brand-500/35 bg-slate-900/92 px-4 py-2.5 text-center text-[13px] font-semibold text-white shadow-lg backdrop-blur-md dark:border-brand-400/30 dark:bg-black/88"
 					>
 						{$zoneUiToast}
 					</p>
