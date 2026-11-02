@@ -59,7 +59,7 @@ export function descripcionDe(brand, accion) {
 		: `${accion} ${m.name}, monitorización y gestión de flotas.`;
 }
 
-const FAMILIAS_DEL_MAPA = ['sky', 'cyan', 'blue', 'teal'];
+const FAMILIAS_DE_IDENTIDAD = ['sky', 'cyan', 'blue', 'teal', 'green'];
 const PASOS = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];
 
 /**
@@ -96,9 +96,9 @@ function conDerivados(tokens, modo) {
 	aura.forEach((paso, i) => {
 		if (t(paso)) derivados[`--color-brand-aura-${i + 1}`] = t(paso);
 	});
-	// El mapa y el seguimiento usan otras familias en Nexus; el partner solo tiene
-	// una rampa, así que las cuatro salen de ella, paso por paso.
-	for (const familia of FAMILIAS_DEL_MAPA) {
+	// Nexus pinta parte de su identidad con otras familias de Tailwind; el partner
+	// solo tiene una rampa, así que todas salen de ella, paso por paso.
+	for (const familia of FAMILIAS_DE_IDENTIDAD) {
 		for (const paso of PASOS) {
 			if (t(paso)) derivados[`--color-brand-${familia}-${paso}`] = t(paso);
 		}

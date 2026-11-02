@@ -241,7 +241,7 @@ describe('estiloDeMarca', () => {
 		expect(oscuro).toContain('--color-brand-aura-3:#1a2b5c');
 	});
 
-	it('pinta las familias del mapa con la rampa del partner, paso por paso', () => {
+	it('pinta las otras familias de identidad con la rampa del partner, paso por paso', () => {
 		const css = estiloDeMarca({
 			name: 'Mero Mero',
 			isDefault: false,
@@ -250,7 +250,7 @@ describe('estiloDeMarca', () => {
 				dark: {}
 			}
 		});
-		for (const familia of ['sky', 'cyan', 'blue', 'teal']) {
+		for (const familia of ['sky', 'cyan', 'blue', 'teal', 'green']) {
 			expect(css).toContain(`--color-brand-${familia}-500:#3b74f6`);
 			expect(css).toContain(`--color-brand-${familia}-700:#1d3fa8`);
 			// Un paso que el partner no publica no se inventa: queda el de Nexus.

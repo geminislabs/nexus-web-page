@@ -49,9 +49,10 @@
 	--color-brand-nav: oklch(58.8% 0.158 241.966);
 	--color-brand-nav-bar: oklch(68.5% 0.169 237.323);
 
-	/* Las familias con las que se pinta el mapa y el seguimiento (controles, panel de
-	   capas, botón de centrar). En Nexus son sky, cyan, blue y teal de Tailwind, tal
-	   cual; a un partner las cuatro se le pintan con su rampa (`estiloDeMarca`). */
+	/* Otras familias de Tailwind que hacen de identidad: el mapa y el seguimiento
+	   (sky, cyan, blue), y los degradados de los botones de guardar (teal, green). En
+	   Nexus son las de Tailwind, tal cual; a un partner todas se le pintan con su rampa
+	   (`estiloDeMarca`). */
 	--color-brand-sky-50: oklch(97.7% 0.013 236.62);
 	--color-brand-sky-100: oklch(95.1% 0.026 236.824);
 	--color-brand-sky-200: oklch(90.1% 0.058 230.902);
@@ -99,6 +100,18 @@
 	--color-brand-teal-800: oklch(43.7% 0.078 188.216);
 	--color-brand-teal-900: oklch(38.6% 0.063 188.416);
 	--color-brand-teal-950: oklch(27.7% 0.046 192.524);
+
+	--color-brand-green-50: oklch(98.2% 0.018 155.826);
+	--color-brand-green-100: oklch(96.2% 0.044 156.743);
+	--color-brand-green-200: oklch(92.5% 0.084 155.995);
+	--color-brand-green-300: oklch(87.1% 0.15 154.449);
+	--color-brand-green-400: oklch(79.2% 0.209 151.711);
+	--color-brand-green-500: oklch(72.3% 0.219 149.579);
+	--color-brand-green-600: oklch(62.7% 0.194 149.214);
+	--color-brand-green-700: oklch(52.7% 0.154 150.069);
+	--color-brand-green-800: oklch(44.8% 0.119 151.328);
+	--color-brand-green-900: oklch(39.3% 0.095 152.535);
+	--color-brand-green-950: oklch(26.6% 0.065 152.934);
 }
 
 /*

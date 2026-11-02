@@ -116,7 +116,7 @@
 	<!-- Hero strip -->
 	<section
 		in:rise|global
-		class="relative mb-6 overflow-hidden rounded-3xl border border-brand-500/25 bg-gradient-to-br from-brand-50 via-white to-sky-50 p-5 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.06)] dark:border-brand-500/20 dark:from-[#0a1628] dark:via-[#0d1f2e] dark:to-[#06261c] dark:text-white dark:shadow-[0_20px_50px_rgba(2,8,20,0.35)] sm:p-7"
+		class="relative mb-6 overflow-hidden rounded-3xl border border-brand-500/25 bg-gradient-to-br from-brand-50 via-white to-brand-sky-50 p-5 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.06)] dark:border-brand-500/20 dark:from-[#0a1628] dark:via-[#0d1f2e] dark:to-[#06261c] dark:text-white dark:shadow-[0_20px_50px_rgba(2,8,20,0.35)] sm:p-7"
 		aria-label="Resumen principal"
 	>
 		<div

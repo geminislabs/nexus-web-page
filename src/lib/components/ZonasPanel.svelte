@@ -358,8 +358,8 @@
 							<span
 								class="hidden rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums sm:inline {$theme ===
 								'light'
-									? 'border-sky-200/90 bg-sky-50 text-sky-800'
-									: 'border-sky-500/30 bg-sky-500/10 text-sky-200'}"
+									? 'border-brand-sky-200/90 bg-brand-sky-50 text-brand-sky-800'
+									: 'border-brand-sky-500/30 bg-brand-sky-500/10 text-brand-sky-200'}"
 								aria-live="polite"
 							>
 								{$selectedH3Cells.length} sel.
@@ -391,8 +391,8 @@
 						<p
 							class="rounded-full border px-4 py-2 text-[13px] font-semibold shadow-md backdrop-blur-sm {$theme ===
 							'light'
-								? 'border-sky-500/60 bg-white/90 text-sky-950'
-								: 'border-sky-500/45 bg-slate-900/90 text-sky-100'}"
+								? 'border-brand-sky-500/60 bg-white/90 text-brand-sky-950'
+								: 'border-brand-sky-500/45 bg-slate-900/90 text-brand-sky-100'}"
 						>
 							{$selectedH3Cells.length} hexágono{$selectedH3Cells.length !== 1 ? 's' : ''} seleccionado{$selectedH3Cells.length !==
 							1
@@ -408,7 +408,7 @@
 							type="button"
 							class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-0 text-white shadow-[0_6px_22px_rgba(16,185,129,0.55)] ring-2 ring-white/25 transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none {fabSaveDisabled
 								? 'bg-gradient-to-b from-slate-400 to-slate-500'
-								: 'bg-gradient-to-b from-emerald-400 to-green-600'}"
+								: 'bg-gradient-to-b from-brand-400 to-brand-green-600'}"
 							disabled={fabSaveDisabled}
 							on:click={openGuardarSheet}
 							aria-label="Continuar para guardar la zona"
@@ -420,7 +420,7 @@
 							type="button"
 							class="flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition hover:brightness-110 active:scale-95 ring-2 ring-white/20 {$h3EraserMode
 								? 'bg-gradient-to-b from-orange-500 to-amber-700 shadow-[0_8px_26px_rgba(234,88,12,0.55)]'
-								: 'bg-gradient-to-b from-sky-400 to-blue-600 shadow-[0_8px_26px_rgba(0,149,255,0.55)]'}"
+								: 'bg-gradient-to-b from-brand-sky-400 to-brand-blue-600 shadow-[0_8px_26px_rgba(0,149,255,0.55)]'}"
 							on:click={() => h3Actions.toggleEraserMode()}
 							aria-pressed={$h3EraserMode}
 							aria-label={$h3EraserMode ? 'Desactivar modo borrador' : 'Activar modo borrador'}
@@ -453,8 +453,8 @@
 						<p
 							class="rounded-full border px-4 py-2 text-[12px] font-semibold tabular-nums shadow-md backdrop-blur-md {$theme ===
 							'light'
-								? 'border-sky-500/50 bg-white/92 text-sky-950'
-								: 'border-sky-500/40 bg-slate-900/92 text-sky-100'}"
+								? 'border-brand-sky-500/50 bg-white/92 text-brand-sky-950'
+								: 'border-brand-sky-500/40 bg-slate-900/92 text-brand-sky-100'}"
 							aria-live="polite"
 						>
 							{$selectedH3Cells.length} hexágono{$selectedH3Cells.length !== 1 ? 's' : ''} seleccionado{$selectedH3Cells.length !==
@@ -502,7 +502,7 @@
 								type="button"
 								class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition hover:brightness-110 active:scale-95 ring-2 ring-white/20 {$h3EraserMode
 									? 'bg-gradient-to-b from-orange-500 to-amber-700 shadow-[0_6px_20px_rgba(234,88,12,0.45)]'
-									: 'bg-gradient-to-b from-sky-400 to-blue-600 shadow-[0_6px_20px_rgba(0,149,255,0.45)]'}"
+									: 'bg-gradient-to-b from-brand-sky-400 to-brand-blue-600 shadow-[0_6px_20px_rgba(0,149,255,0.45)]'}"
 								on:click={() => h3Actions.toggleEraserMode()}
 								aria-pressed={$h3EraserMode}
 								aria-label={$h3EraserMode ? 'Desactivar modo borrador' : 'Activar modo borrador'}
@@ -518,7 +518,7 @@
 								type="button"
 								class="ml-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-0 text-white shadow-[0_6px_20px_rgba(16,185,129,0.5)] ring-2 ring-white/25 transition hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none {fabSaveDisabled
 									? 'bg-gradient-to-b from-slate-400 to-slate-500'
-									: 'bg-gradient-to-b from-emerald-400 to-green-600'}"
+									: 'bg-gradient-to-b from-brand-400 to-brand-green-600'}"
 								disabled={fabSaveDisabled}
 								on:click={openGuardarSheet}
 								aria-label="Continuar para guardar la zona"
@@ -559,7 +559,7 @@
 								? $theme === 'light'
 									? 'border-slate-200 bg-slate-100 text-slate-400'
 									: 'border-white/10 bg-white/[0.06] text-white/35'
-								: 'border-sky-500/50 bg-sky-500 text-white shadow-sm hover:bg-sky-600'}"
+								: 'border-brand-sky-500/50 bg-brand-sky-500 text-white shadow-sm hover:bg-brand-sky-600'}"
 							disabled={sheetGuardarDisabled}
 							on:click={confirmGuardarZona}
 						>
@@ -578,7 +578,7 @@
 						>
 							<Icon
 								icon="mdi:tag-outline"
-								class="h-5 w-5 shrink-0 text-sky-500"
+								class="h-5 w-5 shrink-0 text-brand-sky-500"
 								aria-hidden="true"
 							/>
 							<input
@@ -595,7 +595,7 @@
 						<label class="flex items-start gap-3 px-3 py-3.5">
 							<Icon
 								icon="mdi:format-align-left"
-								class="mt-0.5 h-5 w-5 shrink-0 text-sky-500"
+								class="mt-0.5 h-5 w-5 shrink-0 text-brand-sky-500"
 								aria-hidden="true"
 							/>
 							<textarea
@@ -683,14 +683,14 @@
 								<div
 									class="flex items-stretch gap-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-white/[0.08] dark:bg-[#121a26]"
 								>
-									<div class="w-1 shrink-0 bg-sky-500" aria-hidden="true"></div>
+									<div class="w-1 shrink-0 bg-brand-sky-500" aria-hidden="true"></div>
 									<div
 										class="flex min-w-0 flex-1 items-center gap-3 py-3 pl-3 pr-2"
 										role="group"
 										aria-label={z.name}
 									>
 										<div
-											class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sky-500/20 text-sky-400"
+											class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-sky-500/20 text-brand-sky-400"
 											aria-hidden="true"
 										>
 											<Icon icon="mdi:map-marker" class="h-6 w-6" />
@@ -826,7 +826,7 @@
 			</h1>
 			<button
 				type="button"
-				class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-sky-600 hover:bg-slate-100 dark:border-white/12 dark:bg-zinc-900 dark:text-sky-400 dark:hover:bg-zinc-800"
+				class="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-brand-sky-600 hover:bg-slate-100 dark:border-white/12 dark:bg-zinc-900 dark:text-brand-sky-400 dark:hover:bg-zinc-800"
 				on:click={saveEditZone}
 			>
 				Guardar

@@ -46,7 +46,7 @@
 			active: tab,
 			edge: 'bottom',
 			inset: 12,
-			class: 'z-10 h-0.5 rounded-full bg-emerald-500'
+			class: 'z-10 h-0.5 rounded-full bg-brand-500'
 		}}
 	>
 		{#each tabs as t (t.id)}
@@ -54,9 +54,9 @@
 				type="button"
 				role="tab"
 				aria-selected={tab === t.id}
-				class="relative flex flex-1 items-center justify-center gap-1.5 rounded-t-xl px-2 py-2.5 text-[12px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50
+				class="relative flex flex-1 items-center justify-center gap-1.5 rounded-t-xl px-2 py-2.5 text-[12px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50
 					{tab === t.id
-					? 'bg-slate-50 text-emerald-800 dark:bg-white/[0.05] dark:text-emerald-300'
+					? 'bg-slate-50 text-brand-800 dark:bg-white/[0.05] dark:text-brand-300'
 					: 'text-slate-500 hover:bg-slate-50/80 hover:text-slate-800 dark:text-white/40 dark:hover:bg-white/[0.04] dark:hover:text-white/75'}"
 				on:click={() => selectTab(t.id)}
 			>
@@ -65,7 +65,7 @@
 				<span
 					class="rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums
 						{tab === t.id
-						? 'bg-emerald-500/15 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200'
+						? 'bg-brand-500/15 text-brand-800 dark:bg-brand-500/20 dark:text-brand-200'
 						: 'bg-slate-200/80 text-slate-600 dark:bg-white/10 dark:text-white/45'}"
 				>
 					{t.count()}
