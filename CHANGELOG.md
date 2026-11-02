@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.34.0] - 2026-11-02
+
 ### Added
 
 - **El resto de la identidad con los colores del partner.** La red H3 (botón, panel, deslizador y nivel), los informes (selector de unidades, granularidad activa y botón de generar), los ajustes (campos, avatar, «Agregar unidad», guardar y cambiar contraseña), los selectores de icono y de color de la unidad, la campana de alarmas del panel de administración, los puntos de la bienvenida, el botón «Abrir en la app» de la invitación y el borde de la tarjeta de acceso. Lo que queda en verde, cyan o sky es estado, categoría o dato y no cambia con la marca. Con Nexus todo se ve igual que antes
