@@ -241,6 +241,28 @@ describe('estiloDeMarca', () => {
 		expect(oscuro).toContain('--color-brand-aura-3:#1a2b5c');
 	});
 
+	it('deriva la barra de pestañas y el avatar', () => {
+		const css = estiloDeMarca({
+			name: 'Mero Mero',
+			isDefault: false,
+			tokens: {
+				light: {
+					'--color-brand-primary': '#2563eb',
+					'--color-brand-link': '#1e40af',
+					'--color-brand-700': '#1d3fa8'
+				},
+				dark: { '--color-brand-primary': '#4883ff' }
+			}
+		});
+		const [claro, oscuro] = css.split('html.dark:root');
+		// La pestaña activa es texto: usa el `link`, que ya pasó el contraste.
+		expect(claro).toContain('--color-brand-nav:#1e40af');
+		expect(claro).toContain('--color-brand-nav-bar:#2563eb');
+		expect(claro).toContain('--color-brand-deep:#1d3fa8');
+		expect(oscuro).toContain('--color-brand-nav:#4883ff');
+		expect(oscuro).toContain('--color-brand-deep:#4883ff');
+	});
+
 	it('no deja pasar nada que pueda cerrar la etiqueta o colar otra regla', () => {
 		const css = estiloDeMarca({
 			name: 'X',

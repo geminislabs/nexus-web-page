@@ -598,7 +598,7 @@
 						{#if isMaster && vehicleSubView === 'detail' && vehicleDetail}
 							<button
 								type="button"
-								class="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+								class="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-brand-300 bg-brand-50 px-2.5 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-100 dark:border-brand-500/25 dark:bg-brand-600/12 dark:text-brand-300 dark:hover:bg-brand-600/20"
 								on:click={() => openEditVehicle(vehicleDetail)}
 							>
 								<Icon icon="mdi:pencil-outline" width={13} aria-hidden="true" />Editar
@@ -643,14 +643,14 @@
 								<input
 									type="search"
 									placeholder="Buscar unidad, conductor…"
-									class="h-8 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-10 text-[12px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-emerald-500/50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white dark:placeholder:text-white/22"
+									class="h-8 w-full rounded-lg border border-slate-200 bg-white pl-7 pr-10 text-[12px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-brand-500/50 dark:border-white/[0.1] dark:bg-white/[0.05] dark:text-white dark:placeholder:text-white/22"
 									bind:value={filterSearch}
 								/>
 								<button
 									type="button"
 									class="absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md transition-colors {showAdvancedFilters ||
 									advancedFilterCount > 0
-										? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+										? 'bg-brand-500/15 text-brand-700 dark:text-brand-300'
 										: 'text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white/70'}"
 									on:click={() => (showAdvancedFilters = !showAdvancedFilters)}
 									aria-expanded={showAdvancedFilters}
@@ -660,7 +660,7 @@
 									<Icon icon="mdi:filter-variant" width={15} aria-hidden="true" />
 									{#if advancedFilterCount > 0}
 										<span
-											class="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-emerald-600 px-0.5 text-[8px] font-bold text-white"
+											class="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-brand-primary px-0.5 text-[8px] font-bold text-brand-on-primary"
 											>{advancedFilterCount}</span
 										>
 									{/if}
@@ -673,7 +673,7 @@
 									type="button"
 									class="flex h-8 w-8 items-center justify-center transition-colors {vehicleView ===
 									'grid'
-										? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-300'
+										? 'bg-brand-100 text-brand-700 dark:bg-brand-600/20 dark:text-brand-300'
 										: 'text-slate-500 hover:text-slate-800 dark:text-white/35 dark:hover:text-white/60'}"
 									on:click={() => (vehicleView = 'grid')}
 									title="Vista tarjeta"
@@ -685,7 +685,7 @@
 									type="button"
 									class="flex h-8 w-8 items-center justify-center transition-colors {vehicleView ===
 									'list'
-										? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-300'
+										? 'bg-brand-100 text-brand-700 dark:bg-brand-600/20 dark:text-brand-300'
 										: 'text-slate-500 hover:text-slate-800 dark:text-white/35 dark:hover:text-white/60'}"
 									on:click={() => (vehicleView = 'list')}
 									title="Vista lista"
@@ -696,7 +696,7 @@
 							</div>
 							<button
 								type="button"
-								class="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-50 px-2 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:opacity-40 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+								class="flex h-8 shrink-0 items-center gap-1 rounded-lg border border-brand-500/25 bg-brand-50 px-2 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-100 disabled:opacity-40 dark:bg-brand-600/12 dark:text-brand-300 dark:hover:bg-brand-600/20"
 								on:click={refreshPositions}
 								disabled={$loadingPositions}
 							>
@@ -752,7 +752,7 @@
 						</div>
 						{#if showAdvancedFilters}
 							<div
-								class="space-y-2.5 rounded-xl border border-emerald-500/20 bg-white p-3 dark:border-emerald-400/20 dark:bg-white/[0.04]"
+								class="space-y-2.5 rounded-xl border border-brand-500/20 bg-white p-3 dark:border-brand-400/20 dark:bg-white/[0.04]"
 							>
 								<div class="flex items-center justify-between gap-2">
 									<p
@@ -762,7 +762,7 @@
 									</p>
 									<button
 										type="button"
-										class="text-[10px] font-semibold text-emerald-700 hover:underline dark:text-emerald-300"
+										class="text-[10px] font-semibold text-brand-700 hover:underline dark:text-brand-300"
 										on:click={clearAdvancedFilters}
 										disabled={advancedFilterCount === 0}
 									>
@@ -861,7 +861,7 @@
 								class="flex items-center justify-center gap-3 py-12 text-slate-500 dark:text-white/38"
 							>
 								<span
-									class="h-5 w-5 animate-spin rounded-full border-2 border-emerald-600/20 border-t-emerald-500"
+									class="h-5 w-5 animate-spin rounded-full border-2 border-brand-600/20 border-t-brand-500"
 								></span>
 								<span class="text-[12px]">Cargando unidades…</span>
 							</div>
@@ -940,7 +940,7 @@
 											>
 												<button
 													type="button"
-													class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+													class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-primary text-brand-on-primary shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
 													on:click={() => centerOnVehicle(v)}
 													disabled={!(v.latitude || v.lat) || !(v.longitude || v.lng)}
 													aria-label="Centrar el mapa en {v.name}"
@@ -970,7 +970,7 @@
 												{#if isMaster}
 													<button
 														type="button"
-														class="group flex h-8 max-w-8 items-center overflow-hidden rounded-lg border border-emerald-300 bg-emerald-50 px-2 text-emerald-700 transition-all duration-200 hover:max-w-[7rem] hover:bg-emerald-100 focus-visible:max-w-[7rem] dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+														class="group flex h-8 max-w-8 items-center overflow-hidden rounded-lg border border-brand-300 bg-brand-50 px-2 text-brand-700 transition-all duration-200 hover:max-w-[7rem] hover:bg-brand-100 focus-visible:max-w-[7rem] dark:border-brand-500/25 dark:bg-brand-600/12 dark:text-brand-300 dark:hover:bg-brand-600/20"
 														on:click={() => openEditVehicle(v)}
 														disabled={actionLoading}
 														aria-label="Editar"
@@ -1104,7 +1104,7 @@
 										</div>
 										<button
 											type="button"
-											class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40"
+											class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-primary text-brand-on-primary hover:bg-brand-700 disabled:opacity-40"
 											on:click={() => centerOnVehicle(v)}
 											disabled={!(v.latitude || v.lat) || !(v.longitude || v.lng)}
 											aria-label="Centrar mapa en {v.name}"
@@ -1123,7 +1123,7 @@
 										{#if isMaster}
 											<button
 												type="button"
-												class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-emerald-600/12 dark:text-emerald-300 dark:hover:bg-emerald-600/20"
+												class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-brand-300 bg-brand-50 text-brand-700 hover:bg-brand-100 dark:border-brand-500/25 dark:bg-brand-600/12 dark:text-brand-300 dark:hover:bg-brand-600/20"
 												on:click={() => openEditVehicle(v)}
 												title="Editar"
 												disabled={actionLoading}
@@ -1170,7 +1170,7 @@
 										type="button"
 										class="flex h-7 min-w-7 items-center justify-center rounded-lg border px-1.5 text-[11px] font-semibold transition-colors {safePage ===
 										p
-											? 'border-emerald-500/40 bg-emerald-600 text-white'
+											? 'border-brand-500/40 bg-brand-primary text-brand-on-primary'
 											: 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-white/[0.09] dark:bg-white/[0.04] dark:text-white/55 dark:hover:bg-white/[0.08]'}"
 										on:click={() => (vehiclePage = p)}
 										aria-current={safePage === p ? 'page' : undefined}

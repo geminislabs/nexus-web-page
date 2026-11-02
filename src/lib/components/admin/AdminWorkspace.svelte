@@ -188,7 +188,7 @@
 					on:click|stopPropagation={() => (showUserMenu = !showUserMenu)}
 				>
 					<span
-						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-[13px] font-bold text-white"
+						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-deep text-[13px] font-bold text-white"
 						aria-hidden="true">{initial}</span
 					>
 					<span class="hidden min-w-0 sm:block">

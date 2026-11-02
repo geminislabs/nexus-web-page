@@ -53,7 +53,7 @@
 			active: $activeTab,
 			edge: 'top',
 			inset: 24,
-			class: 'h-[3px] rounded-b-full bg-sky-500 dark:bg-cyan-400'
+			class: 'h-[3px] rounded-b-full bg-brand-nav-bar'
 		}}
 	>
 		{#each visibleTabs as tab (tab.id)}
@@ -61,9 +61,9 @@
 				type="button"
 				id={`bottom-tab-${tab.id}`}
 				role="tab"
-				class="relative flex min-h-[3.5rem] flex-1 flex-col items-center justify-center gap-1 border-0 bg-transparent px-1 py-2 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 dark:focus-visible:outline-cyan-400 {$activeTab ===
+				class="relative flex min-h-[3.5rem] flex-1 flex-col items-center justify-center gap-1 border-0 bg-transparent px-1 py-2 text-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-nav-bar {$activeTab ===
 				tab.id
-					? 'text-sky-600 dark:text-cyan-400'
+					? 'text-brand-nav'
 					: 'text-slate-400 hover:text-slate-600 dark:text-white/45 dark:hover:text-white/70'}"
 				aria-selected={$activeTab === tab.id}
 				tabindex={$activeTab === tab.id ? 0 : -1}
@@ -85,7 +85,7 @@
 				</span>
 				<span
 					class="text-[10px] font-medium tracking-wide {$activeTab === tab.id
-						? 'text-sky-600 dark:text-cyan-400'
+						? 'text-brand-nav'
 						: 'text-slate-400 dark:text-white/45'}">{tab.label}</span
 				>
 			</button>

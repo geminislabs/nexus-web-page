@@ -79,6 +79,11 @@ function conDerivados(tokens, modo) {
 		derivados['--color-brand-glow'] = t('400') || primary;
 		derivados['--color-brand-link'] = primary;
 		derivados['--color-brand-focus'] = t('500') || primary;
+		derivados['--color-brand-deep'] = t('700') || primary;
+		// La pestaña activa es texto sobre el fondo: el `link` ya pasó la
+		// medición de contraste al publicar.
+		derivados['--color-brand-nav'] = t('link') || primary;
+		derivados['--color-brand-nav-bar'] = primary;
 	}
 	if (t('on-primary')) {
 		derivados['--color-brand-on-cta'] = t('on-primary');
