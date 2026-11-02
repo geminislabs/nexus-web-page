@@ -9,11 +9,12 @@
 	import { routeTransition } from '$lib/motion/routeTransition.js';
 
 	import { apiService } from '$lib/services/api.js';
-	import { marcaOPorDefecto } from '$lib/brand.js';
+	import { estiloDeMarca, marcaOPorDefecto } from '$lib/brand.js';
 
 	let { children, data } = $props();
 
 	const marca = $derived(marcaOPorDefecto(data?.brand));
+	const estiloMarca = $derived(estiloDeMarca(data?.brand));
 
 	onNavigate(routeTransition);
 
@@ -42,6 +43,11 @@
 <svelte:head>
 	<link rel="icon" href={marca.faviconUrl || favicon} />
 	<meta name="application-name" content={marca.isDefault ? 'NEXUS' : marca.name} />
+	{#if estiloMarca}
+		<!-- estiloDeMarca solo deja pasar `--color-brand-*: #rrggbb`. -->
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+		{@html `<style data-nexus-brand>${estiloMarca}</style>`}
+	{/if}
 </svelte:head>
 
 {@render children?.()}
