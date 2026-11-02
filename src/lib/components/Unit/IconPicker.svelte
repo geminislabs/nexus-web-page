@@ -45,9 +45,9 @@
 		class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 shadow-sm transition-all duration-200 group dark:border-white/15 dark:bg-white/[0.08]"
 		class:cursor-pointer={editable}
 		class:cursor-default={!editable}
-		class:hover:border-cyan-400={editable}
+		class:hover:border-brand-cyan-400={editable}
 		class:ring-2={isOpen}
-		class:ring-cyan-400={isOpen}
+		class:ring-brand-cyan-400={isOpen}
 		on:click|stopPropagation={toggleDropdown}
 		title={editable ? 'Cambiar icono' : 'Icono de unidad'}
 	>
@@ -87,7 +87,7 @@
 						type="button"
 						class="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 transition-all duration-200 hover:scale-105 dark:border-white/15 dark:bg-white/[0.08] {currentIcon ===
 						slug
-							? 'border-cyan-400 ring-2 ring-cyan-400'
+							? 'border-brand-cyan-400 ring-2 ring-brand-cyan-400'
 							: ''}"
 						on:click={() => selectIcon(slug)}
 						title={slug}

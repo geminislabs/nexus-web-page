@@ -124,7 +124,7 @@
 			aria-hidden="true"
 		></div>
 		<div
-			class="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-sky-400/20 blur-3xl dark:bg-sky-400/15"
+			class="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-brand-sky-400/20 blur-3xl dark:bg-brand-sky-400/15"
 			aria-hidden="true"
 		></div>
 		<div class="relative flex flex-wrap items-end justify-between gap-4">
@@ -262,7 +262,7 @@
 							class="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2.5 dark:border-white/[0.06] dark:bg-white/[0.03]"
 						>
 							<span
-								class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-sky-600 dark:text-sky-300"
+								class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-sky-500/15 text-brand-sky-600 dark:text-brand-sky-300"
 								aria-hidden="true"
 							>
 								<Icon icon="mdi:bell" width={16} />

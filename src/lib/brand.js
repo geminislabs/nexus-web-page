@@ -87,6 +87,8 @@ function conDerivados(tokens, modo) {
 		// medición de contraste al publicar.
 		derivados['--color-brand-nav'] = t('link') || primary;
 		derivados['--color-brand-nav-bar'] = primary;
+		derivados['--color-brand-solid'] = t('600') || primary;
+		derivados['--color-brand-solid-hover'] = t('700') || primary;
 	}
 	if (t('on-primary')) {
 		derivados['--color-brand-on-cta'] = t('on-primary');

@@ -11,8 +11,7 @@
 <div class="min-h-screen flex items-center justify-center bg-app">
 	<div class="text-center">
 		<div
-			class="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
-			style="border-color: var(--accent-cyan)"
+			class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-solid mx-auto mb-4"
 		></div>
 		<p class="text-app">Redirigiendo a Login...</p>
 	</div>

@@ -93,7 +93,7 @@
 			{#each slides as slide, i (slide.id ?? i)}
 				<span
 					class="h-2 rounded-full transition-all duration-300 {i === currentPage
-						? 'w-6 bg-cyan-400'
+						? 'w-6 bg-brand-cyan-400'
 						: 'w-2 bg-white/25'}"
 				></span>
 			{/each}

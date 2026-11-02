@@ -47,7 +47,7 @@
 		<div class="flex w-full flex-col gap-3">
 			<a
 				href={enlaceDeLaAppParaInvitacion(token)}
-				class="rounded-xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-sky-700 dark:bg-[#00a6c0] dark:hover:bg-[#0090a8]"
+				class="rounded-xl bg-brand-sky-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-sky-700 dark:bg-brand-solid dark:hover:bg-brand-solid-hover"
 			>
 				Abrir en la app
 			</a>

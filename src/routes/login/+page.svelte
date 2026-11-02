@@ -94,7 +94,7 @@
 	></div>
 
 	<main
-		class="relative z-10 flex w-[min(420px,92vw)] flex-col items-center rounded-[20px] border border-slate-200 bg-white px-8 pb-6 pt-8 shadow-xl backdrop-blur-xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-sky-500/50 hover:shadow-2xl dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] dark:hover:border-[#00a6c0] dark:hover:shadow-[0_15px_30px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
+		class="relative z-10 flex w-[min(420px,92vw)] flex-col items-center rounded-[20px] border border-slate-200 bg-white px-8 pb-6 pt-8 shadow-xl backdrop-blur-xl transition-all duration-300 ease-in-out hover:-translate-y-1 hover:border-brand-sky-500/50 hover:shadow-2xl dark:border-white/20 dark:bg-white/[0.08] dark:shadow-[0_8px_32px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.1)] dark:hover:border-brand-solid dark:hover:shadow-[0_15px_30px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.2)]"
 		aria-labelledby="login-heading"
 	>
 		<div

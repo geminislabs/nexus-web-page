@@ -51,7 +51,7 @@
 	<button
 		type="button"
 		in:rise|global={{ delay }}
-		class="group relative flex w-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-emerald-300/60 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:border-white/[0.08] dark:bg-[#0d1424] dark:shadow-none dark:hover:border-emerald-400/30"
+		class="group relative flex w-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-4 text-left shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-brand-300/60 hover:shadow-[0_16px_40px_rgba(15,23,42,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 dark:border-white/[0.08] dark:bg-[#0d1424] dark:shadow-none dark:hover:border-brand-400/30"
 		on:click={onClick}
 	>
 		{@render body()}
