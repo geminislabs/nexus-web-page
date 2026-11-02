@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **El botón principal toma los colores del partner.** Quien entra por el dominio de un partner ve el botón principal (iniciar sesión, registro, recuperar y restablecer contraseña, bienvenida, zonas y alertas) con el degradado y el brillo de su marca. Es el primer paso de la opción B: solo cambian elementos de identidad; los colores de estado, como el verde de «en línea», no cambian nunca. Con Nexus todo se ve igual que antes
+
 ## [1.33.0] - 2026-10-29
 
 ### Added

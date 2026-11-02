@@ -102,7 +102,7 @@
 		<div class="flex w-full max-w-sm flex-col gap-3">
 			<button
 				type="button"
-				class="nexus-glow w-full rounded-2xl border-0 bg-[linear-gradient(135deg,#2563eb_0%,#1d9cc4_100%)] py-3.5 text-base font-semibold text-white shadow-lg"
+				class="nexus-glow w-full rounded-2xl border-0 bg-[linear-gradient(135deg,var(--color-brand-cta-from)_0%,var(--color-brand-cta-to)_100%)] py-3.5 text-base font-semibold text-brand-on-cta shadow-lg"
 				on:click={finish}
 			>
 				Comenzar
