@@ -484,7 +484,7 @@
 						<div class="shrink-0 border-t border-slate-200 p-4 dark:border-white/[0.06]">
 							<button
 								type="button"
-								class="nexus-glow flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,#2563eb,#1d9cc4)] px-4 py-3.5 text-base font-semibold text-white shadow-[0_4px_20px_rgba(37,99,235,0.4)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 [&_svg]:h-5 [&_svg]:w-5"
+								class="nexus-glow flex min-h-[2.75rem] w-full cursor-pointer items-center justify-center gap-2 rounded-[14px] border-0 bg-[linear-gradient(135deg,var(--color-brand-cta-from)_0%,var(--color-brand-cta-to)_100%)] px-4 py-3.5 text-base font-semibold text-brand-on-cta shadow-[0_4px_20px_color-mix(in_srgb,var(--color-brand-cta-from)_40%,transparent)] transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 [&_svg]:h-5 [&_svg]:w-5"
 								on:click={openWizard}
 							>
 								<Icon icon="mdi:plus" class="shrink-0" aria-hidden="true" />

@@ -35,3 +35,14 @@ reason = "Kit < 3: solo afecta a use:enhance y aquí no se usa. Quitar al migrar
 id = "GHSA-gcqx-w48m-w2h4"
 ignoreUntil = 2027-01-28T00:00:00Z
 reason = "deepmerge sin arreglo; solo en el build (adapter-node, vite-plugin-svelte), sin datos de usuarios."
+
+# minimatch < 11.0.1: denegación de servicio con un patrón glob que crece en el
+# preprocesado (`**/../`). Entró el 02/11/2026. Solo llega por ESLint (dev): se
+# usa con los patrones de `eslint.config.js`, nunca con un patrón de un usuario,
+# y no está en el bundle. ESLint 10.14.0 aún pide `minimatch ^10.2.6`, así que
+# no hay un arreglo que tomar sin forzar un major. Quitarla cuando ESLint acepte
+# minimatch >= 11.0.1.
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2026-12-02T00:00:00Z
+reason = "minimatch solo vía ESLint (dev), con patrones propios; ESLint aún no acepta 11.x. Quitar cuando lo acepte."

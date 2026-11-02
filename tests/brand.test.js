@@ -6,7 +6,7 @@ import {
 	marcaDesdeConfig,
 	resolverMarca
 } from '../src/lib/server/brand.js';
-import { descripcionDe, logoDe, tituloDe } from '../src/lib/brand.js';
+import { descripcionDe, estiloDeMarca, logoDe, tituloDe } from '../src/lib/brand.js';
 
 /**
  * La marca por Host (Fase 4, §7). El Host solo elige apariencia: lo que se
@@ -156,5 +156,71 @@ describe('helpers de presentación', () => {
 		expect(logoDe(partner)).toBe('https://cdn.meromero.com/logo.png');
 		expect(logoDe(partner, { oscuro: true })).toBe('https://cdn.meromero.com/logo-blanco.png');
 		expect(logoDe(MARCA_POR_DEFECTO)).not.toContain('meromero');
+	});
+});
+
+/**
+ * Opción B: el partner sobrescribe solo los `--color-brand-*`; con Nexus no se
+ * inyecta nada y la página queda exactamente como la define `app.css`.
+ */
+describe('estiloDeMarca', () => {
+	it('con la marca por defecto no inyecta nada', () => {
+		expect(estiloDeMarca(null)).toBe('');
+		expect(estiloDeMarca(MARCA_POR_DEFECTO)).toBe('');
+	});
+
+	it('un partner sin tokens tampoco', () => {
+		expect(estiloDeMarca({ ...marcaDesdeConfig(PUBLICADO), tokens: null })).toBe('');
+	});
+
+	it('sobrescribe claro y oscuro por separado, con más especificidad que :root', () => {
+		const css = estiloDeMarca(marcaDesdeConfig(PUBLICADO));
+		expect(css).toContain('html:root{');
+		expect(css).toContain('html.dark:root{');
+		const [claro, oscuro] = css.split('html.dark:root');
+		expect(claro).toContain('--color-brand-primary:#1d4ed8');
+		expect(oscuro).toContain('--color-brand-primary:#3b82f6');
+	});
+
+	it('deriva el botón principal de primary y accent', () => {
+		const css = estiloDeMarca({
+			name: 'Mero Mero',
+			isDefault: false,
+			tokens: {
+				light: {
+					'--color-brand-primary': '#2563eb',
+					'--color-brand-accent': '#7c3aed',
+					'--color-brand-on-primary': '#ffffff',
+					'--color-brand-400': '#6b9dff'
+				},
+				dark: { '--color-brand-primary': '#4883ff' }
+			}
+		});
+		const [claro, oscuro] = css.split('html.dark:root');
+		expect(claro).toContain('--color-brand-cta-from:#7c3aed');
+		expect(claro).toContain('--color-brand-cta-to:#2563eb');
+		expect(claro).toContain('--color-brand-on-cta:#ffffff');
+		expect(claro).toContain('--color-brand-glow:#6b9dff');
+		// Sin accent ni rampa, todo sale del primary.
+		expect(oscuro).toContain('--color-brand-cta-from:#4883ff');
+		expect(oscuro).toContain('--color-brand-glow:#4883ff');
+	});
+
+	it('no deja pasar nada que pueda cerrar la etiqueta o colar otra regla', () => {
+		const css = estiloDeMarca({
+			name: 'X',
+			isDefault: false,
+			tokens: {
+				light: {
+					'--color-brand-primary': '#2563eb;}</style><script>alert(1)</script>',
+					'--color-brand-500': 'red',
+					'--otra-cosa': '#ffffff',
+					'--color-brand-600': '#123456'
+				},
+				dark: {}
+			}
+		});
+		expect(css).toBe('html:root{--color-brand-600:#123456}');
+		expect(css).not.toMatch(/[<>]/);
 	});
 });

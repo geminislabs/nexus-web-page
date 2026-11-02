@@ -2,6 +2,20 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * Colores de identidad de la marca (Fase 4, opción B). Los valores son los de
+ * Nexus; un partner los sobrescribe desde `estiloDeMarca` (`$lib/brand.js`).
+ * Solo identidad: los colores de estado (verde «en línea», ámbar, rojo) nunca
+ * pasan por aquí.
+ */
+@theme {
+	/* El botón principal: degradado, su texto y el brillo al pasar el ratón. */
+	--color-brand-cta-from: #2563eb;
+	--color-brand-cta-to: #1d9cc4;
+	--color-brand-on-cta: #ffffff;
+	--color-brand-glow: #38bdf8;
+}
+
 /* === Variables globales === */
 :root {
 	--accent-cyan: #00a6c0;
@@ -320,9 +334,9 @@ html[data-theme='light'] .gm-style .gm-svpc:hover {
 	translate: 0 -1px;
 	filter: brightness(1.06);
 	box-shadow:
-		0 0 0 1px rgb(56 189 248 / 0.35),
-		0 6px 28px -4px rgb(29 156 196 / 0.6),
-		0 0 22px -6px rgb(37 99 235 / 0.7);
+		0 0 0 1px color-mix(in srgb, var(--color-brand-glow) 35%, transparent),
+		0 6px 28px -4px color-mix(in srgb, var(--color-brand-cta-to) 60%, transparent),
+		0 0 22px -6px color-mix(in srgb, var(--color-brand-cta-from) 70%, transparent);
 }
 
 .nexus-glow:not(:disabled):active {
