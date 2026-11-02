@@ -59,6 +59,9 @@ export function descripcionDe(brand, accion) {
 		: `${accion} ${m.name}, monitorización y gestión de flotas.`;
 }
 
+const FAMILIAS_DEL_MAPA = ['sky', 'cyan', 'blue', 'teal'];
+const PASOS = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'];
+
 /**
  * Los tokens de un modo más los que la web deriva de ellos: el backend publica
  * `primary`, `accent`, `link` y la rampa, pero el botón principal de Nexus es
@@ -93,6 +96,13 @@ function conDerivados(tokens, modo) {
 	aura.forEach((paso, i) => {
 		if (t(paso)) derivados[`--color-brand-aura-${i + 1}`] = t(paso);
 	});
+	// El mapa y el seguimiento usan otras familias en Nexus; el partner solo tiene
+	// una rampa, así que las cuatro salen de ella, paso por paso.
+	for (const familia of FAMILIAS_DEL_MAPA) {
+		for (const paso of PASOS) {
+			if (t(paso)) derivados[`--color-brand-${familia}-${paso}`] = t(paso);
+		}
+	}
 	return { ...derivados, ...tokens };
 }
 

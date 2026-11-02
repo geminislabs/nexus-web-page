@@ -141,7 +141,7 @@
 		<div class="mb-3">
 			<p
 				class="m-0 text-xs font-semibold uppercase tracking-wide {isPlaying
-					? 'text-cyan-600 dark:text-cyan-400'
+					? 'text-brand-cyan-600 dark:text-brand-cyan-400'
 					: 'text-slate-500 dark:text-white/50'}"
 			>
 				{isPlaying ? 'Reproduciendo' : 'Trayecto'}
@@ -154,7 +154,7 @@
 			<button
 				type="button"
 				class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full {isPlaying
-					? 'bg-cyan-500'
+					? 'bg-brand-cyan-500'
 					: 'bg-slate-200 dark:bg-white/10'} transition-colors"
 				on:click={togglePlay}
 				aria-label={isPlaying ? 'Pausar' : 'Reproducir'}

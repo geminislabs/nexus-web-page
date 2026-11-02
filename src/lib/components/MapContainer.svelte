@@ -353,7 +353,7 @@
 			<div class="pointer-events-none absolute left-3 top-[3.75rem] z-[45] sm:left-3">
 				<button
 					type="button"
-					class="pointer-events-auto inline-flex h-10 items-center gap-2 rounded-xl border-2 border-sky-400/55 bg-white/95 px-3 text-[12px] font-semibold text-sky-800 shadow-[0_4px_16px_rgba(14,165,233,0.25)] backdrop-blur-md transition-all hover:scale-[1.02] hover:border-sky-500 dark:border-cyan-400/50 dark:bg-slate-900/95 dark:text-cyan-200 dark:shadow-[0_4px_16px_rgba(34,211,238,0.3)] dark:hover:border-cyan-400"
+					class="pointer-events-auto inline-flex h-10 items-center gap-2 rounded-xl border-2 border-brand-sky-400/55 bg-white/95 px-3 text-[12px] font-semibold text-brand-sky-800 shadow-[0_4px_16px_rgba(14,165,233,0.25)] backdrop-blur-md transition-all hover:scale-[1.02] hover:border-brand-sky-500 dark:border-brand-cyan-400/50 dark:bg-slate-900/95 dark:text-brand-cyan-200 dark:shadow-[0_4px_16px_rgba(34,211,238,0.3)] dark:hover:border-brand-cyan-400"
 					on:click={() => mapService.exitStreetView()}
 					aria-label="Salir de Street View"
 					title="Salir de Street View"
@@ -372,10 +372,10 @@
 				<div class="relative hidden sm:block" data-map-flyout="alerts">
 					<button
 						type="button"
-						class="relative flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background,transform,box-shadow] duration-200 hover:scale-[1.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500/80 dark:focus-visible:outline-white/80 [&_svg]:h-6 [&_svg]:w-6
+						class="relative flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background,transform,box-shadow] duration-200 hover:scale-[1.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-500/80 dark:focus-visible:outline-white/80 [&_svg]:h-6 [&_svg]:w-6
 						{showAlertsPanel
 							? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-[0_4px_16px_rgba(168,85,247,0.5)]'
-							: 'bg-gradient-to-br from-sky-600 to-blue-700 shadow-[0_4px_16px_rgba(37,99,235,0.4)] dark:from-slate-700 dark:to-slate-800 dark:shadow-[0_4px_16px_rgba(15,23,42,0.45)]'}"
+							: 'bg-gradient-to-br from-brand-sky-600 to-brand-blue-700 shadow-[0_4px_16px_rgba(37,99,235,0.4)] dark:from-slate-700 dark:to-slate-800 dark:shadow-[0_4px_16px_rgba(15,23,42,0.45)]'}"
 						on:click={toggleAlertsPanel}
 						aria-haspopup="dialog"
 						aria-expanded={showAlertsPanel}
@@ -436,7 +436,7 @@
 												<li>
 													<div
 														class="flex items-stretch gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-white/[0.08] dark:bg-[#121a28] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] {!ev.read
-															? 'ring-1 ring-sky-400/40 dark:ring-sky-500/25'
+															? 'ring-1 ring-brand-sky-400/40 dark:ring-brand-sky-500/25'
 															: ''}"
 													>
 														<div
@@ -444,15 +444,15 @@
 															aria-hidden="true"
 														>
 															<div
-																class="absolute inset-0 scale-110 rounded-full bg-sky-500/15 blur-sm dark:bg-sky-500/20"
+																class="absolute inset-0 scale-110 rounded-full bg-brand-sky-500/15 blur-sm dark:bg-brand-sky-500/20"
 															></div>
 															<div
-																class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-b from-sky-100 to-sky-200/80 ring-1 ring-sky-300/80 dark:from-sky-400/18 dark:to-blue-600/10 dark:ring-sky-400/30"
+																class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-b from-brand-sky-100 to-brand-sky-200/80 ring-1 ring-brand-sky-300/80 dark:from-brand-sky-400/18 dark:to-brand-blue-600/10 dark:ring-brand-sky-400/30"
 															>
 																<Icon
 																	icon="mdi:bell"
 																	width={16}
-																	class="text-sky-600 dark:text-sky-400"
+																	class="text-brand-sky-600 dark:text-brand-sky-400"
 																/>
 															</div>
 														</div>
@@ -468,7 +468,7 @@
 																{ev.name || 'Evento'}
 															</p>
 															<p
-																class="m-0 mt-1 flex items-center gap-1 text-[10px] font-medium text-sky-600 dark:text-sky-400"
+																class="m-0 mt-1 flex items-center gap-1 text-[10px] font-medium text-brand-sky-600 dark:text-brand-sky-400"
 															>
 																<Icon icon="mdi:clock-outline" width={11} aria-hidden="true" />
 																<time datetime={ev.at}>{formatAlarmWhen(ev.at)}</time>
@@ -535,10 +535,10 @@
 				<div class="relative" data-map-flyout="layers">
 					<button
 						type="button"
-						class="group flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border-2 text-white shadow-lg transition-all duration-200 hover:scale-[1.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400
+						class="group flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border-2 text-white shadow-lg transition-all duration-200 hover:scale-[1.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-400
 						{showLayersPanel
-							? 'border-cyan-400 bg-gradient-to-br from-cyan-400 to-blue-500 shadow-[0_4px_24px_rgba(34,211,238,0.5),0_0_40px_rgba(34,211,238,0.25)]'
-							: 'border-cyan-400/50 bg-gradient-to-br from-cyan-500 to-blue-600 shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:shadow-[0_4px_28px_rgba(34,211,238,0.55)]'}"
+							? 'border-brand-cyan-400 bg-gradient-to-br from-brand-cyan-400 to-brand-blue-500 shadow-[0_4px_24px_rgba(34,211,238,0.5),0_0_40px_rgba(34,211,238,0.25)]'
+							: 'border-brand-cyan-400/50 bg-gradient-to-br from-brand-cyan-500 to-brand-blue-600 shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:shadow-[0_4px_28px_rgba(34,211,238,0.55)]'}"
 						on:click={toggleLayersPanel}
 						aria-haspopup="menu"
 						aria-expanded={showLayersPanel}
@@ -563,17 +563,17 @@
 
 					{#if showLayersPanel}
 						<div
-							class="absolute right-[calc(100%+12px)] top-0 z-[20] w-[240px] overflow-hidden rounded-2xl border border-cyan-500/25 bg-white/98 text-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.15),0_0_0_1px_rgba(34,211,238,0.1)] backdrop-blur-xl dark:border-cyan-400/15 dark:bg-[rgb(10_15_28_/0.98)] dark:text-white dark:shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_30px_rgba(34,211,238,0.1)]"
+							class="absolute right-[calc(100%+12px)] top-0 z-[20] w-[240px] overflow-hidden rounded-2xl border border-brand-cyan-500/25 bg-white/98 text-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.15),0_0_0_1px_rgba(34,211,238,0.1)] backdrop-blur-xl dark:border-brand-cyan-400/15 dark:bg-[rgb(10_15_28_/0.98)] dark:text-white dark:shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_30px_rgba(34,211,238,0.1)]"
 							role="menu"
 							aria-label="Opciones de capas"
 							transition:fly={{ x: 8, duration: 200 }}
 						>
 							<!-- Header con gradiente -->
 							<div
-								class="border-b border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 px-4 py-3 dark:from-cyan-500/15 dark:to-blue-600/10"
+								class="border-b border-brand-cyan-500/20 bg-gradient-to-r from-brand-cyan-500/10 to-brand-blue-500/10 px-4 py-3 dark:from-brand-cyan-500/15 dark:to-brand-blue-600/10"
 							>
 								<h4
-									class="m-0 flex items-center gap-2 text-sm font-bold tracking-wide text-cyan-600 dark:text-cyan-400"
+									class="m-0 flex items-center gap-2 text-sm font-bold tracking-wide text-brand-cyan-600 dark:text-brand-cyan-400"
 								>
 									<svg
 										class="h-5 w-5"
@@ -605,7 +605,7 @@
 											type="button"
 											class="flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-semibold transition-all duration-150
 											{currentMapType === opt.id
-												? 'bg-gradient-to-br from-cyan-500/20 to-blue-500/15 text-cyan-600 ring-2 ring-cyan-400/60 dark:from-cyan-500/25 dark:to-blue-600/20 dark:text-cyan-400 dark:ring-cyan-400/50'
+												? 'bg-gradient-to-br from-brand-cyan-500/20 to-brand-blue-500/15 text-brand-cyan-600 ring-2 ring-brand-cyan-400/60 dark:from-brand-cyan-500/25 dark:to-brand-blue-600/20 dark:text-brand-cyan-400 dark:ring-brand-cyan-400/50'
 												: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
 											role="menuitemradio"
 											aria-checked={currentMapType === opt.id}
@@ -614,7 +614,9 @@
 											<Icon
 												icon={opt.icon}
 												width={22}
-												class={currentMapType === opt.id ? 'text-cyan-500 dark:text-cyan-400' : ''}
+												class={currentMapType === opt.id
+													? 'text-brand-cyan-500 dark:text-brand-cyan-400'
+													: ''}
 											/>
 											<span>{opt.label}</span>
 										</button>
@@ -633,7 +635,7 @@
 									type="button"
 									class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[12px] font-semibold transition-all duration-150
 									{showTraffic
-										? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/15 text-emerald-600 ring-2 ring-emerald-400/60 dark:from-emerald-500/25 dark:to-teal-600/20 dark:text-emerald-400 dark:ring-emerald-400/50'
+										? 'bg-gradient-to-r from-brand-500/20 to-brand-teal-500/15 text-brand-600 ring-2 ring-brand-400/60 dark:from-brand-500/25 dark:to-brand-teal-600/20 dark:text-brand-400 dark:ring-brand-400/50'
 										: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
 									role="menuitemcheckbox"
 									aria-checked={showTraffic}
@@ -642,12 +644,12 @@
 									<Icon
 										icon="mdi:traffic-light"
 										width={20}
-										class={showTraffic ? 'text-emerald-500' : ''}
+										class={showTraffic ? 'text-brand-500' : ''}
 									/>
 									<span class="flex-1 text-left">Tráfico en Vivo</span>
 									<span
 										class="flex h-5 w-5 items-center justify-center rounded-md transition-all {showTraffic
-											? 'bg-emerald-500 text-white'
+											? 'bg-brand-500 text-white'
 											: 'bg-slate-200 dark:bg-white/10'}"
 									>
 										{#if showTraffic}
@@ -668,23 +670,26 @@
 				class="pointer-events-none absolute right-[10px] top-1/2 z-20 flex -translate-y-1/2 flex-col items-end"
 			>
 				<div
-					class="pointer-events-auto flex flex-col overflow-hidden rounded-2xl border-2 border-sky-400/55 bg-white/95 text-sky-700 shadow-[0_4px_20px_rgba(14,165,233,0.22)] backdrop-blur-md dark:border-cyan-400/50 dark:bg-gradient-to-br dark:from-slate-800/95 dark:to-slate-950/95 dark:text-cyan-300 dark:shadow-[0_4px_20px_rgba(34,211,238,0.3)]"
+					class="pointer-events-auto flex flex-col overflow-hidden rounded-2xl border-2 border-brand-sky-400/55 bg-white/95 text-brand-sky-700 shadow-[0_4px_20px_rgba(14,165,233,0.22)] backdrop-blur-md dark:border-brand-cyan-400/50 dark:bg-gradient-to-br dark:from-slate-800/95 dark:to-slate-950/95 dark:text-brand-cyan-300 dark:shadow-[0_4px_20px_rgba(34,211,238,0.3)]"
 					role="group"
 					aria-label="Controles de zoom"
 				>
 					<button
 						type="button"
-						class="flex h-11 w-11 items-center justify-center transition-colors hover:bg-sky-500/15 hover:text-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-500 dark:hover:bg-cyan-500/20 dark:hover:text-cyan-100 dark:focus-visible:outline-cyan-400"
+						class="flex h-11 w-11 items-center justify-center transition-colors hover:bg-brand-sky-500/15 hover:text-brand-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-sky-500 dark:hover:bg-brand-cyan-500/20 dark:hover:text-brand-cyan-100 dark:focus-visible:outline-brand-cyan-400"
 						on:click={zoomIn}
 						aria-label="Acercar mapa"
 						title="Acercar"
 					>
 						<Icon icon="mdi:plus" width={22} aria-hidden="true" />
 					</button>
-					<div class="h-px w-full bg-sky-300/50 dark:bg-cyan-400/25" aria-hidden="true"></div>
+					<div
+						class="h-px w-full bg-brand-sky-300/50 dark:bg-brand-cyan-400/25"
+						aria-hidden="true"
+					></div>
 					<button
 						type="button"
-						class="flex h-11 w-11 items-center justify-center transition-colors hover:bg-sky-500/15 hover:text-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky-500 dark:hover:bg-cyan-500/20 dark:hover:text-cyan-100 dark:focus-visible:outline-cyan-400"
+						class="flex h-11 w-11 items-center justify-center transition-colors hover:bg-brand-sky-500/15 hover:text-brand-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-sky-500 dark:hover:bg-brand-cyan-500/20 dark:hover:text-brand-cyan-100 dark:focus-visible:outline-brand-cyan-400"
 						on:click={zoomOut}
 						aria-label="Alejar mapa"
 						title="Alejar"

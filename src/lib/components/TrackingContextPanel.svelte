@@ -180,7 +180,7 @@
 				<div class="flex shrink-0 items-center gap-1.5 self-start pt-0.5">
 					<button
 						type="button"
-						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-slate-200/90 text-slate-700 shadow-sm transition-transform hover:scale-105 hover:bg-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 dark:border-white/20 dark:bg-white/15 dark:text-white dark:hover:bg-white/25"
+						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-slate-200/90 text-slate-700 shadow-sm transition-transform hover:scale-105 hover:bg-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-sky-400/50 dark:border-white/20 dark:bg-white/15 dark:text-white dark:hover:bg-white/25"
 						on:click={onClose}
 						aria-label="Cerrar panel de unidad"
 						title="Cerrar"
@@ -189,7 +189,7 @@
 					</button>
 					<button
 						type="button"
-						class="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500 shadow-sm transition-transform hover:scale-105"
+						class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-sky-500 shadow-sm transition-transform hover:scale-105"
 						on:click={onCenterUnit}
 						aria-label="Centrar en mapa"
 					>
@@ -308,7 +308,7 @@
 								>
 									<span
 										class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg {isFollowing
-											? 'bg-cyan-500/20 text-cyan-400'
+											? 'bg-brand-cyan-500/20 text-brand-cyan-400'
 											: 'bg-slate-400/15 text-slate-500'}"
 										aria-hidden="true"
 									>
@@ -410,7 +410,7 @@
 						type="search"
 						bind:value={searchQuery}
 						placeholder="Buscar unidad…"
-						class="mb-2 w-full shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-slate-900 placeholder:text-slate-400 outline-none focus:border-sky-500/50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/30"
+						class="mb-2 w-full shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-slate-900 placeholder:text-slate-400 outline-none focus:border-brand-sky-500/50 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-white/30"
 					/>
 					<div class="mb-2 shrink-0">
 						<UnitsStatusFilterPanels {units} bind:value={statusFilter} variant="embedded" />
@@ -453,7 +453,7 @@
 									<button
 										type="button"
 										class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors {u.onMap
-											? 'text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400'
+											? 'text-brand-600 hover:bg-brand-500/10 dark:text-brand-400'
 											: 'text-slate-400 hover:bg-slate-100 dark:text-white/35 dark:hover:bg-white/[0.07]'}"
 										on:click={(e) => toggleUnitOnMap(u, e)}
 										aria-pressed={u.onMap}

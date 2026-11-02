@@ -160,16 +160,16 @@
 						<li in:rise|global={{ delay: staggerDelay(i) }}>
 							<button
 								type="button"
-								class="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition-colors hover:border-cyan-400/30 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+								class="flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left transition-colors hover:border-brand-cyan-400/30 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
 								on:click={() => selectTrip(trip)}
 							>
 								<div
-									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-400/15"
+									class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-cyan-400/15"
 								>
 									<Icon
 										icon="mdi:clock-outline"
 										width={20}
-										class="text-cyan-600 dark:text-cyan-400"
+										class="text-brand-cyan-600 dark:text-brand-cyan-400"
 									/>
 								</div>
 								<div class="min-w-0 flex-1">

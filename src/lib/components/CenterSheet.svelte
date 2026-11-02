@@ -60,7 +60,7 @@
 		>
 			<button
 				type="button"
-				class="absolute inset-0 cursor-default border-0 bg-slate-950/50 p-0 backdrop-blur-[2px] transition-opacity hover:bg-slate-950/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
+				class="absolute inset-0 cursor-default border-0 bg-slate-950/50 p-0 backdrop-blur-[2px] transition-opacity hover:bg-slate-950/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-500"
 				aria-label="Cerrar panel"
 				on:click={backdropClick}
 			></button>
@@ -92,7 +92,7 @@
 					</h2>
 					<button
 						type="button"
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500/60 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500/60 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
 						on:click={onClose}
 						aria-label="Cerrar panel"
 					>
