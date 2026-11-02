@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **El botón principal toma los colores del partner.** Quien entra por el dominio de un partner ve el botón principal (iniciar sesión, registro, recuperar y restablecer contraseña, bienvenida, zonas y alertas) con el degradado y el brillo de su marca. Es el primer paso de la opción B: solo cambian elementos de identidad; los colores de estado, como el verde de «en línea», no cambian nunca. Con Nexus todo se ve igual que antes
 
+### Security
+
+- **Excepción temporal para `minimatch`.** El escaneo de dependencias ignora GHSA-g3hv-75wg-m249 hasta el 02/12/2026: solo llega por ESLint en desarrollo, con los patrones propios del repo, y ESLint todavía no acepta la versión arreglada (11.x)
+
 ## [1.33.0] - 2026-10-29
 
 ### Added
