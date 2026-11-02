@@ -38,11 +38,11 @@
 	aria-label="Abrir panel de controles de rejilla H3"
 	aria-haspopup="dialog"
 	aria-expanded={open}
-	class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition-all duration-200 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 {isLightTheme
+	class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white shadow-lg transition-all duration-200 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-400 {isLightTheme
 		? 'border border-slate-600/45 bg-gradient-to-br from-slate-700 to-slate-900 shadow-[0_2px_6px_rgb(15_23_42_/_0.2)] [box-shadow:inset_0_1px_0_rgb(255_255_255_/_0.08)] hover:brightness-[1.07]'
 		: 'border border-white/10 bg-white/10 hover:bg-white/[0.16]'}"
 	class:ring-2={open}
-	class:ring-cyan-400={open}
+	class:ring-brand-cyan-400={open}
 	class:ring-offset-2={open}
 	class:ring-offset-slate-900={open && isLightTheme}
 	class:ring-offset-slate-950={open && !isLightTheme}
@@ -61,7 +61,7 @@
 			</h3>
 			<button
 				type="button"
-				class="flex w-full min-h-[2.75rem] cursor-pointer items-center justify-center gap-2 rounded-xl border border-cyan-600/30 bg-cyan-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-cyan-900/20 transition-colors hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 dark:border-cyan-500/35 dark:shadow-cyan-950/30"
+				class="flex w-full min-h-[2.75rem] cursor-pointer items-center justify-center gap-2 rounded-xl border border-brand-cyan-600/30 bg-brand-cyan-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-brand-cyan-900/20 transition-colors hover:bg-brand-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-400 dark:border-brand-cyan-500/35 dark:shadow-brand-cyan-950/30"
 				on:click={toggleH3Grid}
 				aria-pressed={$showH3Grid}
 			>
@@ -107,7 +107,7 @@
 					aria-valuemax="10"
 					aria-valuenow={$h3Resolution}
 					aria-valuetext={`Resolución H3 nivel ${$h3Resolution}`}
-					class="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-cyan-600 dark:bg-slate-700 dark:accent-cyan-500"
+					class="mt-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-cyan-600 dark:bg-slate-700 dark:accent-brand-cyan-500"
 					on:input={(event) =>
 						h3Actions.setResolution(Number(event.currentTarget.value), { source: 'user' })}
 				/>
@@ -118,7 +118,7 @@
 				{:else}
 					<button
 						type="button"
-						class="mt-1.5 text-[10px] font-semibold text-cyan-700 underline-offset-2 hover:underline dark:text-cyan-300"
+						class="mt-1.5 text-[10px] font-semibold text-brand-cyan-700 underline-offset-2 hover:underline dark:text-brand-cyan-300"
 						on:click={() => h3Actions.enableFollowZoomAndSync()}
 					>
 						Reactivar ajuste automático con zoom

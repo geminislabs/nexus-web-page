@@ -247,7 +247,7 @@
 	$: selectedColorHex = vehicleColors.find((c) => c.slug === editColor)?.hex ?? null;
 
 	const inputClass =
-		'h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-[14px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/15 dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30';
+		'h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-[14px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-brand-cyan-500/60 focus:ring-2 focus:ring-brand-cyan-500/15 dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30';
 </script>
 
 <section
@@ -264,7 +264,7 @@
 					aria-labelledby="ajustes-user-name"
 				>
 					<div
-						class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 text-2xl font-bold text-white"
+						class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue-600 to-brand-cyan-600 text-2xl font-bold text-white"
 						aria-hidden="true"
 					>
 						{getInitial($user.name)}
@@ -389,7 +389,7 @@
 					>
 						<span class="flex items-center gap-3">
 							<span
-								class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400 [&_svg]:h-5 [&_svg]:w-5"
+								class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg bg-brand-cyan-500/20 text-brand-cyan-400 [&_svg]:h-5 [&_svg]:w-5"
 								aria-hidden="true"><Icon icon="mdi:lock-reset" aria-hidden="true" /></span
 							>
 							<span>Cambiar contraseña</span>
@@ -476,12 +476,12 @@
 							<li>
 								<button
 									type="button"
-									class="flex w-full items-center gap-3 rounded-xl border border-cyan-500/25 bg-cyan-500/[0.06] px-4 py-3.5 text-left transition-colors hover:bg-cyan-500/10"
+									class="flex w-full items-center gap-3 rounded-xl border border-brand-cyan-500/25 bg-brand-cyan-500/[0.06] px-4 py-3.5 text-left transition-colors hover:bg-brand-cyan-500/10"
 									on:click={openCreate}
 									aria-label="Agregar nueva unidad"
 								>
 									<div
-										class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cyan-500/40 bg-cyan-500/15 text-cyan-400"
+										class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-brand-cyan-500/40 bg-brand-cyan-500/15 text-brand-cyan-400"
 										aria-hidden="true"
 									>
 										<Icon icon="mdi:plus" class="h-6 w-6" />
@@ -496,7 +496,7 @@
 									</div>
 									<Icon
 										icon="mdi:chevron-right"
-										class="h-4 w-4 shrink-0 text-cyan-400/70"
+										class="h-4 w-4 shrink-0 text-brand-cyan-400/70"
 										aria-hidden="true"
 									/>
 								</button>
@@ -591,7 +591,7 @@
 				</h2>
 				<button
 					type="button"
-					class="shrink-0 rounded-xl bg-cyan-500 px-4 py-1.5 text-[13px] font-bold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+					class="shrink-0 rounded-xl bg-brand-cyan-500 px-4 py-1.5 text-[13px] font-bold text-white shadow-md transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 					disabled={saving || !editName.trim()}
 					on:click={subView === 'createUnit' ? saveCreate : saveEdit}
 				>
@@ -962,7 +962,7 @@
 				</div>
 				<button
 					type="button"
-					class="mt-5 w-full rounded-xl bg-cyan-500 py-3 text-[15px] font-bold text-white disabled:opacity-50"
+					class="mt-5 w-full rounded-xl bg-brand-cyan-500 py-3 text-[15px] font-bold text-white disabled:opacity-50"
 					disabled={changingPassword}
 					on:click={handleChangePassword}
 				>

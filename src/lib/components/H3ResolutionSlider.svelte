@@ -37,7 +37,7 @@
 	<div class="flex flex-col items-center gap-0.5">
 		<span
 			class="flex h-7 w-7 items-center justify-center rounded-lg
-				{isLight ? 'bg-cyan-500/15 text-cyan-700' : 'bg-cyan-400/15 text-cyan-300'}"
+				{isLight ? 'bg-brand-cyan-500/15 text-brand-cyan-700' : 'bg-brand-cyan-400/15 text-brand-cyan-300'}"
 			aria-hidden="true"
 		>
 			<Icon icon="mdi:hexagon-outline" width={16} />
@@ -50,7 +50,7 @@
 
 	<div class="relative flex h-[9.5rem] w-9 items-center justify-center">
 		<div
-			class="pointer-events-none absolute inset-y-1 left-1/2 w-1.5 -translate-x-1/2 rounded-full bg-gradient-to-b from-amber-400/70 via-emerald-400/50 to-cyan-400/80"
+			class="pointer-events-none absolute inset-y-1 left-1/2 w-1.5 -translate-x-1/2 rounded-full bg-gradient-to-b from-amber-400/70 via-brand-400/50 to-brand-cyan-400/80"
 			aria-hidden="true"
 		></div>
 		<input
@@ -77,7 +77,7 @@
 		>
 		<span
 			class="mt-0.5 min-w-[1.75rem] rounded-md px-1.5 py-0.5 text-center font-mono text-[11px] font-bold tabular-nums
-				{isLight ? 'bg-slate-100 text-cyan-800' : 'bg-white/10 text-cyan-200'}"
+				{isLight ? 'bg-slate-100 text-brand-cyan-800' : 'bg-white/10 text-brand-cyan-200'}"
 			aria-live="polite"
 		>
 			{$h3Resolution}
@@ -95,10 +95,10 @@
 	{:else}
 		<button
 			type="button"
-			class="rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50
+			class="rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-cyan-400/50
 				{isLight
-				? 'border-cyan-500/40 bg-cyan-50 text-cyan-800 hover:bg-cyan-100'
-				: 'border-cyan-400/35 bg-cyan-500/15 text-cyan-200 hover:bg-cyan-500/25'}"
+				? 'border-brand-cyan-500/40 bg-brand-cyan-50 text-brand-cyan-800 hover:bg-brand-cyan-100'
+				: 'border-brand-cyan-400/35 bg-brand-cyan-500/15 text-brand-cyan-200 hover:bg-brand-cyan-500/25'}"
 			on:click={enableAuto}
 			title="Volver a ajustar con el zoom"
 		>

@@ -29,7 +29,7 @@
 
 	function swatchClass(isSelected) {
 		return isSelected
-			? 'border-cyan-400 ring-2 ring-cyan-400 scale-105'
+			? 'border-brand-cyan-400 ring-2 ring-brand-cyan-400 scale-105'
 			: 'border-black/20 dark:border-white/30 hover:scale-105';
 	}
 </script>
@@ -40,7 +40,7 @@
 	<button
 		type="button"
 		class="flex h-12 w-12 items-center justify-center rounded-xl border-2 shadow-sm transition-all {showPicker
-			? 'border-cyan-400 ring-2 ring-cyan-400'
+			? 'border-brand-cyan-400 ring-2 ring-brand-cyan-400'
 			: 'border-black/15 dark:border-white/25'}"
 		style="background-color: {triggerBg};"
 		on:click|stopPropagation={togglePicker}
@@ -77,7 +77,7 @@
 					type="button"
 					role="option"
 					class="flex h-10 w-10 items-center justify-center rounded-xl border-2 border-dashed bg-slate-100 transition-transform dark:bg-white/[0.06] {!selectedColor
-						? 'border-cyan-400 ring-2 ring-cyan-400 scale-105'
+						? 'border-brand-cyan-400 ring-2 ring-brand-cyan-400 scale-105'
 						: 'border-slate-300 dark:border-white/25 hover:scale-105'}"
 					on:click={() => pick('')}
 					title="Sin color"

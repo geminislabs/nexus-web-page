@@ -81,7 +81,7 @@
 		type="button"
 		class={compact
 			? `relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08] ${open ? 'border-brand-400/50 text-brand-700 dark:text-brand-300' : ''}`
-			: `relative flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background,transform,box-shadow] duration-200 hover:scale-[1.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500/80 [&_svg]:h-6 [&_svg]:w-6 ${open ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-[0_4px_16px_rgba(168,85,247,0.5)]' : 'bg-gradient-to-br from-sky-600 to-blue-700 shadow-[0_4px_16px_rgba(37,99,235,0.4)] dark:from-slate-700 dark:to-slate-800'}`}
+			: `relative flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background,transform,box-shadow] duration-200 hover:scale-[1.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-500/80 [&_svg]:h-6 [&_svg]:w-6 ${open ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-[0_4px_16px_rgba(168,85,247,0.5)]' : 'bg-gradient-to-br from-brand-sky-600 to-brand-blue-700 shadow-[0_4px_16px_rgba(37,99,235,0.4)] dark:from-slate-700 dark:to-slate-800'}`}
 		aria-haspopup="dialog"
 		aria-expanded={open}
 		aria-label="Historial de alarmas y notificaciones"
@@ -149,7 +149,7 @@
 								<li in:rise|global={{ delay: staggerDelay(rowIndex) }} animate:flipList>
 									<div
 										class="flex items-stretch gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-white/[0.08] dark:bg-[#121a28] {!ev.read
-											? 'ring-1 ring-sky-400/40 dark:ring-sky-500/25'
+											? 'ring-1 ring-brand-sky-400/40 dark:ring-brand-sky-500/25'
 											: ''}"
 									>
 										<div class="min-w-0 flex-1 py-px">
@@ -164,7 +164,7 @@
 												{ev.name || 'Evento'}
 											</p>
 											<p
-												class="m-0 mt-1 flex items-center gap-1 text-[10px] font-medium text-sky-600 dark:text-sky-400"
+												class="m-0 mt-1 flex items-center gap-1 text-[10px] font-medium text-brand-sky-600 dark:text-brand-sky-400"
 											>
 												<Icon icon="mdi:clock-outline" width={11} aria-hidden="true" />
 												<time datetime={ev.at}>{formatAlarmWhen(ev.at)}</time>

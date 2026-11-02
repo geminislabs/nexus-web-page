@@ -68,7 +68,7 @@
 						</div>
 						<button
 							type="button"
-							class="text-[14px] font-semibold text-cyan-700 dark:text-cyan-400"
+							class="text-[14px] font-semibold text-brand-cyan-700 dark:text-brand-cyan-400"
 							on:click={onClose}
 						>
 							Listo
@@ -85,7 +85,7 @@
 							type="search"
 							bind:value={searchQuery}
 							placeholder="Buscar unidad…"
-							class="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-3 text-[13px] text-slate-900 placeholder:text-slate-400 outline-none focus:border-cyan-500/50 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30"
+							class="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-3 text-[13px] text-slate-900 placeholder:text-slate-400 outline-none focus:border-brand-cyan-500/50 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30"
 						/>
 					</div>
 				</div>
@@ -104,7 +104,9 @@
 								<button
 									type="button"
 									class="mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors last:mb-0
-									{selected ? 'bg-cyan-500/15 dark:bg-cyan-500/15' : 'hover:bg-slate-100 dark:hover:bg-white/[0.05]'}
+									{selected
+										? 'bg-brand-cyan-500/15 dark:bg-brand-cyan-500/15'
+										: 'hover:bg-slate-100 dark:hover:bg-white/[0.05]'}
 									{atLimit ? 'cursor-not-allowed opacity-35' : ''}"
 									disabled={atLimit}
 									on:click={() => onToggle(u.id)}
@@ -112,7 +114,7 @@
 								>
 									<div
 										class="flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors {selected
-											? 'border-cyan-500 bg-cyan-500 dark:border-cyan-400'
+											? 'border-brand-cyan-500 bg-brand-cyan-500 dark:border-brand-cyan-400'
 											: 'border-slate-300 bg-white dark:border-white/20 dark:bg-white/[0.04]'}"
 										aria-hidden="true"
 									>
@@ -132,7 +134,7 @@
 									</div>
 									{#if selected}
 										<span
-											class="shrink-0 text-[11px] font-semibold text-cyan-700 dark:text-cyan-400"
+											class="shrink-0 text-[11px] font-semibold text-brand-cyan-700 dark:text-brand-cyan-400"
 											>✓</span
 										>
 									{/if}

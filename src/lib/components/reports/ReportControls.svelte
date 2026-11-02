@@ -30,7 +30,7 @@
 			: ''}"
 		on:click={onOpenUnitPicker}
 	>
-		<Icon icon="mdi:car-multiple" width={22} class="shrink-0 text-cyan-500" />
+		<Icon icon="mdi:car-multiple" width={22} class="shrink-0 text-brand-cyan-500" />
 		<span class="flex-1 text-sm font-medium">
 			{$selectedReportUnitIds.size === 0
 				? 'Seleccionar unidades'
@@ -78,7 +78,7 @@
 			<button
 				type="button"
 				class="rounded-md px-3 py-1 text-xs font-semibold {$reportGranularity === 'hour'
-					? 'bg-cyan-600 text-white'
+					? 'bg-brand-cyan-600 text-white'
 					: 'text-slate-600 dark:text-white/60'}"
 				on:click={() => reportGranularity.set('hour')}
 			>
@@ -87,7 +87,7 @@
 			<button
 				type="button"
 				class="rounded-md px-3 py-1 text-xs font-semibold {$reportGranularity === 'day'
-					? 'bg-cyan-600 text-white'
+					? 'bg-brand-cyan-600 text-white'
 					: 'text-slate-600 dark:text-white/60'}"
 				on:click={() => reportGranularity.set('day')}
 			>
@@ -98,7 +98,7 @@
 
 	<button
 		type="button"
-		class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 py-3.5 text-base font-bold text-white shadow-lg disabled:opacity-50 {variant ===
+		class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-cyan-600 to-brand-blue-600 py-3.5 text-base font-bold text-white shadow-lg disabled:opacity-50 {variant ===
 		'stack'
 			? 'md:col-span-2 lg:col-span-1'
 			: ''}"

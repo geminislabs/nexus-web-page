@@ -52,8 +52,8 @@
 
 	$: isDrawer = variant === 'drawer';
 	$: sectionLabelClass = isDrawer
-		? 'mb-2 text-[11px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400/80'
-		: 'mb-2 text-[12px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400/80';
+		? 'mb-2 text-[11px] font-bold uppercase tracking-wider text-brand-cyan-600 dark:text-brand-cyan-400/80'
+		: 'mb-2 text-[12px] font-bold uppercase tracking-wider text-brand-cyan-600 dark:text-brand-cyan-400/80';
 	$: fieldLabelClass = isDrawer
 		? 'w-[100px] shrink-0 text-[12px] text-slate-500 dark:text-white/40'
 		: 'w-[100px] shrink-0 text-[14px] text-slate-500 dark:text-white/40';
@@ -68,7 +68,7 @@
 {#if loading}
 	<div class="flex h-28 items-center justify-center {isDrawer ? 'px-4' : ''}">
 		<div
-			class="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-500"
+			class="h-6 w-6 animate-spin rounded-full border-2 border-brand-cyan-500/30 border-t-brand-cyan-500"
 		></div>
 	</div>
 {:else if error}

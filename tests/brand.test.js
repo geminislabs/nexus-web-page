@@ -278,6 +278,8 @@ describe('estiloDeMarca', () => {
 		expect(claro).toContain('--color-brand-deep:#1d3fa8');
 		expect(oscuro).toContain('--color-brand-nav:#4883ff');
 		expect(oscuro).toContain('--color-brand-deep:#4883ff');
+		expect(claro).toContain('--color-brand-solid-hover:#1d3fa8');
+		expect(oscuro).toContain('--color-brand-solid:#4883ff');
 	});
 
 	it('no deja pasar nada que pueda cerrar la etiqueta o colar otra regla', () => {

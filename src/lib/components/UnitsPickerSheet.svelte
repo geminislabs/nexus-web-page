@@ -201,7 +201,7 @@
 							<button
 								type="button"
 								class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors {v.onMap
-									? 'text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400'
+									? 'text-brand-600 hover:bg-brand-500/10 dark:text-brand-400'
 									: 'text-slate-400 hover:bg-slate-100 dark:text-white/35 dark:hover:bg-white/[0.07]'}"
 								on:click={(e) => toggleUnitOnMap(v, e)}
 								aria-pressed={v.onMap}

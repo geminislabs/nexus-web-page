@@ -38,8 +38,8 @@
 	const uid = `uep-${Math.random().toString(36).slice(2, 9)}`;
 
 	$: inputClass = compact
-		? 'h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-cyan-500/60 dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30'
-		: 'h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-[14px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/15 dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30';
+		? 'h-8 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-brand-cyan-500/60 dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30'
+		: 'h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-[14px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-brand-cyan-500/60 focus:ring-2 focus:ring-brand-cyan-500/15 dark:border-white/[0.1] dark:bg-white/[0.06] dark:text-white dark:placeholder:text-white/30';
 
 	$: sectionClass = compact
 		? 'mb-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-white/40'

@@ -49,6 +49,11 @@
 	--color-brand-nav: oklch(58.8% 0.158 241.966);
 	--color-brand-nav-bar: oklch(68.5% 0.169 237.323);
 
+	/* El cyan sólido de las páginas públicas en oscuro (botón de la invitación,
+	   borde de la tarjeta de acceso al pasar el ratón, spinner de la raíz). */
+	--color-brand-solid: #00a6c0;
+	--color-brand-solid-hover: #0090a8;
+
 	/* Otras familias de Tailwind que hacen de identidad: el mapa y el seguimiento
 	   (sky, cyan, blue), y los degradados de los botones de guardar (teal, green). En
 	   Nexus son las de Tailwind, tal cual; a un partner todas se le pintan con su rampa
