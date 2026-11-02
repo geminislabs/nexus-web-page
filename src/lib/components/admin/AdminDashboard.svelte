@@ -90,7 +90,7 @@
 		<button
 			slot="actions"
 			type="button"
-			class="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
+			class="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 dark:border-white/10 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]"
 			on:click={loadDashboard}
 			disabled={loading}
 		>
@@ -116,11 +116,11 @@
 	<!-- Hero strip -->
 	<section
 		in:rise|global
-		class="relative mb-6 overflow-hidden rounded-3xl border border-emerald-500/25 bg-gradient-to-br from-emerald-50 via-white to-sky-50 p-5 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.06)] dark:border-emerald-500/20 dark:from-[#0a1628] dark:via-[#0d1f2e] dark:to-[#06261c] dark:text-white dark:shadow-[0_20px_50px_rgba(2,8,20,0.35)] sm:p-7"
+		class="relative mb-6 overflow-hidden rounded-3xl border border-brand-500/25 bg-gradient-to-br from-brand-50 via-white to-sky-50 p-5 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.06)] dark:border-brand-500/20 dark:from-[#0a1628] dark:via-[#0d1f2e] dark:to-[#06261c] dark:text-white dark:shadow-[0_20px_50px_rgba(2,8,20,0.35)] sm:p-7"
 		aria-label="Resumen principal"
 	>
 		<div
-			class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-emerald-400/25 blur-3xl dark:bg-emerald-400/20"
+			class="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-brand-400/25 blur-3xl dark:bg-brand-400/20"
 			aria-hidden="true"
 		></div>
 		<div
@@ -130,14 +130,14 @@
 		<div class="relative flex flex-wrap items-end justify-between gap-4">
 			<div>
 				<p
-					class="m-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-200/80"
+					class="m-0 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-700 dark:text-brand-200/80"
 				>
 					Flota {marca.isDefault ? 'NEXUS' : marca.name}
 				</p>
 				<p class="admin-display m-0 mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
 					{#if loading}
 						<span
-							class="inline-block h-8 w-10 animate-pulse rounded-lg bg-emerald-900/10 align-middle dark:bg-white/10 sm:h-9"
+							class="inline-block h-8 w-10 animate-pulse rounded-lg bg-brand-900/10 align-middle dark:bg-white/10 sm:h-9"
 							aria-hidden="true"
 						></span>
 						<span class="sr-only">Cargando</span>
@@ -156,7 +156,7 @@
 			</div>
 			<button
 				type="button"
-				class="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-600 px-4 text-[13px] font-bold text-white transition hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:bg-emerald-400 dark:text-emerald-950 dark:hover:bg-emerald-300 dark:focus-visible:ring-white/60"
+				class="inline-flex h-10 items-center gap-2 rounded-xl bg-brand-primary px-4 text-[13px] font-bold text-brand-on-primary transition hover:bg-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 dark:bg-brand-400 dark:text-brand-950 dark:hover:bg-brand-300 dark:focus-visible:ring-white/60"
 				on:click={() => workspaceActions.goTracking()}
 			>
 				<Icon icon="mdi:earth" width={18} aria-hidden="true" />

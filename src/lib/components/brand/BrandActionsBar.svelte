@@ -63,7 +63,7 @@
 	</button>
 	<button
 		type="button"
-		class="{button} border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 focus-visible:ring-emerald-500/40 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:hover:bg-white/[0.08]"
+		class="{button} border border-slate-200 bg-white text-slate-800 hover:bg-slate-50 focus-visible:ring-brand-500/40 dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:hover:bg-white/[0.08]"
 		disabled={!canSave}
 		on:click={() => dispatch('save')}
 	>
@@ -78,7 +78,7 @@
 	</button>
 	<button
 		type="button"
-		class="{button} bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-500/50"
+		class="{button} bg-brand-primary text-brand-on-primary hover:bg-brand-700 focus-visible:ring-brand-500/50"
 		disabled={!canPublish}
 		title={publishHint || undefined}
 		on:click={() => dispatch('publish')}

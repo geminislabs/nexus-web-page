@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Enlaces, foco y navegación con los colores del partner.** En las pantallas de acceso, los enlaces, el borde del campo con foco y las manchas de luz del fondo toman la marca del partner. En el panel de administración también la navegación activa, el selector de espacio de trabajo, los anillos de foco, los accesos rápidos y los botones principales («Publicar» en Marca, «Ir a seguimiento», «Guardar» de la unidad). Con Nexus todo se ve igual que antes
 - **El botón principal toma los colores del partner.** Quien entra por el dominio de un partner ve el botón principal (iniciar sesión, registro, recuperar y restablecer contraseña, bienvenida y alertas) con el degradado y el brillo de su marca. Es el primer paso de la opción B: solo cambian elementos de identidad; los colores de estado, como el verde de «en línea», no cambian nunca. Con Nexus todo se ve igual que antes
 
 ### Removed
@@ -17,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Vista previa de marca: el punto de «en línea» es verde siempre.** Tomaba el color de acento del partner; es un color de estado y no cambia con la marca
 - **Informes: decimales de más en las gráficas.** Los promedios llegan de la API en coma flotante y se mostraban tal cual (el eje de la batería de respaldo marcaba `4.200000000000001` y `4.199999999999998`). Ahora cada gráfica redondea a la precisión de su magnitud —voltaje y litros a 2 decimales, velocidad, señal, satélites y minutos a 1, metros a enteros— en los datos, el tooltip y las marcas del eje
 - **Informes: el formato base de las gráficas no se aplicaba.** Las opciones de cada gráfica reemplazaban enteras las del panel, así que las fechas del eje X salían inclinadas en lugar de verticales, sin el límite de 6 etiquetas, y la rejilla y las marcas no tomaban los colores del tema oscuro. Ahora se mezclan por niveles (`chartOptions.js`)
 

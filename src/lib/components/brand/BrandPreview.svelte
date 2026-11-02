@@ -182,10 +182,8 @@
 				</div>
 				<div class="flex flex-1 flex-col gap-2 p-3 {text}">
 					<div class="flex items-center gap-2">
-						<span
-							class="h-2 w-2 rounded-full bg-[var(--color-brand-accent,#059669)]"
-							aria-hidden="true"
-						></span>
+						<!-- Verde de estado: no cambia con la marca (opción B). -->
+						<span class="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
 						<span class="text-[11px] font-semibold">12 unidades en línea</span>
 					</div>
 					<div class="flex-1 rounded-xl {s.card}"></div>

@@ -349,7 +349,7 @@
 				>
 				<button
 					type="button"
-					class="h-8 rounded-lg border border-emerald-500/25 bg-emerald-600 px-3 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+					class="h-8 rounded-lg border border-brand-500/25 bg-brand-primary px-3 text-[11px] font-semibold text-brand-on-primary hover:bg-brand-700 disabled:opacity-50"
 					on:click={handleSave}
 					disabled={isSaving || deleting || !editName.trim()}
 					>{isSaving ? 'Guardando…' : 'Guardar'}</button

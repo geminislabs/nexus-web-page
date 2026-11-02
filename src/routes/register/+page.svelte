@@ -9,7 +9,7 @@
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 
 	const inputClass =
-		'w-full appearance-none rounded-[14px] border border-slate-200 bg-white py-3.5 pl-[2.875rem] text-[0.9375rem] text-slate-900 outline-none transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-[3px] focus:ring-blue-500/15 dark:border-white/15 dark:bg-white/[0.08] dark:text-white dark:placeholder:text-white/30 dark:focus:border-blue-500/70 dark:focus:bg-white/11';
+		'w-full appearance-none rounded-[14px] border border-slate-200 bg-white py-3.5 pl-[2.875rem] text-[0.9375rem] text-slate-900 outline-none transition-[border-color,background-color,box-shadow] duration-200 placeholder:text-slate-400 focus:border-brand-focus focus:bg-white focus:ring-[3px] focus:ring-brand-focus/15 dark:border-white/15 dark:bg-white/[0.08] dark:text-white dark:placeholder:text-white/30 dark:focus:border-brand-focus/70 dark:focus:bg-white/11';
 
 	let companyName = '';
 	let name = '';
@@ -88,15 +88,15 @@
 	class="fixed inset-0 flex items-center justify-center overflow-hidden bg-slate-100 font-sans [-webkit-font-smoothing:antialiased] dark:bg-[#0a0f0a]"
 >
 	<div
-		class="pointer-events-none absolute -left-20 -top-[100px] h-[420px] w-[420px] animate-pulse rounded-full bg-[radial-gradient(circle,#bbf7d0_0%,transparent_70%)] opacity-25 blur-[80px] duration-[14s] dark:bg-[radial-gradient(circle,#1a4d2a_0%,transparent_70%)] dark:opacity-[0.45]"
+		class="pointer-events-none absolute -left-20 -top-[100px] h-[420px] w-[420px] animate-pulse rounded-full bg-[radial-gradient(circle,var(--color-brand-aura-1)_0%,transparent_70%)] opacity-25 blur-[80px] duration-[14s] dark:opacity-[0.45]"
 		aria-hidden="true"
 	></div>
 	<div
-		class="pointer-events-none absolute bottom-[-80px] right-[60px] h-80 w-80 animate-pulse rounded-full bg-[radial-gradient(circle,#a7f3d0_0%,transparent_70%)] opacity-25 blur-[80px] duration-[18s] dark:bg-[radial-gradient(circle,#0d3322_0%,transparent_70%)] dark:opacity-[0.45]"
+		class="pointer-events-none absolute bottom-[-80px] right-[60px] h-80 w-80 animate-pulse rounded-full bg-[radial-gradient(circle,var(--color-brand-aura-2)_0%,transparent_70%)] opacity-25 blur-[80px] duration-[18s] dark:opacity-[0.45]"
 		aria-hidden="true"
 	></div>
 	<div
-		class="pointer-events-none absolute left-[60%] top-[40%] h-[200px] w-[200px] animate-pulse rounded-full bg-[radial-gradient(circle,#86efac_0%,transparent_70%)] opacity-20 blur-[80px] duration-[22s] dark:bg-[radial-gradient(circle,#163d1e_0%,transparent_70%)] dark:opacity-[0.45]"
+		class="pointer-events-none absolute left-[60%] top-[40%] h-[200px] w-[200px] animate-pulse rounded-full bg-[radial-gradient(circle,var(--color-brand-aura-3)_0%,transparent_70%)] opacity-20 blur-[80px] duration-[22s] dark:opacity-[0.45]"
 		aria-hidden="true"
 	></div>
 
@@ -289,9 +289,7 @@
 
 		<p class="mt-5 text-center text-[0.8125rem] text-slate-600 dark:text-white/[0.38]">
 			¿Ya tienes cuenta?
-			<a
-				href="/login"
-				class="font-medium text-blue-600 no-underline hover:underline dark:text-blue-400"
+			<a href="/login" class="font-medium text-brand-link no-underline hover:underline"
 				>Inicia sesión</a
 			>
 		</p>
