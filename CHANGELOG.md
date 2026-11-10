@@ -7,10 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.35.0] - 2026-11-10
+
 ### Added
 
 - **Pantalla de organización suspendida.** Si la organización activa está suspendida o borrada (siscom-admin-api v1.68.0), el dashboard no se monta y se ve una pantalla propia en vez de mapas vacíos y «No tienes permiso». Quien administra la facturación ve «Ir a facturación» (el portal, `VITE_COMPANY_URL/control-panel/billing/summary`); el resto, «Contacta al administrador de tu cuenta». Siempre «Reintentar» y «Cerrar sesión», y «Cambiar de organización» si hay otra con servicio. La pantalla se abre con la fila activa de `/auth/organizations` al entrar o con cualquier 403 `organization_suspended`/`organization_deleted` de esa organización. Mientras esté abierta no se pide data token ni se abre el stream. Después de pagar, «Reintentar» la levanta: admin-api reactiva sola la organización al registrar el pago
-
 - **Vuelve el selector de organización.** Quien pertenece a varias organizaciones puede cambiar de una a otra desde el menú de la cuenta (escritorio) y desde Ajustes (móvil). Se marca la activa y, con su motivo, las suspendidas o no disponibles; elegir una suspendida abre su pantalla de suspensión. Faltaba desde que el panel de usuario dejó de montarse
 
 ### Fixed
