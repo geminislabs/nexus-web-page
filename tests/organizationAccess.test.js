@@ -165,6 +165,22 @@ describe('switchableOrganizations', () => {
 	});
 });
 
+describe('organizationStatusLabel', () => {
+	it('marca las bloqueadas en el selector de Ajustes', async () => {
+		const { organizationStatusLabel } = await cargar();
+		expect(organizationStatusLabel(LISTA[0])).toBeNull();
+		expect(organizationStatusLabel({ ...LISTA[0], access_blocked: BLOQUEO_FILA })).toBe(
+			'Suspendida'
+		);
+		expect(
+			organizationStatusLabel({
+				...LISTA[0],
+				access_blocked: { ...BLOQUEO_FILA, error_code: 'organization_deleted' }
+			})
+		).toBe('No disponible');
+	});
+});
+
 describe('api.js con una organización suspendida', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', vi.fn());

@@ -148,6 +148,19 @@ export function organizationBlockCopy(block, organizationName) {
 }
 
 /**
+ * La etiqueta de estado de una fila de `/auth/organizations` en el selector de
+ * organización (`OrganizationSwitcher`), o `null` si da acceso. Se puede elegir igual: al entrar se ve la
+ * pantalla de suspensión, que es donde se paga.
+ * @param {import('./organizationStore.js').UserOrganization} org
+ * @returns {string | null}
+ */
+export function organizationStatusLabel(org) {
+	const block = parseOrganizationBlock(org?.access_blocked);
+	if (!block) return null;
+	return block.errorCode === ORGANIZATION_DELETED ? 'No disponible' : 'Suspendida';
+}
+
+/**
  * Las otras organizaciones a las que se puede cambiar: las que dan acceso.
  * @param {import('./organizationStore.js').UserOrganization[]} list
  * @param {string | null} activeId el id de la activa
