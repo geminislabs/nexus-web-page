@@ -1,6 +1,7 @@
 import { authToken } from '../stores/auth.js';
 import { user } from '../stores/auth.js';
 import { activeOrganizationId } from '../stores/organizationStore.js';
+import { organizationAccess } from '../stores/organizationAccessStore.js';
 import { ApiError, apiErrorFromResponse } from './apiErrors.js';
 import { withQuery } from './apiQuery.js';
 import { httpRouteTemplate, instrumentedFetch } from '$lib/observability/http.js';
@@ -212,7 +213,11 @@ class ApiService {
 		const isJson = contentType.includes('application/json');
 
 		if (!response.ok) {
-			throw await apiErrorFromResponse(response);
+			const error = await apiErrorFromResponse(response);
+			// Organización suspendida o borrada: no es un fallo de credencial. No se
+			// reintenta ni se cierra la sesión; el layout enseña la pantalla.
+			if (error.status === 403) organizationAccess.reportForbidden(error.body);
+			throw error;
 		}
 
 		if (!isJson) {

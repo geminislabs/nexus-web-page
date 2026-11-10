@@ -1,6 +1,8 @@
+import { get } from 'svelte/store';
 import { user, authToken } from '$lib/stores/auth.js';
 import { organizations, activeOrganizationId } from '$lib/stores/organizationStore.js';
 import { accountAccess } from '$lib/stores/accountStore.js';
+import { organizationAccess } from '$lib/stores/organizationAccessStore.js';
 import { apiService } from '$lib/services/api.js';
 import { clearDataToken, primeDataToken } from '$lib/services/dataToken.js';
 import { logger } from '$lib/utils/logger.js';
@@ -26,6 +28,7 @@ async function loadMyOrganizations() {
 		if (currentId && !stillMember) {
 			activeOrganizationId.clear();
 		}
+		organizationAccess.syncFromOrganizations();
 	} catch (err) {
 		logger.warn({
 			code: 'AUTH_ORGANIZATIONS_FETCH_FAILED',
@@ -77,6 +80,33 @@ export async function refreshAccountAccess() {
 	}
 }
 
+/**
+ * «Reintentar» de la pantalla de suspensión: vuelve a pedir las organizaciones
+ * y recalcula el estado de la activa. Después de pagar, la admin-api ya la
+ * reactivó (#196) y la fila llega con `access_blocked: null`.
+ *
+ * @returns {Promise<boolean>} si la organización activa da acceso
+ */
+export async function refreshOrganizationAccess() {
+	await loadMyOrganizations();
+	return get(organizationAccess) === null;
+}
+
+/**
+ * Cambia la organización en la que actúa la sesión.
+ *
+ * Recarga completa: casi todo lo que carga el dashboard está acotado a la
+ * organización activa en varios stores y servicios distintos; recargar es más
+ * barato y más correcto que invalidar cada uno.
+ *
+ * @param {string} organizationId
+ */
+export function switchOrganization(organizationId) {
+	activeOrganizationId.setActive(organizationId);
+	clearDataToken();
+	window.location.reload();
+}
+
 /** @param {Record<string, unknown> | null | undefined} apiUser */
 export function normalizeUser(apiUser) {
 	if (!apiUser) return null;
@@ -116,6 +146,7 @@ export function clearLocalSession() {
 	organizations.clear();
 	activeOrganizationId.clear();
 	accountAccess.clear();
+	organizationAccess.clear();
 	// La credencial del plano de datos deriva de la sesión: si la sesión muere,
 	// muere con ella. Vive solo en memoria, así que basta con soltarla.
 	clearDataToken();

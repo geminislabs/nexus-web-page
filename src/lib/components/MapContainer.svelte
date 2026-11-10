@@ -157,7 +157,14 @@
 		mapService.setNavigationControlsCompact(!isDesktopNav);
 	}
 
-	onMount(async () => {
+	/**
+	 * Monta el mapa y devuelve su limpieza. No es el callback de `onMount`
+	 * directamente: Svelte ignora la limpieza que devuelve una función async, y
+	 * el stream de posiciones seguía abierto al desmontar el mapa (lo desmonta
+	 * la pantalla de organización suspendida).
+	 * @returns {Promise<(() => void) | undefined>}
+	 */
+	async function initMap() {
 		try {
 			map = await mapService.initialize(mapElement);
 			isLoading = false;
@@ -312,6 +319,20 @@
 			logger.error('Error inicializando mapa:', err);
 			isLoading = false;
 		}
+	}
+
+	onMount(() => {
+		let destroyed = false;
+		/** @type {(() => void) | undefined} */
+		let cleanup;
+		initMap().then((fn) => {
+			cleanup = fn;
+			if (destroyed) cleanup?.();
+		});
+		return () => {
+			destroyed = true;
+			cleanup?.();
+		};
 	});
 </script>
 

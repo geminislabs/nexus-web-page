@@ -6,7 +6,8 @@ const LS_ACTIVE_ORGANIZATION_ID = 'active_organization_id';
 /**
  * `is_default` llega desde siscom-admin-api v1.51.0; contra un backend anterior
  * falta y se cae al primero de la lista (ver `isActiveOrganization`).
- * @typedef {{ organization_id: string, name: string, role: string, is_default?: boolean }} UserOrganization
+ * `access_blocked` llega desde v1.68.0 (suspensión): `null` si la organización da acceso.
+ * @typedef {{ organization_id: string, name: string, role: string, is_default?: boolean, access_blocked?: { error_code: string, suspended_by: string, can_manage_billing: boolean } | null }} UserOrganization
  */
 
 function createOrganizationsStore() {
