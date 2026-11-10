@@ -4,11 +4,20 @@
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { activeOrganizationId } from '$lib/stores/organizationStore.js';
 	import { validateSessionWithApi } from '$lib/services/sessionService.js';
+	import { clearDataToken } from '$lib/services/dataToken.js';
+	import { organizationAccess } from '$lib/stores/organizationAccessStore.js';
+	import OrganizationBlockedScreen from '$lib/components/OrganizationBlockedScreen.svelte';
 	import '$lib/styles/dashboard.css';
 
 	let { children } = $props();
 	let isAuthenticated = $state(false);
 	let isLoading = $state(true);
+
+	// La suspensión revoca los data tokens (admin-api), así que el que hubiera en
+	// memoria ya no sirve: al levantarse se pide uno nuevo.
+	$effect(() => {
+		if ($organizationAccess) clearDataToken();
+	});
 
 	onMount(() => {
 		let cancelled = false;
@@ -63,5 +72,11 @@
 		</div>
 	</div>
 {:else if isAuthenticated}
-	{@render children?.()}
+	<!-- Con la organización suspendida no se monta el dashboard: sin mapa, sin
+	stream y sin pedir data token. Al levantarse, se vuelve a montar entero. -->
+	{#if $organizationAccess}
+		<OrganizationBlockedScreen block={$organizationAccess} />
+	{:else}
+		{@render children?.()}
+	{/if}
 {/if}

@@ -22,6 +22,7 @@
  */
 
 import { apiService } from './api.js';
+import { isOrganizationBlocked } from '$lib/stores/organizationAccessStore.js';
 import { logger } from '$lib/utils/logger.js';
 
 /** Carga el journey solo al emitir, para no arrastrar OTel en cada import. */
@@ -68,6 +69,19 @@ export class DataPlaneForbiddenError extends Error {
 	constructor(message = 'El plano de datos rechazó el alcance solicitado') {
 		super(message);
 		this.name = 'DataPlaneForbiddenError';
+	}
+}
+
+/**
+ * La organización activa está suspendida o borrada. No se pide token: la
+ * admin-api lo negaría igual (403 `organization_suspended`), y pedirlo en bucle
+ * sólo llena los logs. Se vuelve a pedir cuando la pantalla de suspensión se
+ * levanta.
+ */
+export class OrganizationUnavailableError extends Error {
+	constructor(message = 'La organización activa no está disponible') {
+		super(message);
+		this.name = 'OrganizationUnavailableError';
 	}
 }
 
@@ -183,6 +197,8 @@ async function issue() {
  * @returns {Promise<string>}
  */
 export async function getDataToken({ force = false } = {}) {
+	if (isOrganizationBlocked()) throw new OrganizationUnavailableError();
+
 	if (!force && isFresh(cached)) return /** @type {DataTokenEntry} */ (cached).token;
 
 	// Si ya hay una emisión en curso, esperarla en vez de lanzar otra: la

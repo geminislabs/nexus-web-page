@@ -10,6 +10,7 @@
 	import { theme } from '$lib/stores/themeStore.js';
 	import { toggleThemeWithReveal } from '$lib/motion/themeReveal.js';
 	import { vehicleColors } from '$lib/data/vehicleColors';
+	import OrganizationSwitcher from '$lib/components/OrganizationSwitcher.svelte';
 	import IconPicker from '$lib/components/Unit/IconPicker.svelte';
 	import VehicleColorPicker from '$lib/components/Unit/VehicleColorPicker.svelte';
 	import { apiService } from '$lib/services/api.js';
@@ -282,6 +283,8 @@
 					</div>
 				</article>
 			{/if}
+
+			<OrganizationSwitcher />
 
 			<div aria-labelledby="ajustes-aspecto-heading">
 				<h3
