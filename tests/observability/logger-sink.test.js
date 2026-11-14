@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { logs } from '@opentelemetry/api-logs';
+import { logs } from '@opentelemetry/api';
 import { logger, setObservabilitySink } from '../../src/lib/utils/logger.js';
 import { init } from '../../src/lib/observability/index.js';
 

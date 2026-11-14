@@ -1,4 +1,4 @@
-import { logs, SeverityNumber } from '@opentelemetry/api-logs';
+import { logs, SeverityNumber } from '@opentelemetry/api';
 import { recordJsError } from './journey.js';
 import { scrubAttrs, scrubMessage, scrubStack } from './scrubber.js';
 

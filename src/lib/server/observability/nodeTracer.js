@@ -6,18 +6,18 @@
  * `forwarded-parse` y `util` de Node) entran al build del navegador.
  * `hooks.server.js` lo inyecta en `init({ serverTracer })`.
  */
-import { ScrubSpanProcessor } from '$lib/observability/init.js';
+import { ScrubSpanProcessor, registerTracerProvider } from '$lib/observability/init.js';
 
 export async function initNodeTracer(resource, base) {
 	const [
-		{ NodeTracerProvider, BatchSpanProcessor },
+		{ TracerProvider, BatchSpanProcessor },
 		{ AsyncLocalStorageContextManager },
 		{ W3CTraceContextPropagator },
 		{ OTLPTraceExporter },
 		{ registerInstrumentations },
 		{ HttpInstrumentation }
 	] = await Promise.all([
-		import('@opentelemetry/sdk-trace-node'),
+		import('@opentelemetry/sdk-trace'),
 		import('@opentelemetry/context-async-hooks'),
 		import('@opentelemetry/core'),
 		import('@opentelemetry/exporter-trace-otlp-http'),
@@ -26,16 +26,17 @@ export async function initNodeTracer(resource, base) {
 	]);
 
 	const processor = new ScrubSpanProcessor(
-		new BatchSpanProcessor(new OTLPTraceExporter({ url: `${base}/v1/traces` }))
+		new BatchSpanProcessor({ exporter: new OTLPTraceExporter({ url: `${base}/v1/traces` }) })
 	);
-	const provider = new NodeTracerProvider({
+	const provider = new TracerProvider({
 		resource,
 		spanProcessors: [processor]
 	});
-	provider.register({
-		contextManager: new AsyncLocalStorageContextManager(),
-		propagator: new W3CTraceContextPropagator()
-	});
+	registerTracerProvider(
+		provider,
+		new AsyncLocalStorageContextManager(),
+		new W3CTraceContextPropagator()
+	);
 	registerInstrumentations({
 		tracerProvider: provider,
 		instrumentations: [

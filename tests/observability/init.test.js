@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { metrics, trace } from '@opentelemetry/api';
-import { logs } from '@opentelemetry/api-logs';
+import { logs, metrics, trace } from '@opentelemetry/api';
 
 const {
-	WebTracerProvider,
-	NodeTracerProvider,
+	TracerProvider,
+	StackContextManager,
+	AsyncLocalStorageContextManager,
 	BatchSpanProcessor,
 	MeterProvider,
 	PeriodicExportingMetricReader,
@@ -18,12 +18,18 @@ const {
 	HttpInstrumentation,
 	resourceFromAttributes
 } = vi.hoisted(() => {
-	function ctor() {
-		this.register = vi.fn();
+	// OTel 3: un solo `TracerProvider` sin `register()`; el navegador y Node se
+	// distinguen por el context manager que se registra.
+	function contextManager() {
+		this.enable = () => this;
+		this.active = vi.fn();
 	}
 	return {
-		WebTracerProvider: vi.fn(ctor),
-		NodeTracerProvider: vi.fn(ctor),
+		TracerProvider: vi.fn(function TracerProvider() {
+			this.getTracer = vi.fn();
+		}),
+		StackContextManager: vi.fn(contextManager),
+		AsyncLocalStorageContextManager: vi.fn(contextManager),
 		BatchSpanProcessor: vi.fn(function BatchSpanProcessor() {}),
 		MeterProvider: vi.fn(function MeterProvider() {
 			this.getMeter = () => ({ createCounter: () => ({ add: vi.fn() }) });
@@ -43,13 +49,9 @@ const {
 	};
 });
 
-vi.mock('@opentelemetry/sdk-trace-web', () => ({
-	WebTracerProvider,
-	StackContextManager: class StackContextManager {},
-	BatchSpanProcessor
-}));
-vi.mock('@opentelemetry/sdk-trace-node', () => ({
-	NodeTracerProvider,
+vi.mock('@opentelemetry/sdk-trace', () => ({
+	TracerProvider,
+	StackContextManager,
 	BatchSpanProcessor
 }));
 vi.mock('@opentelemetry/sdk-metrics', () => ({
@@ -74,9 +76,7 @@ vi.mock('@opentelemetry/instrumentation-http', () => ({ HttpInstrumentation }));
 vi.mock('@opentelemetry/core', () => ({
 	W3CTraceContextPropagator: class W3CTraceContextPropagator {}
 }));
-vi.mock('@opentelemetry/context-async-hooks', () => ({
-	AsyncLocalStorageContextManager: class AsyncLocalStorageContextManager {}
-}));
+vi.mock('@opentelemetry/context-async-hooks', () => ({ AsyncLocalStorageContextManager }));
 vi.mock('@opentelemetry/resources', () => ({ resourceFromAttributes }));
 vi.mock('@opentelemetry/semantic-conventions', () => ({
 	ATTR_SERVICE_NAME: 'service.name',
@@ -106,8 +106,7 @@ describe('init', () => {
 		try {
 			const { init } = await import('../../src/lib/observability/init.js');
 			await expect(init()).resolves.toBeUndefined();
-			expect(WebTracerProvider).not.toHaveBeenCalled();
-			expect(NodeTracerProvider).not.toHaveBeenCalled();
+			expect(TracerProvider).not.toHaveBeenCalled();
 			expect(OTLPTraceExporter).not.toHaveBeenCalled();
 		} finally {
 			if (had) process.env.OTLP_ENDPOINT = previous;
@@ -118,8 +117,7 @@ describe('init', () => {
 		vi.stubEnv('OTLP_ENDPOINT', '');
 		const { init } = await import('../../src/lib/observability/init.js');
 		await expect(init()).resolves.toBeUndefined();
-		expect(WebTracerProvider).not.toHaveBeenCalled();
-		expect(NodeTracerProvider).not.toHaveBeenCalled();
+		expect(TracerProvider).not.toHaveBeenCalled();
 		expect(OTLPTraceExporter).not.toHaveBeenCalled();
 	});
 
@@ -128,14 +126,20 @@ describe('init', () => {
 		const { init } = await import('../../src/lib/observability/init.js');
 		await init();
 		await init();
-		expect(WebTracerProvider).not.toHaveBeenCalled();
+		expect(TracerProvider).not.toHaveBeenCalled();
 	});
 
 	it('con endpoint en browser registra providers y no throw', async () => {
 		vi.stubEnv('OTLP_ENDPOINT', 'http://localhost:4318');
 		const { init } = await import('../../src/lib/observability/init.js');
 		await expect(init()).resolves.toBeUndefined();
-		expect(WebTracerProvider).toHaveBeenCalled();
+		expect(TracerProvider).toHaveBeenCalled();
+		expect(StackContextManager).toHaveBeenCalled();
+		// OTel 3: los processors reciben `{ exporter }`, no el exporter suelto.
+		expect(BatchSpanProcessor).toHaveBeenCalledWith({ exporter: expect.any(OTLPTraceExporter) });
+		expect(BatchLogRecordProcessor).toHaveBeenCalledWith({
+			exporter: expect.any(OTLPLogExporter)
+		});
 		expect(OTLPTraceExporter).toHaveBeenCalled();
 		expect(registerInstrumentations).toHaveBeenCalled();
 		expect(FetchInstrumentation).toHaveBeenCalledWith(
@@ -165,25 +169,28 @@ describe('init', () => {
 			})
 		);
 		expect(LoggerProvider).toHaveBeenCalled();
-		expect(NodeTracerProvider).not.toHaveBeenCalled();
+		expect(AsyncLocalStorageContextManager).not.toHaveBeenCalled();
+		expect(HttpInstrumentation).not.toHaveBeenCalled();
 	});
 
-	it.skipIf(!import.meta.env.SSR)('con endpoint en Node registra NodeTracerProvider', async () => {
+	it.skipIf(!import.meta.env.SSR)('con endpoint en Node registra el tracer de Node', async () => {
 		vi.stubEnv('OTLP_ENDPOINT', 'http://localhost:4318');
 		const { init } = await import('../../src/lib/observability/init.js');
 		const { initNodeTracer } = await import('../../src/lib/server/observability/nodeTracer.js');
 		await expect(init({ serverTracer: initNodeTracer })).resolves.toBeUndefined();
-		expect(NodeTracerProvider).toHaveBeenCalled();
+		expect(TracerProvider).toHaveBeenCalled();
+		expect(AsyncLocalStorageContextManager).toHaveBeenCalled();
 		expect(HttpInstrumentation).toHaveBeenCalledWith(
 			expect.objectContaining({ disableOutgoingRequestInstrumentation: true })
 		);
-		expect(WebTracerProvider).not.toHaveBeenCalled();
+		expect(StackContextManager).not.toHaveBeenCalled();
+		expect(FetchInstrumentation).not.toHaveBeenCalled();
 	});
 
 	it('si el tracer throw, igual registra MeterProvider', async () => {
 		vi.stubEnv('OTLP_ENDPOINT', 'http://localhost:4318');
 		vi.spyOn(console, 'error').mockImplementation(() => {});
-		WebTracerProvider.mockImplementationOnce(() => {
+		TracerProvider.mockImplementationOnce(() => {
 			throw new Error('cjs');
 		});
 		const { init } = await import('../../src/lib/observability/init.js');
@@ -220,7 +227,6 @@ describe('el tracer de Node no entra al bundle del cliente', () => {
 		const { resolve } = await import('node:path');
 		const fuente = readFileSync(resolve(process.cwd(), 'src/lib/observability/init.js'), 'utf8');
 		for (const paquete of [
-			'@opentelemetry/sdk-trace-node',
 			'@opentelemetry/instrumentation-http',
 			'@opentelemetry/context-async-hooks'
 		]) {
