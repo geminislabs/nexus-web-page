@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { apiService } from '$lib/services/api.js';
 	import { validatePassword } from '$lib/utils/passwordValidation.js';
 	import Icon from '$lib/components/Icon.svelte';
@@ -33,7 +33,7 @@
 			return;
 		}
 		// Enlaces antiguos con ?email=…: hidratar y limpiar la URL (no dejar PII en historial/Referer).
-		const q = $page.url.searchParams.get('email');
+		const q = page.url.searchParams.get('email');
 		if (q) {
 			email = q;
 			goto('/reset-password', { replaceState: true });
@@ -80,8 +80,8 @@
 	}
 
 	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
-	$: marca = marcaOPorDefecto($page.data.brand);
-	$: logoUrl = logoDe(marca);
+	const marca = marcaOPorDefecto(page.data.brand);
+	const logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>

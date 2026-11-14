@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { user } from '$lib/stores/auth.js';
 	import { apiService } from '$lib/services/api.js';
 	import { onMount } from 'svelte';
@@ -70,14 +70,14 @@
 	}
 
 	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
-	$: marca = marcaOPorDefecto($page.data.brand);
-	$: logoUrl = logoDe(marca);
+	const marca = marcaOPorDefecto(page.data.brand);
+	const logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>
 	<title>{tituloDe(marca, 'Crear cuenta')}</title>
 	<meta name="description" content={descripcionDe(marca, 'Crea tu cuenta en')} />
-	<link rel="canonical" href={`${$page.url.origin}/register`} />
+	<link rel="canonical" href={`${page.url.origin}/register`} />
 	<meta property="og:title" content={tituloDe(marca, 'Crear cuenta')} />
 	<meta property="og:description" content={descripcionDe(marca, 'Crea tu cuenta en')} />
 	<meta property="og:type" content="website" />

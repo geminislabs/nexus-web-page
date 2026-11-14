@@ -1,8 +1,15 @@
 import { readFileSync } from 'node:fs';
+import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
+import { cspDirectives } from './src/lib/security/csp.js';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
+
+// Las mismas VITE_* que Vite hornea en el bundle: las del entorno (build-args
+// del Dockerfile) mandan sobre las de `.env`. Desde SvelteKit 3 la
+// configuración de Kit va aquí y no en `svelte.config.js`.
+const env = loadEnv(process.env.NODE_ENV || 'production', process.cwd(), 'VITE_');
 
 function otlpEndpointForBuild(mode) {
 	if (process.env.OTLP_ENDPOINT != null) return String(process.env.OTLP_ENDPOINT).trim();
@@ -12,7 +19,24 @@ function otlpEndpointForBuild(mode) {
 }
 
 export default defineConfig(({ mode }) => ({
-	plugins: [sveltekit()],
+	plugins: [
+		sveltekit({
+			adapter: adapter(),
+			// SvelteKit 3 cambió `$lib` por `#lib`; se mantiene `$lib`, que es la
+			// convención del repo (AGENTS.md).
+			alias: { $lib: 'src/lib' },
+			csp: {
+				// `nonce` y no `auto`: el script del tema en app.html depende del nonce, y
+				// en una página prerenderizada no lo habría. Hoy no se prerenderiza nada.
+				mode: 'nonce',
+				// Se aplica. Salió primero en Report-Only (v1.22.0) porque en local no hay
+				// contra qué probar el mapa; el log de `/internal/csp-report` en producción
+				// quedó vacío tras usar mapa, stream, Street View y /share. Lo que se
+				// bloquee a partir de aquí sigue llegando a ese log.
+				directives: cspDirectives(env)
+			}
+		})
+	],
 	ssr: {
 		noExternal: [/^@opentelemetry\/(?!sdk-trace-node|context-async-hooks|instrumentation-http)/]
 	},

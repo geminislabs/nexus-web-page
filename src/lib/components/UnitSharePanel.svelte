@@ -1,5 +1,5 @@
 <script>
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { marcaOPorDefecto } from '$lib/brand.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { apiService } from '$lib/services/api.js';
@@ -34,7 +34,7 @@
 
 	async function shareEta() {
 		const name = unit?.name || 'Unidad';
-		const text = `⏱️ Seguimiento de ${name} — función ETA próximamente en ${marcaOPorDefecto($page.data.brand).name}`;
+		const text = `⏱️ Seguimiento de ${name} — función ETA próximamente en ${marcaOPorDefecto(page.data.brand).name}`;
 		await shareText(text);
 	}
 

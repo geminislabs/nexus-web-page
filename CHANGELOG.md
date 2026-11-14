@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **SvelteKit 3 y Vite 8.** Suben juntos SvelteKit 3.2, Vite 8.3, vite-plugin-svelte 7, adapter-node 6, adapter-auto 8 y TypeScript 6 (lo pide SvelteKit 3), con el resto de dependencias menores de Dependabot (#87, #91, #93, #94, #117, #118, #143 y la parte no-OpenTelemetry de #142). Lo que obligó a tocar el código:
+  - La configuración de Kit (adapter y CSP) pasa de `svelte.config.js`, que ya no se lee, al plugin `sveltekit(...)` de `vite.config.js`. La CSP no cambia
+  - `$lib` se mantiene con un alias. SvelteKit 3 lo cambió por `#lib` y avisa de que el alias está deprecado; la migración va aparte
+  - `$app/stores` ya no existe: las 11 pantallas que leían `$page` usan `page` de `$app/state`. La marca y las URL canónicas pasan de `$:` a `const`, porque con `$app/state` un `$:` en modo legacy ya no se recalcula; tampoco hacía falta: la marca sale del host y no cambia en la sesión
+  - El override `cookie: ^0.7.0`, que era un parche de seguridad para SvelteKit 2, pasa a `>=0.7.0`: SvelteKit 3 trae `cookie` 2 y el override forzaba la 0.7, con lo que todas las páginas daban 500
+  - `jsconfig.json` extiende `$app/tsconfig`, como pide SvelteKit 3; `svelte-check` ahora revisa también los tests
+  - `engines.node` sube a `>=22.17`, el mínimo de SvelteKit 3
+
 ## [1.35.0] - 2026-11-10
 
 ### Added
