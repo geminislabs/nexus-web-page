@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { apiService } from '$lib/services/api.js';
 	import Icon from '$lib/components/Icon.svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { logoDe, marcaOPorDefecto, tituloDe } from '$lib/brand.js';
 	import EnlacesLegales from '$lib/components/EnlacesLegales.svelte';
 
@@ -35,8 +35,8 @@
 	}
 
 	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
-	$: marca = marcaOPorDefecto($page.data.brand);
-	$: logoUrl = logoDe(marca);
+	const marca = marcaOPorDefecto(page.data.brand);
+	const logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>

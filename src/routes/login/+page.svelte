@@ -1,6 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { user, authToken } from '$lib/stores/auth.js';
 	import { apiService, ApiError } from '$lib/services/api.js';
 	import { persistLoginResponse } from '$lib/services/sessionService.js';
@@ -67,14 +67,14 @@
 	}
 
 	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
-	$: marca = marcaOPorDefecto($page.data.brand);
-	$: logoUrl = logoDe(marca);
+	const marca = marcaOPorDefecto(page.data.brand);
+	const logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>
 	<title>{tituloDe(marca, 'Iniciar sesión')}</title>
 	<meta name="description" content={descripcionDe(marca, 'Accede a')} />
-	<link rel="canonical" href={`${$page.url.origin}/login`} />
+	<link rel="canonical" href={`${page.url.origin}/login`} />
 </svelte:head>
 
 <div

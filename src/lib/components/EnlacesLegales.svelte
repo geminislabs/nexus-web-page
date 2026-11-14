@@ -1,5 +1,5 @@
 <script>
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { getLegalLinks } from '$lib/constants/legal.js';
 	import { marcaOPorDefecto } from '$lib/brand.js';
 
@@ -8,8 +8,9 @@
 
 	// Con la marca de un partner, sus usuarios ven sus términos (§7): el
 	// responsable frente a ellos es el partner, no Geminis.
-	$: marca = marcaOPorDefecto($page.data.brand);
-	$: links =
+	// La marca sale del host (`+layout.server.js`) y no cambia en la sesión.
+	const marca = marcaOPorDefecto(page.data.brand);
+	const links =
 		!marca.isDefault && marca.legalUrl
 			? [{ id: 'partner', label: 'Términos y privacidad', href: marca.legalUrl }]
 			: getLegalLinks();

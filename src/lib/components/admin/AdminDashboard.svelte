@@ -1,5 +1,5 @@
 <script>
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { marcaOPorDefecto } from '$lib/brand.js';
 	import { logger } from '$lib/utils/logger.js';
 	import { onMount } from 'svelte';
@@ -79,7 +79,8 @@
 
 	onMount(loadDashboard);
 
-	$: marca = marcaOPorDefecto($page.data.brand);
+	// La marca sale del host (`+layout.server.js`) y no cambia en la sesión.
+	const marca = marcaOPorDefecto(page.data.brand);
 </script>
 
 <div class="admin-dashboard w-full">

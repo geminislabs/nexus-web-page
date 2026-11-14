@@ -10,8 +10,8 @@ Instrucciones para asistentes de IA (Cursor, Copilot, etc.) que trabajen en este
 
 | Capa        | Tecnología                     |
 | ----------- | ------------------------------ |
-| Framework   | SvelteKit 2, Svelte 5          |
-| Build       | Vite 7                         |
+| Framework   | SvelteKit 3, Svelte 5          |
+| Build       | Vite 8                         |
 | Estilos     | Tailwind CSS 4                 |
 | Lint/format | ESLint 9 flat, Prettier (tabs) |
 | Runtime     | Node.js 22                     |

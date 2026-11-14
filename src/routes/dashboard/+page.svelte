@@ -4,7 +4,7 @@
 	import { get } from 'svelte/store';
 	import { browser } from '$app/environment';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { scale, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import { user } from '$lib/stores/auth.js';
@@ -102,8 +102,8 @@
 		openDrawer = getConfigDrawerId(section);
 	}
 
-	$: canonicalUrl =
-		$page?.url?.origin && $page?.url?.pathname ? `${$page.url.origin}${$page.url.pathname}` : '';
+	const canonicalUrl =
+		page?.url?.origin && page?.url?.pathname ? `${page.url.origin}${page.url.pathname}` : '';
 
 	$: if ($requestedPanelView) {
 		trackingPanelView = $requestedPanelView;
@@ -332,8 +332,8 @@
 	});
 
 	// La marca del dominio (§7), resuelta en el servidor: sale bien desde el primer HTML.
-	$: marca = marcaOPorDefecto($page.data.brand);
-	$: logoUrl = logoDe(marca);
+	const marca = marcaOPorDefecto(page.data.brand);
+	const logoUrl = logoDe(marca);
 </script>
 
 <svelte:head>

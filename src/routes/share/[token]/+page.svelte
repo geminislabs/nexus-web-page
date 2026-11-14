@@ -1,13 +1,13 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
 	import { onMount, onDestroy } from 'svelte';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { positionService } from '$lib/services/positionService.js';
 	import { vehicles } from '$lib/stores/vehicleStore.js';
 	import MapContainer from '$lib/components/MapContainer.svelte';
 	import { dialogScale, softFade } from '$lib/motion/index.js';
 
-	let token = $page.params.token;
+	let token = page.params.token;
 	let loading = true;
 	let error = null;
 	let success = false;
