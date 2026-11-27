@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.37.0] - 2026-11-27
+
 ### Added
 
 - **Vista Panel del seguimiento, opcional.** Una segunda vista junto a la de siempre, para validarla con usuarios antes de decidir si reemplaza a la Clásica. **La Clásica sigue siendo la vista por defecto y no cambia.** Se elige en el menú de la cuenta (Vista → Clásica / Panel, solo en escritorio) y se recuerda en el navegador. Los colores nuevos (mapa carbón/papel, superficies grises, números en Sora ligera, color solo para estados) solo se aplican en Panel
