@@ -3,6 +3,7 @@
 	 * Línea de tiempo del día por unidad: tramos en ruta (trayectos) y marcas de
 	 * alarma (zona, ignición). Las filas llevan a la unidad en el mapa.
 	 */
+	import Icon from '$lib/components/Icon.svelte';
 	import { fleetDay } from '$lib/stores/fleetDayStore.js';
 	import { vehicles, loadingVehicles } from '$lib/stores/vehicleStore.js';
 	import { hourWindow } from '$lib/services/fleetDayService.js';
@@ -41,7 +42,14 @@
 	aria-labelledby="act-title"
 >
 	<div class="flex items-baseline justify-between gap-2">
-		<h2 id="act-title" class="m-0 text-[13px] font-medium">Actividad de hoy</h2>
+		<h2 id="act-title" class="m-0 flex items-center gap-1.5 text-[13px] font-medium">
+			<Icon
+				icon="mdi:timeline-clock-outline"
+				class="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+				aria-hidden="true"
+			/>
+			Actividad de hoy
+		</h2>
 		<span class="text-[11px] nx-muted"
 			>{String(win[0]).padStart(2, '0')}:00 – {String(win[1] % 24).padStart(2, '0')}:00</span
 		>
@@ -125,8 +133,8 @@
 								height="6"
 								rx="3"
 								class={sel
-									? 'fill-slate-700 dark:fill-white/70'
-									: 'fill-slate-400/55 dark:fill-white/25'}
+									? 'fill-emerald-600 dark:fill-emerald-400'
+									: 'fill-emerald-500/45 dark:fill-emerald-400/40'}
 							/>
 						{/each}
 						{#each row.marks as m, j (j)}
@@ -161,7 +169,8 @@
 		</div>
 		<div class="mt-2 flex flex-wrap gap-x-3.5 gap-y-1 text-[10.5px] nx-muted">
 			<span class="inline-flex items-center gap-1.5"
-				><i class="inline-block h-[5px] w-4 rounded bg-slate-400/60 dark:bg-white/30"></i>En ruta</span
+				><i class="inline-block h-[5px] w-4 rounded bg-emerald-500/60 dark:bg-emerald-400/50"></i>En
+				ruta</span
 			>
 			<span class="inline-flex items-center gap-1.5"
 				><i class="inline-block h-[7px] w-[7px] rounded-full bg-amber-400"></i>Alerta de zona</span

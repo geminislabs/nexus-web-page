@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Vista Panel: más color donde importa.** El fondo de los paneles no cambia; el color va en íconos, cifras y gráficas, con dos reglas: verde, naranja y ámbar son estado, y el resto de colores son categoría.
+  - Las cifras de En movimiento, Detenidas y Sin señal van en su color de estado. Detenidas pasa a naranja, igual que la pastilla «Detenido» de cada unidad.
+  - La pastilla de cada unidad muestra su estado en color, y el mini-recorrido de una unidad en movimiento es verde.
+  - En las gráficas, Utilización va en cian, Kilómetros hoy en azul cielo (la hora actual, más intensa) y los tramos «en ruta» de Actividad en verde.
+  - Los títulos de los paneles llevan su ícono de color: Unidades índigo, Alertas rosa, Utilización cian, Kilómetros cielo y Actividad verde.
+  - En el riel, Unidades, Alertas e Informes llevan esos mismos colores cuando no están seleccionados, y el encabezado de su panel flotante también.
+  - En la columna de alertas, los grupos van en color: zona en ámbar e ignición en naranja. Las pestañas de Alertas y zonas también van en color: Alertas en rosa y Zonas en cian.
+  - Botones, interruptores y selección siguen en blanco y negro
+
+### Fixed
+
+- **Vista Panel: la franja del día ya no tapa los controles del mapa** cuando la columna de alertas está cerrada. Termina antes de la columna de capas, zoom y Street View
+
+- **Vista Panel: vuelve el fondo anterior de los paneles.** El degradado gris más claro de v1.39.0 se retira. `.nx-glass` y `.nx-float` regresan al gris casi negro (`#15171b`) con las mismas transparencias de antes: 78 %, y en los flotantes 52 % en reposo y 93 % al pasar el puntero. El globo del mapa usa ese mismo fondo. Los íconos con color de categoría se quedan
+
 ## [1.39.0] - 2026-11-27
 
 Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.38.1`.

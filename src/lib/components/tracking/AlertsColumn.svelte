@@ -18,8 +18,8 @@
 	} = $props();
 
 	const GROUPS = [
-		{ id: 'zone', label: 'Zonas', icon: 'mdi:hexagon-outline' },
-		{ id: 'ignition', label: 'Ignición', icon: 'mdi:engine-outline' }
+		{ id: 'zone', label: 'Zonas', icon: 'mdi:hexagon-outline', color: 'text-amber-500' },
+		{ id: 'ignition', label: 'Ignición', icon: 'mdi:engine-outline', color: 'text-orange-500' }
 	];
 
 	const sorted = $derived(
@@ -38,6 +38,11 @@
 >
 	<div class="mb-3 flex items-center justify-between gap-2">
 		<h2 id="alerts-col-title" class="m-0 flex items-center gap-2 text-[13px] font-medium">
+			<Icon
+				icon="mdi:bell-ring-outline"
+				class="-mr-0.5 h-4 w-4 text-pink-500 dark:text-pink-400"
+				aria-hidden="true"
+			/>
 			Alertas
 			{#if $unreadAlarmCount > 0}
 				<span
@@ -72,7 +77,7 @@
 		{:else}
 			{#each groups as g (g.id)}
 				<div class="mb-1.5 mt-1 flex items-center gap-1.5 text-[11.5px] nx-muted">
-					<Icon icon={g.icon} class="h-3.5 w-3.5" aria-hidden="true" />
+					<Icon icon={g.icon} class="h-3.5 w-3.5 {g.color}" aria-hidden="true" />
 					{g.label} <span class="opacity-70">({g.items.length})</span>
 				</div>
 				<ul class="m-0 mb-3 flex list-none flex-col gap-1.5 p-0">

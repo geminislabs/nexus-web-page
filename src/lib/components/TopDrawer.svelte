@@ -28,6 +28,8 @@
 	 * neutro, sin franjas ni mosaico de color. 'clasica' queda exactamente igual.
 	 */
 	export let look = 'clasica';
+	/** Vista Panel: color de categoría del ícono del encabezado (p. ej. 'text-pink-500'). */
+	export let iconColorClass = '';
 	$: isPanel = look === 'panel';
 
 	const DESKTOP_MQ = '(min-width: 1024px)';
@@ -141,7 +143,11 @@
 			>
 				<div class="flex min-w-0 flex-1 items-center gap-3.5">
 					{#if icon && isPanel}
-						<Icon {icon} class="nx-muted h-[22px] w-[22px] shrink-0" aria-hidden="true" />
+						<Icon
+							{icon}
+							class="h-[22px] w-[22px] shrink-0 {iconColorClass || 'nx-muted'}"
+							aria-hidden="true"
+						/>
 					{:else if icon}
 						<div
 							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]"

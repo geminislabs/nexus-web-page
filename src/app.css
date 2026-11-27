@@ -168,13 +168,8 @@
 	.nx-glass {
 		@apply border border-slate-200/80 bg-white/[0.86] text-slate-900 backdrop-blur-xl backdrop-saturate-150;
 	}
-	/*
-	 * Oscuro: gris algo más claro que el mapa, con un degradado suave de arriba a
-	 * abajo. Así el panel destaca por sí mismo y no depende de qué tan iluminado
-	 * esté el mapa detrás (antes solo los que caían sobre calles se veían así).
-	 */
 	html.dark .nx-glass {
-		@apply border-white/[0.09] bg-[linear-gradient(165deg,rgb(46_49_56/0.86),rgb(31_33_38/0.86))] text-[#eceef0];
+		@apply border-white/[0.07] bg-[#15171b]/[0.78] text-[#eceef0];
 	}
 	.nx-glass-hi {
 		@apply border-slate-300/80 bg-slate-100/90;
@@ -195,11 +190,11 @@
 		@apply bg-white/[0.95];
 	}
 	html.dark .nx-float {
-		@apply bg-[linear-gradient(165deg,rgb(46_49_56/0.72),rgb(31_33_38/0.72))];
+		@apply bg-[#15171b]/[0.52];
 	}
 	html.dark .nx-float:hover,
 	html.dark .nx-float:focus-within {
-		@apply bg-[linear-gradient(165deg,rgb(46_49_56/0.96),rgb(31_33_38/0.96))];
+		@apply bg-[#15171b]/[0.93];
 	}
 	/* Un panel flotante marcado (filtro activo) se queda resaltado. */
 	.nx-float.nx-glass-hi {
@@ -213,7 +208,7 @@
 			@apply bg-white/[0.95];
 		}
 		html.dark .nx-float {
-			@apply bg-[linear-gradient(165deg,rgb(46_49_56/0.96),rgb(31_33_38/0.96))];
+			@apply bg-[#15171b]/[0.93];
 		}
 	}
 	/*
