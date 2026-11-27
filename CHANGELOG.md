@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.38.1] - 2026-11-27
+
+Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.38.0`.
+
 ### Changed
 
 - **Vista Panel: el zoom del mapa también va abajo a la derecha**, apilado con el botón de capas justo encima de Street View. La Clásica no cambia
