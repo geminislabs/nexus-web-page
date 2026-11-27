@@ -1,4 +1,5 @@
 <script>
+	import { uiLook } from '$lib/stores/lookStore.js';
 	import { logger } from '$lib/utils/logger.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { onDestroy, tick } from 'svelte';
@@ -329,7 +330,8 @@
 {/if}
 
 {#if zv === 'crear_zona_map' || zv === 'guardar_zona'}
-	<div bind:this={portalHost}>
+	<!-- Se porta a <body>: lleva su propio data-look para la piel de la vista Panel. -->
+	<div bind:this={portalHost} data-look={$uiLook === 'panel' ? 'panel' : undefined}>
 		{#if zv === 'crear_zona_map'}
 			<div
 				class="pointer-events-none fixed inset-0 z-[120] flex flex-col {variant === 'mobile'

@@ -45,6 +45,11 @@
 	 * @type {'clasica' | 'panel'}
 	 */
 	export let look = 'clasica';
+	/**
+	 * Vista Panel con la columna de alertas abierta: la campana repetiría lo
+	 * mismo, así que se oculta. Al apagar la columna vuelve.
+	 */
+	export let hideAlertsBell = false;
 
 	const GLASS_BTN =
 		'nx-glass flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-700 transition-colors duration-200 hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white/80 dark:hover:border-white/15';
@@ -100,7 +105,7 @@
 			layersOff: '',
 			layersIcon: 'h-5 w-5',
 			layersFly:
-				'nx-glass absolute right-[calc(100%+12px)] top-0 z-[20] w-[240px] overflow-hidden rounded-2xl',
+				'nx-glass absolute right-[calc(100%+12px)] bottom-0 z-[20] w-[240px] overflow-hidden rounded-2xl',
 			layersHead: 'border-b border-slate-200/80 px-4 py-3 dark:border-white/[0.07]',
 			layersTitle: 'm-0 flex items-center gap-2 text-[13px] font-medium',
 			typeOn: PANEL_ON,
@@ -225,7 +230,11 @@
 		alertActions.deleteAlarmEvent(id);
 	}
 
-	$: notificationsBadge = $alerts.length + $alarmEvents.length;
+	// Clásica: reglas + eventos, como siempre. Panel: solo eventos sin leer, para que el
+	// número signifique «hay algo nuevo» y no choque con «0 hoy» de la columna.
+	$: notificationsBadge =
+		look === 'panel' ? $unreadAlarmCount : $alerts.length + $alarmEvents.length;
+	$: if (hideAlertsBell) showAlertsPanel = false;
 
 	const MOBILE_MQ = '(max-width: 639px)';
 
@@ -416,6 +425,125 @@
 
 <svelte:window on:keydown={handleKeydown} on:pointerdown={handleWindowPointerdown} />
 
+{#snippet layersControl()}
+	<div class="relative" data-map-flyout="layers">
+		<button
+			type="button"
+			class="{k.layers} {showLayersPanel ? k.layersOn : k.layersOff}"
+			on:click={toggleLayersPanel}
+			aria-haspopup="menu"
+			aria-expanded={showLayersPanel}
+			aria-label="Capas del mapa"
+			title="Capas del mapa"
+		>
+			<!-- Ícono de capas estilo diamante/rombo apiladas -->
+			<svg
+				class={k.layersIcon}
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor" fill-opacity="0.2" />
+				<path d="M2 17l10 5 10-5" />
+				<path d="M2 12l10 5 10-5" />
+			</svg>
+		</button>
+
+		{#if showLayersPanel}
+			<div
+				class={k.layersFly}
+				role="menu"
+				aria-label="Opciones de capas"
+				transition:fly={{ x: 8, duration: 200 }}
+			>
+				<!-- Header con gradiente -->
+				<div class={k.layersHead}>
+					<h4 class={k.layersTitle}>
+						<svg
+							class="h-5 w-5"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2.5"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M12 2L2 7l10 5 10-5-10-5z" />
+							<path d="M2 17l10 5 10-5" />
+							<path d="M2 12l10 5 10-5" />
+						</svg>
+						Capas del Mapa
+					</h4>
+				</div>
+
+				<!-- Tipos de mapa -->
+				<div class="p-3">
+					<p
+						class="m-0 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/35"
+					>
+						Vista del Mapa
+					</p>
+					<div class="grid grid-cols-2 gap-2">
+						{#each MAP_TYPE_OPTIONS as opt (opt.id)}
+							<button
+								type="button"
+								class="flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-semibold transition-all duration-150
+								{currentMapType === opt.id
+									? k.typeOn
+									: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
+								role="menuitemradio"
+								aria-checked={currentMapType === opt.id}
+								on:click={() => selectMapType(opt.id)}
+							>
+								<Icon
+									icon={opt.icon}
+									width={22}
+									class={currentMapType === opt.id ? k.typeIconOn : ''}
+								/>
+								<span>{opt.label}</span>
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<!-- Capas adicionales -->
+				<div class="border-t border-slate-200/80 p-3 dark:border-white/[0.06]">
+					<p
+						class="m-0 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/35"
+					>
+						Capas Adicionales
+					</p>
+					<button
+						type="button"
+						class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[12px] font-semibold transition-all duration-150
+						{showTraffic
+							? k.trafficOn
+							: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
+						role="menuitemcheckbox"
+						aria-checked={showTraffic}
+						on:click={toggleTraffic}
+					>
+						<Icon icon="mdi:traffic-light" width={20} class={showTraffic ? 'text-brand-500' : ''} />
+						<span class="flex-1 text-left">Tráfico en Vivo</span>
+						<span
+							class="flex h-5 w-5 items-center justify-center rounded-md transition-all {showTraffic
+								? 'bg-brand-500 text-white'
+								: 'bg-slate-200 dark:bg-white/10'}"
+						>
+							{#if showTraffic}
+								<Icon icon="mdi:check" width={14} />
+							{/if}
+						</span>
+					</button>
+				</div>
+			</div>
+		{/if}
+	</div>
+{/snippet}
+
 <section
 	class="relative h-full w-full font-sans"
 	data-theme={$theme}
@@ -469,288 +597,185 @@
 		>
 			<div class="pointer-events-auto relative z-[19] flex flex-col items-end gap-1.5">
 				<!-- Centro de notificaciones escritorio -->
-				<div class="relative hidden sm:block" data-map-flyout="alerts">
-					<button
-						type="button"
-						class="{k.bell} {showAlertsPanel ? k.bellOn : k.bellOff}"
-						on:click={toggleAlertsPanel}
-						aria-haspopup="dialog"
-						aria-expanded={showAlertsPanel}
-						aria-label="Ver alertas y notificaciones"
-						title="Alertas y notificaciones"
-					>
-						<Icon icon="mdi:bell-outline" aria-hidden="true" />
-						<span
-							class="absolute -right-1 -top-1 min-w-[18px] rounded-full border border-white/30 bg-rose-600 px-1.5 py-[1px] text-center text-[10px] font-bold leading-none text-white"
-							aria-label="{notificationsBadge} notificaciones"
+				{#if !hideAlertsBell}
+					<div class="relative hidden sm:block" data-map-flyout="alerts">
+						<button
+							type="button"
+							class="{k.bell} {showAlertsPanel ? k.bellOn : k.bellOff}"
+							on:click={toggleAlertsPanel}
+							aria-haspopup="dialog"
+							aria-expanded={showAlertsPanel}
+							aria-label="Ver alertas y notificaciones"
+							title="Alertas y notificaciones"
 						>
-							{notificationsBadge}
-						</span>
-					</button>
+							<Icon icon="mdi:bell-outline" aria-hidden="true" />
+							{#if look !== 'panel' || notificationsBadge > 0}
+								<span
+									class="absolute -right-1 -top-1 min-w-[18px] rounded-full border border-white/30 bg-rose-600 px-1.5 py-[1px] text-center text-[10px] font-bold leading-none text-white"
+									aria-label="{notificationsBadge} notificaciones"
+								>
+									{notificationsBadge}
+								</span>
+							{/if}
+						</button>
 
-					{#if showAlertsPanel}
-						<div
-							class={k.alertsFly}
-							role="dialog"
-							aria-label="Alertas y notificaciones"
-							transition:fly={{ y: -6, duration: 180 }}
-						>
+						{#if showAlertsPanel}
 							<div
-								class="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-white/[0.08]"
+								class={k.alertsFly}
+								role="dialog"
+								aria-label="Alertas y notificaciones"
+								transition:fly={{ y: -6, duration: 180 }}
 							>
-								<h4
-									class="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-white/75"
+								<div
+									class="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-white/[0.08]"
 								>
-									Alertas y notificaciones
-								</h4>
-								<button
-									type="button"
-									class="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-transparent dark:text-white/70 dark:hover:bg-white/10"
-									on:click={() => (showAlertsPanel = false)}
-								>
-									Cerrar
-								</button>
-							</div>
-							<div class="max-h-[320px] overflow-y-auto p-3 text-slate-800 dark:text-white/85">
-								<p class="m-0 mb-2 text-[11px] text-slate-500 dark:text-white/40">
-									Reglas: {$alerts.length} · Eventos hoy: {$alarmEvents.length}
-								</p>
-								{#if $alerts.length === 0 && $alarmEvents.length === 0}
-									<p
-										class="m-0 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white/50"
+									<h4
+										class="m-0 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600 dark:text-white/75"
 									>
-										No hay alertas ni eventos.
+										Alertas y notificaciones
+									</h4>
+									<button
+										type="button"
+										class="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-transparent dark:text-white/70 dark:hover:bg-white/10"
+										on:click={() => (showAlertsPanel = false)}
+									>
+										Cerrar
+									</button>
+								</div>
+								<div class="max-h-[320px] overflow-y-auto p-3 text-slate-800 dark:text-white/85">
+									<p class="m-0 mb-2 text-[11px] text-slate-500 dark:text-white/40">
+										Reglas: {$alerts.length} · Eventos hoy: {$alarmEvents.length}
 									</p>
-								{:else}
-									{#if $alarmEvents.length > 0}
-										<div
-											class="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/35"
+									{#if $alerts.length === 0 && $alarmEvents.length === 0}
+										<p
+											class="m-0 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white/50"
 										>
-											Eventos recibidos
-										</div>
-										<ul class="m-0 mb-3 list-none space-y-2 p-0">
-											{#each $alarmEvents as ev (ev.id)}
-												<li>
-													<div
-														class="flex items-stretch gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-white/[0.08] dark:bg-[#121a28] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] {!ev.read
-															? 'ring-1 ring-brand-sky-400/40 dark:ring-brand-sky-500/25'
-															: ''}"
-													>
+											No hay alertas ni eventos.
+										</p>
+									{:else}
+										{#if $alarmEvents.length > 0}
+											<div
+												class="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/35"
+											>
+												Eventos recibidos
+											</div>
+											<ul class="m-0 mb-3 list-none space-y-2 p-0">
+												{#each $alarmEvents as ev (ev.id)}
+													<li>
 														<div
-															class="relative flex h-10 w-10 shrink-0 items-center justify-center self-start"
-															aria-hidden="true"
+															class="flex items-stretch gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-white/[0.08] dark:bg-[#121a28] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] {!ev.read
+																? 'ring-1 ring-brand-sky-400/40 dark:ring-brand-sky-500/25'
+																: ''}"
 														>
 															<div
-																class="absolute inset-0 scale-110 rounded-full bg-brand-sky-500/15 blur-sm dark:bg-brand-sky-500/20"
-															></div>
-															<div
-																class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-b from-brand-sky-100 to-brand-sky-200/80 ring-1 ring-brand-sky-300/80 dark:from-brand-sky-400/18 dark:to-brand-blue-600/10 dark:ring-brand-sky-400/30"
+																class="relative flex h-10 w-10 shrink-0 items-center justify-center self-start"
+																aria-hidden="true"
 															>
-																<Icon
-																	icon="mdi:bell"
-																	width={16}
-																	class="text-brand-sky-600 dark:text-brand-sky-400"
-																/>
+																<div
+																	class="absolute inset-0 scale-110 rounded-full bg-brand-sky-500/15 blur-sm dark:bg-brand-sky-500/20"
+																></div>
+																<div
+																	class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-b from-brand-sky-100 to-brand-sky-200/80 ring-1 ring-brand-sky-300/80 dark:from-brand-sky-400/18 dark:to-brand-blue-600/10 dark:ring-brand-sky-400/30"
+																>
+																	<Icon
+																		icon="mdi:bell"
+																		width={16}
+																		class="text-brand-sky-600 dark:text-brand-sky-400"
+																	/>
+																</div>
 															</div>
-														</div>
-														<div class="min-w-0 flex-1 py-px">
-															<p
-																class="m-0 truncate text-[11px] font-bold leading-tight text-slate-900 dark:text-white"
-															>
-																{ev.vehicle || 'Unidad'}
-															</p>
-															<p
-																class="m-0 mt-0.5 truncate text-[10px] font-medium text-slate-600 dark:text-slate-400"
-															>
-																{ev.name || 'Evento'}
-															</p>
-															<p
-																class="m-0 mt-1 flex items-center gap-1 text-[10px] font-medium text-brand-sky-600 dark:text-brand-sky-400"
-															>
-																<Icon icon="mdi:clock-outline" width={11} aria-hidden="true" />
-																<time datetime={ev.at}>{formatAlarmWhen(ev.at)}</time>
-															</p>
-														</div>
-														<button
-															type="button"
-															class="shrink-0 self-start rounded-md border border-red-200 bg-red-50 px-1.5 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
-															on:click={() => removeAlarmEvent(ev.id)}
-															aria-label="Eliminar evento {ev.name || ev.id}"
-														>
-															<Icon icon="mdi:close" width={11} aria-hidden="true" />
-														</button>
-													</div>
-												</li>
-											{/each}
-										</ul>
-									{/if}
-									{#if $alerts.length > 0}
-										<div
-											class="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/35"
-										>
-											Alertas configuradas
-										</div>
-										<ul class="m-0 list-none space-y-1.5 p-0">
-											{#each $alerts as al (al.id)}
-												<li
-													class="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-white/[0.08] dark:bg-white/[0.03]"
-												>
-													<div class="flex items-start gap-2">
-														<div class="min-w-0 flex-1">
-															<p
-																class="m-0 truncate text-[12px] font-semibold text-slate-900 dark:text-white"
-															>
-																{al.name || 'Alerta'}
-															</p>
-															<p class="m-0 mt-0.5 text-[10px] text-slate-600 dark:text-white/38">
-																{al.type === 'zone' ? 'Zona' : 'Ignición'} · {al.units?.length ?? 0}
-																unidad{(al.units?.length ?? 0) !== 1 ? 'es' : ''}
-															</p>
-														</div>
-														{#if isMaster}
+															<div class="min-w-0 flex-1 py-px">
+																<p
+																	class="m-0 truncate text-[11px] font-bold leading-tight text-slate-900 dark:text-white"
+																>
+																	{ev.vehicle || 'Unidad'}
+																</p>
+																<p
+																	class="m-0 mt-0.5 truncate text-[10px] font-medium text-slate-600 dark:text-slate-400"
+																>
+																	{ev.name || 'Evento'}
+																</p>
+																<p
+																	class="m-0 mt-1 flex items-center gap-1 text-[10px] font-medium text-brand-sky-600 dark:text-brand-sky-400"
+																>
+																	<Icon icon="mdi:clock-outline" width={11} aria-hidden="true" />
+																	<time datetime={ev.at}>{formatAlarmWhen(ev.at)}</time>
+																</p>
+															</div>
 															<button
 																type="button"
-																class="rounded-md border border-red-200 bg-red-50 px-1.5 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
-																on:click={() => requestDeleteAlert(al)}
-																aria-label="Eliminar alerta {al.name || al.id}"
+																class="shrink-0 self-start rounded-md border border-red-200 bg-red-50 px-1.5 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+																on:click={() => removeAlarmEvent(ev.id)}
+																aria-label="Eliminar evento {ev.name || ev.id}"
 															>
-																<Icon icon="mdi:delete-outline" width={11} aria-hidden="true" />
+																<Icon icon="mdi:close" width={11} aria-hidden="true" />
 															</button>
-														{/if}
-													</div>
-												</li>
-											{/each}
-										</ul>
+														</div>
+													</li>
+												{/each}
+											</ul>
+										{/if}
+										{#if $alerts.length > 0}
+											<div
+												class="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-white/35"
+											>
+												Alertas configuradas
+											</div>
+											<ul class="m-0 list-none space-y-1.5 p-0">
+												{#each $alerts as al (al.id)}
+													<li
+														class="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-white/[0.08] dark:bg-white/[0.03]"
+													>
+														<div class="flex items-start gap-2">
+															<div class="min-w-0 flex-1">
+																<p
+																	class="m-0 truncate text-[12px] font-semibold text-slate-900 dark:text-white"
+																>
+																	{al.name || 'Alerta'}
+																</p>
+																<p class="m-0 mt-0.5 text-[10px] text-slate-600 dark:text-white/38">
+																	{al.type === 'zone' ? 'Zona' : 'Ignición'} · {al.units?.length ??
+																		0}
+																	unidad{(al.units?.length ?? 0) !== 1 ? 'es' : ''}
+																</p>
+															</div>
+															{#if isMaster}
+																<button
+																	type="button"
+																	class="rounded-md border border-red-200 bg-red-50 px-1.5 py-1 text-[10px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-500/25 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
+																	on:click={() => requestDeleteAlert(al)}
+																	aria-label="Eliminar alerta {al.name || al.id}"
+																>
+																	<Icon icon="mdi:delete-outline" width={11} aria-hidden="true" />
+																</button>
+															{/if}
+														</div>
+													</li>
+												{/each}
+											</ul>
+										{/if}
 									{/if}
-								{/if}
-							</div>
-						</div>
-					{/if}
-				</div>
-
-				<!-- Botón de capas (tipos de mapa + tráfico) -->
-				<div class="relative" data-map-flyout="layers">
-					<button
-						type="button"
-						class="{k.layers} {showLayersPanel ? k.layersOn : k.layersOff}"
-						on:click={toggleLayersPanel}
-						aria-haspopup="menu"
-						aria-expanded={showLayersPanel}
-						aria-label="Capas del mapa"
-						title="Capas del mapa"
-					>
-						<!-- Ícono de capas estilo diamante/rombo apiladas -->
-						<svg
-							class={k.layersIcon}
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor" fill-opacity="0.2" />
-							<path d="M2 17l10 5 10-5" />
-							<path d="M2 12l10 5 10-5" />
-						</svg>
-					</button>
-
-					{#if showLayersPanel}
-						<div
-							class={k.layersFly}
-							role="menu"
-							aria-label="Opciones de capas"
-							transition:fly={{ x: 8, duration: 200 }}
-						>
-							<!-- Header con gradiente -->
-							<div class={k.layersHead}>
-								<h4 class={k.layersTitle}>
-									<svg
-										class="h-5 w-5"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2.5"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									>
-										<path d="M12 2L2 7l10 5 10-5-10-5z" />
-										<path d="M2 17l10 5 10-5" />
-										<path d="M2 12l10 5 10-5" />
-									</svg>
-									Capas del Mapa
-								</h4>
-							</div>
-
-							<!-- Tipos de mapa -->
-							<div class="p-3">
-								<p
-									class="m-0 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/35"
-								>
-									Vista del Mapa
-								</p>
-								<div class="grid grid-cols-2 gap-2">
-									{#each MAP_TYPE_OPTIONS as opt (opt.id)}
-										<button
-											type="button"
-											class="flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-semibold transition-all duration-150
-											{currentMapType === opt.id
-												? k.typeOn
-												: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
-											role="menuitemradio"
-											aria-checked={currentMapType === opt.id}
-											on:click={() => selectMapType(opt.id)}
-										>
-											<Icon
-												icon={opt.icon}
-												width={22}
-												class={currentMapType === opt.id ? k.typeIconOn : ''}
-											/>
-											<span>{opt.label}</span>
-										</button>
-									{/each}
 								</div>
 							</div>
+						{/if}
+					</div>
+				{/if}
 
-							<!-- Capas adicionales -->
-							<div class="border-t border-slate-200/80 p-3 dark:border-white/[0.06]">
-								<p
-									class="m-0 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-white/35"
-								>
-									Capas Adicionales
-								</p>
-								<button
-									type="button"
-									class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[12px] font-semibold transition-all duration-150
-									{showTraffic
-										? k.trafficOn
-										: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
-									role="menuitemcheckbox"
-									aria-checked={showTraffic}
-									on:click={toggleTraffic}
-								>
-									<Icon
-										icon="mdi:traffic-light"
-										width={20}
-										class={showTraffic ? 'text-brand-500' : ''}
-									/>
-									<span class="flex-1 text-left">Tráfico en Vivo</span>
-									<span
-										class="flex h-5 w-5 items-center justify-center rounded-md transition-all {showTraffic
-											? 'bg-brand-500 text-white'
-											: 'bg-slate-200 dark:bg-white/10'}"
-									>
-										{#if showTraffic}
-											<Icon icon="mdi:check" width={14} />
-										{/if}
-									</span>
-								</button>
-							</div>
-						</div>
-					{/if}
-				</div>
+				<!-- Botón de capas: aquí en la Clásica; en Panel va abajo, sobre Street View -->
+				{#if look !== 'panel'}
+					{@render layersControl()}
+				{/if}
 			</div>
 		</div>
+
+		{#if look === 'panel'}
+			<!-- Vista Panel: capas justo encima del muñeco de Street View -->
+			<div class="pointer-events-none absolute bottom-[86px] right-[10px] z-20">
+				<div class="pointer-events-auto">
+					{@render layersControl()}
+				</div>
+			</div>
+		{/if}
 
 		<!-- Zoom custom (look & feel app). Street View = pegman nativo de Google. -->
 		{#if isDesktopNav && !$showH3Grid}
@@ -787,6 +812,7 @@
 	{#if $showH3Grid && !$zoneSaveSheetOpen}
 		<div
 			class="pointer-events-none absolute right-[max(0.625rem,env(safe-area-inset-right,0px))] top-1/2 z-[120] flex -translate-y-1/2 flex-col items-end gap-3"
+			data-look={look === 'panel' ? 'panel' : undefined}
 		>
 			<H3ResolutionSlider />
 			{#if !$mobileZoneMapActive}

@@ -211,6 +211,16 @@
 			@apply bg-[#15171b]/[0.93];
 		}
 	}
+	/*
+	 * Botón para volver a abrir un panel plegado. Opaco, con borde y sombra:
+	 * es lo único que queda del panel sobre el mapa y no debe perderse en él.
+	 */
+	.nx-reopen {
+		@apply border border-slate-300 bg-white text-slate-900 shadow-[0_6px_18px_rgb(15_23_42/0.18)] transition-colors hover:border-slate-400 hover:bg-slate-50;
+	}
+	html.dark .nx-reopen {
+		@apply border-white/[0.18] bg-[#1d2025] text-white shadow-[0_6px_20px_rgb(0_0_0/0.6)] hover:border-white/30 hover:bg-[#25292f];
+	}
 	/* Números grandes: Sora ligera, cifras tabulares. */
 	.nx-num {
 		font-family: 'Sora', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
@@ -551,4 +561,187 @@ html.theme-reveal::view-transition-new(root) {
 	.nexus-glow:not(:disabled):focus-visible {
 		translate: none;
 	}
+}
+
+/*
+ * Vista Panel: piel neutra para los paneles que comparten las dos vistas
+ * (Alertas y zonas, asistentes de alertas, editor de zonas, Informes).
+ * Solo aplica dentro de [data-look='panel'], que la página pone únicamente en
+ * la vista Panel: la Clásica no puede verse afectada.
+ *
+ * Regla: azul, cielo, cian, índigo, violeta y los degradados de marca son
+ * «acción» o «seleccionado» → gris (sólido negro/blanco o tinte). Verde, ámbar
+ * y rojo son estado y no se tocan.
+ *
+ * Va fuera de @layer a propósito: así gana a las utilidades de Tailwind (que
+ * viven en @layer utilities) sin !important. Si un componente necesita escapar
+ * de la piel, que use data-look='keep' en ese elemento.
+ */
+[data-look='panel'] {
+	--nx-solid-bg: #0f172a;
+	--nx-solid-fg: #ffffff;
+	--nx-tint-bg: rgb(15 23 42 / 0.05);
+	--nx-tint-bg-hover: rgb(15 23 42 / 0.09);
+	--nx-tint-border: rgb(15 23 42 / 0.14);
+	--nx-accent-fg: #1e293b;
+	--nx-surface: #ffffff;
+	--nx-surface-2: #f4f5f7;
+}
+html.dark [data-look='panel'] {
+	--nx-solid-bg: rgb(255 255 255 / 0.9);
+	--nx-solid-fg: #111316;
+	--nx-tint-bg: rgb(255 255 255 / 0.06);
+	--nx-tint-bg-hover: rgb(255 255 255 / 0.1);
+	--nx-tint-border: rgb(255 255 255 / 0.13);
+	--nx-accent-fg: rgb(255 255 255 / 0.88);
+	--nx-surface: #15171b;
+	--nx-surface-2: #1b1e23;
+}
+
+/* Superficies azul marino → carbón */
+[data-look='panel']
+	:is(
+		[class*='bg-[#060b18]'],
+		[class*='bg-[#080d1a]'],
+		[class*='bg-[#0f1626]'],
+		[class*='bg-[#121a26]'],
+		[class*='bg-[#121a28]'],
+		[class*='bg-[#151c2e]'],
+		[class*='bg-[#1a2332]'],
+		[class*='bg-[#0b1220]'],
+		[class*='bg-[#0d1424]']
+	):not([data-look='keep']) {
+	background-color: var(--nx-surface);
+}
+html:not(.dark)
+	[data-look='panel']
+	:is([class*='bg-[#060b18]'], [class*='bg-[#080d1a]']):not([data-look='keep']) {
+	background-color: var(--nx-surface-2);
+}
+
+/* Tintes de acento → tinte gris */
+[data-look='panel']
+	:is(
+		[class*='bg-blue-'],
+		[class*='bg-sky-'],
+		[class*='bg-cyan-'],
+		[class*='bg-indigo-'],
+		[class*='bg-violet-'],
+		[class*='bg-brand-']
+	):not([data-look='keep']) {
+	background-color: var(--nx-tint-bg);
+	background-image: none;
+}
+[data-look='panel']
+	:is([class*='hover:bg-blue-'], [class*='hover:bg-sky-'], [class*='hover:bg-brand-']):not(
+		[data-look='keep']
+	):hover {
+	background-color: var(--nx-tint-bg-hover);
+}
+
+/* Sólidos de acento (botón principal, interruptor encendido, opción activa) → negro/blanco */
+[data-look='panel']
+	:is(
+		[class~='bg-blue-500'],
+		[class~='bg-blue-600'],
+		[class~='bg-blue-700'],
+		[class~='bg-sky-500'],
+		[class~='bg-sky-600'],
+		[class~='bg-cyan-500'],
+		[class~='bg-cyan-600'],
+		[class~='bg-indigo-600'],
+		[class~='bg-brand-500'],
+		[class~='bg-brand-600'],
+		[class~='bg-brand-primary'],
+		[class~='bg-brand-sky-500'],
+		[class~='bg-brand-sky-600'],
+		[class~='bg-brand-cyan-500'],
+		[class~='bg-brand-cyan-600'],
+		[class~='bg-brand-blue-600'],
+		[class*='from-brand-'],
+		[class*='from-blue-'],
+		[class*='from-sky-'],
+		[class*='from-cyan-'],
+		[class*='bg-[linear-gradient']
+	):not([data-look='keep']) {
+	background-color: var(--nx-solid-bg);
+	background-image: none;
+	color: var(--nx-solid-fg);
+	box-shadow: none;
+}
+
+/* Texto, bordes, anillos y contornos de acento → gris */
+[data-look='panel']
+	:is(
+		[class*='text-blue-'],
+		[class*='text-sky-'],
+		[class*='text-cyan-'],
+		[class*='text-indigo-'],
+		[class*='text-violet-'],
+		[class*='text-brand-sky'],
+		[class*='text-brand-cyan'],
+		[class*='text-brand-blue'],
+		[class*='text-brand-5'],
+		[class*='text-brand-6'],
+		[class*='text-brand-7'],
+		[class*='text-brand-8'],
+		[class*='text-brand-2'],
+		[class*='text-brand-3']
+	):not([data-look='keep']) {
+	color: var(--nx-accent-fg);
+}
+[data-look='panel']
+	:is(
+		[class*='border-blue-'],
+		[class*='border-sky-'],
+		[class*='border-cyan-'],
+		[class*='border-indigo-'],
+		[class*='border-violet-'],
+		[class*='border-brand-']
+	):not([data-look='keep']) {
+	border-color: var(--nx-tint-border);
+}
+[data-look='panel']
+	:is(
+		[class*='ring-blue-'],
+		[class*='ring-sky-'],
+		[class*='ring-brand-'],
+		[class*='outline-blue-'],
+		[class*='outline-brand-']
+	):not([data-look='keep']) {
+	--tw-ring-color: var(--nx-tint-border);
+	outline-color: var(--nx-accent-fg);
+}
+/* Resplandores de color */
+[data-look='panel']
+	:is(
+		.nexus-glow,
+		[class*='rgba(37,99,235'],
+		[class*='rgba(56,189,248'],
+		[class*='rgba(14,165,233']
+	):not([data-look='keep']) {
+	box-shadow: none;
+}
+/* Interruptor encendido: la perilla contrasta con la pista sólida en los dos temas. */
+[data-look='panel']
+	[role='switch']:is([class~='bg-blue-600'], [class~='bg-blue-500'], [class~='bg-brand-500'])
+	> * {
+	background-color: var(--nx-solid-fg);
+}
+/* Fondos negros puros dentro del panel: dejan ver el carbón del contenedor. */
+html.dark [data-look='panel'] [class~='dark:bg-black']:not([data-look='keep']) {
+	background-color: transparent;
+}
+/* Superficies oscuras escritas a mano (azul marino, slate) → carbón, en modo oscuro. */
+html.dark
+	[data-look='panel']
+	:is(
+		[class*='dark:bg-[#0'],
+		[class*='dark:bg-[#1'],
+		[class*='dark:bg-[rgb(8_11_22'],
+		[class~='dark:bg-slate-900'],
+		[class~='dark:bg-slate-950'],
+		[class~='dark:bg-gray-900']
+	):not([data-look='keep']) {
+	background-color: var(--nx-surface);
 }

@@ -85,7 +85,29 @@ function mergeVehicleLists(...lists) {
 	return [...byId.values()];
 }
 
-function mapUnitToVehicle(unit) {
+/**
+ * Campos del perfil (unit_profile / vehicle_profile). Solo `GET /units` los trae;
+ * `GET /units/{id}` y las respuestas de crear/editar la unidad no. Si la respuesta
+ * no trae la llave, el campo se omite para que al mezclar no borre lo que ya había.
+ */
+function profileFieldsFrom(unit) {
+	const has = (k) => unit != null && Object.prototype.hasOwnProperty.call(unit, k);
+	const out = {};
+	if (has('color')) {
+		out.color = unit.color ?? null;
+		out.profile_color_hex = colorSlugToHex(unit.color) ?? null;
+	}
+	if (has('icon_type') || has('iconType')) {
+		out.icon_type = unit.icon_type || unit.iconType || null;
+		out.iconType = out.icon_type;
+	}
+	for (const k of ['brand', 'model', 'year', 'plate', 'vin']) {
+		if (has(k)) out[k] = unit[k] ?? null;
+	}
+	return out;
+}
+
+export function mapUnitToVehicle(unit) {
 	const createdAt = unit?.created_at || null;
 	return {
 		id: String(unit?.id || ''),
@@ -102,20 +124,12 @@ function mapUnitToVehicle(unit) {
 		location: unit?.description || '',
 		lastUpdate: createdAt,
 		lastUpdateFormatted: createdAt ? formatLastUpdate(createdAt) : '',
-		color: unit?.color ?? null,
-		profile_color_hex: colorSlugToHex(unit?.color) ?? null,
-		icon_type: unit?.icon_type || unit?.iconType || null,
-		iconType: unit?.icon_type || unit?.iconType || null,
-		brand: unit?.brand ?? null,
-		model: unit?.model ?? null,
-		year: unit?.year ?? null,
-		plate: unit?.plate ?? null,
-		vin: unit?.vin ?? null
+		...profileFieldsFrom(unit)
 	};
 }
 
 /** GET /units/{id} no incluye device_id; conservar datos ya cargados del listado. */
-function mergeVehicleDetail(existing, mapped) {
+export function mergeVehicleDetail(existing, mapped) {
 	if (!existing) return mapped;
 	return {
 		...existing,

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Vista Panel: los paneles que se abren desde el riel ya hablan el mismo idioma.** Alertas y zonas e Informes flotan sobre el mapa con margen (Alertas y zonas a 560 px, así el mapa queda a la vista al dibujar una zona), sin el mosaico verde del encabezado ni las franjas de color. Dentro, el azul, el cian, el índigo y los degradados de marca que marcaban «acción» o «seleccionado» pasan a gris: la acción principal es negra/blanca, igual que en el dashboard. Verde, ámbar y rojo se quedan porque son estado (Activa, señal, excepciones, borrar). Aplica también a los asistentes de alertas, al editor de zonas sobre el mapa, al selector de unidades de Informes y a la Red H3. Se hace con una piel CSS que solo existe dentro de `[data-look='panel']` (`src/app.css`), así que la Clásica no cambia
+- **Vista Panel: el ícono del auto abre «Gestionar» en la columna** en vez del cajón «Seguimiento», que repetía lo mismo
+- **Vista Panel: sin el título «Seguimiento»** sobre el mapa
+- **Vista Panel: los botones para volver a abrir la columna de flota y la franja «Hoy» ya no se pierden en el mapa.** Son opacos, con borde y sombra, y el de la flota dice «Flota»
+- **Vista Panel: el botón de capas del mapa va abajo a la derecha, sobre Street View**, en vez de quedar bajo la columna de alertas
+
+### Fixed
+
+- **Abrir el detalle de una unidad borraba su marca, modelo y placa en la lista.** `GET /units/{id}` no trae el perfil y la mezcla lo sobrescribía con `null`; la tarjeta pasaba a «Sin datos del vehículo» hasta recargar. Pasaba en las dos vistas. Ahora los campos del perfil solo se toman de las respuestas que los traen
+- **Vista Panel: alertas en un solo lugar.** Con la columna de alertas abierta, la campana del mapa se oculta: repetía los mismos eventos y su número (reglas + eventos) chocaba con «0 hoy» de la columna. El contador de sin leer pasa al encabezado de la columna; las reglas siguen en «Reglas y zonas». Si la columna se apaga desde «Paneles», la campana vuelve y en Panel cuenta solo los eventos sin leer. La Clásica no cambia
+
 ## [1.37.0] - 2026-11-27
 
 ### Added

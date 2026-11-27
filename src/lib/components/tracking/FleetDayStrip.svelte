@@ -66,7 +66,7 @@
 {#if showCollapsed}
 	<button
 		type="button"
-		class="nx-glass ml-auto inline-flex h-10 items-center gap-2 rounded-full px-4 text-[12.5px] focus-visible:outline-2 focus-visible:outline-offset-2"
+		class="nx-reopen ml-auto inline-flex h-10 items-center gap-2 rounded-full px-4 text-[12.5px] focus-visible:outline-2 focus-visible:outline-offset-2"
 		onclick={toggle}
 		aria-expanded="false"
 		aria-controls="fleet-day-strip"

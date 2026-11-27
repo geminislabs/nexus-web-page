@@ -1,4 +1,5 @@
 <script>
+	import { uiLook } from '$lib/stores/lookStore.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { browser } from '$app/environment';
 	import { onDestroy, tick } from 'svelte';
@@ -160,7 +161,7 @@
 </div>
 
 {#if expandedChart}
-	<div bind:this={expandPortalHost}>
+	<div bind:this={expandPortalHost} data-look={$uiLook === 'panel' ? 'panel' : undefined}>
 		<div
 			class="fixed inset-0 z-[400] flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm sm:p-6 dark:bg-black/60"
 			transition:softFade

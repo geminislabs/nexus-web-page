@@ -1,4 +1,5 @@
 <script>
+	import { uiLook } from '$lib/stores/lookStore.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { browser } from '$app/environment';
 	import { onMount, onDestroy, tick } from 'svelte';
@@ -52,7 +53,11 @@
 
 <svelte:window on:keydown={onKeydown} />
 
-<div bind:this={portalHost} class="pointer-events-none">
+<div
+	bind:this={portalHost}
+	class="pointer-events-none"
+	data-look={$uiLook === 'panel' ? 'panel' : undefined}
+>
 	{#if open}
 		<div
 			class="pointer-events-auto fixed inset-0 z-[55] flex flex-col items-center px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6 sm:pb-6"

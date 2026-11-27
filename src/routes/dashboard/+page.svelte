@@ -27,6 +27,7 @@
 	import '@fontsource/sora/latin-ext-300.css';
 	import { trackingView } from '$lib/stores/trackingViewStore.js';
 	import { createFleetDayController } from '$lib/stores/fleetDayStore.js';
+	import { uiLook } from '$lib/stores/lookStore.js';
 	import {
 		loadFleetDay,
 		fetchFleetDaySummary,
@@ -137,6 +138,7 @@
 	/** En móvil siempre la clásica: la vista Panel es de escritorio. */
 	$: isPanelView = isMdUp && $trackingView.view === 'panel';
 	$: if (browser) mapService.setMapStyleVariant(isPanelView ? 'panel' : 'clasica');
+	$: uiLook.set(isPanelView ? 'panel' : 'clasica');
 	$: panels = $trackingView.panels;
 	/** Paneles flotantes fuera cuando el mapa necesita todo el espacio. */
 	$: trackingOverlaysHidden =
@@ -186,7 +188,8 @@
 	$: if (!isAdminWorkspace && $pendingTrackingDrawer) {
 		const section = $pendingTrackingDrawer;
 		pendingTrackingDrawer.set(null);
-		openDrawer = getConfigDrawerId(section);
+		openDrawer = '';
+		openConfigDrawer(section);
 	}
 
 	const canonicalUrl =
@@ -208,9 +211,16 @@
 	function openConfigDrawer(section) {
 		const normalized =
 			section === 'zonas' || section === 'gestionar_alertas' ? 'alertas_zonas' : section;
-		const drawerId = getConfigDrawerId(normalized);
 		showUserMenu = false;
+		// Vista Panel: «Unidades» es el modo Gestionar de la columna, no un cajón aparte.
+		if (isPanelView && normalized === 'unidades') {
+			openDrawer = '';
+			fleetManaging = !fleetManaging;
+			return;
+		}
+		const drawerId = getConfigDrawerId(normalized);
 		openDrawer = openDrawer === drawerId ? '' : drawerId;
+		if (openDrawer) fleetManaging = false;
 	}
 
 	/** Clases de botón lateral: el caller debe pasar un booleano derivado de openDrawer en el template. */
@@ -731,7 +741,10 @@
 
 				<div class="flex flex-col items-center gap-1">
 					{#each visibleConfigSidebarItems as item (item.id)}
-						{@const itemActive = openDrawer === `configuracion:${item.id}`}
+						{@const itemActive =
+							isPanelView && item.id === 'unidades'
+								? fleetManaging
+								: openDrawer === `configuracion:${item.id}`}
 						<button
 							type="button"
 							class="{sidebarNavBtnClass(itemActive, isPanelView)} mx-auto"
@@ -832,18 +845,10 @@
 				onMapTap={onMobileMapTap}
 				controlsRightPx={mapControlsRight}
 				look={isPanelView ? 'panel' : 'clasica'}
+				hideAlertsBell={isPanelView && panels.alertas}
 			/>
 
-			{#if panelLayoutActive}
-				<!-- Vista Panel: el espacio se cambia desde el riel; el título es solo texto -->
-				<div class="absolute top-3 z-[40]" style="left: {leftEdge}px">
-					<h2
-						class="nx-num m-0 text-[30px] leading-[1.1] text-slate-900 [text-shadow:0_1px_12px_rgb(255_255_255/0.6)] dark:text-white dark:[text-shadow:0_1px_14px_rgb(0_0_0/0.55)]"
-					>
-						Seguimiento
-					</h2>
-				</div>
-			{:else if showTrackingWorkspaceSwitcher && !isPanelView}
+			{#if showTrackingWorkspaceSwitcher && !isPanelView}
 				<div class="pointer-events-none absolute left-3 top-3 z-[40]">
 					<div class="pointer-events-auto">
 						<WorkspaceSwitcher compact />
@@ -857,11 +862,16 @@
 				subtitle={configDrawerSubtitle}
 				icon={configDrawerIcon}
 				accentColor="#10b981"
+				look={isPanelView ? 'panel' : 'clasica'}
 				sidebarWidth={SW}
 				bodyPaddingClass="p-0"
 				bodyScrollable={activeConfigSection === 'informes' || !isSideConfigPanel}
 				placement={isSideConfigPanel ? 'side' : 'bottom'}
-				sideWidthClass={configSideWidthClass}
+				sideWidthClass={isPanelView
+					? activeConfigSection === 'informes'
+						? 'w-[min(1080px,calc(100%-24px))]'
+						: 'w-[min(560px,calc(100%-24px))]'
+					: configSideWidthClass}
 				passiveBackdrop={$mobileCrearZonaMapPassesPointer || $desktopZonePanelSubView !== 'zonas'}
 				on:close={closeDrawer}
 			>
@@ -885,18 +895,21 @@
 			</TopDrawer>
 
 			{#if $desktopZonePanelSubView !== 'zonas'}
-				<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
+				<div class="contents" data-look={isPanelView ? 'panel' : undefined}>
+					<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
+				</div>
 			{/if}
 
 			{#if showFleetReopen}
 				<button
 					type="button"
-					class="nx-glass absolute left-3 top-3 z-[60] flex h-11 w-11 items-center justify-center rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2"
+					class="nx-reopen absolute left-3 top-3 z-[60] flex h-10 items-center gap-1.5 rounded-full pl-3 pr-3.5 text-[12.5px] font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
 					on:click={() => trackingView.setPanel('flota', true)}
 					aria-label="Mostrar la columna de flota"
-					title="Flota"
+					title="Mostrar la columna de flota"
 				>
-					<Icon icon="mdi:chevron-double-right" class="h-5 w-5" aria-hidden="true" />
+					<Icon icon="mdi:chevron-double-right" class="h-4 w-4" aria-hidden="true" />
+					Flota
 				</button>
 			{/if}
 
