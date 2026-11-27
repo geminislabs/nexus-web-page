@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.41.0] - 2026-11-27
+
+Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.40.0`.
+
 ### Added
 
 - **Vista Panel: toque tecnológico.**
