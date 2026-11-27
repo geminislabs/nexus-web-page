@@ -1,4 +1,5 @@
 <script>
+	import { trackingView } from '$lib/stores/trackingViewStore.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import ShieldBoltIcon from '$lib/components/icons/ShieldBoltIcon.svelte';
 	import UnitsStatusFilterPanels from './UnitsStatusFilterPanels.svelte';
@@ -30,7 +31,7 @@
 	let searchQuery = '';
 	/** @type {'all' | 'moving' | 'stopped'} */
 	let statusFilter = 'all';
-	const panelActions = [
+	const classicActions = [
 		{
 			id: 'trips',
 			label: 'Trayectos',
@@ -64,6 +65,18 @@
 			active: 'bg-emerald-500/20 ring-1 ring-emerald-500/40 text-emerald-700 dark:text-emerald-300'
 		}
 	];
+	// Vista Panel: una sola tinta para las cuatro acciones; el color queda para los estados.
+	const PANEL_TONE = 'text-slate-700 dark:text-white/80';
+	const PANEL_WELL = 'bg-slate-100 ring-slate-200 dark:bg-white/[0.06] dark:ring-white/10';
+	const PANEL_ACTIVE =
+		'bg-slate-900/[0.06] ring-1 ring-slate-900/15 text-slate-900 dark:bg-white/[0.1] dark:ring-white/20 dark:text-white';
+	const neutralActions = classicActions.map((a) => ({
+		...a,
+		tone: PANEL_TONE,
+		well: PANEL_WELL,
+		active: PANEL_ACTIVE
+	}));
+	$: panelActions = $trackingView.view === 'panel' ? neutralActions : classicActions;
 	$: visibleCount = units.filter((u) => $mapVisibleUnitIds.includes(String(u.id))).length;
 	$: visibleIdSet = new Set(($mapVisibleUnitIds || []).map(String));
 	$: filteredUnits = units

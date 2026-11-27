@@ -37,6 +37,84 @@
 
 	export let isLoading = true;
 	export let onMapTap = () => {};
+	/** Distancia de los controles al borde derecho (deja sitio a la columna de alertas). */
+	export let controlsRightPx = 10;
+	/**
+	 * Aspecto de los controles: `clasica` (el de siempre) o `panel` (vista Panel:
+	 * neutros, translúcidos, sin brillos). La vista Clásica no cambia en nada.
+	 * @type {'clasica' | 'panel'}
+	 */
+	export let look = 'clasica';
+
+	const GLASS_BTN =
+		'nx-glass flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-700 transition-colors duration-200 hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white/80 dark:hover:border-white/15';
+	const PANEL_ON =
+		'bg-slate-900/[0.06] text-slate-900 ring-1 ring-slate-900/20 dark:bg-white/[0.1] dark:text-white dark:ring-white/25';
+	const ZOOM_BTN_CLASICA =
+		'flex h-11 w-11 items-center justify-center transition-colors hover:bg-brand-sky-500/15 hover:text-brand-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-sky-500 dark:hover:bg-brand-cyan-500/20 dark:hover:text-brand-cyan-100 dark:focus-visible:outline-brand-cyan-400';
+	const LOOKS = {
+		clasica: {
+			svExit:
+				'pointer-events-auto inline-flex h-10 items-center gap-2 rounded-xl border-2 border-brand-sky-400/55 bg-white/95 px-3 text-[12px] font-semibold text-brand-sky-800 shadow-[0_4px_16px_rgba(14,165,233,0.25)] backdrop-blur-md transition-all hover:scale-[1.02] hover:border-brand-sky-500 dark:border-brand-cyan-400/50 dark:bg-slate-900/95 dark:text-brand-cyan-200 dark:shadow-[0_4px_16px_rgba(34,211,238,0.3)] dark:hover:border-brand-cyan-400',
+			bell: 'relative flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background,transform,box-shadow] duration-200 hover:scale-[1.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-500/80 dark:focus-visible:outline-white/80 [&_svg]:h-6 [&_svg]:w-6',
+			bellOn:
+				'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-[0_4px_16px_rgba(168,85,247,0.5)]',
+			bellOff:
+				'bg-gradient-to-br from-brand-sky-600 to-brand-blue-700 shadow-[0_4px_16px_rgba(37,99,235,0.4)] dark:from-slate-700 dark:to-slate-800 dark:shadow-[0_4px_16px_rgba(15,23,42,0.45)]',
+			alertsFly:
+				'absolute right-[calc(100%+8px)] top-0 z-[20] w-[320px] overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 text-slate-900 shadow-[0_16px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgb(8_11_22_/0.97)] dark:text-white/85 dark:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.04)]',
+			layers:
+				'group flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border-2 text-white shadow-lg transition-all duration-200 hover:scale-[1.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-400',
+			layersOn:
+				'border-brand-cyan-400 bg-gradient-to-br from-brand-cyan-400 to-brand-blue-500 shadow-[0_4px_24px_rgba(34,211,238,0.5),0_0_40px_rgba(34,211,238,0.25)]',
+			layersOff:
+				'border-brand-cyan-400/50 bg-gradient-to-br from-brand-cyan-500 to-brand-blue-600 shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:shadow-[0_4px_28px_rgba(34,211,238,0.55)]',
+			layersIcon: 'h-7 w-7 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]',
+			layersFly:
+				'absolute right-[calc(100%+12px)] top-0 z-[20] w-[240px] overflow-hidden rounded-2xl border border-brand-cyan-500/25 bg-white/98 text-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.15),0_0_0_1px_rgba(34,211,238,0.1)] backdrop-blur-xl dark:border-brand-cyan-400/15 dark:bg-[rgb(10_15_28_/0.98)] dark:text-white dark:shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_30px_rgba(34,211,238,0.1)]',
+			layersHead:
+				'border-b border-brand-cyan-500/20 bg-gradient-to-r from-brand-cyan-500/10 to-brand-blue-500/10 px-4 py-3 dark:from-brand-cyan-500/15 dark:to-brand-blue-600/10',
+			layersTitle:
+				'm-0 flex items-center gap-2 text-sm font-bold tracking-wide text-brand-cyan-600 dark:text-brand-cyan-400',
+			typeOn:
+				'bg-gradient-to-br from-brand-cyan-500/20 to-brand-blue-500/15 text-brand-cyan-600 ring-2 ring-brand-cyan-400/60 dark:from-brand-cyan-500/25 dark:to-brand-blue-600/20 dark:text-brand-cyan-400 dark:ring-brand-cyan-400/50',
+			typeIconOn: 'text-brand-cyan-500 dark:text-brand-cyan-400',
+			trafficOn:
+				'bg-gradient-to-r from-brand-500/20 to-brand-teal-500/15 text-brand-600 ring-2 ring-brand-400/60 dark:from-brand-500/25 dark:to-brand-teal-600/20 dark:text-brand-400 dark:ring-brand-400/50',
+			zoomGroup:
+				'pointer-events-auto flex flex-col overflow-hidden rounded-2xl border-2 border-brand-sky-400/55 bg-white/95 text-brand-sky-700 shadow-[0_4px_20px_rgba(14,165,233,0.22)] backdrop-blur-md dark:border-brand-cyan-400/50 dark:bg-gradient-to-br dark:from-slate-800/95 dark:to-slate-950/95 dark:text-brand-cyan-300 dark:shadow-[0_4px_20px_rgba(34,211,238,0.3)]',
+			zoomBtn: ZOOM_BTN_CLASICA,
+			zoomSep: 'h-px w-full bg-brand-sky-300/50 dark:bg-brand-cyan-400/25',
+			zoomIcon: 22
+		},
+		panel: {
+			svExit:
+				'nx-glass pointer-events-auto inline-flex h-10 items-center gap-2 rounded-full px-4 text-[12px] font-medium transition-colors hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 dark:hover:border-white/15',
+			bell: `${GLASS_BTN} relative [&_svg]:h-5 [&_svg]:w-5`,
+			bellOn: 'nx-glass-hi',
+			bellOff: '',
+			alertsFly:
+				'nx-glass absolute right-[calc(100%+8px)] top-0 z-[20] w-[320px] overflow-hidden rounded-2xl',
+			layers: `${GLASS_BTN} group`,
+			layersOn: 'nx-glass-hi',
+			layersOff: '',
+			layersIcon: 'h-5 w-5',
+			layersFly:
+				'nx-glass absolute right-[calc(100%+12px)] top-0 z-[20] w-[240px] overflow-hidden rounded-2xl',
+			layersHead: 'border-b border-slate-200/80 px-4 py-3 dark:border-white/[0.07]',
+			layersTitle: 'm-0 flex items-center gap-2 text-[13px] font-medium',
+			typeOn: PANEL_ON,
+			typeIconOn: 'text-slate-900 dark:text-white',
+			trafficOn: PANEL_ON,
+			zoomGroup:
+				'nx-glass pointer-events-auto flex flex-col overflow-hidden rounded-full text-slate-700 dark:text-white/80',
+			zoomBtn:
+				'flex h-11 w-11 items-center justify-center transition-colors hover:bg-slate-900/5 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-[-2px] dark:hover:bg-white/[0.08] dark:hover:text-white',
+			zoomSep: 'mx-auto h-px w-6 bg-slate-300/70 dark:bg-white/[0.12]',
+			zoomIcon: 20
+		}
+	};
+	$: k = LOOKS[look] ?? LOOKS.clasica;
 
 	$: isMaster = !!$user?.is_master;
 
@@ -374,7 +452,7 @@
 			<div class="pointer-events-none absolute left-3 top-[3.75rem] z-[45] sm:left-3">
 				<button
 					type="button"
-					class="pointer-events-auto inline-flex h-10 items-center gap-2 rounded-xl border-2 border-brand-sky-400/55 bg-white/95 px-3 text-[12px] font-semibold text-brand-sky-800 shadow-[0_4px_16px_rgba(14,165,233,0.25)] backdrop-blur-md transition-all hover:scale-[1.02] hover:border-brand-sky-500 dark:border-brand-cyan-400/50 dark:bg-slate-900/95 dark:text-brand-cyan-200 dark:shadow-[0_4px_16px_rgba(34,211,238,0.3)] dark:hover:border-brand-cyan-400"
+					class={k.svExit}
 					on:click={() => mapService.exitStreetView()}
 					aria-label="Salir de Street View"
 					title="Salir de Street View"
@@ -386,17 +464,15 @@
 		{/if}
 
 		<div
-			class="pointer-events-none absolute right-[10px] top-[10px] z-20 flex flex-col items-end gap-1.5"
+			class="pointer-events-none absolute top-[10px] z-20 flex flex-col items-end gap-1.5"
+			style="right: {controlsRightPx}px"
 		>
 			<div class="pointer-events-auto relative z-[19] flex flex-col items-end gap-1.5">
 				<!-- Centro de notificaciones escritorio -->
 				<div class="relative hidden sm:block" data-map-flyout="alerts">
 					<button
 						type="button"
-						class="relative flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border-0 text-white shadow-lg transition-[background,transform,box-shadow] duration-200 hover:scale-[1.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-500/80 dark:focus-visible:outline-white/80 [&_svg]:h-6 [&_svg]:w-6
-						{showAlertsPanel
-							? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-[0_4px_16px_rgba(168,85,247,0.5)]'
-							: 'bg-gradient-to-br from-brand-sky-600 to-brand-blue-700 shadow-[0_4px_16px_rgba(37,99,235,0.4)] dark:from-slate-700 dark:to-slate-800 dark:shadow-[0_4px_16px_rgba(15,23,42,0.45)]'}"
+						class="{k.bell} {showAlertsPanel ? k.bellOn : k.bellOff}"
 						on:click={toggleAlertsPanel}
 						aria-haspopup="dialog"
 						aria-expanded={showAlertsPanel}
@@ -414,7 +490,7 @@
 
 					{#if showAlertsPanel}
 						<div
-							class="absolute right-[calc(100%+8px)] top-0 z-[20] w-[320px] overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 text-slate-900 shadow-[0_16px_48px_rgba(15,23,42,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[rgb(8_11_22_/0.97)] dark:text-white/85 dark:shadow-[0_16px_48px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.04)]"
+							class={k.alertsFly}
 							role="dialog"
 							aria-label="Alertas y notificaciones"
 							transition:fly={{ y: -6, duration: 180 }}
@@ -556,10 +632,7 @@
 				<div class="relative" data-map-flyout="layers">
 					<button
 						type="button"
-						class="group flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border-2 text-white shadow-lg transition-all duration-200 hover:scale-[1.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan-400
-						{showLayersPanel
-							? 'border-brand-cyan-400 bg-gradient-to-br from-brand-cyan-400 to-brand-blue-500 shadow-[0_4px_24px_rgba(34,211,238,0.5),0_0_40px_rgba(34,211,238,0.25)]'
-							: 'border-brand-cyan-400/50 bg-gradient-to-br from-brand-cyan-500 to-brand-blue-600 shadow-[0_4px_20px_rgba(34,211,238,0.4)] hover:shadow-[0_4px_28px_rgba(34,211,238,0.55)]'}"
+						class="{k.layers} {showLayersPanel ? k.layersOn : k.layersOff}"
 						on:click={toggleLayersPanel}
 						aria-haspopup="menu"
 						aria-expanded={showLayersPanel}
@@ -568,7 +641,7 @@
 					>
 						<!-- Ícono de capas estilo diamante/rombo apiladas -->
 						<svg
-							class="h-7 w-7 drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]"
+							class={k.layersIcon}
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
@@ -584,18 +657,14 @@
 
 					{#if showLayersPanel}
 						<div
-							class="absolute right-[calc(100%+12px)] top-0 z-[20] w-[240px] overflow-hidden rounded-2xl border border-brand-cyan-500/25 bg-white/98 text-slate-900 shadow-[0_20px_50px_rgba(0,0,0,0.15),0_0_0_1px_rgba(34,211,238,0.1)] backdrop-blur-xl dark:border-brand-cyan-400/15 dark:bg-[rgb(10_15_28_/0.98)] dark:text-white dark:shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_30px_rgba(34,211,238,0.1)]"
+							class={k.layersFly}
 							role="menu"
 							aria-label="Opciones de capas"
 							transition:fly={{ x: 8, duration: 200 }}
 						>
 							<!-- Header con gradiente -->
-							<div
-								class="border-b border-brand-cyan-500/20 bg-gradient-to-r from-brand-cyan-500/10 to-brand-blue-500/10 px-4 py-3 dark:from-brand-cyan-500/15 dark:to-brand-blue-600/10"
-							>
-								<h4
-									class="m-0 flex items-center gap-2 text-sm font-bold tracking-wide text-brand-cyan-600 dark:text-brand-cyan-400"
-								>
+							<div class={k.layersHead}>
+								<h4 class={k.layersTitle}>
 									<svg
 										class="h-5 w-5"
 										viewBox="0 0 24 24"
@@ -626,7 +695,7 @@
 											type="button"
 											class="flex flex-col items-center gap-1.5 rounded-xl px-3 py-3 text-[11px] font-semibold transition-all duration-150
 											{currentMapType === opt.id
-												? 'bg-gradient-to-br from-brand-cyan-500/20 to-brand-blue-500/15 text-brand-cyan-600 ring-2 ring-brand-cyan-400/60 dark:from-brand-cyan-500/25 dark:to-brand-blue-600/20 dark:text-brand-cyan-400 dark:ring-brand-cyan-400/50'
+												? k.typeOn
 												: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
 											role="menuitemradio"
 											aria-checked={currentMapType === opt.id}
@@ -635,9 +704,7 @@
 											<Icon
 												icon={opt.icon}
 												width={22}
-												class={currentMapType === opt.id
-													? 'text-brand-cyan-500 dark:text-brand-cyan-400'
-													: ''}
+												class={currentMapType === opt.id ? k.typeIconOn : ''}
 											/>
 											<span>{opt.label}</span>
 										</button>
@@ -656,7 +723,7 @@
 									type="button"
 									class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[12px] font-semibold transition-all duration-150
 									{showTraffic
-										? 'bg-gradient-to-r from-brand-500/20 to-brand-teal-500/15 text-brand-600 ring-2 ring-brand-400/60 dark:from-brand-500/25 dark:to-brand-teal-600/20 dark:text-brand-400 dark:ring-brand-400/50'
+										? k.trafficOn
 										: 'bg-slate-100/80 text-slate-600 hover:bg-slate-200/90 dark:bg-white/[0.04] dark:text-white/70 dark:hover:bg-white/[0.08]'}"
 									role="menuitemcheckbox"
 									aria-checked={showTraffic}
@@ -688,34 +755,28 @@
 		<!-- Zoom custom (look & feel app). Street View = pegman nativo de Google. -->
 		{#if isDesktopNav && !$showH3Grid}
 			<div
-				class="pointer-events-none absolute right-[10px] top-1/2 z-20 flex -translate-y-1/2 flex-col items-end"
+				class="pointer-events-none absolute top-1/2 z-20 flex -translate-y-1/2 flex-col items-end"
+				style="right: {controlsRightPx}px"
 			>
-				<div
-					class="pointer-events-auto flex flex-col overflow-hidden rounded-2xl border-2 border-brand-sky-400/55 bg-white/95 text-brand-sky-700 shadow-[0_4px_20px_rgba(14,165,233,0.22)] backdrop-blur-md dark:border-brand-cyan-400/50 dark:bg-gradient-to-br dark:from-slate-800/95 dark:to-slate-950/95 dark:text-brand-cyan-300 dark:shadow-[0_4px_20px_rgba(34,211,238,0.3)]"
-					role="group"
-					aria-label="Controles de zoom"
-				>
+				<div class={k.zoomGroup} role="group" aria-label="Controles de zoom">
 					<button
 						type="button"
-						class="flex h-11 w-11 items-center justify-center transition-colors hover:bg-brand-sky-500/15 hover:text-brand-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-sky-500 dark:hover:bg-brand-cyan-500/20 dark:hover:text-brand-cyan-100 dark:focus-visible:outline-brand-cyan-400"
+						class={k.zoomBtn}
 						on:click={zoomIn}
 						aria-label="Acercar mapa"
 						title="Acercar"
 					>
-						<Icon icon="mdi:plus" width={22} aria-hidden="true" />
+						<Icon icon="mdi:plus" width={k.zoomIcon} aria-hidden="true" />
 					</button>
-					<div
-						class="h-px w-full bg-brand-sky-300/50 dark:bg-brand-cyan-400/25"
-						aria-hidden="true"
-					></div>
+					<div class={k.zoomSep} aria-hidden="true"></div>
 					<button
 						type="button"
-						class="flex h-11 w-11 items-center justify-center transition-colors hover:bg-brand-sky-500/15 hover:text-brand-sky-800 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-sky-500 dark:hover:bg-brand-cyan-500/20 dark:hover:text-brand-cyan-100 dark:focus-visible:outline-brand-cyan-400"
+						class={k.zoomBtn}
 						on:click={zoomOut}
 						aria-label="Alejar mapa"
 						title="Alejar"
 					>
-						<Icon icon="mdi:minus" width={22} aria-hidden="true" />
+						<Icon icon="mdi:minus" width={k.zoomIcon} aria-hidden="true" />
 					</button>
 				</div>
 			</div>

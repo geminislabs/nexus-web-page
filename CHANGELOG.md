@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Vista Panel del seguimiento, opcional.** Una segunda vista junto a la de siempre, para validarla con usuarios antes de decidir si reemplaza a la Clásica. **La Clásica sigue siendo la vista por defecto y no cambia.** Se elige en el menú de la cuenta (Vista → Clásica / Panel, solo en escritorio) y se recuerda en el navegador. Los colores nuevos (mapa carbón/papel, superficies grises, números en Sora ligera, color solo para estados) solo se aplican en Panel
+  - Columna de flota: cuántas unidades están en movimiento, detenidas o sin señal (filtran la lista), utilización del día, buscador y tarjetas de unidad con el recorrido reciente que llega por el stream. «Gestionar» abre dentro de la misma columna los filtros, la visibilidad en el mapa, el detalle, la edición y el borrado que antes estaban en el cajón
+  - Columna de alertas del día, agrupadas por zona e ignición; un clic lleva a la unidad
+  - Franja «Hoy» con kilómetros por hora y la actividad de cada unidad (trayectos y alarmas en una línea de tiempo)
+  - Cada panel se enciende o apaga desde el botón «Paneles» del riel; el tamaño de la pantalla no decide qué se ve
+  - Para el master, Seguimiento y Administración son dos íconos fijos en el riel. Administración usa el mismo riel angosto y un dashboard en el estilo nuevo, que incluye los kilómetros y la actividad de hoy
+  - Los datos del día salen de endpoints que ya existen (`POST /telemetry/query` en lotes de 50, `GET /trips` paginado y las alarmas del día) y se refrescan cada 5 minutos, solo con la pestaña visible. El plan para que esto escale con muchas unidades (un endpoint agregado, `unit_id` en los trayectos y eventos por el stream) está en `docs/architecture/resumen-del-dia-de-flota.md`. Con `VITE_FLEET_DAY_SUMMARY=true` el panel pide `GET /fleet/day-summary`, que aún no existe: muestra «En construcción». El recorrido completo del día también queda «en construcción»
+
+Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.36.0`.
+
 ## [1.36.0] - 2026-11-27
 
 ### Changed

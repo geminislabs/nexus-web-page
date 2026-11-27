@@ -5,6 +5,7 @@
 	import { onMount } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { apiService } from '$lib/services/api.js';
+	import { fetchAdminSummary } from '$lib/services/adminSummaryService.js';
 	import { alerts, zones, alarmEvents, alertActions } from '$lib/stores/alertStore.js';
 	import { vehicles } from '$lib/stores/vehicleStore.js';
 	import { workspaceActions } from '$lib/stores/workspaceStore.js';
@@ -43,32 +44,11 @@
 		loading = true;
 		loadError = '';
 		try {
-			const settled = await Promise.allSettled([
-				apiService.getUsers(),
-				apiService.getMyDevices(),
-				apiService.getUnassignedDevices(),
-				alertActions.syncAlertRulesFromApi(),
-				alertActions.syncZonesFromApi(),
-				alertActions.syncAlarmEventsFromApi()
-			]);
-
-			if (settled[0].status === 'fulfilled') {
-				const raw = settled[0].value;
-				users = Array.isArray(raw) ? raw : (raw?.items ?? raw?.data ?? []);
-			}
-			if (settled[1].status === 'fulfilled') {
-				const raw = settled[1].value;
-				devices = Array.isArray(raw) ? raw : (raw?.items ?? raw?.data ?? []);
-			}
-			if (settled[2].status === 'fulfilled') {
-				const raw = settled[2].value;
-				unassigned = Array.isArray(raw) ? raw : (raw?.items ?? raw?.data ?? []);
-			}
-
-			const failed = settled.filter((s) => s.status === 'rejected');
-			if (failed.length === settled.length) {
-				loadError = 'No se pudo cargar el resumen. Reintenta.';
-			}
+			const r = await fetchAdminSummary({ api: apiService, alerts: alertActions });
+			if (r.users) users = r.users;
+			if (r.devices) devices = r.devices;
+			if (r.unassigned) unassigned = r.unassigned;
+			loadError = r.error;
 		} catch (err) {
 			logger.error('Dashboard admin:', err);
 			loadError = err?.displayMessage || err?.message || 'Error al cargar el dashboard';
