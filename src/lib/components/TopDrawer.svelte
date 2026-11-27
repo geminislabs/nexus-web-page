@@ -23,6 +23,12 @@
 	export let placement = 'bottom';
 	/** Clases de ancho del panel lateral (solo placement side). */
 	export let sideWidthClass = 'w-[min(420px,40%)] max-w-[480px]';
+	/**
+	 * 'panel': vista Panel del seguimiento. Flota sobre el mapa con margen, gris
+	 * neutro, sin franjas ni mosaico de color. 'clasica' queda exactamente igual.
+	 */
+	export let look = 'clasica';
+	$: isPanel = look === 'panel';
 
 	const DESKTOP_MQ = '(min-width: 1024px)';
 
@@ -101,12 +107,17 @@
 		transition:fade={{ duration: 200 }}
 	>
 		<div
-			class="pointer-events-auto absolute flex flex-col overflow-hidden bg-white/95 text-slate-900 shadow-xl backdrop-blur-[40px] [-webkit-backdrop-filter:blur(40px)] dark:bg-[rgb(8_11_22_/0.97)] dark:text-white dark:shadow-[0_24px_80px_rgba(0,0,0,0.75),0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)] {resolvedPlacement ===
+			class="pointer-events-auto absolute flex flex-col overflow-hidden {isPanel
+				? 'border border-slate-200/80 bg-white/[0.97] text-slate-900 shadow-[0_20px_50px_rgb(15_23_42/0.14)] backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#15171b]/[0.97] dark:text-[#eceef0] dark:shadow-[0_24px_60px_rgb(0_0_0/0.55)]'
+				: 'bg-white/95 text-slate-900 shadow-xl backdrop-blur-[40px] [-webkit-backdrop-filter:blur(40px)] dark:bg-[rgb(8_11_22_/0.97)] dark:text-white dark:shadow-[0_24px_80px_rgba(0,0,0,0.75),0_4px_20px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]'} {resolvedPlacement ===
 			'side'
-				? `left-0 top-0 bottom-0 ${sideWidthClass} border-r border-slate-200 dark:border-white/[0.07]`
+				? isPanel
+					? `left-3 top-3 bottom-3 ${sideWidthClass} rounded-[18px]`
+					: `left-0 top-0 bottom-0 ${sideWidthClass} border-r border-slate-200 dark:border-white/[0.07]`
 				: 'left-0 right-0 bottom-0 h-[50vh] max-h-[50vh] overflow-y-auto rounded-t-2xl border-t border-slate-200 dark:border-white/[0.07]'}"
 			role="dialog"
 			aria-modal="true"
+			data-look={isPanel ? 'panel' : undefined}
 			aria-labelledby={headingIdResolved}
 			tabindex="-1"
 			on:click|stopPropagation
@@ -115,17 +126,23 @@
 				? { x: -24, duration: 320, easing: cubicOut, opacity: 0.96 }
 				: { y: 20, duration: 380, easing: cubicOut, opacity: 0.95 }}
 		>
-			<div
-				class="h-0.5 shrink-0 opacity-80"
-				style="background: linear-gradient(90deg, transparent, {accentColor}, #0ea5e9, transparent);"
-				aria-hidden="true"
-			></div>
+			{#if !isPanel}
+				<div
+					class="h-0.5 shrink-0 opacity-80"
+					style="background: linear-gradient(90deg, transparent, {accentColor}, #0ea5e9, transparent);"
+					aria-hidden="true"
+				></div>
+			{/if}
 
 			<header
-				class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 pb-4 pt-[1.125rem] dark:border-white/[0.06] {headerPaddingClass}"
+				class="flex shrink-0 items-center justify-between gap-3 border-b {isPanel
+					? 'border-slate-200/80 pb-3.5 pt-4 dark:border-white/[0.06]'
+					: 'border-slate-200 pb-4 pt-[1.125rem] dark:border-white/[0.06]'} {headerPaddingClass}"
 			>
 				<div class="flex min-w-0 flex-1 items-center gap-3.5">
-					{#if icon}
+					{#if icon && isPanel}
+						<Icon {icon} class="nx-muted h-[22px] w-[22px] shrink-0" aria-hidden="true" />
+					{:else if icon}
 						<div
 							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]"
 							style="background: linear-gradient(135deg, {accentColor}33, {accentColor}18);"
@@ -142,18 +159,28 @@
 					<div class="min-w-0">
 						<h2
 							id={headingIdResolved}
-							class="m-0 text-[1.1875rem] font-bold tracking-tight text-slate-900 dark:text-white"
+							class="m-0 {isPanel
+								? 'nx-num text-[22px] leading-tight'
+								: 'text-[1.1875rem] font-bold tracking-tight text-slate-900 dark:text-white'}"
 						>
 							{title}
 						</h2>
 						{#if subtitle}
-							<p class="m-0 mt-0.5 text-[12px] text-slate-500 dark:text-white/45">{subtitle}</p>
+							<p
+								class="m-0 mt-0.5 text-[12px] {isPanel
+									? 'nx-muted'
+									: 'text-slate-500 dark:text-white/45'}"
+							>
+								{subtitle}
+							</p>
 						{/if}
 					</div>
 				</div>
 				<button
 					type="button"
-					class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-lg border border-slate-300 bg-slate-100 text-slate-600 transition-[background-color,color] duration-150 hover:bg-slate-200 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-400 dark:border-white/[0.08] dark:bg-white/[0.07] dark:text-white/55 dark:hover:bg-white/[0.13] dark:hover:text-white"
+					class="flex h-[34px] w-[34px] shrink-0 items-center justify-center {isPanel
+						? 'rounded-full'
+						: 'rounded-lg'} border border-slate-300 bg-slate-100 text-slate-600 transition-[background-color,color] duration-150 hover:bg-slate-200 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-400 dark:border-white/[0.08] dark:bg-white/[0.07] dark:text-white/55 dark:hover:bg-white/[0.13] dark:hover:text-white"
 					on:click={close}
 					aria-label="Cerrar panel"
 				>
@@ -171,11 +198,13 @@
 				<slot />
 			</div>
 
-			<div
-				class="h-px shrink-0 opacity-60"
-				style="background: linear-gradient(90deg, transparent, {accentColor}30, transparent);"
-				aria-hidden="true"
-			></div>
+			{#if !isPanel}
+				<div
+					class="h-px shrink-0 opacity-60"
+					style="background: linear-gradient(90deg, transparent, {accentColor}30, transparent);"
+					aria-hidden="true"
+				></div>
+			{/if}
 		</div>
 	</div>
 {/if}

@@ -2,7 +2,8 @@
 	/**
 	 * Columna derecha: las alarmas que se dispararon hoy, agrupadas por tipo.
 	 * Las reglas y las geocercas (configuración) siguen en el cajón
-	 * «Alertas y zonas»; la campana del mapa conserva su lista y su contador.
+	 * «Alertas y zonas». Mientras esta columna está abierta, la campana del mapa
+	 * se oculta y el contador de sin leer vive aquí.
 	 */
 	import Icon from '$lib/components/Icon.svelte';
 	import { alarmEvents, unreadAlarmCount, alertActions } from '$lib/stores/alertStore.js';
@@ -30,7 +31,15 @@
 	aria-labelledby="alerts-col-title"
 >
 	<div class="mb-3 flex items-center justify-between gap-2">
-		<h2 id="alerts-col-title" class="m-0 text-[13px] font-medium">Alertas</h2>
+		<h2 id="alerts-col-title" class="m-0 flex items-center gap-2 text-[13px] font-medium">
+			Alertas
+			{#if $unreadAlarmCount > 0}
+				<span
+					class="min-w-[18px] rounded-full bg-rose-600 px-1.5 py-[1px] text-center text-[10px] font-bold leading-[14px] text-white"
+					aria-label="{$unreadAlarmCount} sin leer">{$unreadAlarmCount}</span
+				>
+			{/if}
+		</h2>
 		<span class="text-[11.5px] nx-muted"
 			>{$alarmEvents.length === 1 ? '1 hoy' : `${$alarmEvents.length} hoy`}</span
 		>

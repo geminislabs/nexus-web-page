@@ -1,4 +1,5 @@
 <script>
+	import { uiLook } from '$lib/stores/lookStore.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { fly } from 'svelte/transition';
 	import { browser } from '$app/environment';
@@ -37,7 +38,7 @@
 </script>
 
 {#if open}
-	<div bind:this={portalHost}>
+	<div bind:this={portalHost} data-look={$uiLook === 'panel' ? 'panel' : undefined}>
 		<div
 			class="fixed inset-0 z-[400] flex items-end justify-center bg-black/40 sm:items-center sm:p-4 dark:bg-black/50"
 			role="presentation"
