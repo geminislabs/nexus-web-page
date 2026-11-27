@@ -121,6 +121,7 @@
 <svelte:window on:click={onDocClick} />
 
 <div
+	data-look={panel ? 'panel' : undefined}
 	class="admin-workspace flex h-screen w-screen overflow-hidden antialiased {panel
 		? 'bg-[#eef0f3] text-slate-900 dark:bg-[#0b0c0e] dark:text-[#eceef0]'
 		: 'bg-slate-100 text-slate-900 dark:bg-[#060a12] dark:text-white'}"
@@ -260,6 +261,7 @@
 					on:click|stopPropagation={() => (showUserMenu = !showUserMenu)}
 				>
 					<span
+						data-look="keep"
 						class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-deep text-[13px] font-bold text-white"
 						aria-hidden="true">{initial}</span
 					>
@@ -342,7 +344,8 @@
 							Nombre, logos y colores con los que tus usuarios ven la plataforma
 						</p>
 					</div>
-					<div class={cardClass}>
+					<!-- Marca muestra los colores reales del partner: fuera de la piel de Panel. -->
+					<div class={cardClass} data-look="keep">
 						{#key $accountAccess.accountId}
 							<BrandWorkspace accountId={$accountAccess.accountId} />
 						{/key}

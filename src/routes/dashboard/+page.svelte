@@ -639,6 +639,7 @@
 					>
 						{#if userData}
 							<span
+								data-look="keep"
 								class="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue-600 to-brand-sky-500 text-[0.9375rem] font-bold text-white"
 								aria-hidden="true"
 							>
@@ -656,6 +657,7 @@
 					{#if showUserMenu}
 						<div
 							id="dashboard-user-menu"
+							data-look={isPanelView ? 'panel' : undefined}
 							role="region"
 							aria-labelledby="dashboard-user-menu-button"
 							class="absolute left-[calc(100%+10px)] top-0 z-[60] w-[17.5rem] max-w-[calc(100vw-5rem)] origin-left rounded-[14px] border border-slate-200 bg-white p-3.5 shadow-[0_20px_40px_rgb(15_23_42_/0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[#080b16]/[0.98] dark:shadow-[0_20px_40px_rgb(0_0_0_/0.6)]"
@@ -665,6 +667,7 @@
 							{#if userData}
 								<div class="flex items-start gap-3">
 									<div
+										data-look="keep"
 										class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-blue-600 to-brand-sky-500 text-[1.1rem] font-bold text-white"
 										aria-hidden="true"
 									>
@@ -996,6 +999,7 @@
 				<div
 					class="pointer-events-none absolute bottom-9 left-3 top-3 z-[60] flex flex-col"
 					style="width: {leftColumnWidth}px"
+					data-look="panel"
 				>
 					<div
 						class="pointer-events-auto flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

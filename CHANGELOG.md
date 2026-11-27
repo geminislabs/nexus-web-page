@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Vista Panel: el estilo nuevo llega a lo que faltaba.**
+  - La piel neutra (acción en blanco y negro, color solo para estado y categoría) cubre ahora la columna izquierda completa (subvistas de la unidad: Trayectos, Eventos, Detalles, Compartir, y Detalles y Editar de «Gestionar»), el menú de la cuenta y Administración por dentro (Usuarios, Unidades, Dispositivos, Configuración).
+  - Marca queda fuera a propósito, porque su vista previa debe mostrar los colores reales del partner, y los avatares conservan el color de la marca (identidad).
+  - Una zona exenta (`data-look='keep'`) ahora excluye también todo lo que contiene.
+  - Las gráficas de Informes distinguen unidades con cian, índigo y púrpura, sin el verde que en Panel significa estado.
+  - Revisado en modo claro
 - **Vista Panel: «Actividad de hoy» marca encendidos y apagados.** Salen de los eventos del dispositivo (`GET /api/v1/events` de siscom-api), que llegan siempre, aunque el cliente no tenga una regla de ignición. Encendido es un punto naranja relleno y apagado un aro naranja hueco. Se piden por lotes de 100 unidades; si fallan, el día se muestra igual con las alarmas de antes
 - **Vista Panel: la línea de «ahora» de Actividad es blanca, punteada y con etiqueta.** Antes era verde y se confundía con «en ruta»
 - **Vista Panel: el trayecto se lee mejor.**

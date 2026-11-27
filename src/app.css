@@ -584,8 +584,9 @@ html.theme-reveal::view-transition-new(root) {
  * y rojo son estado y no se tocan.
  *
  * Va fuera de @layer a propósito: así gana a las utilidades de Tailwind (que
- * viven en @layer utilities) sin !important. Si un componente necesita escapar
- * de la piel, que use data-look='keep' en ese elemento.
+ * viven en @layer utilities) sin !important. Para escapar de la piel, un elemento
+ * (y todo lo que tiene dentro) lleva data-look='keep': p. ej. la vista previa de
+ * Marca, que debe mostrar los colores reales del partner.
  */
 [data-look='panel'] {
 	--nx-solid-bg: #0f172a;
@@ -620,12 +621,15 @@ html.dark [data-look='panel'] {
 		[class*='bg-[#1a2332]'],
 		[class*='bg-[#0b1220]'],
 		[class*='bg-[#0d1424]']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	background-color: var(--nx-surface);
 }
 html:not(.dark)
 	[data-look='panel']
-	:is([class*='bg-[#060b18]'], [class*='bg-[#080d1a]']):not([data-look='keep']) {
+	:is([class*='bg-[#060b18]'], [class*='bg-[#080d1a]']):not(
+		[data-look='keep'],
+		[data-look='keep'] *
+	) {
 	background-color: var(--nx-surface-2);
 }
 
@@ -638,7 +642,7 @@ html:not(.dark)
 		[class*='bg-indigo-'],
 		[class*='bg-violet-'],
 		[class*='bg-brand-']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	background-color: var(--nx-tint-bg);
 	background-image: none;
 }
@@ -673,7 +677,7 @@ html:not(.dark)
 		[class*='from-sky-'],
 		[class*='from-cyan-'],
 		[class*='bg-[linear-gradient']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	background-color: var(--nx-solid-bg);
 	background-image: none;
 	color: var(--nx-solid-fg);
@@ -690,7 +694,7 @@ html:not(.dark)
 		[class*='from-brand-500/'],
 		[class*='from-brand-sky-500/'],
 		[class*='from-brand-cyan-500/']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	background-color: var(--nx-tint-bg);
 	background-image: none;
 	color: inherit;
@@ -727,7 +731,9 @@ html:not(.dark)
 		[class*='text-brand-8'],
 		[class*='text-brand-2'],
 		[class*='text-brand-3']
-	):not([data-look='keep']):not(svg):not(:is(span, div):has(> svg:only-child)) {
+	):not([data-look='keep'], [data-look='keep'] *):not(svg):not(
+		:is(span, div):has(> svg:only-child)
+	) {
 	color: var(--nx-accent-fg);
 }
 /*
@@ -744,7 +750,7 @@ html:not(.dark)
 		[class*='text-indigo-'],
 		[class*='text-violet-'],
 		[class*='text-brand-']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	color: var(--nx-accent-fg);
 }
 [data-look='panel']
@@ -755,7 +761,7 @@ html:not(.dark)
 		[class*='border-indigo-'],
 		[class*='border-violet-'],
 		[class*='border-brand-']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	border-color: var(--nx-tint-border);
 }
 [data-look='panel']
@@ -765,7 +771,7 @@ html:not(.dark)
 		[class*='ring-brand-'],
 		[class*='outline-blue-'],
 		[class*='outline-brand-']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	--tw-ring-color: var(--nx-tint-border);
 	outline-color: var(--nx-accent-fg);
 }
@@ -776,7 +782,7 @@ html:not(.dark)
 		[class*='rgba(37,99,235'],
 		[class*='rgba(56,189,248'],
 		[class*='rgba(14,165,233']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	box-shadow: none;
 }
 /*
@@ -784,15 +790,20 @@ html:not(.dark)
  * apagado en gris. Rojo no: una regla apagada no es un error. Va por aria-checked
  * para cubrir cualquier interruptor de la vista Panel, no solo los de alertas.
  */
-[data-look='panel'] [role='switch'][aria-checked='true']:not([data-look='keep']) {
+[data-look='panel']
+	[role='switch'][aria-checked='true']:not([data-look='keep'], [data-look='keep'] *) {
 	background-color: #10b981;
 	background-image: none;
 }
-[data-look='panel'] [role='switch'][aria-checked='true']:not([data-look='keep']) > * {
+[data-look='panel']
+	[role='switch'][aria-checked='true']:not([data-look='keep'], [data-look='keep'] *)
+	> * {
 	background-color: #ffffff;
 }
 /* Fondos negros puros dentro del panel: dejan ver el carbón del contenedor. */
-html.dark [data-look='panel'] [class~='dark:bg-black']:not([data-look='keep']) {
+html.dark
+	[data-look='panel']
+	[class~='dark:bg-black']:not([data-look='keep'], [data-look='keep'] *) {
 	background-color: transparent;
 }
 /* Superficies oscuras escritas a mano (azul marino, slate) → carbón, en modo oscuro. */
@@ -805,6 +816,6 @@ html.dark
 		[class~='dark:bg-slate-900'],
 		[class~='dark:bg-slate-950'],
 		[class~='dark:bg-gray-900']
-	):not([data-look='keep']) {
+	):not([data-look='keep'], [data-look='keep'] *) {
 	background-color: var(--nx-surface);
 }
