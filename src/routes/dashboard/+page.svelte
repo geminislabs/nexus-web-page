@@ -846,6 +846,7 @@
 				controlsRightPx={mapControlsRight}
 				look={isPanelView ? 'panel' : 'clasica'}
 				hideAlertsBell={isPanelView && panels.alertas}
+				onBellClick={isPanelView ? () => trackingView.setPanel('alertas', true) : null}
 			/>
 
 			{#if showTrackingWorkspaceSwitcher && !isPanelView}
@@ -959,6 +960,7 @@
 						<AlertsColumn
 							onSelectUnit={selectUnitForTracking}
 							onOpenRules={() => openConfigDrawer('alertas_zonas')}
+							onCollapse={() => trackingView.setPanel('alertas', false)}
 							unitIds={visibleUnitIds}
 						/>
 					</div>

@@ -3,13 +3,19 @@
 	 * Columna derecha: las alarmas que se dispararon hoy, agrupadas por tipo.
 	 * Las reglas y las geocercas (configuración) siguen en el cajón
 	 * «Alertas y zonas». Mientras esta columna está abierta, la campana del mapa
-	 * se oculta y el contador de sin leer vive aquí.
+	 * se oculta y el contador de sin leer vive aquí; al plegarla (`onCollapse`)
+	 * la campana vuelve y la reabre.
 	 */
 	import Icon from '$lib/components/Icon.svelte';
 	import { alarmEvents, unreadAlarmCount, alertActions } from '$lib/stores/alertStore.js';
 	import { formatAlarmWhen } from '$lib/utils/alarmFormat.js';
 
-	let { onSelectUnit = () => {}, onOpenRules = () => {}, unitIds = new Set() } = $props();
+	let {
+		onSelectUnit = () => {},
+		onOpenRules = () => {},
+		onCollapse = null,
+		unitIds = new Set()
+	} = $props();
 
 	const GROUPS = [
 		{ id: 'zone', label: 'Zonas', icon: 'mdi:hexagon-outline' },
@@ -40,9 +46,22 @@
 				>
 			{/if}
 		</h2>
-		<span class="text-[11.5px] nx-muted"
-			>{$alarmEvents.length === 1 ? '1 hoy' : `${$alarmEvents.length} hoy`}</span
-		>
+		<span class="flex items-center gap-1">
+			<span class="text-[11.5px] nx-muted"
+				>{$alarmEvents.length === 1 ? '1 hoy' : `${$alarmEvents.length} hoy`}</span
+			>
+			{#if onCollapse}
+				<button
+					type="button"
+					class="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-slate-900/5 focus-visible:outline-2 dark:hover:bg-white/[0.06]"
+					onclick={onCollapse}
+					aria-label="Ocultar la columna de alertas"
+					title="Ocultar (la campana del mapa la vuelve a abrir)"
+				>
+					<Icon icon="mdi:chevron-double-right" class="h-4 w-4" aria-hidden="true" />
+				</button>
+			{/if}
+		</span>
 	</div>
 
 	<div class="min-h-0 flex-1 overflow-y-auto pr-0.5">

@@ -50,6 +50,12 @@
 	 * mismo, así que se oculta. Al apagar la columna vuelve.
 	 */
 	export let hideAlertsBell = false;
+	/**
+	 * Si se pasa, la campana llama a esto en vez de abrir su propio panel
+	 * (vista Panel: vuelve a abrir la columna de alertas).
+	 * @type {(() => void) | null}
+	 */
+	export let onBellClick = null;
 
 	const GLASS_BTN =
 		'nx-glass flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-slate-700 transition-colors duration-200 hover:border-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 dark:text-white/80 dark:hover:border-white/15';
@@ -169,6 +175,10 @@
 
 	function toggleAlertsPanel() {
 		if (isLoading) return;
+		if (onBellClick) {
+			onBellClick();
+			return;
+		}
 		showAlertsPanel = !showAlertsPanel;
 		if (showAlertsPanel) {
 			showLayersPanel = false;
