@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Vista Panel: «modo unidad».** Con una unidad abierta, o en una flota de una sola unidad, la franja de abajo deja de mostrar la flota y muestra el día de esa unidad.
+  - **Hoy en números.** Los kilómetros como cifra grande, comparados con ayer a la misma hora; un clic los abre en gráfica por hora. Debajo, tiempo en ruta, ralentí, paradas y velocidad máxima.
+  - **Batería · 24 h.** El voltaje con bandas verde, ámbar y roja (12.2 V y 11.5 V), y una marca roja donde bajó con el motor apagado.
+  - **Combustible · 7 días.** Los litros calculados por día y el rendimiento de la semana en L/100 km. Si no hay consumo calculado, la tarjeta lo dice en vez de mostrar ceros.
+  - **El día de la unidad.** Una línea de tiempo con bandas en ruta (verde), ralentí (ámbar) y apagado (gris). Encima va la velocidad máxima de cada hora, y sobre la línea los encendidos, los apagados y las alertas de zona. Un clic en un tramo en ruta dibuja ese trayecto en el mapa, y la etiqueta del trayecto lo quita.
+  - Con una sola unidad, la columna de flota deja de mostrar «Utilización», que ya está en la franja.
+  - Son tres peticiones por refresco, todas de esa unidad: telemetría por hora de 7 días, trayectos de hoy y eventos de hoy. Se refresca cada 5 minutos con la pestaña visible
+
 ### Changed
 
 - **Vista Panel: «Actividad de hoy» marca encendidos y apagados.** Salen de los eventos del dispositivo (`GET /api/v1/events` de siscom-api), que llegan siempre, aunque el cliente no tenga una regla de ignición. Encendido es un punto naranja relleno y apagado un aro naranja hueco. Se piden por lotes de 100 unidades; si fallan, el día se muestra igual con las alarmas de antes
