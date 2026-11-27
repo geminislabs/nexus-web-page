@@ -329,7 +329,9 @@
 										>
 										{#if dateParts.day}
 											<span
-												class="block text-[11px] font-bold leading-tight text-indigo-600 dark:text-indigo-300"
+												class="block text-[11px] font-bold leading-tight text-indigo-600 dark:text-indigo-300 {isPanel
+													? 'nx-mono'
+													: ''}"
 											>
 												<span class="block">{dateParts.day}</span>
 												{#if dateParts.time}
@@ -390,7 +392,9 @@
 											>Velocidad</span
 										>
 										<span
-											class="block truncate text-[11px] font-bold text-sky-600 dark:text-sky-400"
+											class="block truncate text-[11px] font-bold text-sky-600 dark:text-sky-400 {isPanel
+												? 'nx-mono'
+												: ''}"
 											>{#key unit.id}<AnimatedNumber
 													value={Number.isNaN(speed) ? null : speed}
 													format={formatSpeed}

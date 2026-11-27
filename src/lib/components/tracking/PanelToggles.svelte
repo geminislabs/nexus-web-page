@@ -27,6 +27,13 @@
 			hint: 'Kilómetros y actividad del día',
 			icon: 'mdi:chart-timeline-variant',
 			color: 'text-sky-600 dark:text-sky-400'
+		},
+		{
+			id: 'reticula',
+			label: 'Retícula',
+			hint: 'Cuadrícula y coordenadas del centro',
+			icon: 'mdi:grid',
+			color: 'text-slate-500 dark:text-white/60'
 		}
 	];
 </script>

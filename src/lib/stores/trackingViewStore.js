@@ -15,11 +15,17 @@ import { writable } from 'svelte/store';
 
 export const TRACKING_VIEW_KEY = 'nexus.seguimiento.vista';
 /** @typedef {'clasica' | 'panel'} TrackingViewName */
-/** @typedef {{ flota: boolean, alertas: boolean, hoy: boolean }} TrackingPanels */
+/** @typedef {{ flota: boolean, alertas: boolean, hoy: boolean, reticula: boolean }} TrackingPanels */
 /** @typedef {{ view: TrackingViewName, panels: TrackingPanels }} TrackingViewPrefs */
 
 /** @type {TrackingPanels} */
-export const DEFAULT_PANELS = Object.freeze({ flota: true, alertas: true, hoy: true });
+/** `reticula`: cuadrícula tenue sobre el mapa con las coordenadas del centro (apagada). */
+export const DEFAULT_PANELS = Object.freeze({
+	flota: true,
+	alertas: true,
+	hoy: true,
+	reticula: false
+});
 
 /** @returns {TrackingViewPrefs} */
 export function defaultPrefs() {

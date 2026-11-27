@@ -1,3 +1,4 @@
+import { writable } from 'svelte/store';
 import { startJourney } from '$lib/observability/journey.js';
 import { logger } from '$lib/utils/logger.js';
 import { authToken } from '$lib/stores/auth.js';
@@ -17,6 +18,16 @@ const COMM_API_URL = import.meta.env?.VITE_COMM_API_URL || '';
  * @param {string} urlStr
  * @returns {string}
  */
+/**
+ * Estado del stream para mostrarlo (indicador «En vivo»). Solo informa: no
+ * cambia cómo se conecta ni reconecta.
+ * - `state`: 'off' (sin stream), 'connecting', 'live' o 'reconnecting'.
+ * - `lastMessageAt`: epoch ms de la última posición recibida.
+ * - `devices`: cuántos dispositivos escucha.
+ * @type {import('svelte/store').Writable<{ state: 'off'|'connecting'|'live'|'reconnecting', lastMessageAt: number|null, devices: number }>}
+ */
+export const streamStatus = writable({ state: 'off', lastMessageAt: null, devices: 0 });
+
 export function httpUrlToWebSocketUrl(urlStr) {
 	if (urlStr.startsWith('ws://') || urlStr.startsWith('wss://')) {
 		return urlStr;
@@ -158,6 +169,7 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 	let journey = null;
 
 	const url = `${base}${STREAM_PATH}?device_ids=${encodeURIComponent(unique.join(','))}`;
+	streamStatus.update((st) => ({ ...st, state: 'connecting', devices: unique.length }));
 
 	const connect = async () => {
 		if (stopped) return;
@@ -204,6 +216,7 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 
 		ws.onopen = () => {
 			opened = true;
+			streamStatus.update((st) => ({ ...st, state: 'live' }));
 			journey?.end('success');
 		};
 
@@ -211,7 +224,10 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 			try {
 				const parsed = JSON.parse(ev.data);
 				const pos = parsePositionStreamMessage(parsed);
-				if (pos) onPosition(pos);
+				if (pos) {
+					streamStatus.update((st) => ({ ...st, state: 'live', lastMessageAt: Date.now() }));
+					onPosition(pos);
+				}
 			} catch (e) {
 				logger.warn({
 					code: 'WS_STREAM_PARSE_FAILED',
@@ -233,7 +249,10 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 		ws.onclose = () => {
 			if (!opened) journey?.end(stopped ? 'cancelled' : 'failure');
 			ws = null;
-			if (!stopped) scheduleReconnect();
+			if (!stopped) {
+				streamStatus.update((st) => ({ ...st, state: 'reconnecting' }));
+				scheduleReconnect();
+			}
 		};
 	};
 
@@ -249,6 +268,7 @@ export function startVehiclePositionStream(deviceIds, onPosition) {
 
 	return () => {
 		stopped = true;
+		streamStatus.set({ state: 'off', lastMessageAt: null, devices: 0 });
 		journey?.end('cancelled');
 		if (reconnectTimer != null) {
 			clearTimeout(reconnectTimer);

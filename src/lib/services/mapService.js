@@ -125,6 +125,10 @@ function trailEdgeColorForSpeed(speedKmH) {
 
 /** Unidad actualmente en modo "seguir" (o null). Para reactividad en UI (botón Seguir). */
 export const followedVehicleId = writable(/** @type {string | null} */ (null));
+/** Centro y zoom del mapa cuando se detiene (para la retícula de la vista Panel). */
+export const mapView = writable(
+	/** @type {{ lat: number, lng: number, zoom: number } | null} */ (null)
+);
 
 /** Street View visible — para mostrar el botón propio de salir. */
 export const streetViewVisible = writable(false);
@@ -385,6 +389,10 @@ class MapService {
 			};
 
 			this.map = new this.google.maps.Map(mapElement, mapOptions);
+			this.map.addListener('idle', () => {
+				const c = this.map?.getCenter?.();
+				if (c) mapView.set({ lat: c.lat(), lng: c.lng(), zoom: this.map.getZoom?.() ?? 0 });
+			});
 			if (this._mapClickCloseListener) {
 				this.google.maps.event.removeListener(this._mapClickCloseListener);
 			}
@@ -917,13 +925,17 @@ class MapService {
 		if (!this.map || !this.google) return;
 		const existing = this._liveTrailPolylines.get(vehicleId) || [];
 		const segments = this._buildTrailSegments(vehicleId, multiplier);
+		// Vista Panel: la estela usa la tinta del trayecto (blanco con contorno),
+		// no cian con bordes verde/amarillo/rojo, que se leían como tráfico.
+		const pal = this.styleVariant === 'panel' ? tripPalette('panel', this.themeMode) : null;
+		const mainColor = pal ? pal.line : LIVE_TRAIL_COLOR;
 
 		segments.forEach((seg, i) => {
 			let pair = existing[i];
 			if (!pair) {
 				const border = new this.google.maps.Polyline({
 					geodesic: true,
-					strokeColor: seg.edgeColor,
+					strokeColor: pal ? pal.casing : seg.edgeColor,
 					strokeWeight: TRAIL_EDGE_WEIGHT,
 					strokeOpacity: seg.opacity,
 					map: this.map,
@@ -932,7 +944,7 @@ class MapService {
 				});
 				const main = new this.google.maps.Polyline({
 					geodesic: true,
-					strokeColor: LIVE_TRAIL_COLOR,
+					strokeColor: mainColor,
 					strokeWeight: TRAIL_MAIN_WEIGHT,
 					strokeOpacity: seg.opacity,
 					map: this.map,
@@ -943,9 +955,12 @@ class MapService {
 				existing[i] = pair;
 			}
 			pair.border.setPath(seg.path);
-			pair.border.setOptions({ strokeOpacity: seg.opacity, strokeColor: seg.edgeColor });
+			pair.border.setOptions({
+				strokeOpacity: seg.opacity,
+				strokeColor: pal ? pal.casing : seg.edgeColor
+			});
 			pair.main.setPath(seg.path);
-			pair.main.setOptions({ strokeOpacity: seg.opacity });
+			pair.main.setOptions({ strokeOpacity: seg.opacity, strokeColor: mainColor });
 		});
 
 		for (let i = segments.length; i < existing.length; i++) {

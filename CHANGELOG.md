@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Vista Panel: toque tecnológico.**
+  - **Paleta de comandos (⌘K / Ctrl K, o la lupa del riel).** Busca unidades, «Trayectos de…», «Eventos de…», Alertas y zonas, Informes, Gestionar, encender o apagar paneles, tema, vista clásica y secciones de Administración. Se maneja con flechas, Enter y Esc, sin importar acentos.
+  - **Indicador «En vivo».** Va arriba del mapa: punto que late mientras llegan posiciones por el stream, cuántas unidades escucha y hace cuánto llegó el último dato; se pone ámbar al reconectar. El stream publica su estado (`streamStatus`) sin cambiar cómo se conecta.
+  - **Datos que laten.** Las cifras de En movimiento, Detenidas y Sin señal destellan al cambiar, y cada tarjeta de unidad dice «hace X s» desde su última posición, avanzando solo.
+  - **Mini-gráfica de velocidad** de los últimos 30 min en cada tarjeta de unidad, cuando hubo movimiento.
+  - **Retícula opcional** sobre el mapa, con las coordenadas y el zoom del centro en el indicador. Se activa en «Paneles» o con ⌘K y viene apagada.
+  - **Tipografía monoespaciada** en datos técnicos: horas de actualización, velocidad, voltaje y «hace X s».
+  - La estela en vivo de cada unidad usa la tinta del trayecto (blanco con contorno) en vez de cian con bordes verde, amarillo y rojo, que se leían como tráfico.
+  - **Pendiente, la cámara 3D** (inclinar y girar el mapa al seguir una unidad). Google solo lo permite en mapas vectoriales con un `mapId` creado en Google Cloud, y los estilos carbón y papel tendrían que rehacerse allá con estilos en la nube. Requiere esa configuración antes de poder programarse
+
 - **Vista Panel: «modo unidad».** Con una unidad abierta, o en una flota de una sola unidad, la franja de abajo deja de mostrar la flota y muestra el día de esa unidad.
   - **Hoy en números.** Los kilómetros como cifra grande, comparados con ayer a la misma hora; un clic los abre en gráfica por hora. Debajo, tiempo en ruta, ralentí, paradas y velocidad máxima.
   - **Batería · 24 h.** El voltaje con bandas verde, ámbar y roja (12.2 V y 11.5 V), y una marca roja donde bajó con el motor apagado.
