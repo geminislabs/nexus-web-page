@@ -22,7 +22,7 @@
 			id: 'alertas',
 			label: 'Alertas',
 			icon: 'mdi:bell-ring-outline',
-			color: 'text-pink-500 dark:text-pink-400',
+			color: 'text-amber-500 dark:text-amber-400',
 			count: () => $alerts.length
 		},
 		{

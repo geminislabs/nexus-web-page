@@ -66,14 +66,23 @@
 			active: 'bg-emerald-500/20 ring-1 ring-emerald-500/40 text-emerald-700 dark:text-emerald-300'
 		}
 	];
-	// Vista Panel: una sola tinta para las cuatro acciones; el color queda para los estados.
+	// Vista Panel: recuadro gris; el ícono lleva el color de lo que abre (Trayectos verde
+	// como «en ruta», Eventos ámbar como Alertas, Detalles azul de información) y
+	// Compartir queda gris porque es secundaria.
 	const PANEL_TONE = 'text-slate-700 dark:text-white/80';
+	/** @type {Record<string, string>} */
+	const PANEL_ACTION_TONE = {
+		trips: 'text-emerald-600 dark:text-emerald-400',
+		events: 'text-amber-500 dark:text-amber-400',
+		details: 'text-blue-600 dark:text-blue-400',
+		share: PANEL_TONE
+	};
 	const PANEL_WELL = 'bg-slate-100 ring-slate-200 dark:bg-white/[0.06] dark:ring-white/10';
 	const PANEL_ACTIVE =
 		'bg-slate-900/[0.06] ring-1 ring-slate-900/15 text-slate-900 dark:bg-white/[0.1] dark:ring-white/20 dark:text-white';
 	const neutralActions = classicActions.map((a) => ({
 		...a,
-		tone: PANEL_TONE,
+		tone: PANEL_ACTION_TONE[a.id] ?? PANEL_TONE,
 		well: PANEL_WELL,
 		active: PANEL_ACTIVE
 	}));
@@ -206,7 +215,9 @@
 				<div class="flex shrink-0 items-center gap-1.5 self-start pt-0.5">
 					<button
 						type="button"
-						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-slate-200/90 text-slate-700 shadow-sm transition-transform hover:scale-105 hover:bg-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-sky-400/50 dark:border-white/20 dark:bg-white/15 dark:text-white dark:hover:bg-white/25"
+						class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full {isPanel
+							? 'nx-close'
+							: 'border border-slate-200/90 bg-slate-200/90 text-slate-700 shadow-sm transition-transform hover:scale-105 hover:bg-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-sky-400/50 dark:border-white/20 dark:bg-white/15 dark:text-white dark:hover:bg-white/25'}"
 						on:click={onClose}
 						aria-label="Cerrar panel de unidad"
 						title="Cerrar"

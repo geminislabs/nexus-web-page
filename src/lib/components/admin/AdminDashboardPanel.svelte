@@ -137,14 +137,15 @@
 
 	/**
 	 * Color de categoría del ícono: siempre el mismo para la misma cosa en toda la
-	 * vista Panel. Nunca verde, ámbar ni rojo, que son de estado (la ignición, en
-	 * naranja, es la única excepción y no aparece aquí).
+	 * vista Panel. Verde y rojo son de estado y no se usan aquí. Dos excepciones
+	 * acordadas: alertas en ámbar (la campana se reconoce así y las alertas de zona
+	 * ya son ámbar) e ignición en naranja; se distinguen del estado por la forma.
 	 */
 	const CATEGORY_ICON = {
 		users: 'text-sky-500 dark:text-sky-400',
 		units: 'text-indigo-500 dark:text-indigo-400',
 		devices: 'text-violet-500 dark:text-violet-400',
-		alerts: 'text-pink-500 dark:text-pink-400',
+		alerts: 'text-amber-500 dark:text-amber-400',
 		zones: 'text-cyan-600 dark:text-cyan-400',
 		events: 'nx-muted',
 		settings: 'nx-muted'
