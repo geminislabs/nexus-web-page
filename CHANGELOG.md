@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.39.1] - 2026-11-27
+
+Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.39.0`.
+
 ### Changed
 
 - **Vista Panel: más color donde importa.** El fondo de los paneles no cambia; el color va en íconos, cifras y gráficas, con dos reglas: verde, naranja y ámbar son estado, y el resto de colores son categoría.
