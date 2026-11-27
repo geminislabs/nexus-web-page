@@ -80,6 +80,7 @@
 			label: 'Usuarios',
 			value: s.userCount,
 			icon: 'mdi:account-group-outline',
+			cat: 'users',
 			hint:
 				s.pendingUsers > 0
 					? `${s.pendingUsers} pendientes`
@@ -91,6 +92,7 @@
 			label: 'Unidades',
 			value: unitCount,
 			icon: 'mdi:car-side',
+			cat: 'units',
 			hint: 'Flota registrada',
 			tone: '',
 			onClick: () => workspaceActions.goAdmin('units')
@@ -99,6 +101,7 @@
 			label: 'Dispositivos',
 			value: s.deviceCount,
 			icon: 'mdi:memory',
+			cat: 'devices',
 			hint: s.unassignedCount > 0 ? `${s.unassignedCount} sin asignar` : 'Todos vinculados',
 			tone: s.unassignedCount > 0 ? 'warn' : 'ok',
 			onClick: () => workspaceActions.goAdmin('devices')
@@ -107,6 +110,7 @@
 			label: 'Alertas',
 			value: s.alertCount,
 			icon: 'mdi:bell-ring-outline',
+			cat: 'alerts',
 			hint: `${s.enabledAlerts} activas`,
 			tone: s.enabledAlerts > 0 ? 'ok' : '',
 			onClick: () => openInTracking('alertas_zonas')
@@ -115,6 +119,7 @@
 			label: 'Zonas',
 			value: $zones.length,
 			icon: 'mdi:hexagon-multiple-outline',
+			cat: 'zones',
 			hint: 'Geocercas',
 			tone: '',
 			onClick: () => openInTracking('alertas_zonas')
@@ -123,11 +128,27 @@
 			label: 'Eventos',
 			value: $alarmEvents.length,
 			icon: 'mdi:history',
+			cat: 'events',
 			hint: 'De hoy',
 			tone: '',
 			onClick: null
 		}
 	]);
+
+	/**
+	 * Color de categoría del ícono: siempre el mismo para la misma cosa en toda la
+	 * vista Panel. Nunca verde, ámbar ni rojo, que son de estado (la ignición, en
+	 * naranja, es la única excepción y no aparece aquí).
+	 */
+	const CATEGORY_ICON = {
+		users: 'text-sky-500 dark:text-sky-400',
+		units: 'text-indigo-500 dark:text-indigo-400',
+		devices: 'text-violet-500 dark:text-violet-400',
+		alerts: 'text-pink-500 dark:text-pink-400',
+		zones: 'text-cyan-600 dark:text-cyan-400',
+		events: 'nx-muted',
+		settings: 'nx-muted'
+	};
 
 	const toneClass = {
 		ok: 'text-emerald-600 dark:text-emerald-400',
@@ -136,10 +157,10 @@
 	};
 
 	const quickActions = [
-		{ label: 'Usuarios', icon: 'mdi:account-plus-outline', go: 'users' },
-		{ label: 'Unidades', icon: 'mdi:car-outline', go: 'units' },
-		{ label: 'Dispositivos', icon: 'mdi:chip', go: 'devices' },
-		{ label: 'Configuración', icon: 'mdi:cog-outline', go: 'settings' }
+		{ label: 'Usuarios', icon: 'mdi:account-plus-outline', go: 'users', cat: 'users' },
+		{ label: 'Unidades', icon: 'mdi:car-outline', go: 'units', cat: 'units' },
+		{ label: 'Dispositivos', icon: 'mdi:chip', go: 'devices', cat: 'devices' },
+		{ label: 'Configuración', icon: 'mdi:cog-outline', go: 'settings', cat: 'settings' }
 	];
 </script>
 
@@ -237,7 +258,11 @@
 				>
 					<span class="flex items-center justify-between gap-2">
 						<span class="nx-label">{t.label}</span>
-						<Icon icon={t.icon} class="nx-muted h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+						<Icon
+							icon={t.icon}
+							class="h-[18px] w-[18px] shrink-0 {CATEGORY_ICON[t.cat]}"
+							aria-hidden="true"
+						/>
 					</span>
 					<span class="mt-3">
 						{#if loading && t.label !== 'Unidades' && t.label !== 'Eventos'}
@@ -317,7 +342,11 @@
 						class="flex min-h-[4.25rem] flex-col items-start justify-center gap-2 rounded-xl border border-slate-200/80 px-3.5 py-3 text-left transition-colors hover:border-slate-300 hover:bg-slate-900/[0.03] focus-visible:outline-2 dark:border-white/[0.07] dark:hover:border-white/15 dark:hover:bg-white/[0.04]"
 						onclick={() => workspaceActions.goAdmin(/** @type {any} */ (a.go))}
 					>
-						<Icon icon={a.icon} class="h-[18px] w-[18px]" aria-hidden="true" />
+						<Icon
+							icon={a.icon}
+							class="h-[18px] w-[18px] {CATEGORY_ICON[a.cat]}"
+							aria-hidden="true"
+						/>
 						<span class="text-[12.5px] font-medium">{a.label}</span>
 					</button>
 				{/each}

@@ -1,5 +1,6 @@
 <script>
 	import { trackingView } from '$lib/stores/trackingViewStore.js';
+	import { uiLook } from '$lib/stores/lookStore.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import ShieldBoltIcon from '$lib/components/icons/ShieldBoltIcon.svelte';
 	import UnitsStatusFilterPanels from './UnitsStatusFilterPanels.svelte';
@@ -154,11 +155,23 @@
 		unitIcons[unit?.icon_type || unit?.iconType || 'vehicle-car-sedan'] ||
 		unitIcons['vehicle-car-sedan'];
 	$: unitColorHex = resolveProfileColorHex(unit);
+
+	/**
+	 * Vista Panel: fichas grises con el ícono en su color de categoría (la
+	 * ignición, naranja) y el estado solo en el valor. La Clásica no cambia.
+	 */
+	$: isPanel = $uiLook === 'panel';
+	const PANEL_TILE =
+		'border-slate-200/80 bg-slate-50/60 dark:border-white/[0.08] dark:bg-white/[0.04]';
+	const PANEL_ICON_BOX = 'bg-slate-900/[0.05] dark:bg-white/[0.06]';
 </script>
 
 {#if unit}
 	<div
-		class="pointer-events-auto relative flex w-full flex-col overflow-hidden rounded-t-2xl border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)] {showUnitPicker
+		data-look={isPanel ? 'panel' : undefined}
+		class="pointer-events-auto relative flex w-full flex-col overflow-hidden rounded-t-2xl {isPanel
+			? 'nx-glass'
+			: 'border border-slate-200/80 bg-white shadow-[0_-4px_20px_rgba(15,23,42,0.12)] dark:border-transparent dark:bg-[#0c1829] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)]'} {showUnitPicker
 			? 'h-[min(72vh,calc(100dvh-4.75rem-env(safe-area-inset-bottom,0px)))] md:h-[70vh]'
 			: 'max-h-[min(72vh,calc(100dvh-4.75rem-env(safe-area-inset-bottom,0px)))] md:max-h-[70vh]'}"
 	>
@@ -210,12 +223,18 @@
 					</button>
 					<button
 						type="button"
-						class="flex h-7 w-7 items-center justify-center rounded-full border border-red-500/30 bg-red-600/90 shadow-sm shadow-red-900/20 transition-transform hover:scale-105 dark:shadow-red-900/30"
+						class="flex h-7 w-7 items-center justify-center rounded-full transition-transform hover:scale-105 {isPanel
+							? 'border border-slate-200/90 bg-slate-200/90 text-slate-700 dark:border-white/20 dark:bg-white/15 dark:text-white'
+							: 'border border-red-500/30 bg-red-600/90 shadow-sm shadow-red-900/20 dark:shadow-red-900/30'}"
 						on:click={onOpenSecurity}
 						aria-label="Consola de seguridad"
 						title="Consola de seguridad"
 					>
-						<ShieldBoltIcon size={14} variant="white" />
+						{#if isPanel}
+							<Icon icon="mdi:shield-lock-outline" class="h-3.5 w-3.5" />
+						{:else}
+							<ShieldBoltIcon size={14} variant="white" />
+						{/if}
 					</button>
 				</div>
 			</div>
@@ -239,26 +258,32 @@
 								aria-label="Estado de la unidad"
 							>
 								<div
-									class="flex min-h-[2.75rem] min-w-0 items-center gap-1.5 rounded-xl border px-2 py-1.5 {isOnline
-										? 'border-emerald-500/30 bg-emerald-500/10'
-										: hasSignal
-											? 'border-amber-500/30 bg-amber-500/10'
-											: 'border-red-500/30 bg-red-500/10'}"
+									class="flex min-h-[2.75rem] min-w-0 items-center gap-1.5 rounded-xl border px-2 py-1.5 {isPanel
+										? PANEL_TILE
+										: isOnline
+											? 'border-emerald-500/30 bg-emerald-500/10'
+											: hasSignal
+												? 'border-amber-500/30 bg-amber-500/10'
+												: 'border-red-500/30 bg-red-500/10'}"
 								>
 									<span
-										class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg {isOnline
-											? 'bg-emerald-500/20 text-emerald-500'
-											: hasSignal
-												? 'bg-amber-500/20 text-amber-500'
-												: 'bg-red-500/20 text-red-500'}"
+										class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg {isPanel
+											? `${PANEL_ICON_BOX} text-orange-500 dark:text-orange-400`
+											: isOnline
+												? 'bg-emerald-500/20 text-emerald-500'
+												: hasSignal
+													? 'bg-amber-500/20 text-amber-500'
+													: 'bg-red-500/20 text-red-500'}"
 										aria-hidden="true"
 									>
 										<Icon
-											icon={isOnline
+											icon={isPanel
 												? 'mdi:engine'
-												: hasSignal
-													? 'mdi:key-variant'
-													: 'mdi:signal-off'}
+												: isOnline
+													? 'mdi:engine'
+													: hasSignal
+														? 'mdi:key-variant'
+														: 'mdi:signal-off'}
 											width={15}
 										/>
 									</span>
@@ -312,6 +337,7 @@
 									type="button"
 									class="follow-toggle-btn flex min-h-[2.75rem] min-w-0 items-center gap-1.5 rounded-xl border px-2 py-1.5 text-left transition-all duration-300"
 									class:following={isFollowing}
+									class:panel={isPanel}
 									on:click={toggleFollow}
 									aria-pressed={isFollowing}
 									aria-label={isFollowing
@@ -540,6 +566,27 @@
 		background: rgba(0, 166, 192, 0.14);
 		color: #00a6c0;
 		animation-name: follow-toggle-glow-dark;
+	}
+	/* Vista Panel: ficha gris; «Siguiendo» se marca con borde claro, sin brillo. */
+	.follow-toggle-btn.panel,
+	.follow-toggle-btn.panel.following {
+		background: rgba(15, 23, 42, 0.03);
+		border-color: rgba(15, 23, 42, 0.12);
+		color: #1e293b;
+		animation: none;
+	}
+	.follow-toggle-btn.panel.following {
+		border-color: #0f172a;
+	}
+	:global(html.dark) .follow-toggle-btn.panel,
+	:global(html.dark) .follow-toggle-btn.panel.following {
+		background: rgba(255, 255, 255, 0.04);
+		border-color: rgba(255, 255, 255, 0.08);
+		color: rgba(255, 255, 255, 0.88);
+		animation: none;
+	}
+	:global(html.dark) .follow-toggle-btn.panel.following {
+		border-color: rgba(255, 255, 255, 0.75);
 	}
 	@keyframes follow-toggle-glow {
 		0%,

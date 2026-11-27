@@ -5,6 +5,7 @@
 	import { unitIcons } from '$lib/data/unitIcons';
 	import { resolveProfileColorHex } from '$lib/utils/vehicleMarkerIcon.js';
 	import { pop } from '$lib/motion/index.js';
+	import { uiLook } from '$lib/stores/lookStore.js';
 
 	/** @type {Record<string, any>} */
 	export let vehicle = {};
@@ -111,12 +112,17 @@
 		if (!mapsUrl) return;
 		window.open(mapsUrl, '_blank', 'noopener,noreferrer');
 	}
+	/** Vista Panel: superficie gris y piel neutra (íconos con su color de categoría). */
+	$: isPanel = $uiLook === 'panel';
 </script>
 
 <div
 	class="nexus-viw-card w-[min(100vw-2rem,20rem)] overflow-hidden rounded-2xl border font-sans shadow-xl {isDark
-		? 'border-white/[0.12] bg-[#0c1829] text-slate-200'
+		? isPanel
+			? 'border-white/[0.09] bg-[linear-gradient(165deg,rgb(46_49_56),rgb(31_33_38))] text-[#eceef0]'
+			: 'border-white/[0.12] bg-[#0c1829] text-slate-200'
 		: 'border-slate-200/80 bg-white text-slate-900'}"
+	data-look={isPanel ? 'panel' : undefined}
 	data-nexus-vehicle-popup
 	data-popup-theme={theme}
 >

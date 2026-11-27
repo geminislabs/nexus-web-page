@@ -36,6 +36,40 @@ export function mapStyleFor(variant, mode) {
 	const v = MAP_STYLES[variant] ?? MAP_STYLES.clasica;
 	return mode === 'light' ? v.light : v.dark;
 }
+
+/**
+ * Colores del trayecto (ruta, inicio, fin, punta y marcador de reproducción).
+ * Clásica: los de siempre. Panel: blanco sobre mapa oscuro / casi negro sobre
+ * claro, con contorno y flechas de sentido, para no confundirse con el tráfico
+ * en vivo (verde, amarillo, rojo) ni con los colores de estado.
+ * @param {'clasica' | 'panel'} variant
+ * @param {'dark' | 'light'} mode
+ */
+export function tripPalette(variant, mode) {
+	if (variant !== 'panel') {
+		return {
+			line: '#10b981',
+			casing: null,
+			arrows: false,
+			start: { fill: '#22c55e', fillOpacity: 1, stroke: '#fff', weight: 2 },
+			end: { fill: '#ef4444', fillOpacity: 1, stroke: '#fff', weight: 2 },
+			head: { fill: '#22d3ee', stroke: '#fff' },
+			playback: { fill: '#ef4444', stroke: '#fff' }
+		};
+	}
+	const ink = mode === 'light' ? '#111827' : '#f5f6f7';
+	const paper = mode === 'light' ? '#ffffff' : '#0b0c0e';
+	return {
+		line: ink,
+		casing: paper,
+		arrows: true,
+		// Inicio: aro hueco. Fin: punto sólido.
+		start: { fill: paper, fillOpacity: 0, stroke: ink, weight: 3 },
+		end: { fill: ink, fillOpacity: 1, stroke: paper, weight: 2 },
+		head: { fill: ink, stroke: paper },
+		playback: { fill: ink, stroke: paper }
+	};
+}
 import { formatTripAlertType, tripAlertMarkerColor } from '$lib/utils/tripAlertFormat.js';
 import { theme } from '$lib/stores/themeStore.js';
 import { logger } from '$lib/utils/logger.js';
@@ -1275,6 +1309,7 @@ class MapService {
 		this.themeMode = mode === 'light' ? 'light' : 'dark';
 		if (!this.map) return;
 		this.map.setOptions(mapStyleFor(this.styleVariant, this.themeMode));
+		this._restyleTrip();
 	}
 
 	/**
@@ -1286,6 +1321,46 @@ class MapService {
 		if (next === this.styleVariant) return;
 		this.styleVariant = next;
 		if (this.map) this.map.setOptions(mapStyleFor(this.styleVariant, this.themeMode));
+		this._restyleTrip();
+	}
+
+	/** Un trayecto ya dibujado toma los colores del tema o de la vista nuevos. */
+	_restyleTrip() {
+		if (!this.google) return;
+		const pal = tripPalette(this.styleVariant, this.themeMode);
+		const circle = (/** @type {any} */ m, /** @type {any} */ c, scale, weight) =>
+			m?.setIcon({
+				path: this.google.maps.SymbolPath.CIRCLE,
+				scale,
+				fillColor: c.fill,
+				fillOpacity: c.fillOpacity ?? 1,
+				strokeColor: c.stroke,
+				strokeWeight: weight ?? c.weight
+			});
+		if (this._tripPolyline) {
+			this._tripPolyline.setOptions({ strokeColor: pal.line, icons: this._tripArrowIcons(pal) });
+			if (pal.casing) {
+				if (this._tripCasing) this._tripCasing.setOptions({ strokeColor: pal.casing });
+				else
+					this._tripCasing = new this.google.maps.Polyline({
+						path: this._tripPolyline.getPath(),
+						geodesic: true,
+						strokeColor: pal.casing,
+						strokeOpacity: 0.85,
+						strokeWeight: 9,
+						zIndex: 1,
+						clickable: false,
+						map: this.map
+					});
+			} else if (this._tripCasing) {
+				this._tripCasing.setMap(null);
+				this._tripCasing = null;
+			}
+		}
+		circle(this._tripStartMarker, pal.start, 8);
+		circle(this._tripEndMarker, pal.end, 8);
+		circle(this._tripDrawHead, pal.head, 6, 2);
+		circle(this._playbackMarker, pal.playback, 10, 3);
 	}
 
 	resizeMap() {
@@ -1379,6 +1454,8 @@ class MapService {
 
 	/** @type {google.maps.Polyline | null} */
 	_tripPolyline = null;
+	/** Contorno bajo la ruta (solo vista Panel). @type {google.maps.Polyline | null} */
+	_tripCasing = null;
 	/** @type {google.maps.Marker | null} */
 	_tripStartMarker = null;
 	/** @type {google.maps.Marker | null} */
@@ -1420,13 +1497,30 @@ class MapService {
 		}));
 
 		const animate = path.length > 2 && this._canAnimate();
+		const pal = tripPalette(this.styleVariant, this.themeMode);
+		const initialPath = animate ? [path[0]] : path;
+
+		if (pal.casing) {
+			this._tripCasing = new this.google.maps.Polyline({
+				path: initialPath,
+				geodesic: true,
+				strokeColor: pal.casing,
+				strokeOpacity: 0.85,
+				strokeWeight: 9,
+				zIndex: 1,
+				clickable: false,
+				map: this.map
+			});
+		}
 
 		this._tripPolyline = new this.google.maps.Polyline({
-			path: animate ? [path[0]] : path,
+			path: initialPath,
 			geodesic: true,
-			strokeColor: '#10b981',
+			strokeColor: pal.line,
 			strokeOpacity: 1,
 			strokeWeight: 5,
+			zIndex: 2,
+			icons: this._tripArrowIcons(pal),
 			map: this.map
 		});
 
@@ -1437,10 +1531,10 @@ class MapService {
 				icon: {
 					path: this.google.maps.SymbolPath.CIRCLE,
 					scale: 8,
-					fillColor: '#22c55e',
-					fillOpacity: 1,
-					strokeColor: '#fff',
-					strokeWeight: 2
+					fillColor: pal.start.fill,
+					fillOpacity: pal.start.fillOpacity,
+					strokeColor: pal.start.stroke,
+					strokeWeight: pal.start.weight
 				},
 				title: 'Inicio'
 			});
@@ -1453,10 +1547,10 @@ class MapService {
 				icon: {
 					path: this.google.maps.SymbolPath.CIRCLE,
 					scale: 8,
-					fillColor: '#ef4444',
-					fillOpacity: 1,
-					strokeColor: '#fff',
-					strokeWeight: 2
+					fillColor: pal.end.fill,
+					fillOpacity: pal.end.fillOpacity,
+					strokeColor: pal.end.stroke,
+					strokeWeight: pal.end.weight
 				},
 				title: 'Fin'
 			});
@@ -1464,6 +1558,28 @@ class MapService {
 		}
 
 		if (animate) this._animateTripDraw(path);
+	}
+
+	/**
+	 * Flechas de sentido a lo largo de la ruta (vista Panel), del color del
+	 * contorno para que se lean sobre la línea.
+	 * @param {ReturnType<typeof tripPalette>} pal
+	 */
+	_tripArrowIcons(pal) {
+		if (!pal.arrows || !this.google) return [];
+		return [
+			{
+				icon: {
+					path: this.google.maps.SymbolPath.FORWARD_OPEN_ARROW,
+					scale: 2,
+					strokeColor: pal.casing,
+					strokeOpacity: 1,
+					strokeWeight: 2
+				},
+				offset: '48px',
+				repeat: '96px'
+			}
+		];
 	}
 
 	/**
@@ -1479,9 +1595,9 @@ class MapService {
 			icon: {
 				path: this.google.maps.SymbolPath.CIRCLE,
 				scale: 6,
-				fillColor: '#22d3ee',
+				fillColor: tripPalette(this.styleVariant, this.themeMode).head.fill,
 				fillOpacity: 1,
-				strokeColor: '#fff',
+				strokeColor: tripPalette(this.styleVariant, this.themeMode).head.stroke,
 				strokeWeight: 2
 			},
 			clickable: false,
@@ -1494,6 +1610,7 @@ class MapService {
 			const t = Math.min(1, (now - start) / MapService.TRIP_DRAW_MS);
 			const { path: drawn, head } = pathAtProgress(path, cumulative, EASE.inOut(t));
 			this._tripPolyline?.setPath(drawn);
+			this._tripCasing?.setPath(drawn);
 			this._tripDrawHead?.setPosition(head);
 			if (t < 1) {
 				this._tripDrawFrame = requestAnimationFrame(step);
@@ -1527,6 +1644,10 @@ class MapService {
 		if (this._tripPolyline) {
 			this._tripPolyline.setMap(null);
 			this._tripPolyline = null;
+		}
+		if (this._tripCasing) {
+			this._tripCasing.setMap(null);
+			this._tripCasing = null;
 		}
 		if (this._tripStartMarker) {
 			this._tripStartMarker.setMap(null);
@@ -1643,9 +1764,9 @@ class MapService {
 			icon: {
 				path: this.google.maps.SymbolPath.CIRCLE,
 				scale: 10,
-				fillColor: '#ef4444',
+				fillColor: tripPalette(this.styleVariant, this.themeMode).playback.fill,
 				fillOpacity: 1,
-				strokeColor: '#fff',
+				strokeColor: tripPalette(this.styleVariant, this.themeMode).playback.stroke,
 				strokeWeight: 3
 			},
 			zIndex: 1000,
