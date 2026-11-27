@@ -340,3 +340,99 @@ export const ancestralMapStyle = [
 		stylers: [{ color: ANCESTRAL.land }]
 	}
 ];
+
+// === Seguimiento 2026: carbón (oscuro) y papel (claro) ===
+// Grises neutros con un leve sesgo frío. El color lo ponen las unidades, las
+// zonas y los estados; el mapa se queda atrás. Sin íconos de POI ni tránsito.
+
+/** @param {Record<string, string>} c */
+function neutralStyle(c) {
+	return [
+		{ elementType: 'geometry', stylers: [{ color: c.land }] },
+		{ elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+		{ elementType: 'labels.text.fill', stylers: [{ color: c.text }] },
+		{ elementType: 'labels.text.stroke', stylers: [{ color: c.textStroke }] },
+
+		{ featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: c.natural }] },
+		{ featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: c.urban }] },
+
+		{ featureType: 'water', elementType: 'geometry', stylers: [{ color: c.water }] },
+		{ featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: c.textMuted }] },
+
+		{ featureType: 'poi', elementType: 'geometry', stylers: [{ color: c.poi }] },
+		{ featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+		{ featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: c.park }] },
+
+		{ featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: c.road }] },
+		{ featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: c.roadStroke }] },
+		{ featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: c.textMuted }] },
+		{
+			featureType: 'road.arterial',
+			elementType: 'geometry.fill',
+			stylers: [{ color: c.arterial }]
+		},
+		{ featureType: 'road.highway', elementType: 'geometry.fill', stylers: [{ color: c.highway }] },
+		{
+			featureType: 'road.highway',
+			elementType: 'geometry.stroke',
+			stylers: [{ color: c.roadStroke }]
+		},
+
+		{
+			featureType: 'administrative',
+			elementType: 'geometry.stroke',
+			stylers: [{ color: c.admin }]
+		},
+		{
+			featureType: 'administrative.locality',
+			elementType: 'labels.text.fill',
+			stylers: [{ color: c.text }]
+		},
+		{
+			featureType: 'administrative.neighborhood',
+			elementType: 'labels.text.fill',
+			stylers: [{ color: c.textMuted }]
+		},
+
+		{ featureType: 'transit', stylers: [{ visibility: 'off' }] }
+	];
+}
+
+export const CARBON = {
+	bg: '#0f1114',
+	land: '#121417',
+	natural: '#141619',
+	urban: '#16181c',
+	water: '#0b0d10',
+	poi: '#15171a',
+	park: '#16191a',
+	road: '#23262b',
+	roadStroke: '#0e1013',
+	arterial: '#2b2f35',
+	highway: '#3a3e45',
+	admin: '#2e3238',
+	text: '#a7acb3',
+	textMuted: '#6f747b',
+	textStroke: '#0f1114'
+};
+
+export const PAPER = {
+	bg: '#eceef0',
+	land: '#eef0f2',
+	natural: '#eaedef',
+	urban: '#e6e9ec',
+	water: '#d3d9df',
+	poi: '#e7eaed',
+	park: '#e2e7e4',
+	road: '#ffffff',
+	roadStroke: '#d9dde2',
+	arterial: '#ffffff',
+	highway: '#f7f8f9',
+	admin: '#c3c8ce',
+	text: '#4b5158',
+	textMuted: '#80868d',
+	textStroke: '#f4f5f6'
+};
+
+export const carbonMapStyle = neutralStyle(CARBON);
+export const paperMapStyle = neutralStyle(PAPER);

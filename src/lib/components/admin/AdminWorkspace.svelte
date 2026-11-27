@@ -13,6 +13,9 @@
 	import WorkspaceSwitcher from './WorkspaceSwitcher.svelte';
 	import AlarmBell from './AlarmBell.svelte';
 	import AdminDashboard from './AdminDashboard.svelte';
+	import AdminDashboardPanel from './AdminDashboardPanel.svelte';
+	import WorkspaceRail from '$lib/components/WorkspaceRail.svelte';
+	import '@fontsource/sora/latin-300.css';
 	import AdminPanel from '$lib/components/AdminPanel.svelte';
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
 	import BrandWorkspace from '$lib/components/brand/BrandWorkspace.svelte';
@@ -50,6 +53,26 @@
 		brand: { title: 'Marca' },
 		settings: { title: 'Configuración' }
 	};
+
+	/**
+	 * Vista Panel (preferencia del usuario, md+): mismo riel angosto y mismas
+	 * superficies grises que el seguimiento nuevo. Con `false` todo queda como antes.
+	 */
+	export let panel = false;
+	/** Vista Panel: reintento de los paneles del día (los pide la página). */
+	export let onRetryFleetDay = () => {};
+	/** Vista Panel: abre una unidad en el seguimiento. @type {(id: any) => void} */
+	export let onSelectUnit = () => {};
+	/** Vista Panel: abre Informes en el seguimiento. */
+	export let onOpenReports = null;
+
+	/** Superficie de las secciones embebidas. */
+	$: cardClass = panel
+		? 'flex min-h-0 flex-1 flex-col overflow-auto rounded-[18px] border border-slate-200/80 bg-white dark:border-white/[0.07] dark:bg-[#15171b]'
+		: 'flex min-h-0 flex-1 flex-col overflow-auto rounded-2xl border border-slate-200/90 bg-white dark:border-white/[0.08] dark:bg-[#0d1424]';
+	$: titleClass = panel
+		? 'nx-num m-0 mt-1 text-[30px] leading-[1.1] text-slate-900 dark:text-white'
+		: 'admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white';
 
 	/** En móvil arranca colapsado para dejar espacio al contenido. */
 	let collapsed = browser ? window.matchMedia('(max-width: 639px)').matches : false;
@@ -98,85 +121,134 @@
 <svelte:window on:click={onDocClick} />
 
 <div
-	class="admin-workspace flex h-screen w-screen overflow-hidden bg-slate-100 text-slate-900 antialiased dark:bg-[#060a12] dark:text-white"
+	class="admin-workspace flex h-screen w-screen overflow-hidden antialiased {panel
+		? 'bg-[#eef0f3] text-slate-900 dark:bg-[#0b0c0e] dark:text-[#eceef0]'
+		: 'bg-slate-100 text-slate-900 dark:bg-[#060a12] dark:text-white'}"
 	style="font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;"
 	data-theme={$theme}
 >
-	<aside
-		class="relative z-20 flex h-full shrink-0 flex-col border-r border-slate-200/90 bg-white transition-[width] duration-200 dark:border-white/[0.07] dark:bg-[#080d18]
-			{collapsed ? 'w-[72px]' : 'w-[232px]'}"
-		aria-label="Navegación de administración"
-	>
-		<div
-			class="flex h-14 items-center gap-2.5 border-b border-slate-100 px-3 dark:border-white/[0.06]"
+	{#if panel}
+		<aside
+			class="relative z-20 flex h-full w-[72px] shrink-0 flex-col items-center gap-1 border-r border-slate-200 bg-white py-4 dark:border-white/[0.07] dark:bg-[#0e0f12]"
+			aria-label="Navegación de administración"
 		>
 			<img
 				src={logoUrl}
 				alt={marca.name}
-				class="h-8 w-9 object-contain"
-				width="36"
-				height="32"
+				class="mb-1 h-[34px] w-10 object-contain"
+				width="40"
+				height="34"
 				decoding="async"
 			/>
-			{#if !collapsed}
-				<span
-					class="admin-display text-[15px] font-semibold tracking-wide text-slate-900 dark:text-white"
-					>{marca.isDefault ? 'NEXUS' : marca.name}</span
-				>
-			{/if}
-		</div>
-
-		<nav
-			class="relative flex flex-1 flex-col gap-0.5 overflow-y-auto p-2"
-			aria-label="Secciones"
-			use:slidingIndicator={{
-				active: section,
-				selector: '[aria-current="page"]',
-				class: 'rounded-xl bg-brand-500/15'
-			}}
+			<div
+				class="my-2 h-px w-9 shrink-0 bg-slate-200 dark:bg-white/[0.08]"
+				role="presentation"
+			></div>
+			<WorkspaceRail />
+			<div
+				class="my-2 h-px w-9 shrink-0 bg-slate-200 dark:bg-white/[0.08]"
+				role="presentation"
+			></div>
+			<nav class="flex flex-1 flex-col items-center gap-1" aria-label="Secciones">
+				{#each navItems as item (item.id)}
+					{@const on = section === item.id}
+					<button
+						type="button"
+						class="relative flex h-12 w-12 items-center justify-center rounded-[14px] border transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/60
+							{on
+							? 'border-slate-300 bg-slate-100 text-slate-900 dark:border-white/[0.12] dark:bg-white/[0.07] dark:text-white'
+							: 'border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-white/45 dark:hover:bg-white/[0.06] dark:hover:text-white/85'}"
+						aria-current={on ? 'page' : undefined}
+						aria-label={item.label}
+						title={item.label}
+						on:click={() => go(item.id)}
+					>
+						<Icon icon={item.icon} class="h-[22px] w-[22px] shrink-0" aria-hidden="true" />
+					</button>
+				{/each}
+			</nav>
+		</aside>
+	{:else}
+		<aside
+			class="relative z-20 flex h-full shrink-0 flex-col border-r border-slate-200/90 bg-white transition-[width] duration-200 dark:border-white/[0.07] dark:bg-[#080d18]
+			{collapsed ? 'w-[72px]' : 'w-[232px]'}"
+			aria-label="Navegación de administración"
 		>
-			{#each navItems as item (item.id)}
-				<button
-					type="button"
-					class="relative flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[13px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50
+			<div
+				class="flex h-14 items-center gap-2.5 border-b border-slate-100 px-3 dark:border-white/[0.06]"
+			>
+				<img
+					src={logoUrl}
+					alt={marca.name}
+					class="h-8 w-9 object-contain"
+					width="36"
+					height="32"
+					decoding="async"
+				/>
+				{#if !collapsed}
+					<span
+						class="admin-display text-[15px] font-semibold tracking-wide text-slate-900 dark:text-white"
+						>{marca.isDefault ? 'NEXUS' : marca.name}</span
+					>
+				{/if}
+			</div>
+
+			<nav
+				class="relative flex flex-1 flex-col gap-0.5 overflow-y-auto p-2"
+				aria-label="Secciones"
+				use:slidingIndicator={{
+					active: section,
+					selector: '[aria-current="page"]',
+					class: 'rounded-xl bg-brand-500/15'
+				}}
+			>
+				{#each navItems as item (item.id)}
+					<button
+						type="button"
+						class="relative flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[13px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50
 						{section === item.id
-						? 'text-brand-800 dark:text-brand-200'
-						: 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-white/45 dark:hover:bg-white/[0.05] dark:hover:text-white/85'}
+							? 'text-brand-800 dark:text-brand-200'
+							: 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-white/45 dark:hover:bg-white/[0.05] dark:hover:text-white/85'}
 						{collapsed ? 'justify-center px-0' : ''}"
-					aria-current={section === item.id ? 'page' : undefined}
-					title={item.label}
-					on:click={() => go(item.id)}
-				>
-					<Icon icon={item.icon} width={20} class="shrink-0" aria-hidden="true" />
-					{#if !collapsed}
-						<span class="truncate">{item.label}</span>
-					{/if}
-				</button>
-			{/each}
-		</nav>
+						aria-current={section === item.id ? 'page' : undefined}
+						title={item.label}
+						on:click={() => go(item.id)}
+					>
+						<Icon icon={item.icon} width={20} class="shrink-0" aria-hidden="true" />
+						{#if !collapsed}
+							<span class="truncate">{item.label}</span>
+						{/if}
+					</button>
+				{/each}
+			</nav>
 
-		<button
-			type="button"
-			class="group m-2 flex h-11 w-[calc(100%-1rem)] items-center justify-center self-center rounded-xl border border-brand-500/25 bg-brand-500/10 text-brand-700 transition-[background,border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-500/20 hover:shadow-[0_8px_20px_rgba(16,185,129,0.2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 dark:border-brand-400/25 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:border-brand-300/45 dark:hover:bg-brand-500/20
+			<button
+				type="button"
+				class="group m-2 flex h-11 w-[calc(100%-1rem)] items-center justify-center self-center rounded-xl border border-brand-500/25 bg-brand-500/10 text-brand-700 transition-[background,border-color,transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-brand-400/50 hover:bg-brand-500/20 hover:shadow-[0_8px_20px_rgba(16,185,129,0.2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50 dark:border-brand-400/25 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:border-brand-300/45 dark:hover:bg-brand-500/20
 				{collapsed ? 'w-11' : ''}"
-			on:click={() => (collapsed = !collapsed)}
-			aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
-			title={collapsed ? 'Expandir menú' : 'Contraer menú'}
-		>
-			<Icon
-				icon={collapsed ? 'mdi:menu-close' : 'mdi:menu-open'}
-				width={22}
-				class="transition-transform duration-200 group-hover:scale-110"
-				aria-hidden="true"
-			/>
-		</button>
-	</aside>
+				on:click={() => (collapsed = !collapsed)}
+				aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
+				title={collapsed ? 'Expandir menú' : 'Contraer menú'}
+			>
+				<Icon
+					icon={collapsed ? 'mdi:menu-close' : 'mdi:menu-open'}
+					width={22}
+					class="transition-transform duration-200 group-hover:scale-110"
+					aria-hidden="true"
+				/>
+			</button>
+		</aside>
+	{/if}
 
 	<div class="flex min-w-0 flex-1 flex-col">
 		<header
-			class="relative z-30 flex h-14 shrink-0 items-center gap-3 border-b border-slate-200/90 bg-white px-3 backdrop-blur-md dark:border-white/[0.07] dark:bg-[#080d18] sm:px-5"
+			class="relative z-30 flex h-14 shrink-0 items-center gap-3 px-3 sm:px-5 {panel
+				? ''
+				: 'border-b border-slate-200/90 bg-white backdrop-blur-md dark:border-white/[0.07] dark:bg-[#080d18]'}"
 		>
-			<WorkspaceSwitcher />
+			{#if !panel}
+				<WorkspaceSwitcher />
+			{/if}
 			<div class="min-w-0 flex-1" aria-hidden="true"></div>
 			<AlarmBell compact />
 			<div class="relative" data-admin-user-menu>
@@ -236,23 +308,24 @@
 		<main class="flex min-h-0 flex-1 flex-col overflow-y-auto p-3 sm:p-4" aria-label={meta.title}>
 			{#if section === 'dashboard'}
 				<div in:viewEnter>
-					<AdminDashboard />
+					{#if panel}
+						<AdminDashboardPanel {onRetryFleetDay} {onSelectUnit} {onOpenReports} />
+					{:else}
+						<AdminDashboard />
+					{/if}
 				</div>
 			{:else if section === 'users' || section === 'units' || section === 'devices'}
 				<div class="flex min-h-0 flex-1 flex-col" in:viewEnter>
 					<div class="mb-3 shrink-0">
-						<h1
-							class="admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white"
-						>
+						{#if panel}<p class="nx-label m-0">Administración</p>{/if}
+						<h1 class={titleClass}>
 							{meta.title}
 						</h1>
-						<p class="m-0 mt-1 text-sm text-slate-500 dark:text-white/45">
+						<p class="m-0 mt-1 text-sm {panel ? 'nx-muted' : 'text-slate-500 dark:text-white/45'}">
 							Gestión desde siscom-admin-api
 						</p>
 					</div>
-					<div
-						class="admin-embed flex min-h-0 flex-1 flex-col overflow-auto rounded-2xl border border-slate-200/90 bg-white dark:border-white/[0.08] dark:bg-[#0d1424]"
-					>
+					<div class="admin-embed {cardClass}">
 						{#key section}
 							<div class="flex min-h-0 flex-1 flex-col" in:viewEnter>
 								<AdminPanel embedded={true} lockedSection={meta.locked} />
@@ -263,18 +336,13 @@
 			{:else if section === 'brand' && brandAllowed}
 				<div class="flex min-h-0 flex-1 flex-col" in:viewEnter>
 					<div class="mb-3 shrink-0">
-						<h1
-							class="admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white"
-						>
-							Marca
-						</h1>
-						<p class="m-0 mt-1 text-sm text-slate-500 dark:text-white/45">
+						{#if panel}<p class="nx-label m-0">Administración</p>{/if}
+						<h1 class={titleClass}>Marca</h1>
+						<p class="m-0 mt-1 text-sm {panel ? 'nx-muted' : 'text-slate-500 dark:text-white/45'}">
 							Nombre, logos y colores con los que tus usuarios ven la plataforma
 						</p>
 					</div>
-					<div
-						class="flex min-h-0 flex-1 flex-col overflow-auto rounded-2xl border border-slate-200/90 bg-white dark:border-white/[0.08] dark:bg-[#0d1424]"
-					>
+					<div class={cardClass}>
 						{#key $accountAccess.accountId}
 							<BrandWorkspace accountId={$accountAccess.accountId} />
 						{/key}
@@ -283,18 +351,13 @@
 			{:else if section === 'settings'}
 				<div class="flex min-h-0 flex-1 flex-col" in:viewEnter>
 					<div class="mb-3 shrink-0">
-						<h1
-							class="admin-display m-0 text-[1.5rem] font-semibold tracking-tight text-slate-900 dark:text-white"
-						>
-							Configuración
-						</h1>
-						<p class="m-0 mt-1 text-sm text-slate-500 dark:text-white/45">
+						{#if panel}<p class="nx-label m-0">Administración</p>{/if}
+						<h1 class={titleClass}>Configuración</h1>
+						<p class="m-0 mt-1 text-sm {panel ? 'nx-muted' : 'text-slate-500 dark:text-white/45'}">
 							Apariencia y preferencias
 						</p>
 					</div>
-					<div
-						class="flex min-h-0 flex-1 flex-col overflow-auto rounded-2xl border border-slate-200/90 bg-white dark:border-white/[0.08] dark:bg-[#0d1424]"
-					>
+					<div class={cardClass}>
 						<DrawerConfiguracion initialSection="apariencia" showSectionSidebar={false} />
 					</div>
 				</div>

@@ -784,6 +784,17 @@ class ApiService {
 	}
 
 	/**
+	 * Resumen del día de la flota en una sola llamada. **Planeado: el backend
+	 * aún no lo tiene** (docs/architecture/resumen-del-dia-de-flota.md). Solo se
+	 * pide con `VITE_FLEET_DAY_SUMMARY=true`; un 404/501 se muestra como
+	 * «en construcción».
+	 * @param {Record<string, unknown>} [params] from, to, tz
+	 */
+	async getFleetDaySummary(params = {}) {
+		return this.request(withQuery('/fleet/day-summary', params), { method: 'GET' });
+	}
+
+	/**
 	 * @param {string} tripId
 	 * @param {Record<string, unknown>} [params]
 	 */

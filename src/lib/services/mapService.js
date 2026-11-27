@@ -5,7 +5,37 @@ import {
 	MarkerClusterer,
 	SuperClusterAlgorithm
 } from '@googlemaps/markerclusterer/dist/index.esm.mjs';
-import { darkBlueCarStyle, DBLUE, grayBlueMapStyle, COLORS } from '$lib/mapStyles';
+import {
+	darkBlueCarStyle,
+	DBLUE,
+	grayBlueMapStyle,
+	COLORS,
+	carbonMapStyle,
+	CARBON,
+	paperMapStyle,
+	PAPER
+} from '$lib/mapStyles';
+
+/**
+ * Estilos del mapa por vista y tema. La vista Clásica conserva los de siempre;
+ * la vista Panel usa grises neutros (carbón / papel).
+ */
+const MAP_STYLES = {
+	clasica: {
+		light: { styles: grayBlueMapStyle, backgroundColor: COLORS.grayLight },
+		dark: { styles: darkBlueCarStyle, backgroundColor: DBLUE.bg }
+	},
+	panel: {
+		light: { styles: paperMapStyle, backgroundColor: PAPER.bg },
+		dark: { styles: carbonMapStyle, backgroundColor: CARBON.bg }
+	}
+};
+
+/** @param {string} variant @param {string} mode */
+export function mapStyleFor(variant, mode) {
+	const v = MAP_STYLES[variant] ?? MAP_STYLES.clasica;
+	return mode === 'light' ? v.light : v.dark;
+}
 import { formatTripAlertType, tripAlertMarkerColor } from '$lib/utils/tripAlertFormat.js';
 import { theme } from '$lib/stores/themeStore.js';
 import { logger } from '$lib/utils/logger.js';
@@ -59,6 +89,10 @@ export const streetViewVisible = writable(false);
 
 class MapService {
 	constructor() {
+		/** @type {'clasica' | 'panel'} */
+		this.styleVariant = 'clasica';
+		/** @type {'light' | 'dark'} */
+		this.themeMode = 'dark';
 		this.map = null;
 		this.google = null;
 		this.markers = new Map();
@@ -305,8 +339,7 @@ class MapService {
 				},
 				rotateControl: false,
 				scaleControl: false,
-				styles: initialTheme === 'light' ? grayBlueMapStyle : darkBlueCarStyle,
-				backgroundColor: initialTheme === 'light' ? COLORS.grayLight : DBLUE.bg
+				...mapStyleFor(this.styleVariant, initialTheme === 'light' ? 'light' : 'dark')
 			};
 
 			this.map = new this.google.maps.Map(mapElement, mapOptions);
@@ -1239,18 +1272,20 @@ class MapService {
 	 * @param {'light' | 'dark'} mode
 	 */
 	setMapTheme(mode) {
+		this.themeMode = mode === 'light' ? 'light' : 'dark';
 		if (!this.map) return;
-		if (mode === 'light') {
-			this.map.setOptions({
-				styles: grayBlueMapStyle,
-				backgroundColor: COLORS.grayLight
-			});
-		} else {
-			this.map.setOptions({
-				styles: darkBlueCarStyle,
-				backgroundColor: DBLUE.bg
-			});
-		}
+		this.map.setOptions(mapStyleFor(this.styleVariant, this.themeMode));
+	}
+
+	/**
+	 * Vista del seguimiento: `clasica` (estilos de siempre) o `panel` (grises neutros).
+	 * @param {'clasica' | 'panel'} variant
+	 */
+	setMapStyleVariant(variant) {
+		const next = variant === 'panel' ? 'panel' : 'clasica';
+		if (next === this.styleVariant) return;
+		this.styleVariant = next;
+		if (this.map) this.map.setOptions(mapStyleFor(this.styleVariant, this.themeMode));
 	}
 
 	resizeMap() {

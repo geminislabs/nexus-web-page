@@ -144,6 +144,7 @@ function mapAlarmEvent(alertEvent) {
 	const normalizedType = type.includes('ignition') ? 'ignition' : 'zone';
 	return {
 		id: String(alertEvent?.id || createId('ev')),
+		unitId: alertEvent?.unit_id != null ? String(alertEvent.unit_id) : null,
 		name: payload?.message || payload?.name || alertEvent?.type || 'Alerta',
 		type: normalizedType,
 		vehicle:

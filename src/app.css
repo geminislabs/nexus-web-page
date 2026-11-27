@@ -160,6 +160,76 @@
 	html.dark .nexus-surface-deep {
 		@apply bg-[#080d1a] text-white;
 	}
+
+	/*
+	 * Seguimiento: paneles translúcidos que flotan sobre el mapa. Gris neutro,
+	 * sin sombras de color; el único color es el de estado y el de la marca.
+	 */
+	.nx-glass {
+		@apply border border-slate-200/80 bg-white/[0.86] text-slate-900 backdrop-blur-xl backdrop-saturate-150;
+	}
+	html.dark .nx-glass {
+		@apply border-white/[0.07] bg-[#15171b]/[0.78] text-[#eceef0];
+	}
+	.nx-glass-hi {
+		@apply border-slate-300/80 bg-slate-100/90;
+	}
+	html.dark .nx-glass-hi {
+		@apply border-white/[0.16] bg-[linear-gradient(160deg,rgba(92,98,106,0.55),rgba(36,39,44,0.72))];
+	}
+	/*
+	 * Paneles que flotan sobre el mapa: dejan ver el mapa en reposo y se vuelven
+	 * casi opacos al pasar el puntero o al enfocar algo dentro, para leer sin ruido.
+	 * Va después de .nx-glass para ganarle con la misma especificidad.
+	 */
+	.nx-float {
+		@apply bg-white/[0.62] transition-[background-color,border-color] duration-200;
+	}
+	.nx-float:hover,
+	.nx-float:focus-within {
+		@apply bg-white/[0.95];
+	}
+	html.dark .nx-float {
+		@apply bg-[#15171b]/[0.52];
+	}
+	html.dark .nx-float:hover,
+	html.dark .nx-float:focus-within {
+		@apply bg-[#15171b]/[0.93];
+	}
+	/* Un panel flotante marcado (filtro activo) se queda resaltado. */
+	.nx-float.nx-glass-hi {
+		@apply bg-slate-100/90;
+	}
+	html.dark .nx-float.nx-glass-hi {
+		@apply bg-[linear-gradient(160deg,rgba(92,98,106,0.55),rgba(36,39,44,0.72))];
+	}
+	@media (prefers-reduced-transparency: reduce) {
+		.nx-float {
+			@apply bg-white/[0.95];
+		}
+		html.dark .nx-float {
+			@apply bg-[#15171b]/[0.93];
+		}
+	}
+	/* Números grandes: Sora ligera, cifras tabulares. */
+	.nx-num {
+		font-family: 'Sora', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+		font-weight: 300;
+		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.015em;
+	}
+	.nx-label {
+		@apply text-[10.5px] font-medium uppercase tracking-[0.06em] text-slate-500;
+	}
+	html.dark .nx-label {
+		@apply text-white/40;
+	}
+	.nx-muted {
+		@apply text-slate-500;
+	}
+	html.dark .nx-muted {
+		@apply text-white/45;
+	}
 }
 
 /* === Secciones genéricas === */

@@ -21,8 +21,24 @@
 	import { setThemeWithReveal } from '$lib/motion/themeReveal.js';
 	import { viewEnter, softFade } from '$lib/motion/index.js';
 	import { vehicles, activeUnit, vehicleActions } from '$lib/stores/vehicleStore.js';
-	import { mapService } from '$lib/services/mapService.js';
-	import { alertActions } from '$lib/stores/alertStore.js';
+	import { mapService, streetViewVisible } from '$lib/services/mapService.js';
+	import { alertActions, alarmEvents } from '$lib/stores/alertStore.js';
+	import '@fontsource/sora/latin-300.css';
+	import '@fontsource/sora/latin-ext-300.css';
+	import { trackingView } from '$lib/stores/trackingViewStore.js';
+	import { createFleetDayController } from '$lib/stores/fleetDayStore.js';
+	import {
+		loadFleetDay,
+		fetchFleetDaySummary,
+		isFleetDaySummaryEndpointEnabled,
+		todayRange
+	} from '$lib/services/fleetDayService.js';
+	import { recordPositions } from '$lib/stores/liveTrailStore.js';
+	import FleetColumn from '$lib/components/tracking/FleetColumn.svelte';
+	import AlertsColumn from '$lib/components/tracking/AlertsColumn.svelte';
+	import FleetDayStrip from '$lib/components/tracking/FleetDayStrip.svelte';
+	import PanelToggles from '$lib/components/tracking/PanelToggles.svelte';
+	import FleetManage from '$lib/components/tracking/FleetManage.svelte';
 	import { logoDe, marcaOPorDefecto } from '$lib/brand.js';
 	import Icon from '$lib/components/Icon.svelte';
 
@@ -31,6 +47,7 @@
 	import DrawerConfiguracion from '$lib/components/DrawerConfiguracion.svelte';
 	import AdminWorkspace from '$lib/components/admin/AdminWorkspace.svelte';
 	import WorkspaceSwitcher from '$lib/components/admin/WorkspaceSwitcher.svelte';
+	import WorkspaceRail from '$lib/components/WorkspaceRail.svelte';
 	import AlertasZonasSidePanel from '$lib/components/AlertasZonasSidePanel.svelte';
 
 	import BottomTabBar from '$lib/components/BottomTabBar.svelte';
@@ -43,7 +60,7 @@
 	import UnitsPickerSheet from '$lib/components/UnitsPickerSheet.svelte';
 	import { eventActions } from '$lib/stores/eventStore.js';
 	import { requestedPanelView, pendingTrackingDrawer } from '$lib/stores/navigationStore.js';
-	import { workspace, workspaceActions } from '$lib/stores/workspaceStore.js';
+	import { workspace, workspaceActions, adminSection } from '$lib/stores/workspaceStore.js';
 
 	let isLoading = true;
 	let userData = null;
@@ -55,6 +72,31 @@
 	let trackingPanelView = 'unit-info';
 
 	let openDrawer = ''; // '' | 'configuracion:…'
+
+	// ── Vista Panel (escritorio, opcional; la Clásica es la de siempre) ─────
+	// El usuario elige la vista y qué paneles ve (`trackingView`). El ancho de
+	// pantalla no decide qué aparece: solo pliega la franja del día si no cabe.
+	const FLEET_COL_W = 320;
+	/** Ancho de la columna en modo gestión (sustituye al cajón «Unidades»). */
+	const FLEET_MANAGE_W = 560;
+	let fleetManaging = false;
+	const ALERTS_COL_W = 288;
+	const GAP = 12;
+	/** Ancho mínimo de mapa entre columnas para mostrar la franja desplegada. */
+	const STRIP_MIN_W = 560;
+	let isMdUp = false;
+	let mainWidth = 0;
+	let showPanelToggles = false;
+
+	/** El día de la flota (km, utilización, actividad). Ver fleetDayService. */
+	const fleetDayCtrl = createFleetDayController({
+		load: () =>
+			isFleetDaySummaryEndpointEnabled()
+				? fetchFleetDaySummary(todayRange())
+				: loadFleetDay({ units: get(vehicles), alarms: get(alarmEvents) })
+	});
+	let fleetDayStarted = false;
+	let fleetDayUnitCount = 0;
 
 	const SW = 72;
 
@@ -91,6 +133,51 @@
 	}
 
 	$: isAdminWorkspace = !!userData?.is_master && $workspace === 'admin';
+
+	/** En móvil siempre la clásica: la vista Panel es de escritorio. */
+	$: isPanelView = isMdUp && $trackingView.view === 'panel';
+	$: if (browser) mapService.setMapStyleVariant(isPanelView ? 'panel' : 'clasica');
+	$: panels = $trackingView.panels;
+	/** Paneles flotantes fuera cuando el mapa necesita todo el espacio. */
+	$: trackingOverlaysHidden =
+		isConfigDrawerOpen || $showH3Grid || $desktopZonePanelSubView !== 'zonas' || $streetViewVisible;
+	$: panelLayoutActive = isPanelView && !trackingOverlaysHidden;
+	$: if (!isPanelView) fleetManaging = false;
+	$: showLeftColumn = panelLayoutActive && (panels.flota || !!$activeUnit || fleetManaging);
+	$: showFleetReopen = panelLayoutActive && !panels.flota && !$activeUnit && !fleetManaging;
+	$: leftColumnWidth = fleetManaging ? FLEET_MANAGE_W : FLEET_COL_W;
+	$: showAlertsColumn = panelLayoutActive && panels.alertas;
+	$: showFleetDayStrip = panelLayoutActive && panels.hoy && hasVehicles;
+	$: leftEdge = showLeftColumn
+		? GAP + leftColumnWidth + GAP
+		: showFleetReopen
+			? GAP + 44 + GAP
+			: GAP;
+	$: mapControlsRight = showAlertsColumn ? GAP + ALERTS_COL_W + GAP : 10;
+	$: stripCompact = mainWidth - leftEdge - mapControlsRight < STRIP_MIN_W;
+	$: visibleUnitIds = new Set($vehicles.map((v) => String(v.id)));
+
+	// Los datos del día solo se piden si algún panel los pinta.
+	$: wantsFleetDay =
+		browser &&
+		!!userData &&
+		isPanelView &&
+		hasVehicles &&
+		(isAdminWorkspace ? $adminSection === 'dashboard' : panels.flota || panels.hoy);
+	$: if (wantsFleetDay && !fleetDayStarted) {
+		fleetDayStarted = true;
+		fleetDayUnitCount = $vehicles.length;
+		fleetDayCtrl.start();
+	}
+	$: if (!wantsFleetDay && fleetDayStarted) {
+		fleetDayStarted = false;
+		fleetDayCtrl.stop();
+	}
+	// Llegó o se fue una unidad: el día cambia de forma, se vuelve a pedir.
+	$: if (fleetDayStarted && $vehicles.length !== fleetDayUnitCount) {
+		fleetDayUnitCount = $vehicles.length;
+		fleetDayCtrl.refresh();
+	}
 	$: if (userData && !userData.is_master) {
 		if ($workspace === 'admin') workspaceActions.ensureTrackingForUser();
 	}
@@ -127,7 +214,14 @@
 	}
 
 	/** Clases de botón lateral: el caller debe pasar un booleano derivado de openDrawer en el template. */
-	function sidebarNavBtnClass(active) {
+	function sidebarNavBtnClass(active, panel = false) {
+		if (panel) {
+			const neutral =
+				'border-slate-900 bg-slate-900 text-white dark:border-white/15 dark:bg-white/[0.1] dark:text-white';
+			const idlePanel =
+				'border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85';
+			return `${sidebarBtnBase} ${active ? neutral : idlePanel}`;
+		}
 		const idle =
 			'border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85';
 		const activeCls =
@@ -226,12 +320,16 @@
 			showUserMenu = false;
 			showThemeOptions = false;
 		}
+		if (!e.target.closest('[data-dashboard-panels-menu]')) {
+			showPanelToggles = false;
+		}
 	}
 
 	function handleGlobalKeydown(e) {
 		if (e.key === 'Escape') {
 			showUserMenu = false;
 			showThemeOptions = false;
+			showPanelToggles = false;
 			if (get(desktopZonePanelSubView) !== 'zonas') {
 				mapService.disableMobileZoneEditorZoomLock();
 				h3Actions.exitMobileZoneMap();
@@ -314,7 +412,14 @@
 			});
 		})();
 
+		const unsubscribeTrails = vehicles.subscribe((list) => recordPositions(list));
+		let offMedia = () => {};
 		if (browser) {
+			const mq = window.matchMedia('(min-width: 768px)');
+			isMdUp = mq.matches;
+			const onMedia = (/** @type {MediaQueryListEvent} */ e) => (isMdUp = e.matches);
+			mq.addEventListener('change', onMedia);
+			offMedia = () => mq.removeEventListener('change', onMedia);
 			document.addEventListener('fullscreenchange', syncFullscreen);
 			document.addEventListener('webkitfullscreenchange', syncFullscreen);
 			document.addEventListener('click', handleBodyClick);
@@ -322,6 +427,9 @@
 		}
 		return () => {
 			unsubscribe();
+			unsubscribeTrails();
+			offMedia();
+			fleetDayCtrl.stop();
 			if (browser) {
 				document.removeEventListener('fullscreenchange', syncFullscreen);
 				document.removeEventListener('webkitfullscreenchange', syncFullscreen);
@@ -373,7 +481,18 @@
 	<h1 class="sr-only">Dashboard {marca.isDefault ? 'NEXUS' : marca.name} — seguimiento de flota</h1>
 
 	{#if isAdminWorkspace}
-		<AdminWorkspace />
+		<AdminWorkspace
+			panel={isPanelView}
+			onRetryFleetDay={() => fleetDayCtrl.refresh()}
+			onSelectUnit={(id) => {
+				workspaceActions.goTracking();
+				selectUnitForTracking(id);
+			}}
+			onOpenReports={() => {
+				pendingTrackingDrawer.set('informes');
+				workspaceActions.goTracking();
+			}}
+		/>
 	{:else}
 		<aside
 			class="fixed bottom-0 left-0 top-0 z-50 hidden w-[72px] flex-col items-center gap-1 border-r border-slate-200 bg-white py-4 backdrop-blur-xl dark:border-white/[0.07] dark:bg-[#080b16]/[0.97] sm:flex"
@@ -387,7 +506,9 @@
 					<img
 						src={logoUrl}
 						alt={`${marca.name} — inicio`}
-						class="h-full w-full object-contain drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]"
+						class="h-full w-full object-contain {isPanelView
+							? ''
+							: 'drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]'}"
 						width="40"
 						height="34"
 						decoding="async"
@@ -400,13 +521,23 @@
 				role="presentation"
 			></div>
 
+			{#if isPanelView && userData?.is_master}
+				<WorkspaceRail />
+				<div
+					class="my-2 h-px w-9 shrink-0 bg-slate-200 dark:bg-white/[0.08]"
+					role="presentation"
+				></div>
+			{/if}
+
 			<nav class="flex w-full flex-1 flex-col items-center gap-1 px-0" aria-label="Accesos rápidos">
 				<div class="relative w-full shrink-0 px-3" data-dashboard-user-menu>
 					<button
 						type="button"
 						class={`${sidebarBtnBase} mx-auto w-12 ${
 							showUserMenu
-								? 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/35 dark:border-blue-400/50 dark:bg-blue-500/25 dark:text-blue-300'
+								? isPanelView
+									? 'border-slate-900 bg-slate-900 text-white dark:border-white/15 dark:bg-white/[0.1] dark:text-white'
+									: 'border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/35 dark:border-blue-400/50 dark:bg-blue-500/25 dark:text-blue-300'
 								: 'border-transparent bg-slate-100 text-slate-500 hover:border-slate-300 hover:bg-slate-200 hover:text-slate-800 dark:bg-white/[0.04] dark:text-white/45 dark:hover:border-white/10 dark:hover:bg-white/[0.09] dark:hover:text-white/85'
 						}`}
 						aria-expanded={showUserMenu}
@@ -550,6 +681,34 @@
 									</div>
 								</div>
 							{/if}
+							{#if isMdUp}
+								<div class="mb-3" role="group" aria-label="Vista">
+									<p
+										class="m-0 mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-white/40"
+									>
+										Vista
+									</p>
+									<div class="flex gap-2">
+										{#each [{ id: 'clasica', label: 'Clásica', hint: 'La de siempre' }, { id: 'panel', label: 'Panel', hint: 'Nueva, en prueba' }] as opt (opt.id)}
+											{@const on = $trackingView.view === opt.id}
+											<button
+												type="button"
+												class="flex flex-1 flex-col rounded-xl border px-2.5 py-2 text-left transition-colors {on
+													? 'border-slate-900/40 bg-slate-900/[0.05] dark:border-white/30 dark:bg-white/[0.08]'
+													: 'border-slate-200 hover:border-slate-300 dark:border-white/[0.08] dark:hover:border-white/[0.14]'}"
+												aria-pressed={on}
+												on:click|stopPropagation={() => trackingView.setView(opt.id)}
+											>
+												<span class="text-[12px] font-semibold text-slate-900 dark:text-white"
+													>{opt.label}</span
+												>
+												<span class="text-[10px] text-slate-500 dark:text-white/40">{opt.hint}</span
+												>
+											</button>
+										{/each}
+									</div>
+								</div>
+							{/if}
 							<div class="mb-3">
 								<OrganizationSwitcher compact />
 							</div>
@@ -575,7 +734,7 @@
 						{@const itemActive = openDrawer === `configuracion:${item.id}`}
 						<button
 							type="button"
-							class="{sidebarNavBtnClass(itemActive)} mx-auto"
+							class="{sidebarNavBtnClass(itemActive, isPanelView)} mx-auto"
 							aria-label={item.title ?? `Abrir ${item.label}`}
 							aria-pressed={itemActive}
 							title={item.title ?? item.label}
@@ -583,14 +742,18 @@
 						>
 							{#if itemActive}
 								<span
-									class="absolute -left-1 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-blue-600 dark:bg-blue-400"
+									class="absolute -left-1 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full {isPanelView
+										? 'bg-slate-900 dark:bg-white'
+										: 'bg-blue-600 dark:bg-blue-400'}"
 									aria-hidden="true"
 								></span>
 							{/if}
 							<Icon
 								icon={item.icon}
 								class="h-[22px] w-[22px] shrink-0 {itemActive
-									? 'text-white dark:text-blue-300'
+									? isPanelView
+										? 'text-white'
+										: 'text-white dark:text-blue-300'
 									: ''}"
 								aria-hidden="true"
 							/>
@@ -599,6 +762,42 @@
 				</div>
 
 				<div class="min-h-0 flex-1" aria-hidden="true"></div>
+
+				{#if isPanelView}
+					<div class="relative mb-1 w-full shrink-0 px-3" data-dashboard-panels-menu>
+						<button
+							type="button"
+							class="{sidebarNavBtnClass(
+								showPanelToggles,
+								true
+							)} mx-auto h-[42px] w-[42px] rounded-[10px]"
+							aria-expanded={showPanelToggles}
+							aria-haspopup="true"
+							aria-controls="dashboard-panels-menu"
+							aria-label="Paneles de la vista"
+							title="Paneles"
+							on:click|stopPropagation={() => {
+								showPanelToggles = !showPanelToggles;
+								showUserMenu = false;
+							}}
+						>
+							<Icon
+								icon="mdi:view-dashboard-outline"
+								class="h-[22px] w-[22px] shrink-0"
+								aria-hidden="true"
+							/>
+						</button>
+						{#if showPanelToggles}
+							<div
+								id="dashboard-panels-menu"
+								class="absolute bottom-0 left-[calc(100%+10px)] z-[60]"
+								transition:scale={{ duration: 150, start: 0.95, opacity: 0.9, easing: cubicOut }}
+							>
+								<PanelToggles />
+							</div>
+						{/if}
+					</div>
+				{/if}
 
 				{#if browser}
 					<button
@@ -626,10 +825,25 @@
 			id="main-dashboard"
 			class="fixed bottom-0 left-0 right-0 top-0 sm:left-[72px]"
 			aria-label="Mapa y paneles"
+			bind:clientWidth={mainWidth}
 		>
-			<MapContainer bind:isLoading onMapTap={onMobileMapTap} />
+			<MapContainer
+				bind:isLoading
+				onMapTap={onMobileMapTap}
+				controlsRightPx={mapControlsRight}
+				look={isPanelView ? 'panel' : 'clasica'}
+			/>
 
-			{#if showTrackingWorkspaceSwitcher}
+			{#if panelLayoutActive}
+				<!-- Vista Panel: el espacio se cambia desde el riel; el título es solo texto -->
+				<div class="absolute top-3 z-[40]" style="left: {leftEdge}px">
+					<h2
+						class="nx-num m-0 text-[30px] leading-[1.1] text-slate-900 [text-shadow:0_1px_12px_rgb(255_255_255/0.6)] dark:text-white dark:[text-shadow:0_1px_14px_rgb(0_0_0/0.55)]"
+					>
+						Seguimiento
+					</h2>
+				</div>
+			{:else if showTrackingWorkspaceSwitcher && !isPanelView}
 				<div class="pointer-events-none absolute left-3 top-3 z-[40]">
 					<div class="pointer-events-auto">
 						<WorkspaceSwitcher compact />
@@ -674,8 +888,89 @@
 				<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
 			{/if}
 
+			{#if showFleetReopen}
+				<button
+					type="button"
+					class="nx-glass absolute left-3 top-3 z-[60] flex h-11 w-11 items-center justify-center rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2"
+					on:click={() => trackingView.setPanel('flota', true)}
+					aria-label="Mostrar la columna de flota"
+					title="Flota"
+				>
+					<Icon icon="mdi:chevron-double-right" class="h-5 w-5" aria-hidden="true" />
+				</button>
+			{/if}
+
+			{#if showLeftColumn}
+				<div
+					class="pointer-events-none absolute bottom-9 left-3 top-3 z-[60] flex flex-col"
+					style="width: {leftColumnWidth}px"
+				>
+					<div
+						class="pointer-events-auto flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+					>
+						{#if fleetManaging}
+							<FleetManage on:done={() => (fleetManaging = false)} />
+						{:else if $activeUnit}
+							<!-- El detalle de la unidad ocupa la columna; «cerrar» vuelve a la flota -->
+							<div class="nx-glass flex min-h-0 flex-col overflow-hidden rounded-[18px]">
+								<TrackingSubPanel
+									unit={$activeUnit}
+									units={$vehicles}
+									panelView={trackingPanelView}
+									onPanelViewChange={onTrackingPanelViewChange}
+									onBackToUnitInfo={backToUnitInfoPanel}
+									onClose={closeActiveUnitPanel}
+									onSelectUnit={selectUnitForTracking}
+									onCenterUnit={centerOnActiveUnit}
+								/>
+							</div>
+						{:else}
+							<FleetColumn
+								onSelectUnit={selectUnitForTracking}
+								onManageUnits={() => (fleetManaging = true)}
+								onOpenReports={hasVehicles ? () => openConfigDrawer('informes') : null}
+								onRetry={() => fleetDayCtrl.refresh()}
+								onCollapse={() => trackingView.setPanel('flota', false)}
+							/>
+						{/if}
+					</div>
+				</div>
+			{/if}
+
+			{#if showAlertsColumn}
+				<div
+					class="pointer-events-none absolute bottom-24 right-3 top-3 z-[60] flex flex-col"
+					style="width: {ALERTS_COL_W}px"
+				>
+					<div class="pointer-events-auto flex max-h-full min-h-0 flex-col">
+						<AlertsColumn
+							onSelectUnit={selectUnitForTracking}
+							onOpenRules={() => openConfigDrawer('alertas_zonas')}
+							unitIds={visibleUnitIds}
+						/>
+					</div>
+				</div>
+			{/if}
+
+			{#if showFleetDayStrip}
+				<div
+					class="pointer-events-none absolute bottom-9 z-[55] flex"
+					style="left: {leftEdge}px; right: {mapControlsRight}px"
+				>
+					<div class="pointer-events-auto w-full">
+						<FleetDayStrip
+							compact={stripCompact}
+							onRetry={() => fleetDayCtrl.refresh()}
+							onSelectUnit={selectUnitForTracking}
+							onOpenReports={() => openConfigDrawer('informes')}
+							activeUnitId={$activeUnit?.id ?? null}
+						/>
+					</div>
+				</div>
+			{/if}
+
 			<!-- PR-04: TrackingContextPanel flotante — izquierda para no tapar zoom/Street View -->
-			{#if $activeUnit && !isConfigDrawerOpen && !$showH3Grid}
+			{#if $activeUnit && !isConfigDrawerOpen && !$showH3Grid && !isPanelView}
 				<div
 					class="pointer-events-none fixed bottom-24 left-3 z-[100] hidden w-[340px] md:left-[calc(72px+0.75rem)] md:block"
 				>
