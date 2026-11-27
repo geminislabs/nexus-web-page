@@ -12,6 +12,19 @@
 	let { onRetry = () => {}, onSelectUnit = () => {}, activeUnitId = null } = $props();
 
 	const LABEL_W = 104;
+	/** Espacio arriba para la etiqueta «ahora». */
+	const TOP_PAD = 13;
+	/**
+	 * Marcas sobre la línea de cada unidad: zona en ámbar; ignición en naranja,
+	 * rellena al encender y hueca al apagar. `ignition` es la alarma del cliente,
+	 * que solo aparece si no llegaron los eventos del dispositivo.
+	 */
+	const MARK_CLASS = {
+		zone: 'fill-amber-400 stroke-white dark:stroke-[#16181c]',
+		ignition_on: 'fill-orange-500 stroke-white dark:stroke-[#16181c]',
+		ignition_off: 'fill-white stroke-orange-500 dark:fill-[#16181c]',
+		ignition: 'fill-white stroke-orange-500 dark:fill-[#16181c]'
+	};
 	/** Ancho real del gráfico: el SVG se dibuja 1:1 para que el texto no crezca con la tarjeta. */
 	let measured = $state(0);
 	const W = $derived(Math.max(300, measured));
@@ -63,8 +76,8 @@
 			<svg
 				class="block w-full overflow-visible"
 				width={W}
-				{height}
-				viewBox="0 0 {W} {height}"
+				height={height + TOP_PAD}
+				viewBox="0 {-TOP_PAD} {W} {height + TOP_PAD}"
 				role="group"
 				aria-label="Línea de tiempo de cada unidad"
 			>
@@ -143,9 +156,7 @@
 								{cy}
 								r="4"
 								stroke-width="1.5"
-								class={m.type === 'zone'
-									? 'fill-amber-400 stroke-white dark:stroke-[#16181c]'
-									: 'fill-white stroke-slate-500 dark:fill-[#16181c] dark:stroke-white/70'}
+								class={MARK_CLASS[m.type] ?? MARK_CLASS.ignition}
 							>
 								<title>{m.label}</title>
 							</circle>
@@ -153,17 +164,32 @@
 					</g>
 				{/each}
 				{#if nowH != null && nowH >= win[0] && nowH <= win[1]}
+					<!-- Ahora: tinta neutra (blanca / casi negra), punteada, para no confundirse
+					     con el verde de «en ruta». -->
 					<line
 						x1={X(nowH)}
 						x2={X(nowH)}
-						y1="-4"
+						y1="-2"
 						y2={rows.length * ROW_H}
-						class="stroke-brand-500 dark:stroke-brand-400"
-						stroke-width="1"
+						class="stroke-slate-900 dark:stroke-white"
+						stroke-width="1.2"
+						stroke-dasharray="3 3"
 					/>
-					<circle cx={X(nowH)} cy="-4" r="2.5" class="fill-brand-500 dark:fill-brand-400">
-						<title>Ahora · {nowLabel}</title>
-					</circle>
+					<rect
+						x={X(nowH) - 15}
+						y="-11"
+						width="30"
+						height="11"
+						rx="5.5"
+						class="fill-slate-900 dark:fill-white"
+					/>
+					<text
+						x={X(nowH)}
+						y="-3"
+						text-anchor="middle"
+						class="fill-white text-[8px] font-semibold dark:fill-[#111316]"
+						>ahora<title>Ahora · {nowLabel}</title></text
+					>
 				{/if}
 			</svg>
 		</div>
@@ -176,9 +202,11 @@
 				><i class="inline-block h-[7px] w-[7px] rounded-full bg-amber-400"></i>Alerta de zona</span
 			>
 			<span class="inline-flex items-center gap-1.5"
-				><i
-					class="inline-block h-[7px] w-[7px] rounded-full border border-slate-500 dark:border-white/70"
-				></i>Ignición</span
+				><i class="inline-block h-[7px] w-[7px] rounded-full bg-orange-500"></i>Encendido</span
+			>
+			<span class="inline-flex items-center gap-1.5"
+				><i class="inline-block h-[7px] w-[7px] rounded-full border-[1.5px] border-orange-500"
+				></i>Apagado</span
 			>
 			{#if $fleetDay.data?.tripsTruncated}
 				<span>· Trayectos recortados: el día tiene más de los que se piden de una vez</span>

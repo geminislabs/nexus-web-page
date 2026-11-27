@@ -30,18 +30,25 @@ Código: `src/lib/stores/trackingViewStore.js`, `src/lib/components/tracking/`.
 
 Código: `src/lib/services/fleetDayService.js` y `src/lib/stores/fleetDayStore.js`.
 
-| Dato                           | Endpoint (admin-api v1.69.0)                                                   | Peticiones por refresco     |
-| ------------------------------ | ------------------------------------------------------------------------------ | --------------------------- |
-| Km por hora, utilización       | `POST /telemetry/query` (`hour`, `odometer`, `moving_minutes`, `idle_minutes`) | ⌈N / 50⌉                    |
-| Tramos en ruta por unidad      | `GET /trips?start_date&end_date&limit=500` (sin `unit_id`, con cursor)         | ⌈trayectos / 500⌉ (tope 10) |
-| Marcas de alarma               | `GET /alerts` del día, que el dashboard **ya** carga                           | 0 extra                     |
-| Mini-recorrido de cada tarjeta | Posiciones del stream desde que se abrió el panel (en memoria)                 | 0 extra                     |
+| Dato                           | Endpoint (admin-api v1.69.0)                                                    | Peticiones por refresco      |
+| ------------------------------ | ------------------------------------------------------------------------------- | ---------------------------- |
+| Km por hora, utilización       | `POST /telemetry/query` (`hour`, `odometer`, `moving_minutes`, `idle_minutes`)  | ⌈N / 50⌉                     |
+| Tramos en ruta por unidad      | `GET /trips?start_date&end_date&limit=500` (sin `unit_id`, con cursor)          | ⌈trayectos / 500⌉ (tope 10)  |
+| Marcas de alarma               | `GET /alerts` del día, que el dashboard **ya** carga                            | 0 extra                      |
+| Mini-recorrido de cada tarjeta | Posiciones del stream desde que se abrió el panel (en memoria)                  | 0 extra                      |
+| Encendidos y apagados          | `GET /api/v1/events` de siscom-api (lotes de 100 unidades, `limit=200`, cursor) | ⌈N / 100⌉ × páginas (tope 5) |
 
 - Se refresca cada **5 min** y solo con la pestaña visible. Al volver a la pestaña, se refresca
   si los datos tienen más de 5 min. Nunca hay dos refrescos en vuelo.
 - Solo se pide en la vista Panel, en escritorio, con «Flota» u «Hoy» encendidos.
 - Con 13 unidades son **2 peticiones** por refresco. Con 500 unidades y ~3 000 trayectos al día
   serían 10 + 6 = **16**.
+
+Los encendidos y apagados salen de los eventos del dispositivo, que llegan siempre. Las alarmas
+de ignición del cliente solo existen si tiene una regla, así que con eventos se descartan. El
+endpoint no filtra por `event_type` y devuelve todos los eventos del día para quedarse con dos
+tipos. **Propuesta para siscom-api:** aceptar `event_type=ignition_on&event_type=ignition_off`,
+así basta una página por lote.
 
 `telemetry_hourly_stats` lo escribe `telemetry-consolidator` con un _upsert_ cada ~30 s
 (`FLUSH_INTERVAL_SECS`), así que la hora en curso va casi al día. El retraso real lo pone el

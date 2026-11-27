@@ -49,8 +49,11 @@ export function tripPalette(variant, mode) {
 	if (variant !== 'panel') {
 		return {
 			line: '#10b981',
+			lineWeight: 5,
 			casing: null,
+			casingWeight: 0,
 			arrows: false,
+			startScale: 8,
 			start: { fill: '#22c55e', fillOpacity: 1, stroke: '#fff', weight: 2 },
 			end: { fill: '#ef4444', fillOpacity: 1, stroke: '#fff', weight: 2 },
 			head: { fill: '#22d3ee', stroke: '#fff' },
@@ -61,8 +64,13 @@ export function tripPalette(variant, mode) {
 	const paper = mode === 'light' ? '#ffffff' : '#0b0c0e';
 	return {
 		line: ink,
+		// Más delgada, para que no se empaste donde la ruta pasa dos veces.
+		lineWeight: 4,
 		casing: paper,
+		casingWeight: 7,
 		arrows: true,
+		// El inicio es el aro hueco: un poco más grande y encima de todo.
+		startScale: 10,
 		// Inicio: aro hueco. Fin: punto sólido.
 		start: { fill: paper, fillOpacity: 0, stroke: ink, weight: 3 },
 		end: { fill: ink, fillOpacity: 1, stroke: paper, weight: 2 },
@@ -1347,7 +1355,7 @@ class MapService {
 						geodesic: true,
 						strokeColor: pal.casing,
 						strokeOpacity: 0.85,
-						strokeWeight: 9,
+						strokeWeight: pal.casingWeight,
 						zIndex: 1,
 						clickable: false,
 						map: this.map
@@ -1357,7 +1365,7 @@ class MapService {
 				this._tripCasing = null;
 			}
 		}
-		circle(this._tripStartMarker, pal.start, 8);
+		circle(this._tripStartMarker, pal.start, pal.startScale);
 		circle(this._tripEndMarker, pal.end, 8);
 		circle(this._tripDrawHead, pal.head, 6, 2);
 		circle(this._playbackMarker, pal.playback, 10, 3);
@@ -1506,7 +1514,7 @@ class MapService {
 				geodesic: true,
 				strokeColor: pal.casing,
 				strokeOpacity: 0.85,
-				strokeWeight: 9,
+				strokeWeight: pal.casingWeight,
 				zIndex: 1,
 				clickable: false,
 				map: this.map
@@ -1518,7 +1526,7 @@ class MapService {
 			geodesic: true,
 			strokeColor: pal.line,
 			strokeOpacity: 1,
-			strokeWeight: 5,
+			strokeWeight: pal.lineWeight,
 			zIndex: 2,
 			icons: this._tripArrowIcons(pal),
 			map: this.map
@@ -1530,13 +1538,14 @@ class MapService {
 				map: this.map,
 				icon: {
 					path: this.google.maps.SymbolPath.CIRCLE,
-					scale: 8,
+					scale: pal.startScale,
 					fillColor: pal.start.fill,
 					fillOpacity: pal.start.fillOpacity,
 					strokeColor: pal.start.stroke,
 					strokeWeight: pal.start.weight
 				},
-				title: 'Inicio'
+				title: 'Inicio',
+				...(pal.casing ? { zIndex: 1100 } : {})
 			});
 		}
 
@@ -1552,7 +1561,8 @@ class MapService {
 					strokeColor: pal.end.stroke,
 					strokeWeight: pal.end.weight
 				},
-				title: 'Fin'
+				title: 'Fin',
+				...(pal.casing ? { zIndex: 1090 } : {})
 			});
 			if (animate) this._tripEndMarker.setMap(null);
 		}
@@ -1569,15 +1579,18 @@ class MapService {
 		if (!pal.arrows || !this.google) return [];
 		return [
 			{
+				// Flecha rellena, del color del contorno: se lee sobre la línea sin acercarse.
 				icon: {
-					path: this.google.maps.SymbolPath.FORWARD_OPEN_ARROW,
-					scale: 2,
+					path: this.google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+					scale: 3,
+					fillColor: pal.casing,
+					fillOpacity: 1,
 					strokeColor: pal.casing,
 					strokeOpacity: 1,
-					strokeWeight: 2
+					strokeWeight: 1
 				},
-				offset: '48px',
-				repeat: '96px'
+				offset: '60px',
+				repeat: '120px'
 			}
 		];
 	}

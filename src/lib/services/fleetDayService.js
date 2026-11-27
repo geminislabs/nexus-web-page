@@ -17,6 +17,7 @@
  * 404 o 501, la UI muestra «en construcción» en lugar de un error.
  */
 import { apiService, ApiError } from '$lib/services/api.js';
+import { eventService } from '$lib/services/eventService.js';
 
 /** Máximo de dispositivos por `POST /telemetry/query` (MAX_BATCH_DEVICES de admin-api). */
 export const TELEMETRY_BATCH_SIZE = 50;
@@ -25,6 +26,13 @@ export const TRIPS_PAGE_LIMIT = 500;
 /** Tope de páginas de trayectos por refresco: 5 000 trayectos en un día. */
 export const TRIPS_MAX_PAGES = 10;
 export const FLEET_DAY_METRICS = ['odometer', 'moving_minutes', 'idle_minutes'];
+/** `siscom-api` acepta hasta 100 unidades por petición de eventos. */
+export const EVENTS_BATCH_SIZE = 100;
+/** Eventos por página (máximo del endpoint). */
+export const EVENTS_PAGE_LIMIT = 200;
+/** Tope de páginas por lote: el día de una flota grande no debe vaciar la red. */
+export const EVENTS_MAX_PAGES = 5;
+const IGNITION_TYPES = new Set(['ignition_on', 'ignition_off']);
 
 const HOUR_MS = 3_600_000;
 
@@ -179,6 +187,63 @@ export async function fetchTodayTrips(range, api = apiService) {
 	return { trips, truncated };
 }
 
+/** 13.5 → «13:30». */
+export function formatHour(/** @type {number} */ h) {
+	const hh = Math.floor(h);
+	const mm = Math.floor((h - hh) * 60);
+	return `${String(hh % 24).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+/**
+ * Encendidos y apagados del día. Vienen de los eventos del dispositivo, que
+ * llegan siempre (no dependen de que el cliente tenga una regla de ignición).
+ * Un fallo no tumba el día: se devuelve lista vacía y `failed: true`.
+ * @param {string[]} unitIds
+ * @param {{ from: Date, to: Date }} range
+ * @param {{ getEvents: (q: any) => Promise<{ events: any[], nextCursor: string|null }> }} [events]
+ * @returns {Promise<{ events: Array<{ unitId: string, type: 'ignition_on'|'ignition_off', at: string }>, truncated: boolean, failed: boolean }>}
+ */
+export async function fetchIgnitionEvents(unitIds, range, events = eventService) {
+	const ids = [...new Set((unitIds || []).filter(Boolean).map(String))];
+	if (ids.length === 0) return { events: [], truncated: false, failed: false };
+	let truncated = false;
+	try {
+		const batches = await Promise.all(
+			chunk(ids, EVENTS_BATCH_SIZE).map(async (batch) => {
+				const out = [];
+				let cursor = null;
+				for (let page = 0; page < EVENTS_MAX_PAGES; page++) {
+					const res = await events.getEvents({
+						unitIds: batch,
+						from: range.from,
+						to: range.to,
+						limit: EVENTS_PAGE_LIMIT,
+						order: 'asc',
+						cursor
+					});
+					for (const e of res?.events || []) {
+						const type = String(e?.eventType ?? '').toLowerCase();
+						if (IGNITION_TYPES.has(type)) {
+							out.push({
+								unitId: String(e.unitId),
+								type: /** @type {'ignition_on'|'ignition_off'} */ (type),
+								at: e.occurredAt
+							});
+						}
+					}
+					cursor = res?.nextCursor ?? null;
+					if (!cursor) break;
+					if (page === EVENTS_MAX_PAGES - 1) truncated = true;
+				}
+				return out;
+			})
+		);
+		return { events: batches.flat(), truncated, failed: false };
+	} catch {
+		return { events: [], truncated: false, failed: true };
+	}
+}
+
 /**
  * Una fila por unidad: tramos en ruta (de los trayectos) y marcas de alarma.
  * Los trayectos traen `device_id`; se cruzan con `unit.deviceId`.
@@ -186,8 +251,11 @@ export async function fetchTodayTrips(range, api = apiService) {
  * @param {any[]} trips
  * @param {Array<{ unitId?: string|null, type?: string, name?: string, at: string }>} alarms
  * @param {Date} now
+ * @param {Array<{ unitId: string, type: 'ignition_on'|'ignition_off', at: string }> | null} [ignition]
+ *   Encendidos y apagados del dispositivo. Si vienen, sustituyen a las alarmas de
+ *   ignición del cliente (que solo existen si hay una regla).
  */
-export function buildActivity(units, trips, alarms, now) {
+export function buildActivity(units, trips, alarms, now, ignition = null) {
 	const dayStart = todayRange(now).from;
 	const nowH = hoursSince(dayStart, now) ?? 0;
 	/** @type {Map<string, string>} */
@@ -216,7 +284,20 @@ export function buildActivity(units, trips, alarms, now) {
 		row.movingHours += end - start;
 	}
 
+	const hasIgnition = Array.isArray(ignition);
+	for (const ev of ignition || []) {
+		const row = rows.get(String(ev.unitId));
+		const at = row ? hoursSince(dayStart, ev.at) : null;
+		if (!row || at == null || at < 0 || at > 24) continue;
+		const on = ev.type === 'ignition_on';
+		row.marks.push({
+			at,
+			type: on ? 'ignition_on' : 'ignition_off',
+			label: `${on ? 'Encendido' : 'Apagado'} · ${formatHour(at)}`
+		});
+	}
 	for (const alarm of alarms || []) {
+		if (hasIgnition && alarm?.type === 'ignition') continue;
 		const row = alarm?.unitId ? rows.get(String(alarm.unitId)) : null;
 		const at = row ? hoursSince(dayStart, alarm.at) : null;
 		if (!row || at == null || at < 0 || at > 24) continue;
@@ -267,7 +348,13 @@ export async function fetchFleetDaySummary(range, api = apiService) {
  *   api?: any
  * }} input
  */
-export async function loadFleetDay({ units, alarms, now = new Date(), api = apiService }) {
+export async function loadFleetDay({
+	units,
+	alarms,
+	now = new Date(),
+	api = apiService,
+	events = eventService
+}) {
 	const range = todayRange(now);
 	/** @type {Map<string, string>} */
 	const refToUnit = new Map();
@@ -275,13 +362,25 @@ export async function loadFleetDay({ units, alarms, now = new Date(), api = apiS
 		const ref = u.deviceRef || u.deviceId;
 		if (ref) refToUnit.set(String(ref), u.id);
 	}
-	const [devices, tripsResult] = await Promise.all([
+	const [devices, tripsResult, ignitionResult] = await Promise.all([
 		fetchFleetTelemetry([...refToUnit.keys()], range, api),
-		fetchTodayTrips(range, api)
+		fetchTodayTrips(range, api),
+		fetchIgnitionEvents(
+			units.map((u) => u.id),
+			range,
+			events
+		)
 	]);
 	return {
 		telemetry: aggregateTelemetry(devices, refToUnit, now),
-		activity: buildActivity(units, tripsResult.trips, alarms, now),
+		activity: buildActivity(
+			units,
+			tripsResult.trips,
+			alarms,
+			now,
+			ignitionResult.failed ? null : ignitionResult.events
+		),
+		ignitionTruncated: ignitionResult.truncated,
 		tripsTruncated: tripsResult.truncated,
 		updatedAt: now.toISOString()
 	};

@@ -15,7 +15,10 @@ import {
 	fetchFleetDaySummary,
 	loadFleetDay,
 	hourWindow,
-	niceMax
+	niceMax,
+	fetchIgnitionEvents,
+	formatHour,
+	EVENTS_BATCH_SIZE
 } from '$lib/services/fleetDayService.js';
 import { ApiError } from '$lib/services/apiErrors.js';
 
@@ -321,5 +324,78 @@ describe('escala de las gráficas', () => {
 		expect(niceMax(63.9)).toBe(100);
 		expect(niceMax(410)).toBe(500);
 		expect(niceMax(100)).toBe(100);
+	});
+});
+
+describe('fetchIgnitionEvents', () => {
+	const range = todayRange(NOW);
+
+	it('pide por lotes de 100 unidades, pagina y se queda solo con encendidos y apagados', async () => {
+		const ids = Array.from({ length: EVENTS_BATCH_SIZE + 1 }, (_, i) => `u${i}`);
+		const getEvents = vi.fn(async ({ unitIds, cursor }) => {
+			if (unitIds.length === 1) return { events: [], nextCursor: null };
+			return cursor
+				? {
+						events: [{ unitId: 'u0', eventType: 'ignition_off', occurredAt: at(9) }],
+						nextCursor: null
+					}
+				: {
+						events: [
+							{ unitId: 'u0', eventType: 'IGNITION_ON', occurredAt: at(8) },
+							{ unitId: 'u0', eventType: 'speed_alert', occurredAt: at(8, 30) }
+						],
+						nextCursor: 'c1'
+					};
+		});
+		const r = await fetchIgnitionEvents(ids, range, { getEvents });
+		expect(getEvents.mock.calls.map((c) => c[0].unitIds.length)).toEqual([100, 1, 100]);
+		expect(r.failed).toBe(false);
+		expect(r.events).toEqual([
+			{ unitId: 'u0', type: 'ignition_on', at: at(8) },
+			{ unitId: 'u0', type: 'ignition_off', at: at(9) }
+		]);
+	});
+
+	it('un fallo no tumba el día', async () => {
+		const r = await fetchIgnitionEvents(['u1'], range, {
+			getEvents: vi.fn().mockRejectedValue(new Error('x'))
+		});
+		expect(r).toEqual({ events: [], truncated: false, failed: true });
+	});
+
+	it('sin unidades no pide nada', async () => {
+		const getEvents = vi.fn();
+		expect((await fetchIgnitionEvents([], range, { getEvents })).events).toEqual([]);
+		expect(getEvents).not.toHaveBeenCalled();
+	});
+});
+
+describe('buildActivity con eventos de ignición', () => {
+	const units = [{ id: 'u1', name: 'KIA' }];
+	const alarms = [
+		{ unitId: 'u1', type: 'ignition', name: 'Encendido kia', at: at(8) },
+		{ unitId: 'u1', type: 'zone', name: 'Casa', at: at(10) }
+	];
+
+	it('marca encendido y apagado y descarta la alarma de ignición del cliente', () => {
+		const ign = [
+			{ unitId: 'u1', type: 'ignition_on', at: at(8) },
+			{ unitId: 'u1', type: 'ignition_off', at: at(9, 30) }
+		];
+		const { rows } = buildActivity(units, [], alarms, NOW, ign);
+		expect(rows[0].marks.map((m) => m.type)).toEqual(['ignition_on', 'ignition_off', 'zone']);
+		expect(rows[0].marks[1].label).toBe('Apagado · 09:30');
+	});
+
+	it('sin eventos (null) usa las alarmas del cliente como antes', () => {
+		const { rows } = buildActivity(units, [], alarms, NOW, null);
+		expect(rows[0].marks.map((m) => m.type)).toEqual(['ignition', 'zone']);
+	});
+});
+
+describe('formatHour', () => {
+	it('convierte horas decimales a hh:mm', () => {
+		expect(formatHour(13.5)).toBe('13:30');
+		expect(formatHour(0.25)).toBe('00:15');
 	});
 });
