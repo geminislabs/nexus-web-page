@@ -779,6 +779,17 @@ class ApiService {
 	 * @param {Record<string, unknown>} [params]
 	 * unit_id, device_id, day, tz, start_date, end_date, limit, cursor, include_*
 	 */
+	/**
+	 * Trayectos de una unidad (con `start_date`, `end_date`, `limit`, `cursor`).
+	 * @param {string} unitId
+	 * @param {Record<string, unknown>} [params]
+	 */
+	async getUnitTrips(unitId, params = {}) {
+		return this.request(withQuery(`/units/${encodeURIComponent(unitId)}/trips`, params), {
+			method: 'GET'
+		});
+	}
+
 	async getTrips(params = {}) {
 		return this.request(withQuery('/trips', params), { method: 'GET' });
 	}

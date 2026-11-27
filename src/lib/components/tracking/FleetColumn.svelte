@@ -16,7 +16,9 @@
 		onManageUnits = () => {},
 		onOpenReports = null,
 		onRetry = () => {},
-		onCollapse = null
+		onCollapse = null,
+		/** Con una sola unidad, su día ya está en la franja de abajo (modo unidad). */
+		showUtilization = true
 	} = $props();
 
 	const PAGE = 40;
@@ -112,7 +114,9 @@
 		{/each}
 	</div>
 
-	<UtilizationCard {onRetry} {onOpenReports} />
+	{#if showUtilization}
+		<UtilizationCard {onRetry} {onOpenReports} />
+	{/if}
 
 	<section
 		class="nx-glass nx-float flex min-h-0 flex-col rounded-[18px] p-3"

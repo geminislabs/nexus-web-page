@@ -38,6 +38,10 @@
 	import FleetColumn from '$lib/components/tracking/FleetColumn.svelte';
 	import AlertsColumn from '$lib/components/tracking/AlertsColumn.svelte';
 	import FleetDayStrip from '$lib/components/tracking/FleetDayStrip.svelte';
+	import UnitDayStrip from '$lib/components/tracking/UnitDayStrip.svelte';
+	import { unitDay } from '$lib/stores/unitDayStore.js';
+	import { loadUnitDay } from '$lib/services/unitDayService.js';
+	import { tripActions } from '$lib/stores/tripStore.js';
 	import PanelToggles from '$lib/components/tracking/PanelToggles.svelte';
 	import FleetManage from '$lib/components/tracking/FleetManage.svelte';
 	import { logoDe, marcaOPorDefecto } from '$lib/brand.js';
@@ -92,6 +96,20 @@
 	let showPanelToggles = false;
 
 	/** El día de la flota (km, utilización, actividad). Ver fleetDayService. */
+	/**
+	 * «Modo unidad» (vista Panel): con una unidad abierta, o con una flota de una
+	 * sola unidad, la franja de abajo muestra el día de esa unidad.
+	 */
+	/** @type {any} */
+	let unitDayTarget = null;
+	const unitDayCtrl = createFleetDayController({
+		load: () => loadUnitDay({ unit: unitDayTarget }),
+		store: unitDay
+	});
+	let unitDayStartedFor = '';
+	/** Trayecto de la línea de tiempo dibujado en el mapa. */
+	let unitTripId = null;
+
 	const fleetDayCtrl = createFleetDayController({
 		load: () =>
 			isFleetDaySummaryEndpointEnabled()
@@ -161,6 +179,26 @@
 	$: leftColumnWidth = fleetManaging ? FLEET_MANAGE_W : FLEET_COL_W;
 	$: showAlertsColumn = panelLayoutActive && panels.alertas;
 	$: showFleetDayStrip = panelLayoutActive && panels.hoy && hasVehicles;
+	$: unitModeUnit =
+		isPanelView && !isAdminWorkspace
+			? ($activeUnit ?? ($vehicles.length === 1 ? $vehicles[0] : null))
+			: null;
+	$: wantsUnitDay = browser && !!userData && !!unitModeUnit && panels.hoy;
+	$: unitDayTarget = unitModeUnit;
+	// Cambió la unidad enfocada: se vacía la franja (no mostrar el día de otra) y se pide.
+	$: if (wantsUnitDay && unitModeUnit && unitDayStartedFor !== String(unitModeUnit.id)) {
+		const first = !unitDayStartedFor;
+		unitDayStartedFor = String(unitModeUnit.id);
+		clearUnitTrip();
+		unitDay.set({ status: 'loading', data: null, error: null, refreshing: true });
+		if (first) unitDayCtrl.start();
+		else unitDayCtrl.refresh();
+	}
+	$: if (!wantsUnitDay && unitDayStartedFor) {
+		unitDayStartedFor = '';
+		unitDayCtrl.stop();
+		clearUnitTrip();
+	}
 	$: leftEdge = showLeftColumn
 		? GAP + leftColumnWidth + GAP
 		: showFleetReopen
@@ -334,6 +372,25 @@
 		showMobileUnitsSheet = false;
 	}
 
+	/** Dibuja en el mapa el trayecto elegido en «El día de la unidad». */
+	async function showUnitTrip(/** @type {string} */ tripId) {
+		unitTripId = tripId;
+		const detail = await tripActions.loadTripDetail(tripId, { includePoints: true });
+		if (unitTripId !== tripId) return;
+		if (detail?.points?.length) {
+			mapService.drawTripRoute(detail.points);
+			mapService.fitBoundsToPoints(detail.points);
+		} else {
+			unitTripId = null;
+		}
+	}
+
+	function clearUnitTrip() {
+		if (!unitTripId) return;
+		unitTripId = null;
+		mapService.clearTripRoute();
+	}
+
 	function closeActiveUnitPanel() {
 		mapService.clearFollowVehicle();
 		mapService.setHighlightedVehicle(null);
@@ -457,6 +514,7 @@
 			unsubscribeTrails();
 			offMedia();
 			fleetDayCtrl.stop();
+			unitDayCtrl.stop();
 			if (browser) {
 				document.removeEventListener('fullscreenchange', syncFullscreen);
 				document.removeEventListener('webkitfullscreenchange', syncFullscreen);
@@ -965,6 +1023,7 @@
 								onOpenReports={hasVehicles ? () => openConfigDrawer('informes') : null}
 								onRetry={() => fleetDayCtrl.refresh()}
 								onCollapse={() => trackingView.setPanel('flota', false)}
+								showUtilization={$vehicles.length !== 1}
 							/>
 						{/if}
 					</div>
@@ -993,13 +1052,24 @@
 					style="left: {leftEdge}px; right: {stripRight}px"
 				>
 					<div class="pointer-events-auto w-full">
-						<FleetDayStrip
-							compact={stripCompact}
-							onRetry={() => fleetDayCtrl.refresh()}
-							onSelectUnit={selectUnitForTracking}
-							onOpenReports={() => openConfigDrawer('informes')}
-							activeUnitId={$activeUnit?.id ?? null}
-						/>
+						{#if unitModeUnit}
+							<UnitDayStrip
+								unitName={unitModeUnit.name}
+								compact={stripCompact}
+								onRetry={() => unitDayCtrl.refresh()}
+								onSelectTrip={showUnitTrip}
+								onClearTrip={clearUnitTrip}
+								activeTripId={unitTripId}
+							/>
+						{:else}
+							<FleetDayStrip
+								compact={stripCompact}
+								onRetry={() => fleetDayCtrl.refresh()}
+								onSelectUnit={selectUnitForTracking}
+								onOpenReports={() => openConfigDrawer('informes')}
+								activeUnitId={$activeUnit?.id ?? null}
+							/>
+						{/if}
 					</div>
 				</div>
 			{/if}
