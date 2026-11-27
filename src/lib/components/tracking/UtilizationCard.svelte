@@ -4,6 +4,7 @@
 	 * con la serie por hora. Sale de `moving_minutes`/`idle_minutes` de la
 	 * telemetría horaria (ver fleetDayService).
 	 */
+	import Icon from '$lib/components/Icon.svelte';
 	import { fleetDay } from '$lib/stores/fleetDayStore.js';
 	import { vehicles, loadingVehicles } from '$lib/stores/vehicleStore.js';
 	import { hourWindow } from '$lib/services/fleetDayService.js';
@@ -52,7 +53,10 @@
 
 <section class="nx-glass nx-float rounded-[18px] p-4" aria-labelledby="util-title">
 	<div class="flex items-baseline justify-between gap-2">
-		<h2 id="util-title" class="m-0 text-[13px] font-medium">Utilización de la flota</h2>
+		<h2 id="util-title" class="m-0 flex items-center gap-1.5 text-[13px] font-medium">
+			<Icon icon="mdi:gauge" class="h-4 w-4 text-cyan-600 dark:text-cyan-400" aria-hidden="true" />
+			Utilización de la flota
+		</h2>
 		{#if onOpenReports}
 			<button
 				type="button"
@@ -64,7 +68,9 @@
 
 	{#if $fleetDay.status === 'ready' || ($fleetDay.status === 'error' && t)}
 		<div class="mt-2">
-			<BigNumber value={t?.utilization} suffix="%" />
+			<span class="text-cyan-600 dark:text-cyan-400"
+				><BigNumber value={t?.utilization} suffix="%" /></span
+			>
 		</div>
 		<p class="m-0 mt-1 text-[11.5px] nx-muted">
 			{#if t?.utilization != null}
@@ -93,18 +99,18 @@
 				>
 			{/each}
 			{#if area}
-				<path d={area} class="fill-slate-900/[0.06] dark:fill-white/[0.08]" />
+				<path d={area} class="fill-cyan-500/[0.12] dark:fill-cyan-400/[0.14]" />
 				<path
 					d={line}
 					fill="none"
-					class="stroke-slate-700 dark:stroke-white/85"
+					class="stroke-cyan-600 dark:stroke-cyan-400"
 					stroke-width="1.4"
 					stroke-linejoin="round"
 				/>
 			{/if}
 			{#if last}
-				<circle cx={last[0]} cy={last[1]} r="6" class="fill-slate-900/10 dark:fill-white/15" />
-				<circle cx={last[0]} cy={last[1]} r="2.8" class="fill-slate-800 dark:fill-white" />
+				<circle cx={last[0]} cy={last[1]} r="6" class="fill-cyan-500/20 dark:fill-cyan-400/20" />
+				<circle cx={last[0]} cy={last[1]} r="2.8" class="fill-cyan-600 dark:fill-cyan-400" />
 			{/if}
 			{#each ticks as h (h)}
 				<text

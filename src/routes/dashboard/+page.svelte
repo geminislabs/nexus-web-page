@@ -85,6 +85,8 @@
 	const GAP = 12;
 	/** Ancho mínimo de mapa entre columnas para mostrar la franja desplegada. */
 	const STRIP_MIN_W = 560;
+	/** Ancho de la columna de controles del mapa (capas, zoom, Street View). */
+	const MAP_CONTROLS_W = 44;
 	let isMdUp = false;
 	let mainWidth = 0;
 	let showPanelToggles = false;
@@ -103,6 +105,15 @@
 
 	const sidebarBtnBase =
 		'relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-[14px] border transition-[background-color,border-color,color,box-shadow] duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#080b16]';
+	/**
+	 * Vista Panel: color de categoría de cada ícono del riel cuando no está
+	 * seleccionado; los mismos colores que esas cosas tienen en los paneles.
+	 */
+	const RAIL_ICON_COLOR = {
+		unidades: 'text-indigo-500 dark:text-indigo-400',
+		alertas_zonas: 'text-pink-500 dark:text-pink-400',
+		informes: 'text-violet-500 dark:text-violet-400'
+	};
 	/** Seguimiento: unidades + alertas/zonas + informes. */
 	const configSidebarItems = [
 		{ id: 'unidades', label: 'Unidades', title: 'Seguimiento', icon: 'mdi:car-side' },
@@ -156,7 +167,13 @@
 			? GAP + 44 + GAP
 			: GAP;
 	$: mapControlsRight = showAlertsColumn ? GAP + ALERTS_COL_W + GAP : 10;
-	$: stripCompact = mainWidth - leftEdge - mapControlsRight < STRIP_MIN_W;
+	/**
+	 * En Panel, capas y zoom van abajo a la derecha (a 10 px del borde, sobre Street
+	 * View). La franja del día termina antes para no taparlos, aunque la columna
+	 * de alertas esté cerrada.
+	 */
+	$: stripRight = Math.max(mapControlsRight, 10 + MAP_CONTROLS_W + GAP);
+	$: stripCompact = mainWidth - leftEdge - stripRight < STRIP_MIN_W;
 	$: visibleUnitIds = new Set($vehicles.map((v) => String(v.id)));
 
 	// Los datos del día solo se piden si algún panel los pinta.
@@ -767,7 +784,9 @@
 									? isPanelView
 										? 'text-white'
 										: 'text-white dark:text-blue-300'
-									: ''}"
+									: isPanelView
+										? (RAIL_ICON_COLOR[item.id] ?? '')
+										: ''}"
 								aria-hidden="true"
 							/>
 						</button>
@@ -864,6 +883,7 @@
 				icon={configDrawerIcon}
 				accentColor="#10b981"
 				look={isPanelView ? 'panel' : 'clasica'}
+				iconColorClass={RAIL_ICON_COLOR[activeConfigSection] ?? ''}
 				sidebarWidth={SW}
 				bodyPaddingClass="p-0"
 				bodyScrollable={activeConfigSection === 'informes' || !isSideConfigPanel}
@@ -970,7 +990,7 @@
 			{#if showFleetDayStrip}
 				<div
 					class="pointer-events-none absolute bottom-9 z-[55] flex"
-					style="left: {leftEdge}px; right: {mapControlsRight}px"
+					style="left: {leftEdge}px; right: {stripRight}px"
 				>
 					<div class="pointer-events-auto w-full">
 						<FleetDayStrip

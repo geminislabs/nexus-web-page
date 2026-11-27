@@ -57,9 +57,25 @@
 	const visible = $derived(filtered.slice(0, limit));
 
 	const tiles = [
-		{ id: 'moving', label: 'En movimiento', dot: 'bg-emerald-400' },
-		{ id: 'stopped', label: 'Detenidas', dot: 'bg-slate-400 dark:bg-white/60' },
-		{ id: 'no_signal', label: 'Sin señal', dot: 'bg-amber-400' }
+		// Mismos colores de estado que la pastilla de cada unidad (unitTrackingStatus).
+		{
+			id: 'moving',
+			label: 'En movimiento',
+			dot: 'bg-emerald-400',
+			num: 'text-emerald-600 dark:text-emerald-400'
+		},
+		{
+			id: 'stopped',
+			label: 'Detenidas',
+			dot: 'bg-orange-400',
+			num: 'text-orange-600 dark:text-orange-400'
+		},
+		{
+			id: 'no_signal',
+			label: 'Sin señal',
+			dot: 'bg-amber-400',
+			num: 'text-amber-600 dark:text-amber-400'
+		}
 	];
 
 	function toggleFilter(/** @type {any} */ id) {
@@ -89,7 +105,9 @@
 					<i class="inline-block h-1.5 w-1.5 rounded-full {tile.dot}" aria-hidden="true"></i>
 					{tile.label}
 				</span>
-				<span class="nx-num text-[26px] leading-none">{counts[tile.id]}</span>
+				<span class="nx-num text-[26px] leading-none {counts[tile.id] > 0 ? tile.num : ''}"
+					>{counts[tile.id]}</span
+				>
 			</button>
 		{/each}
 	</div>
@@ -101,7 +119,12 @@
 		aria-labelledby="fleet-title"
 	>
 		<div class="mb-2.5 flex items-center justify-between gap-2 px-1">
-			<h2 id="fleet-title" class="m-0 text-[13px] font-medium">
+			<h2 id="fleet-title" class="m-0 flex items-center gap-1.5 text-[13px] font-medium">
+				<Icon
+					icon="mdi:car-side"
+					class="h-4 w-4 text-indigo-500 dark:text-indigo-400"
+					aria-hidden="true"
+				/>
 				Unidades <span class="nx-muted font-normal">{filtered.length}</span>
 			</h2>
 			<div class="flex items-center gap-1">
@@ -170,7 +193,7 @@
 								class="inline-flex max-w-full items-center gap-1.5 self-start rounded-full border border-slate-200 px-2 py-0.5 text-[10.5px] dark:border-white/10"
 							>
 								<i class="inline-block h-1.5 w-1.5 shrink-0 rounded-full {status.dotClass}"></i>
-								<span class="truncate">{status.shortLabel}</span>
+								<span class="truncate {status.colorClass}">{status.shortLabel}</span>
 							</span>
 							<span
 								class="block overflow-hidden rounded-[10px] border border-slate-200/70 bg-slate-100/70 dark:border-white/[0.05] dark:bg-black/20"
@@ -200,7 +223,9 @@
 											fill="none"
 											stroke-width="1.4"
 											stroke-linejoin="round"
-											class="stroke-slate-700 dark:stroke-white/85"
+											class={status.dotClass === 'bg-emerald-400'
+												? 'stroke-emerald-500 dark:stroke-emerald-400'
+												: 'stroke-slate-700 dark:stroke-white/85'}
 										/>
 										<circle
 											cx={trail.end[0]}

@@ -1,4 +1,5 @@
 <script>
+	import { uiLook } from '$lib/stores/lookStore.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { alerts, zones } from '$lib/stores/alertStore.js';
@@ -21,12 +22,14 @@
 			id: 'alertas',
 			label: 'Alertas',
 			icon: 'mdi:bell-ring-outline',
+			color: 'text-pink-500 dark:text-pink-400',
 			count: () => $alerts.length
 		},
 		{
 			id: 'zonas',
 			label: 'Zonas',
 			icon: 'mdi:hexagon-multiple-outline',
+			color: 'text-cyan-600 dark:text-cyan-400',
 			count: () => $zones.length
 		}
 	];
@@ -60,7 +63,12 @@
 					: 'text-slate-500 hover:bg-slate-50/80 hover:text-slate-800 dark:text-white/40 dark:hover:bg-white/[0.04] dark:hover:text-white/75'}"
 				on:click={() => selectTab(t.id)}
 			>
-				<Icon icon={t.icon} width={16} aria-hidden="true" />
+				<Icon
+					icon={t.icon}
+					width={16}
+					class={$uiLook === 'panel' ? t.color : ''}
+					aria-hidden="true"
+				/>
 				<span class="truncate">{t.label}</span>
 				<span
 					class="rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums

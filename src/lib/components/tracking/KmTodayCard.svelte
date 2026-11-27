@@ -1,5 +1,6 @@
 <script>
 	/** Kilómetros recorridos hoy por toda la flota, con barras por hora. */
+	import Icon from '$lib/components/Icon.svelte';
 	import { fleetDay } from '$lib/stores/fleetDayStore.js';
 	import { vehicles, loadingVehicles } from '$lib/stores/vehicleStore.js';
 	import { hourWindow, niceMax } from '$lib/services/fleetDayService.js';
@@ -34,7 +35,14 @@
 	aria-labelledby="km-title"
 >
 	<div class="flex items-baseline justify-between gap-2">
-		<h2 id="km-title" class="m-0 text-[13px] font-medium">Kilómetros hoy</h2>
+		<h2 id="km-title" class="m-0 flex items-center gap-1.5 text-[13px] font-medium">
+			<Icon
+				icon="mdi:map-marker-distance"
+				class="h-4 w-4 text-sky-600 dark:text-sky-400"
+				aria-hidden="true"
+			/>
+			Kilómetros hoy
+		</h2>
 		{#if onOpenReports}
 			<button
 				type="button"
@@ -45,7 +53,9 @@
 	</div>
 
 	{#if $fleetDay.status === 'ready' || ($fleetDay.status === 'error' && t)}
-		<div class="mt-2"><BigNumber value={t?.kmTotal} suffix="km" /></div>
+		<div class="mt-2 text-sky-600 dark:text-sky-400">
+			<BigNumber value={t?.kmTotal} suffix="km" />
+		</div>
 		<div class="mt-3" bind:clientWidth={measured}>
 			<svg
 				class="block w-full overflow-visible"
@@ -89,8 +99,8 @@
 							height={Math.max(0, Y1 - Y(v))}
 							rx="2.5"
 							class={h === t?.currentHour
-								? 'fill-slate-800 dark:fill-white/90'
-								: 'fill-slate-400/45 dark:fill-white/25'}
+								? 'fill-sky-600 dark:fill-sky-400'
+								: 'fill-sky-500/35 dark:fill-sky-400/30'}
 						>
 							<title>{String(h).padStart(2, '0')}:00 · {fmt(v)} km</title>
 						</rect>
