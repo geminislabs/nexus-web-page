@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.38.0] - 2026-11-27
+
+Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.37.0`.
+
 ### Changed
 
 - **Vista Panel: los paneles que se abren desde el riel ya hablan el mismo idioma.** Alertas y zonas e Informes flotan sobre el mapa con margen (Alertas y zonas a 560 px, así el mapa queda a la vista al dibujar una zona), sin el mosaico verde del encabezado ni las franjas de color. Dentro, el azul, el cian, el índigo y los degradados de marca que marcaban «acción» o «seleccionado» pasan a gris: la acción principal es negra/blanca, igual que en el dashboard. Verde, ámbar y rojo se quedan porque son estado (Activa, señal, excepciones, borrar). Aplica también a los asistentes de alertas, al editor de zonas sobre el mapa, al selector de unidades de Informes y a la Red H3. Se hace con una piel CSS que solo existe dentro de `[data-look='panel']` (`src/app.css`), así que la Clásica no cambia
