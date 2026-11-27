@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Vista Panel: todos los paneles con la misma superficie, que destaca sobre el mapa.** En modo oscuro el fondo pasa de un gris casi negro translúcido a un gris algo más claro con un degradado suave. Antes solo los paneles que caían sobre calles iluminadas se veían así, por lo que se transparentaba detrás; ahora es igual en todos. Sigue la regla de siempre: translúcido en reposo y casi opaco al pasar el puntero
+
 ## [1.38.1] - 2026-11-27
 
 Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.38.0`.
