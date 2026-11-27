@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Vista Panel: vuelve el fondo anterior de los paneles.** El degradado gris más claro de v1.39.0 se retira. `.nx-glass` y `.nx-float` regresan al gris casi negro (`#15171b`) con las mismas transparencias de antes: 78 %, y en los flotantes 52 % en reposo y 93 % al pasar el puntero. El globo del mapa usa ese mismo fondo. Los íconos con color de categoría se quedan
+
 ## [1.39.0] - 2026-11-27
 
 Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.38.1`.

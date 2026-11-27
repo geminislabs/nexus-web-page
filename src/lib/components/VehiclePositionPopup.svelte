@@ -119,7 +119,7 @@
 <div
 	class="nexus-viw-card w-[min(100vw-2rem,20rem)] overflow-hidden rounded-2xl border font-sans shadow-xl {isDark
 		? isPanel
-			? 'border-white/[0.09] bg-[linear-gradient(165deg,rgb(46_49_56),rgb(31_33_38))] text-[#eceef0]'
+			? 'border-white/[0.07] bg-[#15171b] text-[#eceef0]'
 			: 'border-white/[0.12] bg-[#0c1829] text-slate-200'
 		: 'border-slate-200/80 bg-white text-slate-900'}"
 	data-look={isPanel ? 'panel' : undefined}
