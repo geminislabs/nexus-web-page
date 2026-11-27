@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.36.0] - 2026-11-27
+
 ### Changed
 
 - **OpenTelemetry 3.** El SDK pasa a 3.1 (exporters e instrumentaciones 0.301) y `@opentelemetry/api` a 1.10 (Dependabot #120, #122 y la parte OTel de #142). OTel 3 junta `sdk-trace-node` y `sdk-trace-web` en `@opentelemetry/sdk-trace`, quita `register()` (el context manager, el propagador y el provider se registran a mano en `registerTracerProvider`), los processors reciben `{ exporter }` y la API de logs pasa de `@opentelemetry/api-logs` a `@opentelemetry/api`. `@opentelemetry/core` y `@opentelemetry/instrumentation` se importaban sin estar declarados; ahora lo están. Comprobado contra un collector OTLP falso: el servidor exporta trazas (con el contexto propagado y los atributos sensibles borrados) y logs, y el navegador manda sus trazas por `/internal/otlp`
