@@ -28,7 +28,7 @@
 	 * neutro, sin franjas ni mosaico de color. 'clasica' queda exactamente igual.
 	 */
 	export let look = 'clasica';
-	/** Vista Panel: color de categoría del ícono del encabezado (p. ej. 'text-pink-500'). */
+	/** Vista Panel: color de categoría del ícono del encabezado (p. ej. 'text-amber-500'). */
 	export let iconColorClass = '';
 	$: isPanel = look === 'panel';
 
@@ -185,8 +185,8 @@
 				<button
 					type="button"
 					class="flex h-[34px] w-[34px] shrink-0 items-center justify-center {isPanel
-						? 'rounded-full'
-						: 'rounded-lg'} border border-slate-300 bg-slate-100 text-slate-600 transition-[background-color,color] duration-150 hover:bg-slate-200 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-400 dark:border-white/[0.08] dark:bg-white/[0.07] dark:text-white/55 dark:hover:bg-white/[0.13] dark:hover:text-white"
+						? 'nx-close'
+						: 'rounded-lg border border-slate-300 bg-slate-100 text-slate-600 transition-[background-color,color] duration-150 hover:bg-slate-200 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-sky-400 dark:border-white/[0.08] dark:bg-white/[0.07] dark:text-white/55 dark:hover:bg-white/[0.13] dark:hover:text-white'}"
 					on:click={close}
 					aria-label="Cerrar panel"
 				>

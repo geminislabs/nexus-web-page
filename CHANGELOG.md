@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Vista Panel: color de acciones, alertas e interruptores.**
+  - **Alertas en ámbar en vez de rosa.** Cambia en el riel, el encabezado de su panel, la columna, la pestaña de Alertas y zonas, el dashboard de administración y el botón «Eventos». La campana se reconoce en ámbar y las alertas de zona ya lo eran.
+  - **Acciones del detalle de la unidad con color.** Trayectos en verde (como «en ruta»), Eventos en ámbar, Detalles en azul y Compartir en gris, porque es secundaria.
+  - **Interruptores en verde al estar encendidos** y en gris al estar apagados, en las reglas de alerta y en «Paneles». No se usa rojo: una regla apagada no es un error. La fila de una regla apagada sigue atenuada.
+  - **El ícono de cada regla de alerta muestra su tipo.** Motor en naranja para ignición y hexágono en ámbar para zona, igual que en la columna de alertas; antes era un rayo azul en todas.
+  - **Un solo botón de cerrar** (`.nx-close`): círculo gris tenue sin aro, igual en el detalle de la unidad, el globo del mapa y los paneles flotantes. El del globo resaltaba más que los demás.
+  - «Paneles» lleva también sus íconos con color: Flota en índigo, Alertas en ámbar y Hoy en cielo.
+
 ## [1.39.1] - 2026-11-27
 
 Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.39.0`.

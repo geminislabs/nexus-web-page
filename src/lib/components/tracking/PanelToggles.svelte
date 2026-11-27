@@ -11,14 +11,22 @@
 			id: 'flota',
 			label: 'Flota',
 			hint: 'Estados, utilización y unidades',
-			icon: 'mdi:car-multiple'
+			icon: 'mdi:car-multiple',
+			color: 'text-indigo-500 dark:text-indigo-400'
 		},
-		{ id: 'alertas', label: 'Alertas', hint: 'Lo que se disparó hoy', icon: 'mdi:bell-outline' },
+		{
+			id: 'alertas',
+			label: 'Alertas',
+			hint: 'Lo que se disparó hoy',
+			icon: 'mdi:bell-outline',
+			color: 'text-amber-500 dark:text-amber-400'
+		},
 		{
 			id: 'hoy',
 			label: 'Hoy',
 			hint: 'Kilómetros y actividad del día',
-			icon: 'mdi:chart-timeline-variant'
+			icon: 'mdi:chart-timeline-variant',
+			color: 'text-sky-600 dark:text-sky-400'
 		}
 	];
 </script>
@@ -40,19 +48,19 @@
 					class="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left hover:bg-slate-900/[0.04] focus-visible:outline-2 dark:hover:bg-white/[0.05]"
 					on:click|stopPropagation={() => trackingView.togglePanel(opt.id)}
 				>
-					<Icon icon={opt.icon} class="h-4 w-4 shrink-0 nx-muted" aria-hidden="true" />
+					<Icon icon={opt.icon} class="h-4 w-4 shrink-0 {opt.color}" aria-hidden="true" />
 					<span class="min-w-0 flex-1">
 						<span class="block text-[12.5px] font-medium">{opt.label}</span>
 						<span class="block truncate text-[10.5px] nx-muted">{opt.hint}</span>
 					</span>
 					<span
 						class="relative inline-flex h-[18px] w-8 shrink-0 items-center rounded-full transition-colors {on
-							? 'bg-slate-900 dark:bg-white/80'
+							? 'bg-emerald-500'
 							: 'bg-slate-300 dark:bg-white/15'}"
 						aria-hidden="true"
 					>
 						<span
-							class="absolute h-3.5 w-3.5 rounded-full bg-white shadow transition-transform dark:bg-[#15171b] {on
+							class="absolute h-3.5 w-3.5 rounded-full bg-white shadow transition-transform {on
 								? 'translate-x-[15px]'
 								: 'translate-x-[2px] dark:bg-white/70'}"
 						></span>

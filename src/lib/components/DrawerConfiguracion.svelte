@@ -1,5 +1,6 @@
 <script>
 	import { logger } from '$lib/utils/logger.js';
+	import { uiLook } from '$lib/stores/lookStore.js';
 	import Icon from '$lib/components/Icon.svelte';
 	import { rise, staggerDelay, viewEnter, flipList } from '$lib/motion/index.js';
 	import { slidingIndicator } from '$lib/motion/slidingIndicator.js';
@@ -1357,16 +1358,26 @@
 										? 'border-slate-200 bg-slate-50 dark:border-white/[0.07] dark:bg-white/[0.03]'
 										: 'border-slate-200/60 bg-slate-50/60 opacity-60 dark:border-white/[0.04] dark:bg-white/[0.02]'}"
 								>
+									<!-- Vista Panel: recuadro gris e ícono del color de su tipo, el mismo de la
+									     columna de alertas (ignición naranja, zona ámbar). -->
 									<div
-										class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {alert.type ===
-										'ignition'
-											? 'bg-blue-100 text-blue-800 dark:bg-blue-600/15 dark:text-blue-300'
-											: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'}"
+										class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {$uiLook ===
+										'panel'
+											? alert.type === 'ignition'
+												? 'bg-slate-900/[0.05] text-orange-500 dark:bg-white/[0.06] dark:text-orange-400'
+												: 'bg-slate-900/[0.05] text-amber-500 dark:bg-white/[0.06] dark:text-amber-400'
+											: alert.type === 'ignition'
+												? 'bg-blue-100 text-blue-800 dark:bg-blue-600/15 dark:text-blue-300'
+												: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'}"
 									>
 										<Icon
-											icon={alert.type === 'ignition'
-												? 'mdi:lightning-bolt'
-												: 'mdi:map-marker-radius'}
+											icon={$uiLook === 'panel'
+												? alert.type === 'ignition'
+													? 'mdi:engine-outline'
+													: 'mdi:hexagon-outline'
+												: alert.type === 'ignition'
+													? 'mdi:lightning-bolt'
+													: 'mdi:map-marker-radius'}
 											width={15}
 											aria-hidden="true"
 										/>

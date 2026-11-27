@@ -169,9 +169,11 @@
 			</div>
 			<button
 				type="button"
-				class="flex h-7 w-7 shrink-0 items-center justify-center self-start rounded-full border transition-colors {isDark
-					? 'border-white/15 bg-white/10 text-white/80 hover:bg-white/20'
-					: 'border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200'}"
+				class="flex h-7 w-7 shrink-0 items-center justify-center self-start rounded-full {isPanel
+					? 'nx-close'
+					: isDark
+						? 'border border-white/15 bg-white/10 text-white/80 transition-colors hover:bg-white/20'
+						: 'border border-slate-200 bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200'}"
 				on:click|stopPropagation={onClose}
 				aria-label="Cerrar"
 				title="Cerrar"

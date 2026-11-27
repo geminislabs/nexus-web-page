@@ -221,6 +221,16 @@
 	html.dark .nx-reopen {
 		@apply border-white/[0.18] bg-[#1d2025] text-white shadow-[0_6px_20px_rgb(0_0_0/0.6)] hover:border-white/30 hover:bg-[#25292f];
 	}
+	/*
+	 * Botón de cerrar de la vista Panel: el mismo en todos lados, gris tenue y sin
+	 * aro. Es la acción más frecuente y la menos importante: no debe competir.
+	 */
+	.nx-close {
+		@apply rounded-full border-0 bg-slate-900/[0.06] text-slate-600 transition-colors hover:bg-slate-900/[0.12] hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2;
+	}
+	html.dark .nx-close {
+		@apply bg-white/[0.08] text-white/70 hover:bg-white/[0.16] hover:text-white;
+	}
 	/* Números grandes: Sora ligera, cifras tabulares. */
 	.nx-num {
 		font-family: 'Sora', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
@@ -769,11 +779,17 @@ html:not(.dark)
 	):not([data-look='keep']) {
 	box-shadow: none;
 }
-/* Interruptor encendido: la perilla contrasta con la pista sólida en los dos temas. */
-[data-look='panel']
-	[role='switch']:is([class~='bg-blue-600'], [class~='bg-blue-500'], [class~='bg-brand-500'])
-	> * {
-	background-color: var(--nx-solid-fg);
+/*
+ * Interruptores: encendido en verde (estado «activo», como la pastilla «Activa»),
+ * apagado en gris. Rojo no: una regla apagada no es un error. Va por aria-checked
+ * para cubrir cualquier interruptor de la vista Panel, no solo los de alertas.
+ */
+[data-look='panel'] [role='switch'][aria-checked='true']:not([data-look='keep']) {
+	background-color: #10b981;
+	background-image: none;
+}
+[data-look='panel'] [role='switch'][aria-checked='true']:not([data-look='keep']) > * {
+	background-color: #ffffff;
 }
 /* Fondos negros puros dentro del panel: dejan ver el carbón del contenedor. */
 html.dark [data-look='panel'] [class~='dark:bg-black']:not([data-look='keep']) {

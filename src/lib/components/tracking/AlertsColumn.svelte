@@ -40,7 +40,7 @@
 		<h2 id="alerts-col-title" class="m-0 flex items-center gap-2 text-[13px] font-medium">
 			<Icon
 				icon="mdi:bell-ring-outline"
-				class="-mr-0.5 h-4 w-4 text-pink-500 dark:text-pink-400"
+				class="-mr-0.5 h-4 w-4 text-amber-500 dark:text-amber-400"
 				aria-hidden="true"
 			/>
 			Alertas

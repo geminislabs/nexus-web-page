@@ -111,7 +111,7 @@
 	 */
 	const RAIL_ICON_COLOR = {
 		unidades: 'text-indigo-500 dark:text-indigo-400',
-		alertas_zonas: 'text-pink-500 dark:text-pink-400',
+		alertas_zonas: 'text-amber-500 dark:text-amber-400',
 		informes: 'text-violet-500 dark:text-violet-400'
 	};
 	/** Seguimiento: unidades + alertas/zonas + informes. */
