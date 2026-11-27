@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Vista Panel: «Actividad de hoy» marca encendidos y apagados.** Salen de los eventos del dispositivo (`GET /api/v1/events` de siscom-api), que llegan siempre, aunque el cliente no tenga una regla de ignición. Encendido es un punto naranja relleno y apagado un aro naranja hueco. Se piden por lotes de 100 unidades; si fallan, el día se muestra igual con las alarmas de antes
+- **Vista Panel: la línea de «ahora» de Actividad es blanca, punteada y con etiqueta.** Antes era verde y se confundía con «en ruta»
+- **Vista Panel: el trayecto se lee mejor.**
+  - Las flechas de sentido son rellenas, más grandes y más espaciadas.
+  - La línea es más delgada (4 px con contorno de 7 px), para que no se empaste donde la ruta pasa dos veces.
+  - El aro de inicio es más grande y queda encima de los demás marcadores.
+
 ## [1.40.0] - 2026-11-27
 
 Sin migraciones ni cambios de backend. Rollback: volver a desplegar `v1.39.1`.
