@@ -98,4 +98,39 @@ export function recordPositions(
 	now = Date.now()
 ) {
 	liveTrails.update((t) => appendPositions(t, vehicles, now));
+	liveSpeeds.update((sp) => appendSpeeds(sp, vehicles, now));
 }
+
+/** Ventana de la mini-gráfica de velocidad de cada tarjeta. */
+export const SPEED_WINDOW_MS = 30 * 60_000;
+/** Una muestra cada 20 s como mucho: suficiente para 30 min y barato. */
+export const SPEED_MIN_GAP_MS = 20_000;
+
+/**
+ * Agrega la velocidad actual de cada unidad a su serie de los últimos 30 min.
+ * @param {Record<string, Array<{ t: number, v: number }>>} series
+ * @param {Array<Record<string, any>>} vehicles
+ * @param {number} now
+ */
+export function appendSpeeds(series, vehicles, now) {
+	/** @type {Record<string, Array<{ t: number, v: number }>>} */
+	const out = {};
+	const since = now - SPEED_WINDOW_MS;
+	for (const v of vehicles || []) {
+		const id = v?.id != null ? String(v.id) : null;
+		if (!id) continue;
+		const prev = (series?.[id] || []).filter((p) => p.t >= since);
+		const speed = Number(v.speed);
+		const last = prev[prev.length - 1];
+		if (Number.isFinite(speed) && (!last || now - last.t >= SPEED_MIN_GAP_MS)) {
+			prev.push({ t: now, v: Math.max(0, speed) });
+		}
+		out[id] = prev;
+	}
+	return out;
+}
+
+/** Velocidad reciente por unidad (para la mini-gráfica de las tarjetas). */
+export const liveSpeeds = writable(
+	/** @type {Record<string, Array<{ t: number, v: number }>>} */ ({})
+);

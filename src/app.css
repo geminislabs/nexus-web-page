@@ -231,6 +231,71 @@
 	html.dark .nx-close {
 		@apply bg-white/[0.08] text-white/70 hover:bg-white/[0.16] hover:text-white;
 	}
+	/*
+	 * Datos técnicos (coordenadas, voltajes, horas, IDs): monoespaciada del
+	 * sistema, sin descargar otra fuente.
+	 */
+	.nx-mono {
+		font-family:
+			ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.01em;
+	}
+	/* Punto «en vivo»: late mientras llegan datos. */
+	.nx-live-dot {
+		@apply relative inline-block h-2 w-2 rounded-full;
+	}
+	.nx-live-dot::after {
+		content: '';
+		position: absolute;
+		inset: -3px;
+		border-radius: 9999px;
+		background: currentColor;
+		opacity: 0;
+		animation: nx-live-ping 1.8s ease-out infinite;
+	}
+	@keyframes nx-live-ping {
+		0% {
+			transform: scale(0.6);
+			opacity: 0.55;
+		}
+		100% {
+			transform: scale(1.9);
+			opacity: 0;
+		}
+	}
+	/* Un número que acaba de cambiar destella un instante. */
+	.nx-tick {
+		animation: nx-tick 900ms ease-out;
+	}
+	@keyframes nx-tick {
+		0% {
+			text-shadow: 0 0 12px currentColor;
+			filter: brightness(1.6);
+		}
+		100% {
+			text-shadow: none;
+			filter: none;
+		}
+	}
+	/* Retícula opcional sobre el mapa (estilo HUD). */
+	.nx-hud {
+		background-image:
+			linear-gradient(to right, rgb(15 23 42 / 0.07) 1px, transparent 1px),
+			linear-gradient(to bottom, rgb(15 23 42 / 0.07) 1px, transparent 1px);
+		background-size: 64px 64px;
+	}
+	html.dark .nx-hud {
+		background-image:
+			linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+			linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.nx-live-dot::after,
+		.nx-tick {
+			animation: none;
+		}
+	}
 	/* Números grandes: Sora ligera, cifras tabulares. */
 	.nx-num {
 		font-family: 'Sora', 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;

@@ -73,7 +73,7 @@
 			Batería · 24 h
 		</h2>
 		{#if ready && d?.batteryNow != null}
-			<span class="nx-num text-[15px] {tone}">{d.batteryNow.toFixed(1)} V</span>
+			<span class="nx-mono text-[14px] {tone}">{d.batteryNow.toFixed(1)} V</span>
 		{/if}
 	</div>
 

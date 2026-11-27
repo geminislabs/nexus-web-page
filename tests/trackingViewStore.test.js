@@ -29,7 +29,7 @@ describe('parsePrefs', () => {
 		const raw = JSON.stringify({ view: 'panel', panels: { alertas: false } });
 		expect(parsePrefs(raw)).toEqual({
 			view: 'panel',
-			panels: { flota: true, alertas: false, hoy: true }
+			panels: { flota: true, alertas: false, hoy: true, reticula: false }
 		});
 	});
 
@@ -58,10 +58,10 @@ describe('createTrackingViewStore', () => {
 		expect(get(s).panels.alertas).toBe(false);
 		s.setPanel('alertas', true);
 		s.setPanel('hoy', false);
-		expect(get(s).panels).toEqual({ flota: true, alertas: true, hoy: false });
+		expect(get(s).panels).toEqual({ flota: true, alertas: true, hoy: false, reticula: false });
 		s.togglePanel('inventado');
 		s.setPanel('inventado', true);
-		expect(get(s).panels).toEqual({ flota: true, alertas: true, hoy: false });
+		expect(get(s).panels).toEqual({ flota: true, alertas: true, hoy: false, reticula: false });
 	});
 
 	it('arranca con lo guardado', () => {
@@ -70,7 +70,7 @@ describe('createTrackingViewStore', () => {
 		});
 		expect(get(createTrackingViewStore(storage))).toEqual({
 			view: 'panel',
-			panels: { flota: false, alertas: true, hoy: true }
+			panels: { flota: false, alertas: true, hoy: true, reticula: false }
 		});
 	});
 

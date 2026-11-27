@@ -7,7 +7,8 @@
 	 */
 	import Icon from '$lib/components/Icon.svelte';
 	import { vehicles, loadingVehicles } from '$lib/stores/vehicleStore.js';
-	import { liveTrails, projectTrail } from '$lib/stores/liveTrailStore.js';
+	import { liveTrails, liveSpeeds, projectTrail } from '$lib/stores/liveTrailStore.js';
+	import { clock, sinceLabel } from '$lib/stores/clockStore.js';
 	import { getUnitTrackingStatus } from '$lib/utils/unitTrackingStatus.js';
 	import UtilizationCard from './UtilizationCard.svelte';
 
@@ -22,6 +23,21 @@
 	} = $props();
 
 	const PAGE = 40;
+
+	/**
+	 * Mini-gráfica de la velocidad de los últimos 30 min. Solo si hubo
+	 * movimiento: una línea plana en cero no dice nada.
+	 * @param {Array<{ t: number, v: number }>} pts
+	 */
+	function sparkline(pts) {
+		if (pts.length < 2 || !pts.some((p) => p.v > 0)) return null;
+		const t0 = pts[0].t;
+		const span = Math.max(1, pts[pts.length - 1].t - t0);
+		const max = Math.max(20, ...pts.map((p) => p.v));
+		const xy = pts.map((p) => [((p.t - t0) / span) * 140, 17 - (p.v / max) * 15]);
+		const line = `M${xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join('L')}`;
+		return { line, area: `${line}L140,18L0,18Z` };
+	}
 
 	/** @type {'all' | 'moving' | 'stopped' | 'no_signal'} */
 	let filter = $state('all');
@@ -107,9 +123,13 @@
 					<i class="inline-block h-1.5 w-1.5 rounded-full {tile.dot}" aria-hidden="true"></i>
 					{tile.label}
 				</span>
-				<span class="nx-num text-[26px] leading-none {counts[tile.id] > 0 ? tile.num : ''}"
-					>{counts[tile.id]}</span
-				>
+				{#key counts[tile.id]}
+					<!-- Al cambiar la cifra, destella un instante (dato en vivo). -->
+					<span
+						class="nx-num nx-tick text-[26px] leading-none {counts[tile.id] > 0 ? tile.num : ''}"
+						>{counts[tile.id]}</span
+					>
+				{/key}
 			</button>
 		{/each}
 	</div>
@@ -183,6 +203,7 @@
 			<ul class="m-0 grid list-none grid-cols-2 gap-2 p-0">
 				{#each visible as { u, status } (u.id)}
 					{@const trail = projectTrail($liveTrails[String(u.id)] ?? [], 140, 52, 7)}
+					{@const sp = sparkline($liveSpeeds[String(u.id)] ?? [])}
 					<li class="min-w-0">
 						<button
 							type="button"
@@ -248,8 +269,29 @@
 									{/if}
 								</svg>
 							</span>
-							<span class="text-[10px] leading-tight nx-muted">
-								{trail ? 'Recorrido desde que abriste el panel' : 'Sin movimiento reciente'}
+							{#if sp}
+								<!-- Velocidad de los últimos 30 min -->
+								<svg viewBox="0 0 140 18" class="block h-auto w-full" aria-hidden="true">
+									<path d={sp.area} class="fill-cyan-500/15 dark:fill-cyan-400/15" />
+									<path
+										d={sp.line}
+										fill="none"
+										stroke-width="1.2"
+										class="stroke-cyan-600 dark:stroke-cyan-400"
+									/>
+								</svg>
+							{/if}
+							<span
+								class="flex items-center justify-between gap-1 text-[10px] leading-tight nx-muted"
+							>
+								<span class="truncate"
+									>{trail
+										? 'Recorrido desde que abriste el panel'
+										: 'Sin movimiento reciente'}</span
+								>
+								{#if sinceLabel(u.lastUpdate, $clock)}
+									<span class="nx-mono shrink-0">{sinceLabel(u.lastUpdate, $clock)}</span>
+								{/if}
 							</span>
 						</button>
 					</li>

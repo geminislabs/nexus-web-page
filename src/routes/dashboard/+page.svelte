@@ -17,7 +17,7 @@
 		zoneUiToast,
 		showH3Grid
 	} from '$lib/stores/h3Store.js';
-	import { theme } from '$lib/stores/themeStore.js';
+	import { theme, themeActions } from '$lib/stores/themeStore.js';
 	import { setThemeWithReveal } from '$lib/motion/themeReveal.js';
 	import { viewEnter, softFade } from '$lib/motion/index.js';
 	import { vehicles, activeUnit, vehicleActions } from '$lib/stores/vehicleStore.js';
@@ -39,6 +39,8 @@
 	import AlertsColumn from '$lib/components/tracking/AlertsColumn.svelte';
 	import FleetDayStrip from '$lib/components/tracking/FleetDayStrip.svelte';
 	import UnitDayStrip from '$lib/components/tracking/UnitDayStrip.svelte';
+	import CommandPalette from '$lib/components/tracking/CommandPalette.svelte';
+	import LiveIndicator from '$lib/components/tracking/LiveIndicator.svelte';
 	import { unitDay } from '$lib/stores/unitDayStore.js';
 	import { loadUnitDay } from '$lib/services/unitDayService.js';
 	import { tripActions } from '$lib/stores/tripStore.js';
@@ -109,6 +111,7 @@
 	let unitDayStartedFor = '';
 	/** Trayecto de la línea de tiempo dibujado en el mapa. */
 	let unitTripId = null;
+	let commandPaletteOpen = false;
 
 	const fleetDayCtrl = createFleetDayController({
 		load: () =>
@@ -372,6 +375,128 @@
 		showMobileUnitsSheet = false;
 	}
 
+	/** Abre una unidad y, si se pide, una de sus subvistas (trayectos, eventos…). */
+	function openUnit(/** @type {any} */ u, /** @type {string|null} */ view = null) {
+		fleetManaging = false;
+		selectUnitForTracking(u);
+		if (view) onTrackingPanelViewChange(view);
+	}
+
+	/** Comandos de la paleta (⌘K): unidades, paneles y acciones de la vista Panel. */
+	$: commands = !isPanelView
+		? []
+		: [
+				...$vehicles.flatMap((u) => {
+					const sub = [u.brand, u.model, u.plate].filter(Boolean).join(' · ');
+					return [
+						{
+							id: `u:${u.id}`,
+							group: 'Unidades',
+							label: u.name,
+							hint: sub || 'Abrir en el mapa',
+							icon: 'mdi:car-side',
+							color: 'text-indigo-500 dark:text-indigo-400',
+							keywords: [u.plate, u.brand, u.model].filter(Boolean),
+							run: () => openUnit(u)
+						},
+						{
+							id: `ut:${u.id}`,
+							group: 'Trayectos',
+							label: `Trayectos de ${u.name}`,
+							hint: 'Recorridos del día',
+							icon: 'mdi:source-branch',
+							color: 'text-emerald-600 dark:text-emerald-400',
+							keywords: ['recorrido', 'ruta', u.plate].filter(Boolean),
+							run: () => openUnit(u, 'trips')
+						},
+						{
+							id: `ue:${u.id}`,
+							group: 'Eventos',
+							label: `Eventos de ${u.name}`,
+							hint: 'Encendidos, alertas y más',
+							icon: 'mdi:bell-ring-outline',
+							color: 'text-amber-500 dark:text-amber-400',
+							keywords: ['ignicion', 'alertas'],
+							run: () => openUnit(u, 'events')
+						}
+					];
+				}),
+				{
+					id: 'p:alertas',
+					group: 'Paneles',
+					label: 'Alertas y zonas',
+					hint: 'Reglas de alerta y geocercas',
+					icon: 'mdi:bell-ring-outline',
+					color: 'text-amber-500 dark:text-amber-400',
+					keywords: ['reglas', 'geocercas', 'zonas'],
+					run: () => openConfigDrawer('alertas_zonas')
+				},
+				{
+					id: 'p:informes',
+					group: 'Paneles',
+					label: 'Informes',
+					hint: 'Telemetría y reportes',
+					icon: 'mdi:file-chart-outline',
+					color: 'text-violet-500 dark:text-violet-400',
+					keywords: ['reportes', 'telemetria'],
+					run: () => openConfigDrawer('informes')
+				},
+				{
+					id: 'p:gestionar',
+					group: 'Paneles',
+					label: 'Gestionar unidades',
+					hint: 'Filtros, visibilidad, editar',
+					icon: 'mdi:tune-variant',
+					color: 'text-indigo-500 dark:text-indigo-400',
+					keywords: ['editar', 'filtros'],
+					run: () => {
+						openDrawer = '';
+						fleetManaging = true;
+					}
+				},
+				...[
+					{ k: 'flota', label: 'columna de flota', icon: 'mdi:car-multiple' },
+					{ k: 'alertas', label: 'columna de alertas', icon: 'mdi:bell-outline' },
+					{ k: 'hoy', label: 'franja de hoy', icon: 'mdi:chart-timeline-variant' },
+					{ k: 'reticula', label: 'retícula del mapa', icon: 'mdi:grid' }
+				].map((p) => ({
+					id: `t:${p.k}`,
+					group: 'Paneles',
+					label: `${panels[p.k] ? 'Ocultar' : 'Mostrar'} ${p.label}`,
+					icon: p.icon,
+					run: () => trackingView.togglePanel(p.k)
+				})),
+				{
+					id: 'a:tema',
+					group: 'Acciones',
+					label: $theme === 'dark' ? 'Tema claro' : 'Tema oscuro',
+					icon: $theme === 'dark' ? 'mdi:white-balance-sunny' : 'mdi:weather-night',
+					keywords: ['apariencia', 'modo'],
+					run: () => themeActions.set($theme === 'dark' ? 'light' : 'dark')
+				},
+				{
+					id: 'a:clasica',
+					group: 'Acciones',
+					label: 'Volver a la vista clásica',
+					icon: 'mdi:history',
+					run: () => trackingView.setView('clasica')
+				},
+				...(userData?.is_master
+					? [
+							['dashboard', 'Dashboard de administración', 'mdi:view-dashboard-outline'],
+							['users', 'Usuarios', 'mdi:account-group-outline'],
+							['units', 'Unidades (administración)', 'mdi:car-side'],
+							['devices', 'Dispositivos', 'mdi:memory']
+						].map(([sec, label, icon]) => ({
+							id: `adm:${sec}`,
+							group: 'Administración',
+							label,
+							icon,
+							run: () => workspaceActions.goAdmin(/** @type {any} */ (sec))
+						}))
+					: [])
+			];
+
 	/** Dibuja en el mapa el trayecto elegido en «El día de la unidad». */
 	async function showUnitTrip(/** @type {string} */ tripId) {
 		unitTripId = tripId;
@@ -410,6 +535,12 @@
 	}
 
 	function handleGlobalKeydown(e) {
+		// Vista Panel: ⌘K / Ctrl K abre la paleta de comandos.
+		if (isPanelView && (e.metaKey || e.ctrlKey) && String(e.key).toLowerCase() === 'k') {
+			e.preventDefault();
+			commandPaletteOpen = !commandPaletteOpen;
+			return;
+		}
 		if (e.key === 'Escape') {
 			showUserMenu = false;
 			showThemeOptions = false;
@@ -612,6 +743,18 @@
 					class="my-2 h-px w-9 shrink-0 bg-slate-200 dark:bg-white/[0.08]"
 					role="presentation"
 				></div>
+			{/if}
+
+			{#if isPanelView}
+				<button
+					type="button"
+					class="{sidebarNavBtnClass(commandPaletteOpen, true)} mx-auto mb-1"
+					on:click={() => (commandPaletteOpen = true)}
+					aria-label="Buscar unidades, paneles y acciones (⌘K)"
+					title="Buscar · ⌘K"
+				>
+					<Icon icon="mdi:magnify" class="h-[22px] w-[22px] shrink-0" aria-hidden="true" />
+				</button>
 			{/if}
 
 			<nav class="flex w-full flex-1 flex-col items-center gap-1 px-0" aria-label="Accesos rápidos">
@@ -937,6 +1080,17 @@
 				</div>
 			{/if}
 
+			{#if isPanelView && panels.reticula}
+				<div class="nx-hud pointer-events-none absolute inset-0 z-[5]" aria-hidden="true"></div>
+			{/if}
+			{#if panelLayoutActive}
+				<div class="pointer-events-none absolute top-3 z-[40]" style="left: {leftEdge}px">
+					<div class="pointer-events-auto">
+						<LiveIndicator showCoords={panels.reticula} />
+					</div>
+				</div>
+			{/if}
+
 			<TopDrawer
 				open={isConfigDrawerOpen}
 				title={configDrawerTitle}
@@ -980,6 +1134,10 @@
 				<div class="contents" data-look={isPanelView ? 'panel' : undefined}>
 					<ZonasPanel variant="desktop" useDesktopOverlayStore={true} />
 				</div>
+			{/if}
+
+			{#if isPanelView}
+				<CommandPalette bind:open={commandPaletteOpen} {commands} />
 			{/if}
 
 			{#if showFleetReopen}
