@@ -1,4 +1,12 @@
+import { get } from 'svelte/store';
+import { uiLook } from '$lib/stores/lookStore.js';
+
 export const REPORT_UNIT_COLORS = ['#22d3ee', '#34d399', '#a78bfa'];
+/**
+ * Vista Panel: sin verde (es color de estado) para distinguir unidades en las
+ * gráficas de Informes. Cian, índigo y púrpura.
+ */
+export const REPORT_UNIT_COLORS_PANEL = ['#22d3ee', '#818cf8', '#c084fc'];
 
 export const TELEMETRY_METRICS = [
 	'speed',
@@ -27,7 +35,8 @@ export {
 
 /** @param {string} unitId @param {number} index */
 export function getUnitChartColor(unitId, index = 0) {
-	return REPORT_UNIT_COLORS[index % REPORT_UNIT_COLORS.length];
+	const palette = get(uiLook) === 'panel' ? REPORT_UNIT_COLORS_PANEL : REPORT_UNIT_COLORS;
+	return palette[index % palette.length];
 }
 
 /** @param {string} iso */
