@@ -425,6 +425,30 @@
 
 <svelte:window on:keydown={handleKeydown} on:pointerdown={handleWindowPointerdown} />
 
+{#snippet zoomControl()}
+	<div class={k.zoomGroup} role="group" aria-label="Controles de zoom">
+		<button
+			type="button"
+			class={k.zoomBtn}
+			on:click={zoomIn}
+			aria-label="Acercar mapa"
+			title="Acercar"
+		>
+			<Icon icon="mdi:plus" width={k.zoomIcon} aria-hidden="true" />
+		</button>
+		<div class={k.zoomSep} aria-hidden="true"></div>
+		<button
+			type="button"
+			class={k.zoomBtn}
+			on:click={zoomOut}
+			aria-label="Alejar mapa"
+			title="Alejar"
+		>
+			<Icon icon="mdi:minus" width={k.zoomIcon} aria-hidden="true" />
+		</button>
+	</div>
+{/snippet}
+
 {#snippet layersControl()}
 	<div class="relative" data-map-flyout="layers">
 		<button
@@ -769,41 +793,28 @@
 		</div>
 
 		{#if look === 'panel'}
-			<!-- Vista Panel: capas justo encima del muñeco de Street View -->
-			<div class="pointer-events-none absolute bottom-[86px] right-[10px] z-20">
+			<!-- Vista Panel: capas y zoom apilados justo encima del muñeco de Street View -->
+			<div
+				class="pointer-events-none absolute bottom-[86px] right-[10px] z-20 flex flex-col items-end gap-2"
+			>
 				<div class="pointer-events-auto">
 					{@render layersControl()}
 				</div>
+				{#if isDesktopNav && !$showH3Grid}
+					<div class="pointer-events-auto">
+						{@render zoomControl()}
+					</div>
+				{/if}
 			</div>
 		{/if}
 
 		<!-- Zoom custom (look & feel app). Street View = pegman nativo de Google. -->
-		{#if isDesktopNav && !$showH3Grid}
+		{#if isDesktopNav && !$showH3Grid && look !== 'panel'}
 			<div
 				class="pointer-events-none absolute top-1/2 z-20 flex -translate-y-1/2 flex-col items-end"
 				style="right: {controlsRightPx}px"
 			>
-				<div class={k.zoomGroup} role="group" aria-label="Controles de zoom">
-					<button
-						type="button"
-						class={k.zoomBtn}
-						on:click={zoomIn}
-						aria-label="Acercar mapa"
-						title="Acercar"
-					>
-						<Icon icon="mdi:plus" width={k.zoomIcon} aria-hidden="true" />
-					</button>
-					<div class={k.zoomSep} aria-hidden="true"></div>
-					<button
-						type="button"
-						class={k.zoomBtn}
-						on:click={zoomOut}
-						aria-label="Alejar mapa"
-						title="Alejar"
-					>
-						<Icon icon="mdi:minus" width={k.zoomIcon} aria-hidden="true" />
-					</button>
-				</div>
+				{@render zoomControl()}
 			</div>
 		{/if}
 	{/if}
