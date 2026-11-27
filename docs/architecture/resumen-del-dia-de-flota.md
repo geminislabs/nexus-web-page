@@ -160,6 +160,23 @@ posición y a mandarlo a cada cliente, aunque nada visible haya cambiado.
 unidad visible, ya simplificados en el servidor (Douglas-Peucker o 1 punto por minuto). Una
 petición al abrir el panel; después el stream mantiene el recorrido al día como hoy.
 
+### 3.5 Combustible de la flota por día (nuevo)
+
+En «modo unidad» el combustible sale de `POST /telemetry/query` por hora de 7 días de **una**
+unidad (`fuel_consumed_liters`, calculado por la plataforma) y se suma por día en el cliente.
+Para la flota completa eso no escala: serían 7 × 24 cubetas por unidad, en lotes de 50.
+
+Propuesta: `GET /api/v1/fleet/fuel-daily?from&to&tz`. Devuelve por día local los litros y los km
+de la organización (y, opcional, por unidad), agregados en SQL sobre `telemetry_hourly_stats`, con
+el mismo caché por organización que el resumen del día. Con eso, la vista de flota puede mostrar
+la tarjeta de combustible y L/100 km de la flota sin pedir telemetría de cada unidad.
+
+### 3.6 Filtro por tipo en eventos (siscom-api)
+
+`GET /api/v1/events` no filtra por `event_type`. Para los encendidos y apagados del día se
+descargan todos los eventos y se descartan los demás. Aceptar
+`event_type=ignition_on&event_type=ignition_off` deja una sola página por lote de 100 unidades.
+
 ## 4. Cómo se enciende en el frontend
 
 - `VITE_FLEET_DAY_SUMMARY=true` hace que el panel pida `GET /fleet/day-summary` en lugar de
